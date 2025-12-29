@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Cpu, Shield, Zap, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/logo-injediesel.png";
+import { Logo } from "@/components/Logo";
 
 const features = [
   {
@@ -34,7 +34,7 @@ export default function Landing() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="Injediesel" className="h-8 w-auto" />
+            <Logo size="md" />
           </Link>
           <nav className="hidden md:flex items-center gap-8">
             <a href="#sobre" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -178,7 +178,7 @@ export default function Landing() {
       <footer className="py-8 border-t border-border">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <img src={logo} alt="Injediesel" className="h-6 w-auto" />
+            <Logo size="sm" />
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} Injediesel. Todos os direitos reservados.
             </p>

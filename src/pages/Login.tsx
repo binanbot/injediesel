@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import logo from "@/assets/logo-injediesel.png";
+import { Logo } from "@/components/Logo";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -60,7 +60,7 @@ export default function Login() {
             </Link>
 
             <div className="flex items-center gap-3 mb-8">
-              <img src={logo} alt="Injediesel" className="h-10 w-auto" />
+              <Logo size="lg" />
             </div>
 
             <h1 className="text-2xl font-bold mb-2">Bem-vindo de volta</h1>
@@ -157,7 +157,7 @@ export default function Login() {
             className="text-center"
           >
             <div className="w-24 h-24 rounded-3xl bg-primary/20 flex items-center justify-center mx-auto mb-8 glow">
-              <img src={logo} alt="Injediesel" className="h-12 w-auto" />
+              <Logo size="lg" />
             </div>
             <h2 className="text-2xl font-bold mb-4">Sistema de Gestão ECU</h2>
             <p className="text-muted-foreground max-w-sm">
