@@ -118,7 +118,11 @@ export default function MeusArquivos() {
               </thead>
               <tbody>
                 {filteredArquivos.map((arquivo) => (
-                  <tr key={arquivo.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
+                  <tr 
+                    key={arquivo.id} 
+                    className="border-b border-border/50 hover:bg-secondary/30 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/franqueado/arquivos/${arquivo.id}`)}
+                  >
                     <td className="py-4 px-4 font-medium">{arquivo.placa}</td>
                     <td className="py-4 px-4 text-muted-foreground">
                       {arquivo.marca} {arquivo.modelo}
@@ -126,7 +130,7 @@ export default function MeusArquivos() {
                     <td className="py-4 px-4 text-muted-foreground">{arquivo.servico}</td>
                     <td className="py-4 px-4">{getStatusBadge(arquivo.status)}</td>
                     <td className="py-4 px-4 text-muted-foreground">{arquivo.data}</td>
-                    <td className="py-4 px-4">
+                    <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
                         {arquivo.status === "completed" ? (
                           <Button variant="ghost" size="icon">
