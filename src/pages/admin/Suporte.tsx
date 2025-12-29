@@ -33,7 +33,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { TicketTimeline } from "@/components/admin/TicketTimeline";
 
 type TicketStatus = "aberto" | "em_andamento" | "resolvido" | "cancelado";
 type TicketPrioridade = "baixa" | "media" | "alta" | "urgente";
@@ -358,7 +361,7 @@ export default function AdminSuporte() {
 
       {/* Ticket Detail Dialog */}
       <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Headphones className="h-5 w-5 text-primary" />
@@ -366,132 +369,173 @@ export default function AdminSuporte() {
             </DialogTitle>
           </DialogHeader>
           {selectedTicket && (
-            <div className="space-y-5 pt-4">
-              {/* Current Status Badges */}
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline" className={statusConfig[selectedTicket.status].color}>
-                  {statusConfig[selectedTicket.status].label}
-                </Badge>
-                <Badge variant="outline" className={`${prioridadeConfig[selectedTicket.prioridade].bgColor} ${prioridadeConfig[selectedTicket.prioridade].color}`}>
-                  <Flag className="h-3 w-3 mr-1" />
-                  {prioridadeConfig[selectedTicket.prioridade].label}
-                </Badge>
-                {selectedTicket.atribuidoPara && (
-                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-                    <UserPlus className="h-3 w-3 mr-1" />
-                    {getMembroNome(selectedTicket.atribuidoPara)}
-                  </Badge>
-                )}
-              </div>
+            <Tabs defaultValue="historico" className="flex-1 flex flex-col overflow-hidden">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="historico">Histórico</TabsTrigger>
+                <TabsTrigger value="gerenciar">Gerenciar</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="historico" className="flex-1 overflow-hidden mt-4">
+                <ScrollArea className="h-[400px] pr-4">
+                  <div className="space-y-4">
+                    {/* Current Status Badges */}
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline" className={statusConfig[selectedTicket.status].color}>
+                        {statusConfig[selectedTicket.status].label}
+                      </Badge>
+                      <Badge variant="outline" className={`${prioridadeConfig[selectedTicket.prioridade].bgColor} ${prioridadeConfig[selectedTicket.prioridade].color}`}>
+                        <Flag className="h-3 w-3 mr-1" />
+                        {prioridadeConfig[selectedTicket.prioridade].label}
+                      </Badge>
+                      {selectedTicket.atribuidoPara && (
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                          <UserPlus className="h-3 w-3 mr-1" />
+                          {getMembroNome(selectedTicket.atribuidoPara)}
+                        </Badge>
+                      )}
+                    </div>
 
-              {/* Ticket Info */}
-              <div className="p-4 rounded-lg bg-secondary/50 space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <User className="h-4 w-4 text-primary" />
-                  <span className="font-medium">{selectedTicket.franqueado}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>Aberto em: {selectedTicket.data}</span>
-                </div>
-                <p className="text-sm">{selectedTicket.descricao}</p>
-              </div>
+                    {/* Ticket Info Summary */}
+                    <div className="p-3 rounded-lg bg-secondary/30 border border-border">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-primary" />
+                          <span className="font-medium">{selectedTicket.franqueado}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>Aberto em: {selectedTicket.data}</span>
+                        </div>
+                      </div>
+                    </div>
 
-              <Separator />
+                    <Separator />
 
-              {/* Management Section */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Atribuir */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <UserPlus className="h-4 w-4" />
-                    Atribuir para
-                  </Label>
-                  <Select
-                    value={selectedTicket.atribuidoPara || ""}
-                    onValueChange={(value) => handleAtribuir(selectedTicket.id, value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar membro" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {equipe.map((membro) => (
-                        <SelectItem key={membro.id} value={membro.id}>
-                          {membro.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    {/* Timeline */}
+                    <TicketTimeline ticketId={selectedTicket.id} />
 
-                {/* Prioridade */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Flag className="h-4 w-4" />
-                    Prioridade
-                  </Label>
-                  <Select
-                    value={selectedTicket.prioridade}
-                    onValueChange={(value: TicketPrioridade) => handleAlterarPrioridade(selectedTicket.id, value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(prioridadeConfig).map(([key, config]) => (
-                        <SelectItem key={key} value={key}>
-                          <span className={config.color}>{config.label}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <Separator />
 
-                {/* Status */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Status
-                  </Label>
-                  <Select
-                    value={selectedTicket.status}
-                    onValueChange={(value: TicketStatus) => handleAlterarStatus(selectedTicket.id, value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(statusConfig).map(([key, config]) => (
-                        <SelectItem key={key} value={key}>
-                          <span className={config.color.split(" ")[1]}>{config.label}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                    {/* Quick Response */}
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Resposta rápida
+                      </Label>
+                      <Textarea placeholder="Digite sua resposta..." rows={3} />
+                      <div className="flex justify-end">
+                        <Button variant="hero" size="sm" onClick={handleResponder}>
+                          <Send className="h-4 w-4" />
+                          Enviar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </TabsContent>
 
-              <Separator />
+              <TabsContent value="gerenciar" className="flex-1 overflow-hidden mt-4">
+                <ScrollArea className="h-[400px] pr-4">
+                  <div className="space-y-5">
+                    {/* Ticket Info */}
+                    <div className="p-4 rounded-lg bg-secondary/50 space-y-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <User className="h-4 w-4 text-primary" />
+                        <span className="font-medium">{selectedTicket.franqueado}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span>Aberto em: {selectedTicket.data}</span>
+                      </div>
+                      <p className="text-sm">{selectedTicket.descricao}</p>
+                    </div>
 
-              {/* Response Section */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Responder ao chamado
-                </Label>
-                <Textarea placeholder="Digite sua resposta..." rows={4} />
-              </div>
+                    <Separator />
 
-              <div className="flex gap-3 justify-end">
-                <Button variant="outline" onClick={() => setSelectedTicket(null)}>
-                  Fechar
-                </Button>
-                <Button variant="hero" onClick={handleResponder}>
-                  <Send className="h-4 w-4" />
-                  Enviar Resposta
-                </Button>
-              </div>
-            </div>
+                    {/* Management Section */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Atribuir */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <UserPlus className="h-4 w-4" />
+                          Atribuir para
+                        </Label>
+                        <Select
+                          value={selectedTicket.atribuidoPara || ""}
+                          onValueChange={(value) => handleAtribuir(selectedTicket.id, value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar membro" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {equipe.map((membro) => (
+                              <SelectItem key={membro.id} value={membro.id}>
+                                {membro.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Prioridade */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Flag className="h-4 w-4" />
+                          Prioridade
+                        </Label>
+                        <Select
+                          value={selectedTicket.prioridade}
+                          onValueChange={(value: TicketPrioridade) => handleAlterarPrioridade(selectedTicket.id, value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(prioridadeConfig).map(([key, config]) => (
+                              <SelectItem key={key} value={key}>
+                                <span className={config.color}>{config.label}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Status */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Status
+                        </Label>
+                        <Select
+                          value={selectedTicket.status}
+                          onValueChange={(value: TicketStatus) => handleAlterarStatus(selectedTicket.id, value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(statusConfig).map(([key, config]) => (
+                              <SelectItem key={key} value={key}>
+                                <span className={config.color.split(" ")[1]}>{config.label}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Actions */}
+                    <div className="flex gap-3 justify-end">
+                      <Button variant="outline" onClick={() => setSelectedTicket(null)}>
+                        Fechar
+                      </Button>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>
