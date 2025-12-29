@@ -14,6 +14,27 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { BannerCarousel, Banner } from "@/components/BannerCarousel";
+
+// Dados mockados dos banners - em produção viriam do banco de dados
+const banners: Banner[] = [
+  {
+    id: "1",
+    tipo: "imagem",
+    url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&h=400&fit=crop",
+    link: "https://example.com/promocao",
+    titulo: "Promoção de Fim de Ano",
+    ativo: true,
+  },
+  {
+    id: "2",
+    tipo: "imagem",
+    url: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=1200&h=400&fit=crop",
+    link: "https://example.com/novidades",
+    titulo: "Novidades no Sistema",
+    ativo: true,
+  },
+];
 
 const stats = [
   { label: "Arquivos Enviados", value: "24", icon: Upload, color: "text-primary" },
@@ -77,6 +98,9 @@ const getStatusBadge = (status: string) => {
 export default function FranqueadoHome() {
   return (
     <div className="space-y-6">
+      {/* Banner Carousel */}
+      <BannerCarousel banners={banners} autoPlay interval={6000} />
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

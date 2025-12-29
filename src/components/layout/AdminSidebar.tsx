@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   X,
+  ImageIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
   { icon: Users, label: "Franqueados", path: "/admin/franqueados" },
   { icon: FileDown, label: "Arquivos Recebidos", path: "/admin/arquivos" },
+  { icon: ImageIcon, label: "Banners", path: "/admin/banners" },
   { icon: MapPin, label: "Áreas de Atuação", path: "/admin/areas" },
   { icon: MessageSquare, label: "Mensagens", path: "/admin/mensagens" },
   { icon: BarChart3, label: "Relatórios", path: "/admin/relatorios" },
