@@ -80,8 +80,8 @@ export default function Landing() {
             </motion.div>
             
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              Bem-vindo ao{" "}
-              <span className="gradient-text">Injediesel</span>
+              Bem-vindo a{" "}
+              <span className="text-primary">Injediesel</span>
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
