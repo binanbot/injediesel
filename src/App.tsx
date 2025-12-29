@@ -20,6 +20,7 @@ import Materiais from "./pages/franqueado/Materiais";
 import Mensagens from "./pages/franqueado/Mensagens";
 import Perfil from "./pages/franqueado/Perfil";
 import Suporte from "./pages/franqueado/Suporte";
+import FranqueadoRelatorios from "./pages/franqueado/Relatorios";
 
 // Admin
 import { AdminLayout } from "./components/layout/AdminLayout";
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="mensagens" element={<Mensagens />} />
             <Route path="perfil" element={<Perfil />} />
             <Route path="suporte" element={<Suporte />} />
+            <Route path="relatorios" element={<FranqueadoRelatorios />} />
           </Route>
 
           {/* Admin Routes */}
