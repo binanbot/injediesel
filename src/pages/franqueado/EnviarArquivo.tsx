@@ -294,7 +294,7 @@ export default function EnviarArquivo() {
           <CardContent className="space-y-4">
             {/* Categorias - Múltipla escolha */}
             <div className="space-y-2">
-              <Label>Categorias *</Label>
+              <Label>Selecione uma ou mais categorias *</Label>
               <div className="flex flex-wrap gap-2">
                 {categoriasServicos.map((cat) => {
                   const isSelected = categoriasSelecionadas.includes(cat.id);
