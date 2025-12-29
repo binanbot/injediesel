@@ -5,6 +5,7 @@ import {
   FileDown,
   MapPin,
   MessageSquare,
+  Headphones,
   BarChart3,
   Settings,
   LogOut,
@@ -13,7 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/logo-injediesel.png";
+import { Logo } from "@/components/Logo";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
@@ -21,6 +22,7 @@ const menuItems = [
   { icon: FileDown, label: "Arquivos Recebidos", path: "/admin/arquivos" },
   { icon: ImageIcon, label: "Banners", path: "/admin/banners" },
   { icon: MapPin, label: "Áreas de Atuação", path: "/admin/areas" },
+  { icon: Headphones, label: "Suporte", path: "/admin/suporte" },
   { icon: MessageSquare, label: "Mensagens", path: "/admin/mensagens" },
   { icon: BarChart3, label: "Relatórios", path: "/admin/relatorios" },
   { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
@@ -52,7 +54,7 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
           <Link to="/admin" className="flex items-center gap-2">
-            <img src={logo} alt="Injediesel" className="h-8 w-auto" />
+            <Logo size="md" />
             <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">ADM</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">

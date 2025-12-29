@@ -101,7 +101,7 @@ export default function AdminDashboard() {
 
       {/* Alerts: Support & Messages */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Link to="/admin/mensagens" className="block">
+        <Link to="/admin/suporte" className="block">
           <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
