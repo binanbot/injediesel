@@ -14,6 +14,7 @@ import { FranchiseeLayout } from "./components/layout/FranchiseeLayout";
 import FranqueadoHome from "./pages/franqueado/Home";
 import EnviarArquivo from "./pages/franqueado/EnviarArquivo";
 import MeusArquivos from "./pages/franqueado/MeusArquivos";
+import ArquivoDetalhes from "./pages/franqueado/ArquivoDetalhes";
 import Atualizacoes from "./pages/franqueado/Atualizacoes";
 import Tutoriais from "./pages/franqueado/Tutoriais";
 import Materiais from "./pages/franqueado/Materiais";
@@ -52,6 +53,7 @@ const App = () => (
             <Route index element={<FranqueadoHome />} />
             <Route path="enviar" element={<EnviarArquivo />} />
             <Route path="arquivos" element={<MeusArquivos />} />
+            <Route path="arquivos/:id" element={<ArquivoDetalhes />} />
             <Route path="atualizacoes" element={<Atualizacoes />} />
             <Route path="tutoriais" element={<Tutoriais />} />
             <Route path="materiais" element={<Materiais />} />
