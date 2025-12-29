@@ -1,5 +1,17 @@
+import { useState, useMemo } from "react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import {
   AreaChart,
   Area,
@@ -16,6 +28,22 @@ import {
   LineChart,
   Line,
 } from "recharts";
+import { 
+  CalendarIcon, 
+  Trophy, 
+  TrendingUp, 
+  Truck, 
+  Car, 
+  Bike, 
+  Tractor,
+  HardHat,
+  Ship,
+  Zap,
+  Medal,
+  Crown,
+  Award
+} from "lucide-react";
+import { motion } from "framer-motion";
 
 const arquivosPorUnidade = [
   { nome: "São Paulo - Centro", arquivos: 45 },
@@ -58,25 +86,395 @@ const evolucaoMensal = [
   { mes: "Dez", arquivos: 324, receita: 115000 },
 ];
 
+// Dados de desempenho por categoria/nicho
+const desempenhoPorCategoria = [
+  { categoria: "Caminhão", icon: Truck, arquivos: 892, receita: 445000, crescimento: 15.2, cor: "hsl(217, 91%, 60%)" },
+  { categoria: "Agrícola", icon: Tractor, arquivos: 654, receita: 392000, crescimento: 22.8, cor: "hsl(142, 76%, 36%)" },
+  { categoria: "Pick-up", icon: Car, arquivos: 523, receita: 261500, crescimento: 8.5, cor: "hsl(45, 93%, 47%)" },
+  { categoria: "Pesados", icon: HardHat, arquivos: 412, receita: 329600, crescimento: 18.3, cor: "hsl(262, 83%, 58%)" },
+  { categoria: "Veículo de Passeio", icon: Car, arquivos: 387, receita: 154800, crescimento: 5.2, cor: "hsl(199, 89%, 48%)" },
+  { categoria: "Ônibus", icon: Truck, arquivos: 234, receita: 187200, crescimento: 12.1, cor: "hsl(25, 95%, 53%)" },
+  { categoria: "Motos", icon: Bike, arquivos: 198, receita: 59400, crescimento: -2.3, cor: "hsl(330, 81%, 60%)" },
+  { categoria: "Moto Aquática", icon: Ship, arquivos: 87, receita: 43500, crescimento: 35.7, cor: "hsl(180, 70%, 45%)" },
+  { categoria: "Geradores", icon: Zap, arquivos: 56, receita: 33600, crescimento: 28.4, cor: "hsl(48, 96%, 53%)" },
+];
+
+// Top 10 revendas por categoria
+const revendasPorCategoria: Record<string, Array<{ nome: string; arquivos: number; receita: number; cidade: string }>> = {
+  all: [
+    { nome: "Auto Remap SP", arquivos: 156, receita: 234000, cidade: "São Paulo" },
+    { nome: "Diesel Power RJ", arquivos: 142, receita: 213000, cidade: "Rio de Janeiro" },
+    { nome: "TurboTech BH", arquivos: 128, receita: 192000, cidade: "Belo Horizonte" },
+    { nome: "Remap Sul", arquivos: 115, receita: 172500, cidade: "Porto Alegre" },
+    { nome: "Performance Curitiba", arquivos: 108, receita: 162000, cidade: "Curitiba" },
+    { nome: "ECU Masters", arquivos: 98, receita: 147000, cidade: "Campinas" },
+    { nome: "Chip Tuning Santos", arquivos: 92, receita: 138000, cidade: "Santos" },
+    { nome: "Power Stage Floripa", arquivos: 87, receita: 130500, cidade: "Florianópolis" },
+    { nome: "Remap Center", arquivos: 82, receita: 123000, cidade: "Goiânia" },
+    { nome: "Diesel Evolution", arquivos: 78, receita: 117000, cidade: "Brasília" },
+  ],
+  caminhao: [
+    { nome: "Diesel Power RJ", arquivos: 89, receita: 178000, cidade: "Rio de Janeiro" },
+    { nome: "Auto Remap SP", arquivos: 76, receita: 152000, cidade: "São Paulo" },
+    { nome: "TurboTech BH", arquivos: 68, receita: 136000, cidade: "Belo Horizonte" },
+    { nome: "Remap Sul", arquivos: 62, receita: 124000, cidade: "Porto Alegre" },
+    { nome: "Performance Curitiba", arquivos: 55, receita: 110000, cidade: "Curitiba" },
+    { nome: "Truck Power", arquivos: 48, receita: 96000, cidade: "Ribeirão Preto" },
+    { nome: "ECU Masters", arquivos: 42, receita: 84000, cidade: "Campinas" },
+    { nome: "Diesel Evolution", arquivos: 38, receita: 76000, cidade: "Brasília" },
+    { nome: "Heavy Remap", arquivos: 35, receita: 70000, cidade: "Uberlândia" },
+    { nome: "Remap Center", arquivos: 32, receita: 64000, cidade: "Goiânia" },
+  ],
+  agricola: [
+    { nome: "Agro Remap MT", arquivos: 124, receita: 186000, cidade: "Cuiabá" },
+    { nome: "Campo Power", arquivos: 98, receita: 147000, cidade: "Rondonópolis" },
+    { nome: "Rural Tech", arquivos: 87, receita: 130500, cidade: "Sorriso" },
+    { nome: "Agro Performance", arquivos: 76, receita: 114000, cidade: "Lucas do Rio Verde" },
+    { nome: "TurboTech BH", arquivos: 65, receita: 97500, cidade: "Belo Horizonte" },
+    { nome: "Farm Chip", arquivos: 54, receita: 81000, cidade: "Rio Verde" },
+    { nome: "Agro ECU", arquivos: 48, receita: 72000, cidade: "Dourados" },
+    { nome: "Colheita Power", arquivos: 42, receita: 63000, cidade: "Primavera do Leste" },
+    { nome: "Remap Rural", arquivos: 38, receita: 57000, cidade: "Sinop" },
+    { nome: "AgroMax Chip", arquivos: 34, receita: 51000, cidade: "Cascavel" },
+  ],
+  pickup: [
+    { nome: "Auto Remap SP", arquivos: 67, receita: 100500, cidade: "São Paulo" },
+    { nome: "Pick Power", arquivos: 58, receita: 87000, cidade: "Goiânia" },
+    { nome: "4x4 Remap", arquivos: 52, receita: 78000, cidade: "Campo Grande" },
+    { nome: "Performance Curitiba", arquivos: 48, receita: 72000, cidade: "Curitiba" },
+    { nome: "Remap Sul", arquivos: 44, receita: 66000, cidade: "Porto Alegre" },
+    { nome: "Diesel Power RJ", arquivos: 41, receita: 61500, cidade: "Rio de Janeiro" },
+    { nome: "Off Road Chip", arquivos: 38, receita: 57000, cidade: "Londrina" },
+    { nome: "ECU Masters", arquivos: 35, receita: 52500, cidade: "Campinas" },
+    { nome: "Truck Light", arquivos: 32, receita: 48000, cidade: "Maringá" },
+    { nome: "TurboTech BH", arquivos: 29, receita: 43500, cidade: "Belo Horizonte" },
+  ],
+  pesados: [
+    { nome: "Heavy Duty SP", arquivos: 78, receita: 156000, cidade: "São Paulo" },
+    { nome: "Construção Power", arquivos: 65, receita: 130000, cidade: "Rio de Janeiro" },
+    { nome: "Máquinas Remap", arquivos: 54, receita: 108000, cidade: "Belo Horizonte" },
+    { nome: "Industrial Chip", arquivos: 48, receita: 96000, cidade: "Curitiba" },
+    { nome: "Mining Power", arquivos: 42, receita: 84000, cidade: "Carajás" },
+    { nome: "Construction ECU", arquivos: 38, receita: 76000, cidade: "Vitória" },
+    { nome: "Heavy Remap", arquivos: 34, receita: 68000, cidade: "Salvador" },
+    { nome: "Power Caterpillar", arquivos: 30, receita: 60000, cidade: "Manaus" },
+    { nome: "Equipment Chip", arquivos: 26, receita: 52000, cidade: "Recife" },
+    { nome: "Industrial Tech", arquivos: 22, receita: 44000, cidade: "Fortaleza" },
+  ],
+  motos: [
+    { nome: "Moto Power SP", arquivos: 45, receita: 22500, cidade: "São Paulo" },
+    { nome: "2 Rodas Chip", arquivos: 38, receita: 19000, cidade: "Rio de Janeiro" },
+    { nome: "Bike Remap", arquivos: 32, receita: 16000, cidade: "Curitiba" },
+    { nome: "Moto Tech", arquivos: 28, receita: 14000, cidade: "Belo Horizonte" },
+    { nome: "Speed Chip", arquivos: 24, receita: 12000, cidade: "Porto Alegre" },
+    { nome: "Racing ECU", arquivos: 21, receita: 10500, cidade: "Florianópolis" },
+    { nome: "Moto Evolution", arquivos: 18, receita: 9000, cidade: "Brasília" },
+    { nome: "Bike Power", arquivos: 15, receita: 7500, cidade: "Salvador" },
+    { nome: "Two Wheels", arquivos: 12, receita: 6000, cidade: "Recife" },
+    { nome: "Moto Performance", arquivos: 10, receita: 5000, cidade: "Goiânia" },
+  ],
+  aquatica: [
+    { nome: "Náutica Power", arquivos: 24, receita: 36000, cidade: "Angra dos Reis" },
+    { nome: "Marine Chip", arquivos: 18, receita: 27000, cidade: "Florianópolis" },
+    { nome: "Jet Remap", arquivos: 14, receita: 21000, cidade: "Guarujá" },
+    { nome: "Sea Power", arquivos: 11, receita: 16500, cidade: "Búzios" },
+    { nome: "Wave ECU", arquivos: 9, receita: 13500, cidade: "Cabo Frio" },
+    { nome: "Ocean Tech", arquivos: 7, receita: 10500, cidade: "Ilhabela" },
+    { nome: "Aqua Remap", arquivos: 5, receita: 7500, cidade: "Paraty" },
+    { nome: "Marina Chip", arquivos: 4, receita: 6000, cidade: "Santos" },
+    { nome: "Boat Power", arquivos: 3, receita: 4500, cidade: "Itajaí" },
+    { nome: "Sail ECU", arquivos: 2, receita: 3000, cidade: "Balneário Camboriú" },
+  ],
+  geradores: [
+    { nome: "Industrial Power", arquivos: 18, receita: 27000, cidade: "São Paulo" },
+    { nome: "Generator Chip", arquivos: 12, receita: 18000, cidade: "Rio de Janeiro" },
+    { nome: "Energy Remap", arquivos: 9, receita: 13500, cidade: "Belo Horizonte" },
+    { nome: "Power Gen", arquivos: 7, receita: 10500, cidade: "Curitiba" },
+    { nome: "Electric ECU", arquivos: 5, receita: 7500, cidade: "Porto Alegre" },
+    { nome: "Gen Tech", arquivos: 4, receita: 6000, cidade: "Brasília" },
+    { nome: "Energy Solutions", arquivos: 3, receita: 4500, cidade: "Salvador" },
+    { nome: "Power Solutions", arquivos: 2, receita: 3000, cidade: "Recife" },
+    { nome: "Gen Power", arquivos: 1, receita: 1500, cidade: "Manaus" },
+    { nome: "Electric Power", arquivos: 1, receita: 1500, cidade: "Fortaleza" },
+  ],
+};
+
+const categoriaOptions = [
+  { value: "all", label: "Todas as Categorias" },
+  { value: "caminhao", label: "Caminhão" },
+  { value: "agricola", label: "Agrícola" },
+  { value: "pickup", label: "Pick-up" },
+  { value: "pesados", label: "Pesados" },
+  { value: "motos", label: "Motos" },
+  { value: "aquatica", label: "Moto Aquática" },
+  { value: "geradores", label: "Geradores" },
+];
+
+const getMedalIcon = (index: number) => {
+  switch (index) {
+    case 0:
+      return <Crown className="h-5 w-5 text-yellow-500" />;
+    case 1:
+      return <Medal className="h-5 w-5 text-gray-400" />;
+    case 2:
+      return <Award className="h-5 w-5 text-amber-600" />;
+    default:
+      return <span className="w-5 h-5 flex items-center justify-center text-sm font-bold text-muted-foreground">{index + 1}</span>;
+  }
+};
+
 export default function AdminRelatorios() {
+  const [dataInicio, setDataInicio] = useState<Date>();
+  const [dataFim, setDataFim] = useState<Date>();
+  const [categoriaFiltro, setCategoriaFiltro] = useState("all");
+
+  const revendasFiltradas = useMemo(() => {
+    return revendasPorCategoria[categoriaFiltro] || revendasPorCategoria.all;
+  }, [categoriaFiltro]);
+
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Relatórios</h1>
-          <p className="text-muted-foreground">Análise detalhada do desempenho do sistema.</p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">Relatórios</h1>
+            <p className="text-muted-foreground">Análise detalhada do desempenho do sistema.</p>
+          </div>
+          <div className="flex gap-2">
+            <Select defaultValue="2024">
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Ano" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2023">2023</SelectItem>
+                <SelectItem value="2022">2022</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <Select defaultValue="2024">
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Ano" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="2024">2024</SelectItem>
-            <SelectItem value="2023">2023</SelectItem>
-            <SelectItem value="2022">2022</SelectItem>
-          </SelectContent>
-        </Select>
+
+        {/* Filtros de data */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              <div className="flex-1 sm:max-w-[200px]">
+                <label className="text-sm font-medium mb-2 block text-muted-foreground">Data Início</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !dataInicio && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dataInicio ? format(dataInicio, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dataInicio}
+                      onSelect={setDataInicio}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="flex-1 sm:max-w-[200px]">
+                <label className="text-sm font-medium mb-2 block text-muted-foreground">Data Fim</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !dataFim && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dataFim ? format(dataFim, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dataFim}
+                      onSelect={setDataFim}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              {(dataInicio || dataFim) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setDataInicio(undefined);
+                    setDataFim(undefined);
+                  }}
+                >
+                  Limpar datas
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Desempenho por Categoria/Nicho */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Desempenho por Categoria de Veículo
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {desempenhoPorCategoria.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <motion.div
+                    key={item.categoria}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/40 transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="p-2 rounded-lg"
+                          style={{ backgroundColor: `${item.cor}20` }}
+                        >
+                          <Icon className="h-4 w-4" style={{ color: item.cor }} />
+                        </div>
+                        <span className="font-medium">{item.categoria}</span>
+                      </div>
+                      <Badge 
+                        variant={item.crescimento >= 0 ? "default" : "destructive"}
+                        className={item.crescimento >= 0 ? "bg-success/20 text-success" : ""}
+                      >
+                        {item.crescimento >= 0 ? "+" : ""}{item.crescimento}%
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Arquivos</p>
+                        <p className="font-bold text-lg">{item.arquivos.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Receita</p>
+                        <p className="font-bold text-lg text-success">{formatCurrency(item.receita)}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Top 10 Revendas */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-yellow-500" />
+                Top 10 Melhores Revendas
+              </CardTitle>
+              <Select value={categoriaFiltro} onValueChange={setCategoriaFiltro}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filtrar por categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoriaOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {revendasFiltradas.map((revenda, index) => (
+                <motion.div
+                  key={revenda.nome}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className={cn(
+                    "flex items-center gap-4 p-4 rounded-xl border transition-colors",
+                    index === 0 
+                      ? "border-yellow-500/50 bg-yellow-500/10" 
+                      : index === 1 
+                      ? "border-gray-400/50 bg-gray-400/10"
+                      : index === 2
+                      ? "border-amber-600/50 bg-amber-600/10"
+                      : "border-border/50 bg-secondary/20"
+                  )}
+                >
+                  <div className="flex-shrink-0">
+                    {getMedalIcon(index)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold truncate">{revenda.nome}</p>
+                      <Badge variant="outline" className="text-xs">
+                        {revenda.cidade}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                      <span>{revenda.arquivos} arquivos</span>
+                      <span className="text-success font-medium">{formatCurrency(revenda.receita)}</span>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <div 
+                      className="h-2 rounded-full bg-secondary/50 w-24 overflow-hidden"
+                    >
+                      <div 
+                        className="h-full rounded-full bg-primary"
+                        style={{ 
+                          width: `${(revenda.arquivos / revendasFiltradas[0].arquivos) * 100}%` 
+                        }}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Evolution Chart */}
       <Card>
