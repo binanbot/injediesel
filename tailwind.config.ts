@@ -88,11 +88,16 @@ export default {
           to: { height: "0" },
         },
         shimmer: {
-          "100%": { transform: "translateX(100%)" },
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
         },
         float: {
           "0%, 100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-10px)" },
+        },
+        glow: {
+          "0%, 100%": { boxShadow: "0 0 20px hsl(217 91% 55% / 0.2)" },
+          "50%": { boxShadow: "0 0 40px hsl(217 91% 55% / 0.4)" },
         },
       },
       animation: {
@@ -100,10 +105,16 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         shimmer: "shimmer 2s infinite",
         float: "float 3s ease-in-out infinite",
+        glow: "glow 2s ease-in-out infinite",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "hero-pattern": "radial-gradient(ellipse at top, hsl(217 91% 60% / 0.1) 0%, transparent 50%)",
+        "hero-pattern": "radial-gradient(ellipse at top, hsl(217 91% 55% / 0.08) 0%, transparent 50%)",
+        "glass-gradient": "linear-gradient(145deg, hsl(222 47% 14% / 0.7) 0%, hsl(222 47% 9% / 0.5) 100%)",
+        "premium-mesh": "radial-gradient(at 40% 20%, hsl(222 47% 15%) 0px, transparent 50%), radial-gradient(at 80% 0%, hsl(217 91% 30% / 0.15) 0px, transparent 50%)",
+      },
+      backdropBlur: {
+        xs: "2px",
       },
     },
   },

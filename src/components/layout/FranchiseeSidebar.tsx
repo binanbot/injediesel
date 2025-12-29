@@ -49,26 +49,28 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
       {/* Overlay for mobile */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={onClose}
         />
       )}
       
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform duration-300 lg:translate-x-0",
+          "fixed left-0 top-0 z-50 h-screen w-64 glass-sidebar flex flex-col transition-transform duration-300 lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
+        {/* Logo Header */}
+        <div className="flex items-center justify-between h-16 px-4 border-b border-border/20">
           <Link to="/franqueado" className="flex items-center gap-2">
             <img src={logo} alt="Injediesel" className="h-8 w-auto" />
           </Link>
-          <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
+          <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden hover:bg-secondary/50">
             <X className="h-5 w-5" />
           </Button>
         </div>
 
+        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4 px-3">
           <ul className="space-y-1">
             {menuItems.map((item) => {
@@ -81,17 +83,20 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
                     to={item.path}
                     onClick={onClose}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 relative group",
                       isActive
-                        ? "bg-sidebar-accent text-sidebar-primary"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                        ? "bg-primary/15 text-primary border border-primary/20 shadow-lg shadow-primary/5"
+                        : "text-sidebar-foreground hover:bg-secondary/50 hover:text-foreground"
                     )}
                   >
-                    <item.icon className={cn("h-5 w-5", isActive && "text-sidebar-primary")} />
+                    <item.icon className={cn(
+                      "h-5 w-5 transition-colors",
+                      isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                    )} />
                     <span className="flex-1">{item.label}</span>
                     
                     {notificationCount > 0 && (
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold animate-pulse">
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs font-semibold border border-primary/30">
                         <Bell className="h-3 w-3" />
                         {notificationCount}
                       </span>
@@ -103,10 +108,11 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
           </ul>
         </nav>
 
-        <div className="p-3 border-t border-sidebar-border">
+        {/* Logout */}
+        <div className="p-3 border-t border-border/20">
           <Link
             to="/login"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-200"
           >
             <LogOut className="h-5 w-5" />
             Sair
