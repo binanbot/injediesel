@@ -26,6 +26,7 @@ import { AdminLayout } from "./components/layout/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminFranqueados from "./pages/admin/Franqueados";
 import AdminArquivos from "./pages/admin/Arquivos";
+import AdminBanners from "./pages/admin/Banners";
 import AdminAreas from "./pages/admin/Areas";
 import AdminMensagens from "./pages/admin/Mensagens";
 import AdminRelatorios from "./pages/admin/Relatorios";
@@ -62,6 +63,7 @@ const App = () => (
             <Route index element={<AdminDashboard />} />
             <Route path="franqueados" element={<AdminFranqueados />} />
             <Route path="arquivos" element={<AdminArquivos />} />
+            <Route path="banners" element={<AdminBanners />} />
             <Route path="areas" element={<AdminAreas />} />
             <Route path="mensagens" element={<AdminMensagens />} />
             <Route path="relatorios" element={<AdminRelatorios />} />
