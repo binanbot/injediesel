@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import SupportChat from "@/components/franqueado/SupportChat";
 
 // WhatsApp SVG Icon component
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -213,6 +214,8 @@ export default function Suporte() {
           </form>
         </CardContent>
       </Card>
+      {/* Live Chat Widget */}
+      <SupportChat />
     </div>
   );
 }
