@@ -10,6 +10,9 @@ import {
   User,
   Calendar,
   ChevronRight,
+  UserPlus,
+  Flag,
+  Send,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,9 +24,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 
 type TicketStatus = "aberto" | "em_andamento" | "resolvido" | "cancelado";
+type TicketPrioridade = "baixa" | "media" | "alta" | "urgente";
+
+interface TeamMember {
+  id: string;
+  nome: string;
+  avatar?: string;
+}
 
 interface Ticket {
   id: number;
@@ -32,11 +51,19 @@ interface Ticket {
   franqueado: string;
   data: string;
   status: TicketStatus;
-  prioridade: "baixa" | "media" | "alta";
+  prioridade: TicketPrioridade;
   mensagens: number;
+  atribuidoPara?: string;
 }
 
-const chamados: Ticket[] = [
+const equipe: TeamMember[] = [
+  { id: "1", nome: "Carlos Admin" },
+  { id: "2", nome: "Ana Suporte" },
+  { id: "3", nome: "Pedro Técnico" },
+  { id: "4", nome: "Julia Atendimento" },
+];
+
+const chamadosIniciais: Ticket[] = [
   {
     id: 1,
     titulo: "Erro ao enviar arquivo",
@@ -46,6 +73,7 @@ const chamados: Ticket[] = [
     status: "aberto",
     prioridade: "alta",
     mensagens: 3,
+    atribuidoPara: undefined,
   },
   {
     id: 2,
@@ -56,6 +84,7 @@ const chamados: Ticket[] = [
     status: "em_andamento",
     prioridade: "media",
     mensagens: 5,
+    atribuidoPara: "2",
   },
   {
     id: 3,
@@ -66,6 +95,7 @@ const chamados: Ticket[] = [
     status: "resolvido",
     prioridade: "baixa",
     mensagens: 2,
+    atribuidoPara: "1",
   },
   {
     id: 4,
@@ -74,8 +104,9 @@ const chamados: Ticket[] = [
     franqueado: "Ana Paula - Curitiba",
     data: "25/12/2024",
     status: "aberto",
-    prioridade: "alta",
+    prioridade: "urgente",
     mensagens: 1,
+    atribuidoPara: undefined,
   },
   {
     id: 5,
@@ -86,6 +117,7 @@ const chamados: Ticket[] = [
     status: "cancelado",
     prioridade: "baixa",
     mensagens: 0,
+    atribuidoPara: "3",
   },
 ];
 
@@ -96,14 +128,16 @@ const statusConfig: Record<TicketStatus, { label: string; color: string; icon: R
   cancelado: { label: "Cancelado", color: "bg-gray-500/20 text-gray-400 border-gray-500/30", icon: XCircle },
 };
 
-const prioridadeConfig = {
-  baixa: "bg-slate-500/20 text-slate-400",
-  media: "bg-amber-500/20 text-amber-400",
-  alta: "bg-red-500/20 text-red-400",
+const prioridadeConfig: Record<TicketPrioridade, { label: string; color: string; bgColor: string }> = {
+  baixa: { label: "Baixa", color: "text-slate-400", bgColor: "bg-slate-500/20" },
+  media: { label: "Média", color: "text-amber-400", bgColor: "bg-amber-500/20" },
+  alta: { label: "Alta", color: "text-orange-400", bgColor: "bg-orange-500/20" },
+  urgente: { label: "Urgente", color: "text-red-400", bgColor: "bg-red-500/20" },
 };
 
 export default function AdminSuporte() {
   const { toast } = useToast();
+  const [chamados, setChamados] = useState<Ticket[]>(chamadosIniciais);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [filter, setFilter] = useState<TicketStatus | "todos">("todos");
 
@@ -118,12 +152,51 @@ export default function AdminSuporte() {
     ? chamados 
     : chamados.filter((c) => c.status === filter);
 
+  const handleUpdateTicket = (ticketId: number, updates: Partial<Ticket>) => {
+    setChamados((prev) =>
+      prev.map((c) => (c.id === ticketId ? { ...c, ...updates } : c))
+    );
+    if (selectedTicket?.id === ticketId) {
+      setSelectedTicket((prev) => (prev ? { ...prev, ...updates } : null));
+    }
+  };
+
+  const handleAtribuir = (ticketId: number, membroId: string) => {
+    const membro = equipe.find((m) => m.id === membroId);
+    handleUpdateTicket(ticketId, { atribuidoPara: membroId });
+    toast({
+      title: "Chamado atribuído!",
+      description: `O chamado foi atribuído para ${membro?.nome}.`,
+    });
+  };
+
+  const handleAlterarPrioridade = (ticketId: number, prioridade: TicketPrioridade) => {
+    handleUpdateTicket(ticketId, { prioridade });
+    toast({
+      title: "Prioridade alterada!",
+      description: `A prioridade foi alterada para ${prioridadeConfig[prioridade].label}.`,
+    });
+  };
+
+  const handleAlterarStatus = (ticketId: number, status: TicketStatus) => {
+    handleUpdateTicket(ticketId, { status });
+    toast({
+      title: "Status alterado!",
+      description: `O status foi alterado para ${statusConfig[status].label}.`,
+    });
+  };
+
   const handleResponder = () => {
     toast({
       title: "Resposta enviada!",
       description: "O franqueado será notificado da sua resposta.",
     });
     setSelectedTicket(null);
+  };
+
+  const getMembroNome = (id?: string) => {
+    if (!id) return null;
+    return equipe.find((m) => m.id === id)?.nome;
   };
 
   return (
@@ -222,6 +295,7 @@ export default function AdminSuporte() {
           <div className="space-y-3">
             {filteredChamados.map((chamado) => {
               const StatusIcon = statusConfig[chamado.status].icon;
+              const membroAtribuido = getMembroNome(chamado.atribuidoPara);
               return (
                 <motion.div
                   key={chamado.id}
@@ -239,8 +313,9 @@ export default function AdminSuporte() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="font-semibold">{chamado.titulo}</h3>
-                            <Badge variant="outline" className={prioridadeConfig[chamado.prioridade]}>
-                              {chamado.prioridade}
+                            <Badge variant="outline" className={`${prioridadeConfig[chamado.prioridade].bgColor} ${prioridadeConfig[chamado.prioridade].color}`}>
+                              <Flag className="h-3 w-3 mr-1" />
+                              {prioridadeConfig[chamado.prioridade].label}
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{chamado.descricao}</p>
@@ -259,6 +334,12 @@ export default function AdminSuporte() {
                           <MessageSquare className="h-4 w-4" />
                           {chamado.mensagens} mensagens
                         </span>
+                        {membroAtribuido && (
+                          <span className="flex items-center gap-1 text-primary">
+                            <UserPlus className="h-4 w-4" />
+                            {membroAtribuido}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -277,7 +358,7 @@ export default function AdminSuporte() {
 
       {/* Ticket Detail Dialog */}
       <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Headphones className="h-5 w-5 text-primary" />
@@ -285,16 +366,25 @@ export default function AdminSuporte() {
             </DialogTitle>
           </DialogHeader>
           {selectedTicket && (
-            <div className="space-y-4 pt-4">
+            <div className="space-y-5 pt-4">
+              {/* Current Status Badges */}
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline" className={statusConfig[selectedTicket.status].color}>
                   {statusConfig[selectedTicket.status].label}
                 </Badge>
-                <Badge variant="outline" className={prioridadeConfig[selectedTicket.prioridade]}>
-                  Prioridade: {selectedTicket.prioridade}
+                <Badge variant="outline" className={`${prioridadeConfig[selectedTicket.prioridade].bgColor} ${prioridadeConfig[selectedTicket.prioridade].color}`}>
+                  <Flag className="h-3 w-3 mr-1" />
+                  {prioridadeConfig[selectedTicket.prioridade].label}
                 </Badge>
+                {selectedTicket.atribuidoPara && (
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                    <UserPlus className="h-3 w-3 mr-1" />
+                    {getMembroNome(selectedTicket.atribuidoPara)}
+                  </Badge>
+                )}
               </div>
 
+              {/* Ticket Info */}
               <div className="p-4 rounded-lg bg-secondary/50 space-y-3">
                 <div className="flex items-center gap-2 text-sm">
                   <User className="h-4 w-4 text-primary" />
@@ -307,8 +397,88 @@ export default function AdminSuporte() {
                 <p className="text-sm">{selectedTicket.descricao}</p>
               </div>
 
+              <Separator />
+
+              {/* Management Section */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Atribuir */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    Atribuir para
+                  </Label>
+                  <Select
+                    value={selectedTicket.atribuidoPara || ""}
+                    onValueChange={(value) => handleAtribuir(selectedTicket.id, value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecionar membro" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {equipe.map((membro) => (
+                        <SelectItem key={membro.id} value={membro.id}>
+                          {membro.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Prioridade */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Flag className="h-4 w-4" />
+                    Prioridade
+                  </Label>
+                  <Select
+                    value={selectedTicket.prioridade}
+                    onValueChange={(value: TicketPrioridade) => handleAlterarPrioridade(selectedTicket.id, value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(prioridadeConfig).map(([key, config]) => (
+                        <SelectItem key={key} value={key}>
+                          <span className={config.color}>{config.label}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Status */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Status
+                  </Label>
+                  <Select
+                    value={selectedTicket.status}
+                    onValueChange={(value: TicketStatus) => handleAlterarStatus(selectedTicket.id, value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(statusConfig).map(([key, config]) => (
+                        <SelectItem key={key} value={key}>
+                          <span className={config.color.split(" ")[1]}>{config.label}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Response Section */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Responder ao chamado</label>
+                <Label className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Responder ao chamado
+                </Label>
                 <Textarea placeholder="Digite sua resposta..." rows={4} />
               </div>
 
@@ -317,7 +487,7 @@ export default function AdminSuporte() {
                   Fechar
                 </Button>
                 <Button variant="hero" onClick={handleResponder}>
-                  <MessageSquare className="h-4 w-4" />
+                  <Send className="h-4 w-4" />
                   Enviar Resposta
                 </Button>
               </div>
