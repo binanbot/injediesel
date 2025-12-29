@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Download, Search, Filter, Eye, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,7 @@ const getStatusBadge = (status: string) => {
 export default function MeusArquivos() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const navigate = useNavigate();
 
   const filteredArquivos = arquivos.filter(arquivo => {
     const matchesSearch = 
@@ -142,7 +144,7 @@ export default function MeusArquivos() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate(`/franqueado/arquivos/${arquivo.id}`)}>
                               <Eye className="h-4 w-4 mr-2" />
                               Ver detalhes
                             </DropdownMenuItem>
