@@ -37,29 +37,58 @@ const servicos = [
 const categorias = [
   "Caminhão",
   "Ônibus",
-  "Máquina Agrícola",
-  "Máquina de Construção",
   "Veículo de Passeio",
+  "Pick-up",
+  "Moto",
+  "Máquina Agrícola",
+  "Máquinas Pesadas",
+  "Moto Aquática",
   "Outro",
 ];
 
-const marcas = [
-  "Volvo",
-  "Scania",
-  "Mercedes-Benz",
-  "DAF",
-  "MAN",
-  "Iveco",
-  "Ford",
-  "Volkswagen",
-  "John Deere",
-  "Case",
-  "New Holland",
-  "Caterpillar",
-  "Outro",
-];
+// Categorias que exigem placa
+const categoriasComPlaca = ["Caminhão", "Ônibus", "Veículo de Passeio", "Pick-up", "Moto"];
+
+// Marcas por categoria disponíveis no Brasil
+const marcasPorCategoria: Record<string, string[]> = {
+  "Caminhão": [
+    "Volvo", "Scania", "Mercedes-Benz", "DAF", "MAN", "Iveco", "Ford", "Volkswagen", "Outro"
+  ],
+  "Ônibus": [
+    "Marcopolo", "Mercedes-Benz", "Volvo", "Scania", "Volkswagen", "Iveco", "Agrale", "Outro"
+  ],
+  "Veículo de Passeio": [
+    "Volkswagen", "Fiat", "Chevrolet", "Ford", "Toyota", "Honda", "Hyundai", "Jeep", 
+    "Renault", "Nissan", "Peugeot", "Citroën", "BMW", "Mercedes-Benz", "Audi", 
+    "Mitsubishi", "Kia", "Suzuki", "Caoa Chery", "BYD", "GWM", "Outro"
+  ],
+  "Pick-up": [
+    "Toyota", "Ford", "Chevrolet", "Volkswagen", "Fiat", "Mitsubishi", "Nissan", 
+    "Dodge", "Ram", "GWM", "Outro"
+  ],
+  "Moto": [
+    "Honda", "Yamaha", "Suzuki", "Kawasaki", "BMW", "Harley-Davidson", "Triumph", 
+    "Ducati", "Royal Enfield", "Shineray", "Dafra", "Outro"
+  ],
+  "Máquina Agrícola": [
+    "John Deere", "Case IH", "New Holland", "Massey Ferguson", "Valtra", 
+    "AGCO", "Jacto", "Stara", "Outro"
+  ],
+  "Máquinas Pesadas": [
+    "Caterpillar", "Komatsu", "Volvo", "Liebherr", "JCB", "Case", "New Holland", 
+    "Hyundai", "XCMG", "Sany", "Outro"
+  ],
+  "Moto Aquática": [
+    "Yamaha", "Sea-Doo", "Kawasaki", "Honda", "Outro"
+  ],
+  "Outro": [
+    "Outro"
+  ],
+};
 
 const transmissoes = ["Manual", "Automática", "Automatizada"];
+
+const MAX_FILES = 2;
 
 interface UploadedFile {
   name: string;
@@ -73,6 +102,11 @@ export default function EnviarArquivo() {
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [categoria, setCategoria] = useState<string>("");
+  const [marca, setMarca] = useState<string>("");
+
+  const exigePlaca = categoriasComPlaca.includes(categoria);
+  const marcasDisponiveis = categoria ? marcasPorCategoria[categoria] || [] : [];
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -83,7 +117,19 @@ export default function EnviarArquivo() {
       size: file.size,
       type: file.type,
     }));
-    setFiles(prev => [...prev, ...droppedFiles]);
+    
+    const totalFiles = files.length + droppedFiles.length;
+    if (totalFiles > MAX_FILES) {
+      toast({
+        title: "Limite de arquivos",
+        description: `Você pode enviar no máximo ${MAX_FILES} arquivos.`,
+        variant: "destructive",
+      });
+      const allowedFiles = droppedFiles.slice(0, MAX_FILES - files.length);
+      setFiles(prev => [...prev, ...allowedFiles]);
+    } else {
+      setFiles(prev => [...prev, ...droppedFiles]);
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,7 +139,19 @@ export default function EnviarArquivo() {
         size: file.size,
         type: file.type,
       }));
-      setFiles(prev => [...prev, ...selectedFiles]);
+      
+      const totalFiles = files.length + selectedFiles.length;
+      if (totalFiles > MAX_FILES) {
+        toast({
+          title: "Limite de arquivos",
+          description: `Você pode enviar no máximo ${MAX_FILES} arquivos.`,
+          variant: "destructive",
+        });
+        const allowedFiles = selectedFiles.slice(0, MAX_FILES - files.length);
+        setFiles(prev => [...prev, ...allowedFiles]);
+      } else {
+        setFiles(prev => [...prev, ...selectedFiles]);
+      }
     }
   };
 
@@ -105,6 +163,11 @@ export default function EnviarArquivo() {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleCategoriaChange = (value: string) => {
+    setCategoria(value);
+    setMarca(""); // Reset marca when category changes
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -137,7 +200,7 @@ export default function EnviarArquivo() {
             Obrigado por enviar seu arquivo. Nossa equipe irá processá-lo e você receberá uma notificação assim que estiver pronto.
           </p>
           <div className="flex gap-4 justify-center">
-            <Button variant="outline" onClick={() => setSubmitted(false)}>
+            <Button variant="outline" onClick={() => { setSubmitted(false); setCategoria(""); setMarca(""); setFiles([]); }}>
               Enviar Outro
             </Button>
             <Button variant="hero" onClick={() => window.location.href = "/franqueado/arquivos"}>
@@ -157,12 +220,25 @@ export default function EnviarArquivo() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Serviço e Categoria */}
+        {/* Categoria e Serviço */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Informações do Serviço</CardTitle>
           </CardHeader>
           <CardContent className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Categoria *</Label>
+              <Select required value={categoria} onValueChange={handleCategoriaChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categorias.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label>Serviço a ser executado *</Label>
               <Select required>
@@ -172,19 +248,6 @@ export default function EnviarArquivo() {
                 <SelectContent>
                   {servicos.map(s => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Categoria *</Label>
-              <Select required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categorias.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -199,32 +262,34 @@ export default function EnviarArquivo() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Placa *</Label>
-                <div className="relative">
-                  <Input placeholder="ABC-1234" required />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
+              {exigePlaca && (
+                <div className="space-y-2">
+                  <Label>Placa *</Label>
+                  <div className="relative">
+                    <Input placeholder="ABC-1234" required />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2"
+                    >
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Info className="h-3 w-3" />
+                    Consulta automática disponível via API
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Info className="h-3 w-3" />
-                  Consulta automática disponível via API
-                </p>
-              </div>
+              )}
               <div className="space-y-2">
                 <Label>Marca *</Label>
-                <Select required>
+                <Select required value={marca} onValueChange={setMarca} disabled={!categoria}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione a marca" />
+                    <SelectValue placeholder={categoria ? "Selecione a marca" : "Selecione a categoria primeiro"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {marcas.map(m => (
+                    {marcasDisponiveis.map(m => (
                       <SelectItem key={m} value={m}>{m}</SelectItem>
                     ))}
                   </SelectContent>
@@ -272,7 +337,7 @@ export default function EnviarArquivo() {
         {/* Upload de Arquivos */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Upload de Arquivos</CardTitle>
+            <CardTitle className="text-lg">Upload de Arquivos (máx. {MAX_FILES})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div
@@ -283,7 +348,7 @@ export default function EnviarArquivo() {
                 isDragging
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50"
-              }`}
+              } ${files.length >= MAX_FILES ? "opacity-50 pointer-events-none" : ""}`}
             >
               <input
                 type="file"
@@ -292,17 +357,22 @@ export default function EnviarArquivo() {
                 onChange={handleFileSelect}
                 className="hidden"
                 id="file-upload"
+                disabled={files.length >= MAX_FILES}
               />
-              <label htmlFor="file-upload" className="cursor-pointer">
+              <label htmlFor="file-upload" className={`cursor-pointer ${files.length >= MAX_FILES ? "cursor-not-allowed" : ""}`}>
                 <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4">
                   <Upload className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <p className="font-medium mb-1">Arraste arquivos aqui ou clique para selecionar</p>
+                <p className="font-medium mb-1">
+                  {files.length >= MAX_FILES 
+                    ? "Limite de arquivos atingido" 
+                    : "Arraste arquivos aqui ou clique para selecionar"}
+                </p>
                 <p className="text-sm text-muted-foreground">
                   Formatos aceitos: .bin, .ori, .kfg, .bck, .eprom, .zip, .rar
                 </p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Limite máximo: 256 MB
+                  Limite máximo: 256 MB por arquivo | {files.length}/{MAX_FILES} arquivos
                 </p>
               </label>
             </div>
