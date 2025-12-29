@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Cpu, Shield, Zap, Users } from "lucide-react";
@@ -28,6 +29,35 @@ const features = [
 ];
 
 export default function Landing() {
+  const [displayedText, setDisplayedText] = useState("");
+  const [showCursor, setShowCursor] = useState(true);
+  const fullText = "Injediesel";
+
+  useEffect(() => {
+    let currentIndex = 0;
+    const typingInterval = setInterval(() => {
+      if (currentIndex <= fullText.length) {
+        setDisplayedText(fullText.slice(0, currentIndex));
+        currentIndex++;
+      } else {
+        clearInterval(typingInterval);
+        // Keep cursor blinking for a moment then hide
+        setTimeout(() => setShowCursor(false), 2000);
+      }
+    }, 120);
+
+    return () => clearInterval(typingInterval);
+  }, []);
+
+  // Cursor blink effect
+  useEffect(() => {
+    const cursorInterval = setInterval(() => {
+      setShowCursor((prev) => !prev);
+    }, 530);
+
+    return () => clearInterval(cursorInterval);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -81,7 +111,14 @@ export default function Landing() {
             
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
               Bem-vindo a{" "}
-              <span className="text-primary">Injediesel</span>
+              <span className="text-primary">
+                {displayedText}
+                <span 
+                  className={`inline-block w-[3px] h-[1em] bg-primary ml-1 align-middle transition-opacity duration-100 ${
+                    showCursor ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              </span>
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
