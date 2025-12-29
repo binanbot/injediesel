@@ -3,8 +3,33 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+
+// Pages
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+
+// Franqueado
+import { FranchiseeLayout } from "./components/layout/FranchiseeLayout";
+import FranqueadoHome from "./pages/franqueado/Home";
+import EnviarArquivo from "./pages/franqueado/EnviarArquivo";
+import MeusArquivos from "./pages/franqueado/MeusArquivos";
+import Atualizacoes from "./pages/franqueado/Atualizacoes";
+import Tutoriais from "./pages/franqueado/Tutoriais";
+import Materiais from "./pages/franqueado/Materiais";
+import Mensagens from "./pages/franqueado/Mensagens";
+import Perfil from "./pages/franqueado/Perfil";
+import Suporte from "./pages/franqueado/Suporte";
+
+// Admin
+import { AdminLayout } from "./components/layout/AdminLayout";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminFranqueados from "./pages/admin/Franqueados";
+import AdminArquivos from "./pages/admin/Arquivos";
+import AdminAreas from "./pages/admin/Areas";
+import AdminMensagens from "./pages/admin/Mensagens";
+import AdminRelatorios from "./pages/admin/Relatorios";
+import AdminConfiguracoes from "./pages/admin/Configuracoes";
 
 const queryClient = new QueryClient();
 
@@ -15,8 +40,34 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          {/* Public Routes */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+
+          {/* Franqueado Routes */}
+          <Route path="/franqueado" element={<FranchiseeLayout />}>
+            <Route index element={<FranqueadoHome />} />
+            <Route path="enviar" element={<EnviarArquivo />} />
+            <Route path="arquivos" element={<MeusArquivos />} />
+            <Route path="atualizacoes" element={<Atualizacoes />} />
+            <Route path="tutoriais" element={<Tutoriais />} />
+            <Route path="materiais" element={<Materiais />} />
+            <Route path="mensagens" element={<Mensagens />} />
+            <Route path="perfil" element={<Perfil />} />
+            <Route path="suporte" element={<Suporte />} />
+          </Route>
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="franqueados" element={<AdminFranqueados />} />
+            <Route path="arquivos" element={<AdminArquivos />} />
+            <Route path="areas" element={<AdminAreas />} />
+            <Route path="mensagens" element={<AdminMensagens />} />
+            <Route path="relatorios" element={<AdminRelatorios />} />
+            <Route path="configuracoes" element={<AdminConfiguracoes />} />
+          </Route>
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
