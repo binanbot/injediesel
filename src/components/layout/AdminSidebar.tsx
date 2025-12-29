@@ -11,6 +11,7 @@ import {
   LogOut,
   X,
   ImageIcon,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const menuItems = [
   { icon: MessageSquare, label: "Mensagens", path: "/admin/mensagens" },
   { icon: BarChart3, label: "Relatórios", path: "/admin/relatorios" },
   { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
+  { icon: FileText, label: "Documentação", path: "/admin/documentacao" },
 ];
 
 interface AdminSidebarProps {
