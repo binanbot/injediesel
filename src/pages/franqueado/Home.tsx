@@ -9,11 +9,9 @@ import {
   ArrowRight,
   FileText,
   CheckCircle2,
-  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { BannerCarousel, Banner } from "@/components/BannerCarousel";
 
 // Dados mockados dos banners - em produção viriam do banco de dados
@@ -104,7 +102,7 @@ export default function FranqueadoHome() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Página Inicial</h1>
+          <h1 className="text-2xl font-bold text-foreground">Página Inicial</h1>
           <p className="text-muted-foreground">Bem-vindo de volta! Aqui está um resumo da sua conta.</p>
         </div>
         <Link to="/franqueado/enviar">
@@ -119,7 +117,7 @@ export default function FranqueadoHome() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-4 rounded-xl bg-warning/10 border border-warning/20 flex items-start gap-3"
+        className="p-4 rounded-xl glass-card border-warning/30 flex items-start gap-3"
       >
         <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
         <div className="flex-1">
@@ -144,14 +142,14 @@ export default function FranqueadoHome() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <Card className="hover:border-primary/50 transition-colors">
+            <Card className="glass-hover hover:border-primary/30">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="text-3xl font-bold mt-1">{stat.value}</p>
+                    <p className="text-3xl font-bold mt-1 text-foreground">{stat.value}</p>
                   </div>
-                  <div className={`p-3 rounded-xl bg-secondary ${stat.color}`}>
+                  <div className={`p-3 rounded-xl bg-secondary/60 backdrop-blur-sm ${stat.color}`}>
                     <stat.icon className="h-6 w-6" />
                   </div>
                 </div>
@@ -176,7 +174,7 @@ export default function FranqueadoHome() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b border-border/30">
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Placa</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Veículo</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Serviço</th>
@@ -187,8 +185,8 @@ export default function FranqueadoHome() {
               </thead>
               <tbody>
                 {recentFiles.map((file) => (
-                  <tr key={file.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
-                    <td className="py-3 px-4 font-medium">{file.placa}</td>
+                  <tr key={file.id} className="border-b border-border/20 hover:bg-secondary/30 transition-colors">
+                    <td className="py-3 px-4 font-medium text-foreground">{file.placa}</td>
                     <td className="py-3 px-4 text-muted-foreground">
                       {file.marca} {file.modelo}
                     </td>
@@ -217,14 +215,14 @@ export default function FranqueadoHome() {
       {/* Quick Actions */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Link to="/franqueado/atualizacoes">
-          <Card className="hover:border-primary/50 transition-all cursor-pointer group">
+          <Card className="glass-hover cursor-pointer group hover:border-primary/30">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+                <div className="p-3 rounded-xl bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors border border-primary/20">
                   <Download className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="font-medium">Atualizações</p>
+                  <p className="font-medium text-foreground">Atualizações</p>
                   <p className="text-sm text-muted-foreground">3 novas disponíveis</p>
                 </div>
               </div>
@@ -233,14 +231,14 @@ export default function FranqueadoHome() {
         </Link>
 
         <Link to="/franqueado/tutoriais">
-          <Card className="hover:border-primary/50 transition-all cursor-pointer group">
+          <Card className="glass-hover cursor-pointer group hover:border-info/30">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-info/10 text-info group-hover:bg-info/20 transition-colors">
+                <div className="p-3 rounded-xl bg-info/10 text-info group-hover:bg-info/20 transition-colors border border-info/20">
                   <FileText className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="font-medium">Tutoriais</p>
+                  <p className="font-medium text-foreground">Tutoriais</p>
                   <p className="text-sm text-muted-foreground">Aprenda a usar o sistema</p>
                 </div>
               </div>
@@ -249,14 +247,14 @@ export default function FranqueadoHome() {
         </Link>
 
         <Link to="/franqueado/mensagens">
-          <Card className="hover:border-primary/50 transition-all cursor-pointer group">
+          <Card className="glass-hover cursor-pointer group hover:border-success/30">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-success/10 text-success group-hover:bg-success/20 transition-colors">
+                <div className="p-3 rounded-xl bg-success/10 text-success group-hover:bg-success/20 transition-colors border border-success/20">
                   <FileCheck className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="font-medium">Mensagens</p>
+                  <p className="font-medium text-foreground">Mensagens</p>
                   <p className="text-sm text-muted-foreground">2 não lidas</p>
                 </div>
               </div>

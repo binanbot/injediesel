@@ -58,7 +58,7 @@ export function BannerCarousel({ banners, autoPlay = true, interval = 5000 }: Ba
   };
 
   return (
-    <div className="relative w-full h-48 sm:h-56 md:h-64 rounded-xl overflow-hidden group">
+    <div className="relative w-full h-48 sm:h-56 md:h-64 rounded-xl overflow-hidden group glass-card">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
@@ -113,18 +113,18 @@ export function BannerCarousel({ banners, autoPlay = true, interval = 5000 }: Ba
       {activeBanners.length > 1 && (
         <>
           <Button
-            variant="ghost"
+            variant="glass"
             size="icon"
             onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/50 hover:bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <Button
-            variant="ghost"
+            variant="glass"
             size="icon"
             onClick={(e) => { e.stopPropagation(); goToNext(); }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/50 hover:bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
           >
             <ChevronRight className="h-5 w-5" />
           </Button>

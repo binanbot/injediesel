@@ -145,7 +145,7 @@ export default function Login() {
       </div>
 
       {/* Right Side - Decorative */}
-      <div className="hidden lg:flex flex-1 bg-card border-l border-border relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 glass-card border-l border-border/30 relative overflow-hidden">
         <div className="absolute inset-0 bg-hero-pattern" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-3xl" />
         
