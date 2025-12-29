@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/logo-injediesel.png";
+import { Logo } from "@/components/Logo";
 
 // Dados mockados de notificações - em produção viriam do banco de dados
 const notifications: Record<string, number> = {
@@ -63,7 +63,7 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
         {/* Logo Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-border/20">
           <Link to="/franqueado" className="flex items-center gap-2">
-            <img src={logo} alt="Injediesel" className="h-8 w-auto" />
+            <Logo size="md" />
           </Link>
           <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden hover:bg-secondary/50">
             <X className="h-5 w-5" />
