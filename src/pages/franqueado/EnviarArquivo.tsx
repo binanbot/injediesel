@@ -327,7 +327,7 @@ export default function EnviarArquivo() {
                 <Input placeholder="Ex: 2020/2021" required />
               </div>
               <div className="space-y-2">
-                <Label>Horas do veículo</Label>
+                <Label>Horas / Km do veículo</Label>
                 <Input placeholder="Ex: 15.000" />
               </div>
             </div>
