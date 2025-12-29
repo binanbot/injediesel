@@ -29,6 +29,7 @@ import AdminArquivos from "./pages/admin/Arquivos";
 import AdminBanners from "./pages/admin/Banners";
 import AdminAreas from "./pages/admin/Areas";
 import AdminMensagens from "./pages/admin/Mensagens";
+import AdminSuporte from "./pages/admin/Suporte";
 import AdminRelatorios from "./pages/admin/Relatorios";
 import AdminConfiguracoes from "./pages/admin/Configuracoes";
 
@@ -66,6 +67,7 @@ const App = () => (
             <Route path="banners" element={<AdminBanners />} />
             <Route path="areas" element={<AdminAreas />} />
             <Route path="mensagens" element={<AdminMensagens />} />
+            <Route path="suporte" element={<AdminSuporte />} />
             <Route path="relatorios" element={<AdminRelatorios />} />
             <Route path="configuracoes" element={<AdminConfiguracoes />} />
           </Route>
