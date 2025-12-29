@@ -35,6 +35,7 @@ import AdminMensagens from "./pages/admin/Mensagens";
 import AdminSuporte from "./pages/admin/Suporte";
 import AdminRelatorios from "./pages/admin/Relatorios";
 import AdminConfiguracoes from "./pages/admin/Configuracoes";
+import DocumentacaoSistema from "./pages/admin/DocumentacaoSistema";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
             <Route path="suporte" element={<AdminSuporte />} />
             <Route path="relatorios" element={<AdminRelatorios />} />
             <Route path="configuracoes" element={<AdminConfiguracoes />} />
+            <Route path="documentacao" element={<DocumentacaoSistema />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
