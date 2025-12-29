@@ -58,11 +58,72 @@ const topUnidades = [
 ];
 
 export default function AdminDashboard() {
+  // Mock data - replace with real data from API
+  const novosArquivos = 12;
+  const novosSuporte = 5;
+  const novasMensagens = 8;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground">Visão geral do sistema Injediesel.</p>
+      </div>
+
+      {/* Alert: New Files */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-500/20 via-orange-500/10 to-orange-500/20 border border-orange-500/30 p-4"
+      >
+        <div className="absolute inset-0 bg-orange-500/5 animate-pulse" />
+        <div className="absolute inset-0 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.3)] animate-pulse" />
+        <div className="relative flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-orange-500/20 text-orange-400">
+            <FileDown className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-orange-400">
+              Você tem <span className="text-2xl font-bold">{novosArquivos}</span> novos arquivos
+            </p>
+            <p className="text-sm text-orange-300/70">Aguardando análise e resolução</p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Alerts: Support & Messages */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 }}
+          className="rounded-xl bg-gradient-to-r from-amber-500/15 to-amber-500/5 border border-amber-500/20 p-4"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+              <Clock className="h-5 w-5" />
+            </div>
+            <p className="font-medium text-amber-400">
+              Você tem <span className="text-xl font-bold">{novosSuporte}</span> novos suporte!
+            </p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.15 }}
+          className="rounded-xl bg-gradient-to-r from-blue-500/15 to-blue-500/5 border border-blue-500/20 p-4"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
+              <Users className="h-5 w-5" />
+            </div>
+            <p className="font-medium text-blue-400">
+              Você tem <span className="text-xl font-bold">{novasMensagens}</span> mensagens
+            </p>
+          </div>
+        </motion.div>
       </div>
 
       {/* Stats Grid */}
