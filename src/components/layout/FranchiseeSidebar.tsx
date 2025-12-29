@@ -11,10 +11,18 @@ import {
   User,
   LogOut,
   X,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo-injediesel.png";
+
+// Dados mockados de notificações - em produção viriam do banco de dados
+const notifications: Record<string, number> = {
+  "/franqueado/arquivos": 2, // 2 arquivos prontos para download
+  "/franqueado/atualizacoes": 3, // 3 novas atualizações
+  "/franqueado/mensagens": 2, // 2 mensagens não lidas
+};
 
 const menuItems = [
   { icon: Home, label: "Página Inicial", path: "/franqueado" },
@@ -65,20 +73,29 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
           <ul className="space-y-1">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
+              const notificationCount = notifications[item.path] || 0;
+              
               return (
                 <li key={item.path}>
                   <Link
                     to={item.path}
                     onClick={onClose}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative",
                       isActive
                         ? "bg-sidebar-accent text-sidebar-primary"
                         : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                     )}
                   >
                     <item.icon className={cn("h-5 w-5", isActive && "text-sidebar-primary")} />
-                    {item.label}
+                    <span className="flex-1">{item.label}</span>
+                    
+                    {notificationCount > 0 && (
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold animate-pulse">
+                        <Bell className="h-3 w-3" />
+                        {notificationCount}
+                      </span>
+                    )}
                   </Link>
                 </li>
               );
