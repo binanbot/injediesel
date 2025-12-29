@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
@@ -12,7 +14,7 @@ import {
   Ship,
   HardHat,
   MoreHorizontal,
-  ChevronDown,
+  CalendarIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import {
   PieChart,
   Pie,
@@ -79,6 +88,8 @@ const multiplicadores: Record<Periodo, number> = {
 
 export default function Relatorios() {
   const [periodo, setPeriodo] = useState<Periodo>("mes");
+  const [dataInicio, setDataInicio] = useState<Date>();
+  const [dataFim, setDataFim] = useState<Date>();
 
   // Calcular dados com base no período selecionado
   const dadosFaturamento = useMemo(() => {
@@ -127,26 +138,104 @@ export default function Relatorios() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4">
         <div>
           <h1 className="text-2xl font-bold">Relatórios de Faturamento</h1>
           <p className="text-muted-foreground">
             Acompanhe o faturamento por categoria de veículo
           </p>
         </div>
-        <Select value={periodo} onValueChange={(v) => setPeriodo(v as Periodo)}>
-          <SelectTrigger className="w-[180px] glass-input">
-            <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-            <SelectValue placeholder="Selecione o período" />
-          </SelectTrigger>
-          <SelectContent className="glass-card">
-            <SelectItem value="dia">Hoje</SelectItem>
-            <SelectItem value="semana">Esta Semana</SelectItem>
-            <SelectItem value="mes">Este Mês</SelectItem>
-            <SelectItem value="semestre">Este Semestre</SelectItem>
-            <SelectItem value="ano">Este Ano</SelectItem>
-          </SelectContent>
-        </Select>
+        
+        {/* Filtros */}
+        <Card className="glass-card">
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-2 block">Período</label>
+                <Select value={periodo} onValueChange={(v) => setPeriodo(v as Periodo)}>
+                  <SelectTrigger className="glass-input">
+                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <SelectValue placeholder="Selecione o período" />
+                  </SelectTrigger>
+                  <SelectContent className="glass-card">
+                    <SelectItem value="dia">Hoje</SelectItem>
+                    <SelectItem value="semana">Esta Semana</SelectItem>
+                    <SelectItem value="mes">Este Mês</SelectItem>
+                    <SelectItem value="semestre">Este Semestre</SelectItem>
+                    <SelectItem value="ano">Este Ano</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-2 block">Data Início</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal glass-input",
+                        !dataInicio && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dataInicio ? format(dataInicio, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 glass-card" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={dataInicio}
+                      onSelect={setDataInicio}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-2 block">Data Fim</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal glass-input",
+                        !dataFim && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dataFim ? format(dataFim, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 glass-card" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={dataFim}
+                      onSelect={setDataFim}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              {(dataInicio || dataFim) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setDataInicio(undefined);
+                    setDataFim(undefined);
+                  }}
+                >
+                  Limpar datas
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Cards de resumo */}
