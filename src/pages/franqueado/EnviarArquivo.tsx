@@ -334,31 +334,6 @@ export default function EnviarArquivo() {
               />
             </div>
 
-            {/* Aviso Legal */}
-            {exigeAvisoLegal && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="p-4 rounded-lg bg-warning/10 border border-warning/30"
-              >
-                <div className="flex gap-3">
-                  <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
-                  <div className="space-y-3">
-                    <p className="text-sm text-warning whitespace-pre-line">{avisoLegalTexto}</p>
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="aceito-responsabilidade"
-                        checked={aceitouResponsabilidade}
-                        onCheckedChange={(checked) => setAceitouResponsabilidade(checked === true)}
-                      />
-                      <Label htmlFor="aceito-responsabilidade" className="text-sm font-medium cursor-pointer">
-                        Estou ciente da responsabilidade
-                      </Label>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
 
             {/* Campo Valor */}
             <div className="space-y-2">
