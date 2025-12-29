@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Upload,
@@ -7,86 +7,38 @@ import {
   Search,
   CheckCircle2,
   Info,
+  AlertTriangle,
+  User,
+  DollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-
-const servicos = [
-  "Stage 1",
-  "Stage 2",
-  "DPF Off",
-  "EGR Off",
-  "AdBlue Off",
-  "DTC Off",
-  "Speed Limiter Off",
-  "Hot Start Fix",
-  "Outro",
-];
-
-const categorias = [
-  "Caminhão",
-  "Ônibus",
-  "Veículo de Passeio",
-  "Pick-up",
-  "Moto",
-  "Máquina Agrícola",
-  "Máquinas Pesadas",
-  "Moto Aquática",
-  "Outro",
-];
-
-// Categorias que exigem placa
-const categoriasComPlaca = ["Caminhão", "Ônibus", "Veículo de Passeio", "Pick-up", "Moto"];
-
-// Marcas por categoria disponíveis no Brasil
-const marcasPorCategoria: Record<string, string[]> = {
-  "Caminhão": [
-    "Volvo", "Scania", "Mercedes-Benz", "DAF", "MAN", "Iveco", "Ford", "Volkswagen", "Outro"
-  ],
-  "Ônibus": [
-    "Marcopolo", "Mercedes-Benz", "Volvo", "Scania", "Volkswagen", "Iveco", "Agrale", "Outro"
-  ],
-  "Veículo de Passeio": [
-    "Volkswagen", "Fiat", "Chevrolet", "Ford", "Toyota", "Honda", "Hyundai", "Jeep", 
-    "Renault", "Nissan", "Peugeot", "Citroën", "BMW", "Mercedes-Benz", "Audi", 
-    "Mitsubishi", "Kia", "Suzuki", "Caoa Chery", "BYD", "GWM", "Outro"
-  ],
-  "Pick-up": [
-    "Toyota", "Ford", "Chevrolet", "Volkswagen", "Fiat", "Mitsubishi", "Nissan", 
-    "Dodge", "Ram", "GWM", "Outro"
-  ],
-  "Moto": [
-    "Honda", "Yamaha", "Suzuki", "Kawasaki", "BMW", "Harley-Davidson", "Triumph", 
-    "Ducati", "Royal Enfield", "Shineray", "Dafra", "Outro"
-  ],
-  "Máquina Agrícola": [
-    "John Deere", "Case IH", "New Holland", "Massey Ferguson", "Valtra", 
-    "AGCO", "Jacto", "Stara", "Outro"
-  ],
-  "Máquinas Pesadas": [
-    "Caterpillar", "Komatsu", "Volvo", "Liebherr", "JCB", "Case", "New Holland", 
-    "Hyundai", "XCMG", "Sany", "Outro"
-  ],
-  "Moto Aquática": [
-    "Yamaha", "Sea-Doo", "Kawasaki", "Honda", "Outro"
-  ],
-  "Outro": [
-    "Outro"
-  ],
-};
-
-const transmissoes = ["Manual", "Automática", "Automatizada"];
+import {
+  categoriasServicos,
+  avisoLegalTexto,
+  categoriasVeiculo,
+  categoriasComPlaca,
+  marcasPorCategoria,
+  transmissoes,
+} from "@/data/servicos-categorias";
+import { ClienteSelect } from "@/components/franqueado/ClienteSelect";
+import { NovoClienteDrawer } from "@/components/franqueado/NovoClienteDrawer";
+import { ClientePerfilDialog } from "@/components/franqueado/ClientePerfilDialog";
+import { Cliente, clientesMock } from "@/data/clientes-mock";
 
 const MAX_FILES = 2;
 
@@ -102,22 +54,61 @@ export default function EnviarArquivo() {
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [categoria, setCategoria] = useState<string>("");
+
+  // Categoria de serviço e serviço selecionado
+  const [categoriaServicoId, setCategoriaServicoId] = useState<string>("");
+  const [servicoSelecionado, setServicoSelecionado] = useState<string>("");
+  const [aceitouResponsabilidade, setAceitouResponsabilidade] = useState(false);
+
+  // Categoria de veículo e marca
+  const [categoriaVeiculo, setCategoriaVeiculo] = useState<string>("");
   const [marca, setMarca] = useState<string>("");
 
-  const exigePlaca = categoriasComPlaca.includes(categoria);
-  const marcasDisponiveis = categoria ? marcasPorCategoria[categoria] || [] : [];
+  // Cliente
+  const [clienteId, setClienteId] = useState<string>("");
+  const [novoClienteDrawerOpen, setNovoClienteDrawerOpen] = useState(false);
+  const [clientePerfilOpen, setClientePerfilOpen] = useState(false);
+  const [clienteSelecionadoParaPerfil, setClienteSelecionadoParaPerfil] = useState<Cliente | null>(null);
+
+  // Valor
+  const [valor, setValor] = useState<string>("");
+
+  // Derivados
+  const exigePlaca = categoriasComPlaca.includes(categoriaVeiculo);
+  const marcasDisponiveis = categoriaVeiculo ? marcasPorCategoria[categoriaVeiculo] || [] : [];
+
+  // Serviços filtrados pela categoria selecionada
+  const categoriaServicoAtual = categoriasServicos.find((c) => c.id === categoriaServicoId);
+  const servicosDisponiveis = categoriaServicoAtual?.servicos || [];
+
+  // Verifica se o serviço exige aviso legal
+  const servicoAtual = servicosDisponiveis.find((s) => s.nome === servicoSelecionado);
+  const exigeAvisoLegal = servicoAtual?.avisoLegal || false;
+
+  // Validação do formulário
+  const formValido = useMemo(() => {
+    const temCliente = !!clienteId;
+    const temCategoria = !!categoriaServicoId;
+    const temServico = !!servicoSelecionado;
+    const temCategoriaVeiculo = !!categoriaVeiculo;
+    const temMarca = !!marca;
+    const temValor = !!valor && parseFloat(valor.replace(/[^\d,]/g, "").replace(",", ".")) > 0;
+    const temArquivos = files.length > 0;
+    const aceitouSeNecessario = exigeAvisoLegal ? aceitouResponsabilidade : true;
+
+    return temCliente && temCategoria && temServico && temCategoriaVeiculo && temMarca && temValor && temArquivos && aceitouSeNecessario;
+  }, [clienteId, categoriaServicoId, servicoSelecionado, categoriaVeiculo, marca, valor, files, exigeAvisoLegal, aceitouResponsabilidade]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
-    const droppedFiles = Array.from(e.dataTransfer.files).map(file => ({
+
+    const droppedFiles = Array.from(e.dataTransfer.files).map((file) => ({
       name: file.name,
       size: file.size,
       type: file.type,
     }));
-    
+
     const totalFiles = files.length + droppedFiles.length;
     if (totalFiles > MAX_FILES) {
       toast({
@@ -126,20 +117,20 @@ export default function EnviarArquivo() {
         variant: "destructive",
       });
       const allowedFiles = droppedFiles.slice(0, MAX_FILES - files.length);
-      setFiles(prev => [...prev, ...allowedFiles]);
+      setFiles((prev) => [...prev, ...allowedFiles]);
     } else {
-      setFiles(prev => [...prev, ...droppedFiles]);
+      setFiles((prev) => [...prev, ...droppedFiles]);
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const selectedFiles = Array.from(e.target.files).map(file => ({
+      const selectedFiles = Array.from(e.target.files).map((file) => ({
         name: file.name,
         size: file.size,
         type: file.type,
       }));
-      
+
       const totalFiles = files.length + selectedFiles.length;
       if (totalFiles > MAX_FILES) {
         toast({
@@ -148,15 +139,15 @@ export default function EnviarArquivo() {
           variant: "destructive",
         });
         const allowedFiles = selectedFiles.slice(0, MAX_FILES - files.length);
-        setFiles(prev => [...prev, ...allowedFiles]);
+        setFiles((prev) => [...prev, ...allowedFiles]);
       } else {
-        setFiles(prev => [...prev, ...selectedFiles]);
+        setFiles((prev) => [...prev, ...selectedFiles]);
       }
     }
   };
 
   const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const formatFileSize = (bytes: number) => {
@@ -165,13 +156,62 @@ export default function EnviarArquivo() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const handleCategoriaChange = (value: string) => {
-    setCategoria(value);
-    setMarca(""); // Reset marca when category changes
+  const handleCategoriaServicoChange = (value: string) => {
+    setCategoriaServicoId(value);
+    setServicoSelecionado("");
+    setAceitouResponsabilidade(false);
+  };
+
+  const handleServicoChange = (value: string) => {
+    setServicoSelecionado(value);
+    setAceitouResponsabilidade(false);
+  };
+
+  const handleCategoriaVeiculoChange = (value: string) => {
+    setCategoriaVeiculo(value);
+    setMarca("");
+  };
+
+  const handleClienteCriado = (novoCliente: { id: string; nome: string; telefone: string; email?: string; cidade?: string }) => {
+    // Em produção, adicionaria ao banco. Aqui apenas seleciona
+    setClienteId(novoCliente.id);
+  };
+
+  const handleViewCliente = (cliente: Cliente) => {
+    setClienteSelecionadoParaPerfil(cliente);
+    setClientePerfilOpen(true);
+  };
+
+  const formatValor = (val: string) => {
+    // Remove tudo que não é número ou vírgula
+    const numericValue = val.replace(/[^\d]/g, "");
+    if (!numericValue) return "";
+
+    // Converte para número e formata
+    const number = parseInt(numericValue, 10) / 100;
+    return number.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatValor(e.target.value);
+    setValor(formatted);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formValido) {
+      toast({
+        title: "Formulário incompleto",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     setTimeout(() => {
@@ -182,6 +222,18 @@ export default function EnviarArquivo() {
         description: "Você receberá uma notificação quando o processamento for concluído.",
       });
     }, 2000);
+  };
+
+  const resetForm = () => {
+    setSubmitted(false);
+    setCategoriaServicoId("");
+    setServicoSelecionado("");
+    setCategoriaVeiculo("");
+    setMarca("");
+    setClienteId("");
+    setValor("");
+    setFiles([]);
+    setAceitouResponsabilidade(false);
   };
 
   if (submitted) {
@@ -200,10 +252,10 @@ export default function EnviarArquivo() {
             Obrigado por enviar seu arquivo. Nossa equipe irá processá-lo e você receberá uma notificação assim que estiver pronto.
           </p>
           <div className="flex gap-4 justify-center">
-            <Button variant="outline" onClick={() => { setSubmitted(false); setCategoria(""); setMarca(""); setFiles([]); }}>
+            <Button variant="outline" onClick={resetForm}>
               Enviar Outro
             </Button>
-            <Button variant="hero" onClick={() => window.location.href = "/franqueado/arquivos"}>
+            <Button variant="hero" onClick={() => (window.location.href = "/franqueado/arquivos")}>
               Ver Meus Arquivos
             </Button>
           </div>
@@ -220,59 +272,170 @@ export default function EnviarArquivo() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Cliente */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              Cliente *
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ClienteSelect
+              value={clienteId}
+              onChange={setClienteId}
+              onAddNew={() => setNovoClienteDrawerOpen(true)}
+              onViewCliente={handleViewCliente}
+            />
+          </CardContent>
+        </Card>
+
         {/* Categoria e Serviço */}
-        <Card>
+        <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-lg">Informações do Serviço</CardTitle>
           </CardHeader>
-          <CardContent className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Categoria *</Label>
-              <Select required value={categoria} onValueChange={handleCategoriaChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categorias.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <CardContent className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Categoria *</Label>
+                <Select value={categoriaServicoId} onValueChange={handleCategoriaServicoChange}>
+                  <SelectTrigger className="glass-input">
+                    <SelectValue placeholder="Selecione a categoria" />
+                  </SelectTrigger>
+                  <SelectContent className="glass-card">
+                    {categoriasServicos.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        <span className="flex items-center gap-2">
+                          <span>{cat.emoji}</span>
+                          <span>{cat.nome}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Serviço a ser executado *</Label>
+                <Select
+                  value={servicoSelecionado}
+                  onValueChange={handleServicoChange}
+                  disabled={!categoriaServicoId}
+                >
+                  <SelectTrigger className="glass-input">
+                    <SelectValue
+                      placeholder={categoriaServicoId ? "Selecione o serviço" : "Selecione a categoria primeiro"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent className="glass-card max-h-[300px]">
+                    {servicosDisponiveis.map((servico) => (
+                      <SelectItem key={servico.nome} value={servico.nome}>
+                        <span className="flex items-center gap-2">
+                          {servico.avisoLegal && <AlertTriangle className="h-3 w-3 text-warning" />}
+                          <span>{servico.nome}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            {/* Aviso Legal */}
+            {exigeAvisoLegal && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="p-4 rounded-lg bg-warning/10 border border-warning/30"
+              >
+                <div className="flex gap-3">
+                  <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+                  <div className="space-y-3">
+                    <p className="text-sm text-warning whitespace-pre-line">{avisoLegalTexto}</p>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="aceito-responsabilidade"
+                        checked={aceitouResponsabilidade}
+                        onCheckedChange={(checked) => setAceitouResponsabilidade(checked === true)}
+                      />
+                      <Label htmlFor="aceito-responsabilidade" className="text-sm font-medium cursor-pointer">
+                        Estou ciente da responsabilidade
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Campo Valor */}
             <div className="space-y-2">
-              <Label>Serviço a ser executado *</Label>
-              <Select required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o serviço" />
-                </SelectTrigger>
-                <SelectContent>
-                  {servicos.map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Valor Cobrado (R$) *</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="0,00"
+                  value={valor}
+                  onChange={handleValorChange}
+                  className="glass-input pl-10"
+                  required
+                />
+              </div>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                Este valor será incluído nos relatórios de faturamento
+              </p>
             </div>
           </CardContent>
         </Card>
 
         {/* Dados do Veículo */}
-        <Card>
+        <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-lg">Dados do Veículo</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Categoria do Veículo *</Label>
+                <Select value={categoriaVeiculo} onValueChange={handleCategoriaVeiculoChange}>
+                  <SelectTrigger className="glass-input">
+                    <SelectValue placeholder="Selecione a categoria" />
+                  </SelectTrigger>
+                  <SelectContent className="glass-card">
+                    {categoriasVeiculo.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Marca *</Label>
+                <Select value={marca} onValueChange={setMarca} disabled={!categoriaVeiculo}>
+                  <SelectTrigger className="glass-input">
+                    <SelectValue
+                      placeholder={categoriaVeiculo ? "Selecione a marca" : "Selecione a categoria primeiro"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent className="glass-card">
+                    {marcasDisponiveis.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
               {exigePlaca && (
                 <div className="space-y-2">
                   <Label>Placa *</Label>
                   <div className="relative">
-                    <Input placeholder="ABC-1234" required />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-1 top-1/2 -translate-y-1/2"
-                    >
+                    <Input placeholder="ABC-1234" className="glass-input" required />
+                    <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2">
                       <Search className="h-4 w-4" />
                     </Button>
                   </div>
@@ -283,14 +446,27 @@ export default function EnviarArquivo() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label>Marca *</Label>
-                <Select required value={marca} onValueChange={setMarca} disabled={!categoria}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={categoria ? "Selecione a marca" : "Selecione a categoria primeiro"} />
+                <Label>Modelo *</Label>
+                <Input placeholder="Ex: FH 540" className="glass-input" required />
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Motor / Cilindrada</Label>
+                <Input placeholder="Ex: D13A 540" className="glass-input" />
+              </div>
+              <div className="space-y-2">
+                <Label>Transmissão</Label>
+                <Select>
+                  <SelectTrigger className="glass-input">
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {marcasDisponiveis.map(m => (
-                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                  <SelectContent className="glass-card">
+                    {transmissoes.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -299,55 +475,32 @@ export default function EnviarArquivo() {
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Modelo *</Label>
-                <Input placeholder="Ex: FH 540" required />
-              </div>
-              <div className="space-y-2">
-                <Label>Motor / Cilindrada</Label>
-                <Input placeholder="Ex: D13A 540" />
-              </div>
-            </div>
-
-            <div className="grid sm:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Transmissão</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {transmissoes.map(t => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
                 <Label>Ano / Modelo *</Label>
-                <Input placeholder="Ex: 2020/2021" required />
+                <Input placeholder="Ex: 2020/2021" className="glass-input" required />
               </div>
               <div className="space-y-2">
                 <Label>Horas / Km do veículo</Label>
-                <Input placeholder="Ex: 15.000" />
+                <Input placeholder="Ex: 15.000" className="glass-input" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Upload de Arquivos */}
-        <Card>
+        <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-lg">Upload de Arquivos (máx. {MAX_FILES})</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
               className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                isDragging
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/50"
+                isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
               } ${files.length >= MAX_FILES ? "opacity-50 pointer-events-none" : ""}`}
             >
               <input
@@ -359,18 +512,19 @@ export default function EnviarArquivo() {
                 id="file-upload"
                 disabled={files.length >= MAX_FILES}
               />
-              <label htmlFor="file-upload" className={`cursor-pointer ${files.length >= MAX_FILES ? "cursor-not-allowed" : ""}`}>
+              <label
+                htmlFor="file-upload"
+                className={`cursor-pointer ${files.length >= MAX_FILES ? "cursor-not-allowed" : ""}`}
+              >
                 <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4">
                   <Upload className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <p className="font-medium mb-1">
-                  {files.length >= MAX_FILES 
-                    ? "Limite de arquivos atingido" 
+                  {files.length >= MAX_FILES
+                    ? "Limite de arquivos atingido"
                     : "Arraste arquivos aqui ou clique para selecionar"}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Formatos aceitos: .bin, .ori, .kfg, .bck, .eprom, .zip, .rar
-                </p>
+                <p className="text-sm text-muted-foreground">Formatos aceitos: .bin, .ori, .kfg, .bck, .eprom, .zip, .rar</p>
                 <p className="text-xs text-muted-foreground mt-2">
                   Limite máximo: 256 MB por arquivo | {files.length}/{MAX_FILES} arquivos
                 </p>
@@ -380,10 +534,7 @@ export default function EnviarArquivo() {
             {files.length > 0 && (
               <div className="space-y-2">
                 {files.map((file, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 border border-border"
-                  >
+                  <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 border border-border">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-primary/10">
                         <FileIcon className="h-4 w-4 text-primary" />
@@ -393,12 +544,7 @@ export default function EnviarArquivo() {
                         <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeFile(index)}
-                    >
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeFile(index)}>
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -409,24 +555,21 @@ export default function EnviarArquivo() {
         </Card>
 
         {/* Observações */}
-        <Card>
+        <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-lg">Observações</CardTitle>
           </CardHeader>
           <CardContent>
-            <Textarea
-              placeholder="Adicione informações adicionais sobre o serviço..."
-              rows={4}
-            />
+            <Textarea placeholder="Adicione informações adicionais sobre o serviço..." rows={4} className="glass-input" />
           </CardContent>
         </Card>
 
         {/* Submit */}
         <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline">
+          <Button type="button" variant="outline" onClick={resetForm}>
             Cancelar
           </Button>
-          <Button type="submit" variant="hero" disabled={isSubmitting || files.length === 0}>
+          <Button type="submit" variant="hero" disabled={isSubmitting || !formValido}>
             {isSubmitting ? (
               <>
                 <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
@@ -441,6 +584,20 @@ export default function EnviarArquivo() {
           </Button>
         </div>
       </form>
+
+      {/* Drawer para novo cliente */}
+      <NovoClienteDrawer
+        open={novoClienteDrawerOpen}
+        onOpenChange={setNovoClienteDrawerOpen}
+        onClienteCriado={handleClienteCriado}
+      />
+
+      {/* Dialog perfil do cliente */}
+      <ClientePerfilDialog
+        cliente={clienteSelecionadoParaPerfil}
+        open={clientePerfilOpen}
+        onOpenChange={setClientePerfilOpen}
+      />
     </div>
   );
 }
