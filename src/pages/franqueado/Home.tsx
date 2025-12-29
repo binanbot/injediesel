@@ -108,8 +108,8 @@ export default function FranqueadoHome() {
           <p className="text-muted-foreground">Bem-vindo de volta! Aqui está um resumo da sua conta.</p>
         </div>
         <Link to="/franqueado/enviar">
-          <Button variant="hero">
-            <Upload className="h-4 w-4" />
+          <Button variant="hero" size="lg">
+            <Upload className="h-5 w-5" />
             Enviar Arquivo
           </Button>
         </Link>
