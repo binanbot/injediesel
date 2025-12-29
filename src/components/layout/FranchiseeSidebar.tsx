@@ -12,6 +12,7 @@ import {
   LogOut,
   X,
   Bell,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ const menuItems = [
   { icon: Home, label: "Página Inicial", path: "/franqueado" },
   { icon: Upload, label: "Enviar Arquivo", path: "/franqueado/enviar" },
   { icon: FolderOpen, label: "Meus Arquivos", path: "/franqueado/arquivos" },
+  { icon: BarChart3, label: "Relatórios", path: "/franqueado/relatorios" },
   { icon: RefreshCw, label: "Atualizações", path: "/franqueado/atualizacoes" },
   { icon: HeadphonesIcon, label: "Suporte", path: "/franqueado/suporte" },
   { icon: BookOpen, label: "Tutoriais", path: "/franqueado/tutoriais" },
