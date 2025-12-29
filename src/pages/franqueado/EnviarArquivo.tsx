@@ -55,9 +55,9 @@ export default function EnviarArquivo() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // Categoria de serviço e serviço selecionado
-  const [categoriaServicoId, setCategoriaServicoId] = useState<string>("");
-  const [servicoSelecionado, setServicoSelecionado] = useState<string>("");
+  // Categorias de serviço (múltipla escolha) e serviço (texto livre)
+  const [categoriasSelecionadas, setCategoriasSelecionadas] = useState<string[]>([]);
+  const [servicoTexto, setServicoTexto] = useState<string>("");
   const [aceitouResponsabilidade, setAceitouResponsabilidade] = useState(false);
 
   // Categoria de veículo e marca
@@ -77,19 +77,14 @@ export default function EnviarArquivo() {
   const exigePlaca = categoriasComPlaca.includes(categoriaVeiculo);
   const marcasDisponiveis = categoriaVeiculo ? marcasPorCategoria[categoriaVeiculo] || [] : [];
 
-  // Serviços filtrados pela categoria selecionada
-  const categoriaServicoAtual = categoriasServicos.find((c) => c.id === categoriaServicoId);
-  const servicosDisponiveis = categoriaServicoAtual?.servicos || [];
-
-  // Verifica se o serviço exige aviso legal
-  const servicoAtual = servicosDisponiveis.find((s) => s.nome === servicoSelecionado);
-  const exigeAvisoLegal = servicoAtual?.avisoLegal || false;
+  // Verifica se alguma categoria selecionada exige aviso legal (Emissões)
+  const exigeAvisoLegal = categoriasSelecionadas.includes("emissoes");
 
   // Validação do formulário
   const formValido = useMemo(() => {
     const temCliente = !!clienteId;
-    const temCategoria = !!categoriaServicoId;
-    const temServico = !!servicoSelecionado;
+    const temCategoria = categoriasSelecionadas.length > 0;
+    const temServico = !!servicoTexto.trim();
     const temCategoriaVeiculo = !!categoriaVeiculo;
     const temMarca = !!marca;
     const temValor = !!valor && parseFloat(valor.replace(/[^\d,]/g, "").replace(",", ".")) > 0;
@@ -97,7 +92,7 @@ export default function EnviarArquivo() {
     const aceitouSeNecessario = exigeAvisoLegal ? aceitouResponsabilidade : true;
 
     return temCliente && temCategoria && temServico && temCategoriaVeiculo && temMarca && temValor && temArquivos && aceitouSeNecessario;
-  }, [clienteId, categoriaServicoId, servicoSelecionado, categoriaVeiculo, marca, valor, files, exigeAvisoLegal, aceitouResponsabilidade]);
+  }, [clienteId, categoriasSelecionadas, servicoTexto, categoriaVeiculo, marca, valor, files, exigeAvisoLegal, aceitouResponsabilidade]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -156,15 +151,16 @@ export default function EnviarArquivo() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const handleCategoriaServicoChange = (value: string) => {
-    setCategoriaServicoId(value);
-    setServicoSelecionado("");
-    setAceitouResponsabilidade(false);
-  };
-
-  const handleServicoChange = (value: string) => {
-    setServicoSelecionado(value);
-    setAceitouResponsabilidade(false);
+  const handleCategoriaToggle = (categoriaId: string) => {
+    setCategoriasSelecionadas((prev) =>
+      prev.includes(categoriaId)
+        ? prev.filter((id) => id !== categoriaId)
+        : [...prev, categoriaId]
+    );
+    // Reset aceite se remover categoria de emissões
+    if (categoriaId === "emissoes") {
+      setAceitouResponsabilidade(false);
+    }
   };
 
   const handleCategoriaVeiculoChange = (value: string) => {
@@ -226,8 +222,8 @@ export default function EnviarArquivo() {
 
   const resetForm = () => {
     setSubmitted(false);
-    setCategoriaServicoId("");
-    setServicoSelecionado("");
+    setCategoriasSelecionadas([]);
+    setServicoTexto("");
     setCategoriaVeiculo("");
     setMarca("");
     setClienteId("");
@@ -296,49 +292,46 @@ export default function EnviarArquivo() {
             <CardTitle className="text-lg">Informações do Serviço</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Categoria *</Label>
-                <Select value={categoriaServicoId} onValueChange={handleCategoriaServicoChange}>
-                  <SelectTrigger className="glass-input">
-                    <SelectValue placeholder="Selecione a categoria" />
-                  </SelectTrigger>
-                  <SelectContent className="glass-card">
-                    {categoriasServicos.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        <span className="flex items-center gap-2">
-                          <span>{cat.emoji}</span>
-                          <span>{cat.nome}</span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Categorias - Múltipla escolha */}
+            <div className="space-y-2">
+              <Label>Categorias *</Label>
+              <div className="flex flex-wrap gap-2">
+                {categoriasServicos.map((cat) => {
+                  const isSelected = categoriasSelecionadas.includes(cat.id);
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => handleCategoriaToggle(cat.id)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm font-medium ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background/50 border-border/50 hover:border-primary/50 hover:bg-primary/10"
+                      }`}
+                    >
+                      <span>{cat.emoji}</span>
+                      <span>{cat.nome}</span>
+                    </button>
+                  );
+                })}
               </div>
-              <div className="space-y-2">
-                <Label>Serviço a ser executado *</Label>
-                <Select
-                  value={servicoSelecionado}
-                  onValueChange={handleServicoChange}
-                  disabled={!categoriaServicoId}
-                >
-                  <SelectTrigger className="glass-input">
-                    <SelectValue
-                      placeholder={categoriaServicoId ? "Selecione o serviço" : "Selecione a categoria primeiro"}
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="glass-card max-h-[300px]">
-                    {servicosDisponiveis.map((servico) => (
-                      <SelectItem key={servico.nome} value={servico.nome}>
-                        <span className="flex items-center gap-2">
-                          {servico.avisoLegal && <AlertTriangle className="h-3 w-3 text-warning" />}
-                          <span>{servico.nome}</span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {categoriasSelecionadas.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {categoriasSelecionadas.length} categoria(s) selecionada(s)
+                </p>
+              )}
+            </div>
+
+            {/* Serviço - Texto livre */}
+            <div className="space-y-2">
+              <Label>Serviço a ser executado *</Label>
+              <Input
+                placeholder="Descreva o serviço a ser realizado..."
+                value={servicoTexto}
+                onChange={(e) => setServicoTexto(e.target.value)}
+                className="glass-input"
+                required
+              />
             </div>
 
             {/* Aviso Legal */}
