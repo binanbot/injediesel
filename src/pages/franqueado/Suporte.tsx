@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { HeadphonesIcon, Phone, Mail, Clock, Send, History, MessageSquare, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { HeadphonesIcon, Phone, Mail, Clock, Send, History, MessageSquare, CheckCircle, AlertCircle, Loader2, X, User, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,12 +8,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import SupportChat from "@/components/franqueado/SupportChat";
@@ -38,6 +46,14 @@ interface Ticket {
   status: string;
   created_at: string;
   updated_at: string;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  sender_type: string;
+  sender_id: string;
+  created_at: string;
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -68,10 +84,42 @@ export default function Suporte() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("novo");
+  
+  // Dialog state
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [newMessage, setNewMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadTickets();
+    getUserId();
   }, []);
+
+  useEffect(() => {
+    if (selectedTicket) {
+      loadMessages(selectedTicket.id);
+    }
+  }, [selectedTicket]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const getUserId = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setUserId(user.id);
+    }
+  };
 
   const loadTickets = async () => {
     try {
@@ -88,6 +136,59 @@ export default function Suporte() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadMessages = async (conversationId: string) => {
+    try {
+      setLoadingMessages(true);
+      const { data, error } = await supabase
+        .from("support_messages")
+        .select("*")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      setMessages(data || []);
+    } catch (error) {
+      console.error("Erro ao carregar mensagens:", error);
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedTicket || !userId) return;
+
+    try {
+      setSendingMessage(true);
+      const { error } = await supabase
+        .from("support_messages")
+        .insert({
+          conversation_id: selectedTicket.id,
+          content: newMessage.trim(),
+          sender_id: userId,
+          sender_type: "franqueado"
+        });
+
+      if (error) throw error;
+
+      setNewMessage("");
+      loadMessages(selectedTicket.id);
+    } catch (error) {
+      console.error("Erro ao enviar mensagem:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível enviar a mensagem.",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const handleOpenTicket = (ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    setDialogOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -114,8 +215,34 @@ export default function Suporte() {
     return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   };
 
+  const formatMessageTime = (dateString: string) => {
+    return format(new Date(dateString), "HH:mm", { locale: ptBR });
+  };
+
+  const formatMessageDate = (dateString: string) => {
+    return format(new Date(dateString), "dd 'de' MMMM", { locale: ptBR });
+  };
+
   const getStatusConfig = (status: string) => {
     return statusConfig[status] || statusConfig.open;
+  };
+
+  // Group messages by date
+  const groupMessagesByDate = (msgs: Message[]) => {
+    const groups: { date: string; messages: Message[] }[] = [];
+    let currentDate = "";
+
+    msgs.forEach((msg) => {
+      const msgDate = format(new Date(msg.created_at), "yyyy-MM-dd");
+      if (msgDate !== currentDate) {
+        currentDate = msgDate;
+        groups.push({ date: msg.created_at, messages: [msg] });
+      } else {
+        groups[groups.length - 1].messages.push(msg);
+      }
+    });
+
+    return groups;
   };
 
   return (
@@ -264,7 +391,10 @@ export default function Suporte() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.2, delay: index * 0.05 }}
                     >
-                      <Card className="hover:border-primary/30 transition-all duration-200 cursor-pointer">
+                      <Card 
+                        className="hover:border-primary/30 transition-all duration-200 cursor-pointer"
+                        onClick={() => handleOpenTicket(ticket)}
+                      >
                         <CardContent className="py-4 px-4">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
@@ -388,6 +518,137 @@ export default function Suporte() {
 
       {/* Live Chat Widget */}
       <SupportChat />
+
+      {/* Ticket Detail Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0">
+          <DialogHeader className="p-6 pb-4 border-b border-border/50">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <DialogTitle className="text-lg font-semibold mb-2">
+                  {selectedTicket?.subject}
+                </DialogTitle>
+                {selectedTicket && (
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Badge 
+                      variant="outline" 
+                      className={`${getStatusConfig(selectedTicket.status).color} flex items-center gap-1 text-xs`}
+                    >
+                      {getStatusConfig(selectedTicket.status).icon}
+                      {getStatusConfig(selectedTicket.status).label}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      Criado: {formatDate(selectedTicket.created_at)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </DialogHeader>
+
+          {/* Messages Area */}
+          <div className="flex-1 overflow-hidden flex flex-col">
+            <ScrollArea className="flex-1 px-6">
+              {loadingMessages ? (
+                <div className="flex items-center justify-center py-12 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  <span>Carregando mensagens...</span>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <MessageSquare className="h-12 w-12 mb-3 opacity-30" />
+                  <p className="font-medium">Nenhuma mensagem ainda</p>
+                  <p className="text-sm mt-1">Envie uma mensagem para iniciar a conversa.</p>
+                </div>
+              ) : (
+                <div className="py-4 space-y-4">
+                  {groupMessagesByDate(messages).map((group, groupIndex) => (
+                    <div key={groupIndex}>
+                      {/* Date separator */}
+                      <div className="flex items-center gap-3 my-4">
+                        <Separator className="flex-1" />
+                        <span className="text-xs text-muted-foreground px-2">
+                          {formatMessageDate(group.date)}
+                        </span>
+                        <Separator className="flex-1" />
+                      </div>
+
+                      {/* Messages */}
+                      {group.messages.map((msg) => {
+                        const isUser = msg.sender_type === "franqueado";
+                        return (
+                          <div
+                            key={msg.id}
+                            className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3`}
+                          >
+                            <div className={`flex items-end gap-2 max-w-[80%] ${isUser ? "flex-row-reverse" : ""}`}>
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+                                isUser 
+                                  ? "bg-primary/20" 
+                                  : "bg-[hsl(180,100%,40%)]/20"
+                              }`}>
+                                {isUser ? (
+                                  <User className="h-4 w-4 text-primary" />
+                                ) : (
+                                  <Headphones className="h-4 w-4 text-[hsl(180,100%,40%)]" />
+                                )}
+                              </div>
+                              <div className={`rounded-2xl px-4 py-2 ${
+                                isUser 
+                                  ? "bg-primary text-primary-foreground rounded-br-sm" 
+                                  : "bg-muted rounded-bl-sm"
+                              }`}>
+                                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                                <span className={`text-[10px] mt-1 block ${
+                                  isUser ? "text-primary-foreground/70" : "text-muted-foreground"
+                                }`}>
+                                  {formatMessageTime(msg.created_at)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
+            </ScrollArea>
+
+            {/* Message Input */}
+            <div className="p-4 border-t border-border/50 bg-background/50">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Digite sua mensagem..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  disabled={sendingMessage}
+                  className="flex-1"
+                />
+                <Button 
+                  onClick={handleSendMessage}
+                  disabled={!newMessage.trim() || sendingMessage}
+                  className="shrink-0"
+                >
+                  {sendingMessage ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
