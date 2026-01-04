@@ -231,7 +231,7 @@ export default function AdminArquivos() {
                 {filteredArquivos.map((arquivo) => {
                   const tempo = calcularTempoDecorrido(arquivo.data);
                   return (
-                  <tr key={arquivo.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
+                  <tr key={arquivo.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors group">
                     <td className="py-4 px-4 font-medium">{arquivo.unidade}</td>
                     <td className="py-4 px-4 text-muted-foreground">{arquivo.placa}</td>
                     <td className="py-4 px-4 text-muted-foreground hidden md:table-cell">
@@ -249,21 +249,71 @@ export default function AdminArquivos() {
                     </td>
                     <td className="py-4 px-4 text-muted-foreground hidden sm:table-cell">{arquivo.data}</td>
                     <td className="py-4 px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="icon">
-                          <Download className="h-4 w-4" />
-                        </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        {/* Ações rápidas visíveis no hover (desktop) */}
+                        <div className="hidden sm:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => navigate(`/admin/arquivos/${arquivo.id}`)}
+                            title="Ver detalhes"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            title="Download"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          {arquivo.status === "pending" && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-success hover:text-success"
+                              onClick={() => handleStatusChange("Concluído")}
+                              title="Marcar como concluído"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {/* Menu para ações secundárias (sempre visível) */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate(`/admin/arquivos/${arquivo.id}`)}>
+                            {/* Mobile: mostrar ações principais no menu */}
+                            <DropdownMenuItem 
+                              className="sm:hidden"
+                              onClick={() => navigate(`/admin/arquivos/${arquivo.id}`)}
+                            >
                               <Eye className="h-4 w-4 mr-2" />
                               Ver detalhes
                             </DropdownMenuItem>
+                            <DropdownMenuItem className="sm:hidden">
+                              <Download className="h-4 w-4 mr-2" />
+                              Download
+                            </DropdownMenuItem>
+                            {arquivo.status === "pending" && (
+                              <DropdownMenuItem 
+                                className="sm:hidden text-success"
+                                onClick={() => handleStatusChange("Concluído")}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Marcar como concluído
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator className="sm:hidden" />
+                            
+                            {/* Ações secundárias */}
                             <DropdownMenuItem>
                               <Download className="h-4 w-4 mr-2" />
                               Download original
@@ -276,10 +326,6 @@ export default function AdminArquivos() {
                             <DropdownMenuItem>
                               <Upload className="h-4 w-4 mr-2" />
                               Enviar arquivo processado
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-success">
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Marcar como concluído
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

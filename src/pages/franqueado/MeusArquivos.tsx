@@ -218,7 +218,7 @@ export default function MeusArquivos() {
                   return (
                   <tr 
                     key={arquivo.id} 
-                    className="border-b border-border/50 hover:bg-secondary/30 transition-colors cursor-pointer"
+                    className="border-b border-border/50 hover:bg-secondary/30 transition-colors cursor-pointer group"
                     onClick={() => navigate(`/franqueado/arquivos/${arquivo.id}`)}
                   >
                     <td className="py-4 px-4 font-medium">{arquivo.placa}</td>
@@ -237,27 +237,53 @@ export default function MeusArquivos() {
                     </td>
                     <td className="py-4 px-4 text-muted-foreground hidden sm:table-cell">{arquivo.data}</td>
                     <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-2">
-                        {arquivo.status === "completed" ? (
-                          <Button variant="ghost" size="icon">
-                            <Download className="h-4 w-4" />
+                      <div className="flex items-center justify-end gap-1">
+                        {/* Ações rápidas visíveis no hover (desktop) */}
+                        <div className="hidden sm:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => navigate(`/franqueado/arquivos/${arquivo.id}`)}
+                            title="Ver detalhes"
+                          >
+                            <Eye className="h-4 w-4" />
                           </Button>
-                        ) : (
-                          <Button variant="ghost" size="icon" disabled>
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        )}
+                          {arquivo.status === "completed" && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-success hover:text-success"
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {/* Menu para ações secundárias (sempre visível) */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate(`/franqueado/arquivos/${arquivo.id}`)}>
+                            {/* Mobile: mostrar ações principais no menu */}
+                            <DropdownMenuItem 
+                              className="sm:hidden"
+                              onClick={() => navigate(`/franqueado/arquivos/${arquivo.id}`)}
+                            >
                               <Eye className="h-4 w-4 mr-2" />
                               Ver detalhes
                             </DropdownMenuItem>
+                            {arquivo.status === "completed" && (
+                              <DropdownMenuItem className="sm:hidden">
+                                <Download className="h-4 w-4 mr-2" />
+                                Download
+                              </DropdownMenuItem>
+                            )}
+                            {/* Ações secundárias */}
                             <DropdownMenuItem>
                               <Download className="h-4 w-4 mr-2" />
                               Download original
