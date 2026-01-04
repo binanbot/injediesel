@@ -31,6 +31,7 @@ import { ptBR } from "date-fns/locale";
 import { playNotificationSound } from "@/utils/notificationSound";
 import { showBrowserNotification } from "@/utils/browserNotifications";
 import { ExpandableText } from "@/components/ui/expandable-text";
+import { calcularTempoDecorridoISO, getTempoClasses } from "@/utils/tempoDecorrido";
 
 // WhatsApp SVG Icon component
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -664,6 +665,7 @@ export default function Suporte() {
                   .filter(ticket => statusFilter === "all" || ticket.status === statusFilter)
                   .map((ticket, index) => {
                   const status = getStatusConfig(ticket.status);
+                  const tempoDecorrido = calcularTempoDecorridoISO(ticket.updated_at);
                   return (
                     <motion.div
                       key={ticket.id}
@@ -687,10 +689,13 @@ export default function Suporte() {
                                   {status.icon}
                                   {status.label}
                                 </Badge>
-                                <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {formatDate(ticket.created_at)}
-                                </span>
+                                <Badge 
+                                  variant="outline" 
+                                  className={`${getTempoClasses(tempoDecorrido.level)} text-xs`}
+                                >
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {tempoDecorrido.label}
+                                </Badge>
                               </div>
                               {/* Assunto */}
                               <h4 className="font-medium text-sm">{ticket.subject}</h4>

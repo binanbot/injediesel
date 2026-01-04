@@ -57,6 +57,46 @@ export function calcularTempoDecorrido(dataStr: string): TempoDecorridoResult {
 }
 
 /**
+ * Calcula tempo decorrido a partir de uma ISO date string
+ * Retorna label amigável (ex: "há 2h", "há 3d") + nível de urgência
+ */
+export function calcularTempoDecorridoISO(isoDateStr: string): TempoDecorridoResult {
+  const dataArquivo = new Date(isoDateStr);
+  const agora = new Date();
+  
+  const horasDecorridas = differenceInHours(agora, dataArquivo);
+  const diasDecorridos = differenceInDays(agora, dataArquivo);
+  const minutosDecorridos = differenceInMinutes(agora, dataArquivo);
+  
+  // Formatar label amigável
+  let label: string;
+  if (minutosDecorridos < 1) {
+    label = "agora";
+  } else if (minutosDecorridos < 60) {
+    label = `há ${minutosDecorridos}min`;
+  } else if (horasDecorridas < 24) {
+    label = `há ${horasDecorridas}h`;
+  } else if (diasDecorridos < 7) {
+    label = `há ${diasDecorridos}d`;
+  } else {
+    const semanas = Math.floor(diasDecorridos / 7);
+    label = `há ${semanas}sem`;
+  }
+  
+  // Determinar nível de urgência
+  let level: UrgencyLevel;
+  if (horasDecorridas < 6) {
+    level = "neutral";
+  } else if (horasDecorridas < 24) {
+    level = "attention";
+  } else {
+    level = "critical";
+  }
+  
+  return { label, level };
+}
+
+/**
  * Retorna classes CSS para o badge de tempo baseado no nível de urgência
  */
 export function getTempoClasses(level: UrgencyLevel): string {
