@@ -60,6 +60,8 @@ export type Database = {
       }
       support_conversations: {
         Row: {
+          attachment_name: string | null
+          attachment_url: string | null
           created_at: string
           franqueado_id: string
           id: string
@@ -68,6 +70,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           created_at?: string
           franqueado_id: string
           id?: string
@@ -76,6 +80,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          attachment_name?: string | null
+          attachment_url?: string | null
           created_at?: string
           franqueado_id?: string
           id?: string

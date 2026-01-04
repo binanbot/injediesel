@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { HeadphonesIcon, Phone, Mail, Clock, Send, History, MessageSquare, CheckCircle, AlertCircle, Loader2, X, User, Headphones, Sparkles } from "lucide-react";
+import { HeadphonesIcon, Phone, Mail, Clock, Send, History, MessageSquare, CheckCircle, AlertCircle, Loader2, X, User, Headphones, Sparkles, Paperclip, FileIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -97,6 +97,15 @@ export default function Suporte() {
   const [userId, setUserId] = useState<string | null>(null);
   const [hasNewMessage, setHasNewMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Form state for new ticket
+  const [ticketCategory, setTicketCategory] = useState("");
+  const [ticketPriority, setTicketPriority] = useState("");
+  const [ticketSubject, setTicketSubject] = useState("");
+  const [ticketDescription, setTicketDescription] = useState("");
+  const [ticketAttachment, setTicketAttachment] = useState<File | null>(null);
+  const [submittingTicket, setSubmittingTicket] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadTickets();
@@ -243,12 +252,113 @@ export default function Suporte() {
     setDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // 10MB limit
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "O arquivo deve ter no máximo 10MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+      setTicketAttachment(file);
+    }
+  };
+
+  const removeAttachment = () => {
+    setTicketAttachment(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Ticket enviado!",
-      description: "Nossa equipe entrará em contato em breve.",
-    });
+    
+    if (!userId || !ticketSubject.trim()) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setSubmittingTicket(true);
+      
+      let attachmentUrl = null;
+      let attachmentName = null;
+
+      // Upload file if present
+      if (ticketAttachment) {
+        const fileExt = ticketAttachment.name.split('.').pop();
+        const fileName = `${userId}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('support-attachments')
+          .upload(fileName, ticketAttachment);
+        
+        if (uploadError) {
+          console.error("Erro no upload:", uploadError);
+          throw new Error("Erro ao enviar anexo");
+        }
+        
+        const { data: urlData } = supabase.storage
+          .from('support-attachments')
+          .getPublicUrl(fileName);
+        
+        attachmentUrl = urlData.publicUrl;
+        attachmentName = ticketAttachment.name;
+      }
+
+      // Create conversation
+      const { error: convError } = await supabase
+        .from("support_conversations")
+        .insert({
+          subject: ticketSubject.trim(),
+          franqueado_id: userId,
+          attachment_url: attachmentUrl,
+          attachment_name: attachmentName
+        });
+
+      if (convError) throw convError;
+
+      // Reset form
+      setTicketCategory("");
+      setTicketPriority("");
+      setTicketSubject("");
+      setTicketDescription("");
+      setTicketAttachment(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      toast({
+        title: "Ticket enviado!",
+        description: "Nossa equipe entrará em contato em breve.",
+      });
+
+      // Refresh tickets and switch to history tab
+      loadTickets();
+      setActiveTab("historico");
+    } catch (error) {
+      console.error("Erro ao criar ticket:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o ticket. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmittingTicket(false);
+    }
   };
 
   const handlePhoneClick = () => {
@@ -347,7 +457,7 @@ export default function Suporte() {
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Categoria</Label>
-                      <Select required>
+                      <Select value={ticketCategory} onValueChange={setTicketCategory}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione uma categoria" />
                         </SelectTrigger>
@@ -362,7 +472,7 @@ export default function Suporte() {
                     </div>
                     <div className="space-y-2">
                       <Label>Prioridade</Label>
-                      <Select required>
+                      <Select value={ticketPriority} onValueChange={setTicketPriority}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione a prioridade" />
                         </SelectTrigger>
@@ -376,24 +486,85 @@ export default function Suporte() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Assunto</Label>
-                    <Input placeholder="Descreva brevemente o problema" required />
+                    <Label>Assunto *</Label>
+                    <Input 
+                      placeholder="Descreva brevemente o problema" 
+                      value={ticketSubject}
+                      onChange={(e) => setTicketSubject(e.target.value)}
+                      required 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Descrição</Label>
                     <Textarea
                       placeholder="Descreva detalhadamente o problema ou dúvida..."
                       rows={5}
-                      required
+                      value={ticketDescription}
+                      onChange={(e) => setTicketDescription(e.target.value)}
                     />
                   </div>
+                  
+                  {/* Anexo */}
+                  <div className="space-y-2">
+                    <Label>Anexo (opcional)</Label>
+                    <div className="flex flex-col gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        onChange={handleFileChange}
+                        className="hidden"
+                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                      />
+                      {!ticketAttachment ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full border-dashed border-2 h-16 hover:border-[hsl(180,100%,40%)]/50 hover:bg-[hsl(180,100%,40%)]/5 transition-all"
+                        >
+                          <Paperclip className="h-5 w-5 mr-2 text-muted-foreground" />
+                          <span className="text-muted-foreground">Clique para anexar arquivo (máx. 10MB)</span>
+                        </Button>
+                      ) : (
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-[hsl(180,100%,40%)]/10 border border-[hsl(180,100%,40%)]/30">
+                          <div className="w-10 h-10 rounded-lg bg-[hsl(180,100%,40%)]/20 flex items-center justify-center">
+                            <FileIcon className="h-5 w-5 text-[hsl(180,100%,40%)]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{ticketAttachment.name}</p>
+                            <p className="text-xs text-muted-foreground">{formatFileSize(ticketAttachment.size)}</p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={removeAttachment}
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
                   <div className="flex justify-end">
                     <Button 
                       type="submit"
+                      disabled={submittingTicket || !ticketSubject.trim()}
                       className="bg-gradient-to-r from-[hsl(180,100%,35%)] to-[hsl(200,100%,45%)] hover:from-[hsl(180,100%,40%)] hover:to-[hsl(200,100%,50%)] text-white shadow-[0_0_20px_hsl(180,100%,40%,0.4)] hover:shadow-[0_0_30px_hsl(180,100%,40%,0.6)] transition-all duration-300"
                     >
-                      <Send className="h-4 w-4" />
-                      Enviar Ticket
+                      {submittingTicket ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4" />
+                          Enviar Ticket
+                        </>
+                      )}
                     </Button>
                   </div>
                 </form>
