@@ -406,6 +406,7 @@ export default function AdminSuporte() {
     open: tickets.filter(t => t.status === "open").length,
     in_progress: tickets.filter(t => t.status === "in_progress").length,
     resolved: tickets.filter(t => t.status === "resolved").length,
+    closed: tickets.filter(t => t.status === "closed").length,
     total: tickets.length,
   };
 
@@ -421,16 +422,16 @@ export default function AdminSuporte() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="hover:border-blue-500/50 transition-colors cursor-pointer" onClick={() => setFilter("open")}>
+          <Card className={`hover:border-sky-500/50 transition-colors cursor-pointer ${filter === "open" ? "border-sky-500 shadow-[0_0_15px_hsl(200,100%,50%,0.2)]" : ""}`} onClick={() => setFilter("open")}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Abertos</p>
-                  <p className="text-3xl font-bold text-blue-400">{stats.open}</p>
+                  <p className="text-3xl font-bold text-sky-400">{stats.open}</p>
                 </div>
-                <div className="p-3 rounded-xl bg-blue-500/10 text-blue-400">
+                <div className="p-3 rounded-xl bg-sky-500/10 text-sky-400">
                   <MessageSquare className="h-6 w-6" />
                 </div>
               </div>
@@ -439,14 +440,14 @@ export default function AdminSuporte() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="hover:border-yellow-500/50 transition-colors cursor-pointer" onClick={() => setFilter("in_progress")}>
+          <Card className={`hover:border-amber-500/50 transition-colors cursor-pointer ${filter === "in_progress" ? "border-amber-500 shadow-[0_0_15px_hsl(45,100%,50%,0.2)]" : ""}`} onClick={() => setFilter("in_progress")}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Em Andamento</p>
-                  <p className="text-3xl font-bold text-yellow-400">{stats.in_progress}</p>
+                  <p className="text-3xl font-bold text-amber-400">{stats.in_progress}</p>
                 </div>
-                <div className="p-3 rounded-xl bg-yellow-500/10 text-yellow-400">
+                <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400">
                   <Clock className="h-6 w-6" />
                 </div>
               </div>
@@ -455,14 +456,14 @@ export default function AdminSuporte() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card className="hover:border-green-500/50 transition-colors cursor-pointer" onClick={() => setFilter("resolved")}>
+          <Card className={`hover:border-emerald-500/50 transition-colors cursor-pointer ${filter === "resolved" ? "border-emerald-500 shadow-[0_0_15px_hsl(160,100%,40%,0.2)]" : ""}`} onClick={() => setFilter("resolved")}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Resolvidos</p>
-                  <p className="text-3xl font-bold text-green-400">{stats.resolved}</p>
+                  <p className="text-3xl font-bold text-emerald-400">{stats.resolved}</p>
                 </div>
-                <div className="p-3 rounded-xl bg-green-500/10 text-green-400">
+                <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
                   <CheckCircle2 className="h-6 w-6" />
                 </div>
               </div>
@@ -471,7 +472,23 @@ export default function AdminSuporte() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <Card className="hover:border-primary/50 transition-colors cursor-pointer" onClick={() => setFilter("todos")}>
+          <Card className={`hover:border-slate-500/50 transition-colors cursor-pointer ${filter === "closed" ? "border-slate-500 shadow-[0_0_15px_hsl(220,10%,50%,0.2)]" : ""}`} onClick={() => setFilter("closed")}>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Fechados</p>
+                  <p className="text-3xl font-bold text-slate-400">{stats.closed}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-500/10 text-slate-400">
+                  <XCircle className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          <Card className={`hover:border-primary/50 transition-colors cursor-pointer ${filter === "todos" ? "border-primary shadow-[0_0_15px_hsl(var(--primary),0.2)]" : ""}`} onClick={() => setFilter("todos")}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
