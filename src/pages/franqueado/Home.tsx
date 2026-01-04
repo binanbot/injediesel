@@ -184,8 +184,8 @@ export default function FranqueadoHome() {
         </Link>
       </div>
 
-      {/* Contract Alert */}
-      <ContractAlert expirationDate="2025-01-10" />
+      {/* Contract Alert - usa dados do banco via hook */}
+      <ContractAlert useHook />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

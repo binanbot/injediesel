@@ -57,8 +57,8 @@ export default function Perfil() {
         <p className="text-muted-foreground">Gerencie as informações da sua unidade.</p>
       </div>
 
-      {/* Contract Alert */}
-      <ContractAlert expirationDate="2025-01-10" />
+      {/* Contract Alert - usa dados do banco via hook */}
+      <ContractAlert useHook />
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Avatar Card */}

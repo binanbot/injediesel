@@ -4,16 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { differenceInDays } from "date-fns";
+import { useContractStatus } from "@/hooks/useContractStatus";
 
 interface ContractAlertProps {
-  /** Data de vencimento do contrato (ISO string ou Date) */
-  expirationDate: string | Date;
+  /** Data de vencimento do contrato (ISO string ou Date) - opcional se usar hook */
+  expirationDate?: string | Date;
   /** Variante de exibição */
   variant?: "banner" | "compact" | "inline";
   /** Mostrar animação de entrada */
   animate?: boolean;
   /** Classes adicionais */
   className?: string;
+  /** Usar dados do hook ao invés de prop */
+  useHook?: boolean;
 }
 
 /**
@@ -69,11 +72,25 @@ function getUrgencyConfig(daysRemaining: number) {
 const RENEW_ROUTE = "/franqueado/perfil";
 
 export function ContractAlert({
-  expirationDate,
+  expirationDate: propExpirationDate,
   variant = "banner",
   animate = true,
   className = "",
+  useHook = false,
 }: ContractAlertProps) {
+  const contractStatus = useContractStatus();
+
+  // Usar dados do hook ou da prop
+  const expirationDate = useHook 
+    ? contractStatus.expirationDate 
+    : propExpirationDate;
+
+  // Se usando hook e ainda carregando, não mostrar nada
+  if (useHook && contractStatus.isLoading) return null;
+
+  // Se não tem data de vencimento, não mostrar
+  if (!expirationDate) return null;
+
   const daysRemaining = getDaysRemaining(expirationDate);
   const config = getUrgencyConfig(daysRemaining);
 

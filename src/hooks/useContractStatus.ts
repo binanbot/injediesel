@@ -1,5 +1,7 @@
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { differenceInDays } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ContractStatus {
   /** Se o contrato está vencido */
@@ -9,31 +11,86 @@ interface ContractStatus {
   /** Se o contrato está próximo do vencimento (<=30 dias) */
   isNearExpiration: boolean;
   /** Data de vencimento */
-  expirationDate: Date;
+  expirationDate: Date | null;
+  /** Se está carregando os dados */
+  isLoading: boolean;
+  /** Se houve erro ao carregar */
+  hasError: boolean;
 }
 
 /**
  * Hook para verificar o status do contrato do franqueado
- * TODO: Substituir pela data real do contrato do usuário logado
  */
 export function useContractStatus(): ContractStatus {
-  // TODO: Buscar data de vencimento real do banco de dados
-  // Por enquanto, usando uma data mock para demonstração
-  const mockExpirationDate = useMemo(() => {
-    // Simula contrato vencendo em 25 dias (para testes, altere para o passado para simular vencido)
-    const date = new Date();
-    date.setDate(date.getDate() + 25);
-    return date;
-  }, []);
+  const { user, userRole } = useAuth();
+  const [expirationDate, setExpirationDate] = useState<Date | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const fetchContractStatus = async () => {
+      // Admins e suporte não têm contrato - sempre liberados
+      if (!user || userRole === "admin" || userRole === "suporte") {
+        setIsLoading(false);
+        setExpirationDate(null);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("franchisee_profiles")
+          .select("contract_expiration_date")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Erro ao buscar status do contrato:", error);
+          setHasError(true);
+          setIsLoading(false);
+          return;
+        }
+
+        if (data?.contract_expiration_date) {
+          setExpirationDate(new Date(data.contract_expiration_date));
+        } else {
+          // Se não tem perfil, considera como não vencido (perfil será criado)
+          const defaultDate = new Date();
+          defaultDate.setFullYear(defaultDate.getFullYear() + 1);
+          setExpirationDate(defaultDate);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar status do contrato:", error);
+        setHasError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchContractStatus();
+  }, [user, userRole]);
 
   return useMemo(() => {
-    const daysRemaining = differenceInDays(mockExpirationDate, new Date());
-    
+    // Se carregando ou admin/suporte, retorna status liberado
+    if (isLoading || !expirationDate) {
+      return {
+        isExpired: false,
+        daysRemaining: 365,
+        isNearExpiration: false,
+        expirationDate: null,
+        isLoading,
+        hasError,
+      };
+    }
+
+    const daysRemaining = differenceInDays(expirationDate, new Date());
+
     return {
       isExpired: daysRemaining < 0,
       daysRemaining,
       isNearExpiration: daysRemaining <= 30 && daysRemaining >= 0,
-      expirationDate: mockExpirationDate,
+      expirationDate,
+      isLoading: false,
+      hasError,
     };
-  }, [mockExpirationDate]);
+  }, [expirationDate, isLoading, hasError]);
 }

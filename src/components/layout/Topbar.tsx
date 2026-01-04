@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useContractStatus } from "@/hooks/useContractStatus";
 
 interface TopbarProps {
   unitName?: string;
@@ -20,6 +21,9 @@ interface TopbarProps {
 }
 
 export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuButton = false }: TopbarProps) {
+  const contractStatus = useContractStatus();
+  const showContractAlert = contractStatus.isNearExpiration || contractStatus.isExpired;
+
   return (
     <header className="h-16 glass-topbar sticky top-0 z-40">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
@@ -59,21 +63,34 @@ export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuB
                 <span className="font-medium text-foreground">Nova atualização disponível</span>
                 <span className="text-xs text-muted-foreground">AlienTech v3.2 disponível para download</span>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer focus:bg-warning/10">
-                <Link to="/franqueado/perfil" className="flex items-start gap-2 p-2">
-                  <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-warning">Contrato próximo do vencimento</span>
-                      <Badge variant="outline" className="bg-amber-500/20 text-amber-400 border-amber-500/40 text-xs">
-                        <Clock className="h-3 w-3 mr-1" />
-                        15 dias
-                      </Badge>
+              {showContractAlert && (
+                <DropdownMenuItem asChild className="cursor-pointer focus:bg-warning/10">
+                  <Link to="/franqueado/perfil" className="flex items-start gap-2 p-2">
+                    <AlertTriangle className={`h-4 w-4 mt-0.5 shrink-0 ${contractStatus.isExpired ? "text-destructive" : "text-warning"}`} />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-medium ${contractStatus.isExpired ? "text-destructive" : "text-warning"}`}>
+                          {contractStatus.isExpired ? "Contrato vencido" : "Contrato próximo do vencimento"}
+                        </span>
+                        <Badge 
+                          variant="outline" 
+                          className={contractStatus.isExpired 
+                            ? "bg-destructive/20 text-destructive border-destructive/40 text-xs animate-pulse" 
+                            : "bg-amber-500/20 text-amber-400 border-amber-500/40 text-xs"
+                          }
+                        >
+                          <Clock className="h-3 w-3 mr-1" />
+                          {contractStatus.isExpired 
+                            ? "Vencido" 
+                            : `${contractStatus.daysRemaining} dias`
+                          }
+                        </Badge>
+                      </div>
+                      <span className="text-xs text-muted-foreground">Clique para renovar agora</span>
                     </div>
-                    <span className="text-xs text-muted-foreground">Clique para renovar agora</span>
-                  </div>
-                </Link>
-              </DropdownMenuItem>
+                  </Link>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 

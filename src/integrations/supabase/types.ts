@@ -58,6 +58,39 @@ export type Database = {
           },
         ]
       }
+      franchisee_profiles: {
+        Row: {
+          contract_expiration_date: string
+          created_at: string
+          empresa: string | null
+          id: string
+          nome: string | null
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contract_expiration_date?: string
+          created_at?: string
+          empresa?: string | null
+          id?: string
+          nome?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contract_expiration_date?: string
+          created_at?: string
+          empresa?: string | null
+          id?: string
+          nome?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       support_conversations: {
         Row: {
           attachment_name: string | null
