@@ -7,6 +7,7 @@ import { calcularTempoDecorrido, getTempoClasses } from "@/utils/tempoDecorrido"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -45,6 +46,15 @@ const arquivos = [
   { id: 5, unidade: "Porto Alegre", placa: "MNO-7890", marca: "MAN", modelo: "TGX", servico: "Stage 2", status: "cancelled", data: "27/12/2024 16:20" },
   { id: 6, unidade: "São Paulo - Centro", placa: "PQR-1234", marca: "Iveco", modelo: "Stralis", servico: "Speed Limiter", status: "completed", data: "27/12/2024 15:00" },
 ];
+
+// Contagem por status para exibir nas tabs
+const getStatusCounts = () => {
+  const counts = { all: arquivos.length, pending: 0, processing: 0, completed: 0, cancelled: 0 };
+  arquivos.forEach(a => {
+    if (a.status in counts) counts[a.status as keyof typeof counts]++;
+  });
+  return counts;
+};
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -102,12 +112,55 @@ export default function AdminArquivos() {
     setStatusDialog({ open: false, arquivo: null });
   };
 
+  const statusCounts = getStatusCounts();
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Arquivos Recebidos</h1>
         <p className="text-muted-foreground">Gerencie os arquivos enviados pelos franqueados.</p>
       </div>
+
+      {/* Status Tabs */}
+      <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full">
+        <TabsList className="w-full justify-start h-auto flex-wrap gap-1 bg-transparent p-0">
+          <TabsTrigger 
+            value="all" 
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-4"
+          >
+            Todos
+            <span className="ml-1.5 text-xs opacity-70">({statusCounts.all})</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="pending" 
+            className="data-[state=active]:bg-warning data-[state=active]:text-warning-foreground rounded-full px-4"
+          >
+            Pendentes
+            <span className="ml-1.5 text-xs opacity-70">({statusCounts.pending})</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="processing" 
+            className="data-[state=active]:bg-info data-[state=active]:text-info-foreground rounded-full px-4"
+          >
+            Processando
+            <span className="ml-1.5 text-xs opacity-70">({statusCounts.processing})</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="completed" 
+            className="data-[state=active]:bg-success data-[state=active]:text-success-foreground rounded-full px-4"
+          >
+            Concluídos
+            <span className="ml-1.5 text-xs opacity-70">({statusCounts.completed})</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="cancelled" 
+            className="data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground rounded-full px-4"
+          >
+            Cancelados
+            <span className="ml-1.5 text-xs opacity-70">({statusCounts.cancelled})</span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Filters */}
       <Card>
@@ -123,19 +176,6 @@ export default function AdminArquivos() {
                   className="pl-10"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filtrar por status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="processing">Processando</SelectItem>
-                  <SelectItem value="completed">Concluído</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             
             {/* Filtros de data */}

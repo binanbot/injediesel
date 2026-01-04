@@ -7,6 +7,7 @@ import { calcularTempoDecorrido, getTempoClasses } from "@/utils/tempoDecorrido"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -38,6 +39,17 @@ const arquivos = [
   { id: 7, placa: "STU-5678", marca: "Volvo", modelo: "FM 460", servico: "Hot Start", status: "financial", data: "25/12/2024" },
   { id: 8, placa: "VWX-9012", marca: "Scania", modelo: "P 360", servico: "DTC Off", status: "completed", data: "25/12/2024" },
 ];
+
+// Contagem por status para exibir nas tabs
+const getStatusCounts = () => {
+  const counts = { all: arquivos.length, processing: 0, completed: 0, other: 0 };
+  arquivos.forEach(a => {
+    if (a.status === "processing") counts.processing++;
+    else if (a.status === "completed") counts.completed++;
+    else counts.other++;
+  });
+  return counts;
+};
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -71,12 +83,21 @@ export default function MeusArquivos() {
     return new Date(ano, mes - 1, dia);
   };
 
+  // Filtro especial para "other" (todos exceto processing e completed)
   const filteredArquivos = arquivos.filter(arquivo => {
     const matchesSearch = 
       arquivo.placa.toLowerCase().includes(search.toLowerCase()) ||
       arquivo.marca.toLowerCase().includes(search.toLowerCase()) ||
       arquivo.modelo.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || arquivo.status === statusFilter;
+    
+    let matchesStatus = false;
+    if (statusFilter === "all") {
+      matchesStatus = true;
+    } else if (statusFilter === "other") {
+      matchesStatus = !["processing", "completed"].includes(arquivo.status);
+    } else {
+      matchesStatus = arquivo.status === statusFilter;
+    }
     
     // Filtro por data
     const arquivoData = parseData(arquivo.data);
@@ -86,12 +107,48 @@ export default function MeusArquivos() {
     return matchesSearch && matchesStatus && matchesDataInicio && matchesDataFim;
   });
 
+  const statusCounts = getStatusCounts();
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Meus Arquivos</h1>
         <p className="text-muted-foreground">Gerencie todos os seus arquivos enviados.</p>
       </div>
+
+      {/* Status Tabs */}
+      <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full">
+        <TabsList className="w-full justify-start h-auto flex-wrap gap-1 bg-transparent p-0">
+          <TabsTrigger 
+            value="all" 
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-4"
+          >
+            Todos
+            <span className="ml-1.5 text-xs opacity-70">({statusCounts.all})</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="processing" 
+            className="data-[state=active]:bg-info data-[state=active]:text-info-foreground rounded-full px-4"
+          >
+            Processando
+            <span className="ml-1.5 text-xs opacity-70">({statusCounts.processing})</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="completed" 
+            className="data-[state=active]:bg-success data-[state=active]:text-success-foreground rounded-full px-4"
+          >
+            Concluídos
+            <span className="ml-1.5 text-xs opacity-70">({statusCounts.completed})</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="other" 
+            className="data-[state=active]:bg-muted data-[state=active]:text-muted-foreground rounded-full px-4"
+          >
+            Outros
+            <span className="ml-1.5 text-xs opacity-70">({statusCounts.other})</span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Filters */}
       <Card>
@@ -107,21 +164,6 @@ export default function MeusArquivos() {
                   className="pl-10"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filtrar por status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="completed">Concluído</SelectItem>
-                  <SelectItem value="processing">Processando</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
-                  <SelectItem value="recall">Recall Original</SelectItem>
-                  <SelectItem value="complex">Arquivo complexo</SelectItem>
-                  <SelectItem value="financial">Contate financeiro</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             
             {/* Filtros de data */}
