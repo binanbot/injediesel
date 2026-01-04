@@ -43,6 +43,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import CorrectionChatPanel from "@/components/admin/CorrectionChatPanel";
+import { ExpandableText, TechnicalDetails } from "@/components/ui/expandable-text";
 
 interface CorrectionTicket {
   id: string;
@@ -417,9 +418,10 @@ export default function AdminCorrecoes() {
                     className="p-4 rounded-xl bg-secondary/30 border border-border/30 hover:bg-secondary/50 transition-colors cursor-pointer"
                     onClick={() => handleOpenTicket(ticket)}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                      <div className="flex-1 space-y-3">
+                        {/* Resumo - 1 linha */}
+                        <div className="flex items-center gap-3 flex-wrap">
                           {getStatusBadge(ticket.status)}
                           <span className="text-sm text-muted-foreground">
                             #{ticket.id.slice(0, 8)}
@@ -430,30 +432,36 @@ export default function AdminCorrecoes() {
                               Anexo
                             </Badge>
                           )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-4 text-sm">
-                          <span className="flex items-center gap-1 text-foreground font-medium">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            {ticketData.franqueado}
-                          </span>
-                          <span className="flex items-center gap-1 text-muted-foreground">
-                            <Car className="h-4 w-4" />
-                            {ticketData.placa} - {ticketData.veiculo}
+                          <span className="text-xs text-muted-foreground ml-auto">
+                            <Calendar className="h-3 w-3 inline mr-1" />
+                            {formatDate(ticket.created_at)}
                           </span>
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {ticket.motivo}
-                        </p>
+                        
+                        {/* Info técnica em bullet points */}
+                        <ul className="text-sm space-y-1 pl-1">
+                          <li className="flex items-center gap-2">
+                            <span className="text-primary">•</span>
+                            <User className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-foreground font-medium">{ticketData.franqueado}</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="text-primary">•</span>
+                            <Car className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-muted-foreground">{ticketData.placa} - {ticketData.veiculo}</span>
+                          </li>
+                        </ul>
+                        
+                        {/* Detalhes expansível */}
+                        <ExpandableText 
+                          text={ticket.motivo} 
+                          maxLength={80}
+                          className="pl-1"
+                        />
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4 inline mr-1" />
-                          {formatDate(ticket.created_at)}
-                        </div>
-                        <Button variant="ghost" size="icon">
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <Button variant="ghost" size="icon" className="shrink-0">
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
                     </div>
                   </motion.div>
                 );
@@ -551,9 +559,12 @@ export default function AdminCorrecoes() {
                     {/* Motivo da correção */}
                     <div className="space-y-3">
                       <h4 className="font-semibold text-foreground">Descrição do Problema</h4>
-                      <p className="text-sm text-foreground bg-secondary/30 p-3 rounded-lg">
-                        {selectedTicket.motivo}
-                      </p>
+                      <div className="bg-secondary/30 p-3 rounded-lg">
+                        <ExpandableText 
+                          text={selectedTicket.motivo} 
+                          maxLength={150}
+                        />
+                      </div>
                     </div>
 
                     {/* Arquivo anexo */}

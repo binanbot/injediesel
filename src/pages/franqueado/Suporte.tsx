@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { HeadphonesIcon, Phone, Mail, Clock, Send, History, MessageSquare, CheckCircle, AlertCircle, Loader2, X, User, Headphones, Sparkles, Paperclip, FileIcon } from "lucide-react";
+import { HeadphonesIcon, Phone, Mail, Clock, Send, History, MessageSquare, CheckCircle, AlertCircle, Loader2, X, User, Headphones, Sparkles, Paperclip, FileIcon, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +30,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { playNotificationSound } from "@/utils/notificationSound";
 import { showBrowserNotification } from "@/utils/browserNotifications";
+import { ExpandableText } from "@/components/ui/expandable-text";
 
 // WhatsApp SVG Icon component
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -676,8 +677,9 @@ export default function Suporte() {
                       >
                         <CardContent className="py-4 px-4">
                           <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
+                            <div className="flex-1 min-w-0 space-y-2">
+                              {/* Resumo - 1 linha */}
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <Badge 
                                   variant="outline" 
                                   className={`${status.color} flex items-center gap-1 text-xs`}
@@ -685,19 +687,19 @@ export default function Suporte() {
                                   {status.icon}
                                   {status.label}
                                 </Badge>
-                              </div>
-                              <h4 className="font-medium text-sm truncate">{ticket.subject}</h4>
-                              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  Criado: {formatDate(ticket.created_at)}
+                                <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {formatDate(ticket.created_at)}
                                 </span>
-                                {ticket.updated_at !== ticket.created_at && (
-                                  <span className="text-muted-foreground/60">
-                                    Atualizado: {formatDate(ticket.updated_at)}
-                                  </span>
-                                )}
                               </div>
+                              {/* Assunto */}
+                              <h4 className="font-medium text-sm">{ticket.subject}</h4>
+                              {/* Atualização */}
+                              {ticket.updated_at !== ticket.created_at && (
+                                <p className="text-xs text-muted-foreground/60">
+                                  Atualizado: {formatDate(ticket.updated_at)}
+                                </p>
+                              )}
                             </div>
                             <Button variant="ghost" size="sm" className="shrink-0">
                               <MessageSquare className="h-4 w-4" />
