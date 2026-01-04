@@ -212,10 +212,11 @@ export default function EnviarArquivo() {
     setAceitouTermoPlaca(false);
   };
 
-  // Verifica se os campos devem estar bloqueados
+  // Verifica se os campos devem estar bloqueados (apenas para veículos emplacados)
   const camposBloqueados = exigePlaca && !placaConsultada && !dadosManuais;
 
   // Função para buscar dados do veículo pela placa
+  // TODO: Integrar com API real (https://apiplacas.com.br/contratar.php)
   const buscarPlaca = async () => {
     if (!placa || placa.length < 7) {
       toast({
@@ -229,13 +230,13 @@ export default function EnviarArquivo() {
     setBuscandoPlaca(true);
     setPlacaConsultada(true);
     
-    // Simulating API call - In production, this would call a real plate API
-    // Simula 70% de chance de encontrar a placa para demonstração
-    const encontrou = Math.random() > 0.3;
+    // Mock API - substituir por chamada real à API de placas
+    // A API retorna: marca, modelo, motor/cilindrada/CV, transmissão, ano/modelo
+    const encontrou = Math.random() > 0.3; // 70% de chance para demo
     
     setTimeout(() => {
       if (encontrou) {
-        // Mock response based on plate format
+        // Mock response - em produção virá da API apiplacas.com.br
         const mockData = {
           marca: categoriaVeiculo === "Truck" ? "Volvo" : 
                  categoriaVeiculo === "Ônibus" ? "Mercedes-Benz" :
@@ -247,11 +248,11 @@ export default function EnviarArquivo() {
                   categoriaVeiculo === "Veículo de Passeio" ? "Golf GTI" :
                   categoriaVeiculo === "Pick-up" ? "Hilux SRX" :
                   categoriaVeiculo === "Moto" ? "CB 1000R" : "Modelo Genérico",
-          motor: categoriaVeiculo === "Truck" ? "D13K 540" : 
-                 categoriaVeiculo === "Ônibus" ? "OM 457 LA" :
-                 categoriaVeiculo === "Veículo de Passeio" ? "2.0 TSI" :
-                 categoriaVeiculo === "Pick-up" ? "2.8 Diesel" :
-                 categoriaVeiculo === "Moto" ? "998cc" : "",
+          motor: categoriaVeiculo === "Truck" ? "D13K 540cv" : 
+                 categoriaVeiculo === "Ônibus" ? "OM 457 LA 360cv" :
+                 categoriaVeiculo === "Veículo de Passeio" ? "2.0 TSI 230cv" :
+                 categoriaVeiculo === "Pick-up" ? "2.8 Diesel 204cv" :
+                 categoriaVeiculo === "Moto" ? "998cc 143cv" : "",
           ano: "2023/2024",
           transmissao: "Automática",
         };
@@ -584,8 +585,8 @@ export default function EnviarArquivo() {
             )}
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Linha 1: Categoria + Placa (conforme imagem) */}
-            <div className="grid sm:grid-cols-2 gap-4">
+            {/* Linha 1: Categoria + Placa (só aparece para veículos emplacados) */}
+            <div className={`grid gap-4 ${exigePlaca ? "sm:grid-cols-2" : "sm:grid-cols-1"}`}>
               <div className="space-y-2">
                 <Label>Categoria do Veículo *</Label>
                 <Select value={categoriaVeiculo} onValueChange={handleCategoriaVeiculoChange}>
@@ -602,7 +603,7 @@ export default function EnviarArquivo() {
                 </Select>
               </div>
               
-              {exigePlaca ? (
+              {exigePlaca && (
                 <div className="space-y-2">
                   <Label>Placa *</Label>
                   <div className="flex gap-2">
@@ -661,14 +662,6 @@ export default function EnviarArquivo() {
                       Digite a placa e clique em "Buscar" para preencher automaticamente
                     </p>
                   )}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label>Identificação</Label>
-                  <Input 
-                    placeholder="Ex: Chassi, Série, etc." 
-                    className="glass-input"
-                  />
                 </div>
               )}
             </div>
