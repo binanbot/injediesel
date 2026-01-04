@@ -1,1 +1,4 @@
 project_id = "rbhkcsmbnutxbqfwqsci"
+
+[functions.import-franchisees]
+verify_jwt = false

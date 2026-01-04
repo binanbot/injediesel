@@ -127,6 +127,96 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles_franchisees: {
+        Row: {
+          allow_manual_credits: boolean | null
+          cnpj: string | null
+          contract_expiration_date: string | null
+          contract_type: string | null
+          cpf: string | null
+          created_at: string | null
+          display_name: string | null
+          email: string
+          equipment_type: string | null
+          first_name: string | null
+          id: string
+          is_prepaid: boolean | null
+          kess_expires_at: string | null
+          kess_serial: string | null
+          ktag_expires_at: string | null
+          ktag_serial: string | null
+          last_name: string | null
+          legacy_role: string | null
+          legacy_source_user_id: string | null
+          legacy_user_login: string | null
+          legacy_user_pass_hash: string | null
+          legacy_user_registered_at: string | null
+          rental_value_brl: number | null
+          requires_password_reset: boolean | null
+          start_date: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          allow_manual_credits?: boolean | null
+          cnpj?: string | null
+          contract_expiration_date?: string | null
+          contract_type?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          email: string
+          equipment_type?: string | null
+          first_name?: string | null
+          id?: string
+          is_prepaid?: boolean | null
+          kess_expires_at?: string | null
+          kess_serial?: string | null
+          ktag_expires_at?: string | null
+          ktag_serial?: string | null
+          last_name?: string | null
+          legacy_role?: string | null
+          legacy_source_user_id?: string | null
+          legacy_user_login?: string | null
+          legacy_user_pass_hash?: string | null
+          legacy_user_registered_at?: string | null
+          rental_value_brl?: number | null
+          requires_password_reset?: boolean | null
+          start_date?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          allow_manual_credits?: boolean | null
+          cnpj?: string | null
+          contract_expiration_date?: string | null
+          contract_type?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          email?: string
+          equipment_type?: string | null
+          first_name?: string | null
+          id?: string
+          is_prepaid?: boolean | null
+          kess_expires_at?: string | null
+          kess_serial?: string | null
+          ktag_expires_at?: string | null
+          ktag_serial?: string | null
+          last_name?: string | null
+          legacy_role?: string | null
+          legacy_source_user_id?: string | null
+          legacy_user_login?: string | null
+          legacy_user_pass_hash?: string | null
+          legacy_user_registered_at?: string | null
+          rental_value_brl?: number | null
+          requires_password_reset?: boolean | null
+          start_date?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       support_conversations: {
         Row: {
           attachment_name: string | null

@@ -15,6 +15,7 @@ import {
   FileText,
   AlertCircle,
   CalendarCheck,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
   { icon: Users, label: "Franqueados", path: "/admin/franqueados" },
+  { icon: Upload, label: "Importar Franqueados", path: "/admin/importar" },
   { icon: CalendarCheck, label: "Contratos", path: "/admin/contratos" },
   { icon: FileDown, label: "Arquivos Recebidos", path: "/admin/arquivos" },
   { icon: AlertCircle, label: "Correções", path: "/admin/correcoes", badgeKey: "correcoes" },

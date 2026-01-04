@@ -42,6 +42,8 @@ import AdminConfiguracoes from "./pages/admin/Configuracoes";
 import DocumentacaoSistema from "./pages/admin/DocumentacaoSistema";
 import AdminCorrecoes from "./pages/admin/Correcoes";
 import AdminContratos from "./pages/admin/Contratos";
+import ImportarFranqueados from "./pages/admin/ImportarFranqueados";
+import FranqueadoDetalhe from "./pages/admin/FranqueadoDetalhe";
 
 const queryClient = new QueryClient();
 
@@ -92,6 +94,8 @@ const App = () => (
             >
               <Route index element={<AdminDashboard />} />
               <Route path="franqueados" element={<AdminFranqueados />} />
+              <Route path="franqueados/:id" element={<FranqueadoDetalhe />} />
+              <Route path="importar" element={<ImportarFranqueados />} />
               <Route path="arquivos" element={<AdminArquivos />} />
               <Route path="arquivos/:id" element={<AdminArquivoDetalhes />} />
               <Route path="banners" element={<AdminBanners />} />
