@@ -151,6 +151,8 @@ export default function AdminCorrecoes() {
   const [resposta, setResposta] = useState("");
   const [novoStatus, setNovoStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
+  const [activeTab, setActiveTab] = useState("detalhes");
   const { toast } = useToast();
 
   // Carregar tickets do banco (com fallback para mock)
@@ -205,6 +207,8 @@ export default function AdminCorrecoes() {
     setSelectedTicket(ticket);
     setNovoStatus(ticket.status);
     setResposta("");
+    setChatUnreadCount(0);
+    setActiveTab("detalhes");
     setDialogOpen(true);
   };
 
@@ -474,16 +478,27 @@ export default function AdminCorrecoes() {
             </DialogTitle>
           </DialogHeader>
 
-          <Tabs defaultValue="detalhes" className="flex-1 flex flex-col overflow-hidden">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="mx-6 mt-4 grid w-auto grid-cols-2">
               <TabsTrigger value="detalhes" className="gap-2">
                 <FileText className="h-4 w-4" />
                 Detalhes
               </TabsTrigger>
-              <TabsTrigger value="chat" className="gap-2">
+              <TabsTrigger value="chat" className="gap-2 relative">
                 <MessageCircle className="h-4 w-4" />
                 Chat
-                {selectedTicket?.conversation_id && (
+                {chatUnreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
+                    <Badge 
+                      variant="destructive" 
+                      className="relative h-5 min-w-5 px-1.5 text-xs font-bold"
+                    >
+                      {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+                    </Badge>
+                  </span>
+                )}
+                {chatUnreadCount === 0 && selectedTicket?.conversation_id && (
                   <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
                     Ativo
                   </Badge>
@@ -595,7 +610,11 @@ export default function AdminCorrecoes() {
             </TabsContent>
 
             <TabsContent value="chat" className="flex-1 overflow-hidden mt-0 h-[400px]">
-              <CorrectionChatPanel conversationId={selectedTicket?.conversation_id || null} />
+              <CorrectionChatPanel 
+                conversationId={selectedTicket?.conversation_id || null} 
+                onUnreadCountChange={setChatUnreadCount}
+                isActive={activeTab === "chat"}
+              />
             </TabsContent>
           </Tabs>
 
