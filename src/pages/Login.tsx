@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Loader2, Phone, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -21,6 +22,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [activeTab, setActiveTab] = useState("login");
+  const [telefone, setTelefone] = useState("");
+  const [tipoRepresentante, setTipoRepresentante] = useState<"existente" | "novo">("existente");
 
   // Redirect if already logged in
   useEffect(() => {
@@ -278,6 +281,44 @@ export default function Login() {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="telefone">Telefone / WhatsApp</Label>
+                  <div className="relative">
+                    <Input
+                      id="telefone"
+                      type="tel"
+                      placeholder="(00) 00000-0000"
+                      value={telefone}
+                      onChange={(e) => setTelefone(e.target.value)}
+                      required
+                      className="h-12 pl-12"
+                    />
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Tipo de representante</Label>
+                  <RadioGroup
+                    value={tipoRepresentante}
+                    onValueChange={(value) => setTipoRepresentante(value as "existente" | "novo")}
+                    className="space-y-3"
+                  >
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors cursor-pointer">
+                      <RadioGroupItem value="existente" id="existente" />
+                      <Label htmlFor="existente" className="cursor-pointer flex-1 font-normal">
+                        Já sou representante Injediesel
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors cursor-pointer">
+                      <RadioGroupItem value="novo" id="novo" />
+                      <Label htmlFor="novo" className="cursor-pointer flex-1 font-normal">
+                        Quero me tornar um representante Injediesel
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
                 <Button
                   type="submit"
                   variant="hero"
@@ -298,12 +339,29 @@ export default function Login() {
             </TabsContent>
           </Tabs>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Problemas para acessar?{" "}
-            <Link to="/suporte" className="text-primary hover:underline">
-              Entre em contato com o suporte
-            </Link>
-          </p>
+          <div className="mt-6 pt-6 border-t border-border/30">
+            <p className="text-center text-sm text-muted-foreground mb-3">
+              Precisa de ajuda? Entre em contato:
+            </p>
+            <div className="flex items-center justify-center gap-4">
+              <a
+                href="tel:+5500000000000"
+                className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+              >
+                <Phone className="h-4 w-4" />
+                (00) 0000-0000
+              </a>
+              <a
+                href="https://wa.me/5500000000000"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-green-500 hover:text-green-400 transition-colors"
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp
+              </a>
+            </div>
+          </div>
         </motion.div>
       </div>
     </div>
