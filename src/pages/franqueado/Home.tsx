@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -152,25 +152,10 @@ const getStatusBadge = (status: string) => {
 export default function FranqueadoHome() {
   const [selectedArquivo, setSelectedArquivo] = useState<ArquivoDetalhado | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [highlightArquivosRecentes, setHighlightArquivosRecentes] = useState(false);
-  const arquivosRecentesRef = useRef<HTMLDivElement>(null);
 
   const handleArquivoClick = (arquivo: ArquivoDetalhado) => {
     setSelectedArquivo(arquivo);
     setDialogOpen(true);
-  };
-
-  const handleScrollToArquivo = () => {
-    // Scroll to Arquivos Recentes section
-    arquivosRecentesRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    
-    // Highlight the section
-    setHighlightArquivosRecentes(true);
-    
-    // Remove highlight after animation
-    setTimeout(() => {
-      setHighlightArquivosRecentes(false);
-    }, 2000);
   };
 
   return (
@@ -180,7 +165,6 @@ export default function FranqueadoHome() {
         arquivo={selectedArquivo}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onSolicitarCorrecao={handleScrollToArquivo}
       />
 
       {/* Banner Carousel */}
@@ -249,20 +233,9 @@ export default function FranqueadoHome() {
       </div>
 
       {/* Recent Files */}
-      <Card 
-        ref={arquivosRecentesRef}
-        className={`transition-all duration-500 ${
-          highlightArquivosRecentes 
-            ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_30px_rgba(59,130,246,0.5)]" 
-            : ""
-        }`}
-      >
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className={`text-lg transition-colors duration-500 ${
-            highlightArquivosRecentes ? "text-primary" : ""
-          }`}>
-            Arquivos Recentes
-          </CardTitle>
+          <CardTitle className="text-lg">Arquivos Recentes</CardTitle>
           <Link to="/franqueado/arquivos">
             <Button variant="ghost" size="sm">
               Ver todos
