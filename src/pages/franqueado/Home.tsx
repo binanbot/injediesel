@@ -6,7 +6,6 @@ import {
   Download,
   FileCheck,
   Clock,
-  AlertTriangle,
   ArrowRight,
   FileText,
   CheckCircle2,
@@ -15,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BannerCarousel, Banner } from "@/components/BannerCarousel";
 import { ArquivoDetalheDialog, ArquivoDetalhado } from "@/components/franqueado/ArquivoDetalheDialog";
+import { ContractAlert } from "@/components/ContractAlert";
 
 // Dados mockados dos banners - em produção viriam do banco de dados
 const banners: Banner[] = [
@@ -185,24 +185,7 @@ export default function FranqueadoHome() {
       </div>
 
       {/* Contract Alert */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-4 rounded-xl glass-card border-warning/30 flex items-start gap-3"
-      >
-        <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
-        <div className="flex-1">
-          <p className="font-medium text-warning">Contrato próximo do vencimento</p>
-          <p className="text-sm text-muted-foreground">
-            Seu contrato vence em 15 dias. Renove agora para continuar utilizando o sistema.
-          </p>
-        </div>
-        <Link to="/franqueado/perfil">
-          <Button variant="warning" size="sm">
-            Renovar
-          </Button>
-        </Link>
-      </motion.div>
+      <ContractAlert expirationDate="2025-01-10" />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
