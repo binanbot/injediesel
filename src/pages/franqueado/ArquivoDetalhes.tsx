@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, 
@@ -10,12 +10,14 @@ import {
   DollarSign,
   AlertTriangle,
   Upload,
-  Send
+  Send,
+  Loader2,
+  Paperclip,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -28,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 // Mock data - será substituído por dados reais
 const arquivosMock: Record<string, {
@@ -151,6 +154,7 @@ export default function ArquivoDetalhes() {
   const [correcaoDescricao, setCorrecaoDescricao] = useState("");
   const [novoArquivo, setNovoArquivo] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const arquivo = id ? arquivosMock[id] : null;
 
@@ -170,6 +174,28 @@ export default function ArquivoDetalhes() {
     );
   }
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "O arquivo deve ter no máximo 10MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setNovoArquivo(file);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setNovoArquivo(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleEnviarCorrecao = async () => {
     if (!correcaoDescricao.trim()) {
       toast({
@@ -180,20 +206,129 @@ export default function ArquivoDetalhes() {
       return;
     }
 
+    if (correcaoDescricao.trim().length < 10) {
+      toast({
+        title: "Descrição muito curta",
+        description: "Por favor, forneça mais detalhes sobre a correção necessária.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setEnviando(true);
     
-    // Simular envio
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setEnviando(false);
-    setCorrecaoDialogOpen(false);
-    setCorrecaoDescricao("");
-    setNovoArquivo(null);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Sessão expirada",
+          description: "Por favor, faça login novamente.",
+          variant: "destructive",
+        });
+        setEnviando(false);
+        return;
+      }
 
-    toast({
-      title: "Solicitação enviada",
-      description: "Sua solicitação de correção foi enviada para análise.",
-    });
+      let arquivoAnexoUrl: string | null = null;
+
+      if (novoArquivo) {
+        const fileExt = novoArquivo.name.split('.').pop();
+        const fileName = `${user.id}/${arquivo.id}_${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('correction-files')
+          .upload(fileName, novoArquivo, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast({
+            title: "Erro no upload",
+            description: "Não foi possível enviar o arquivo. Tente novamente.",
+            variant: "destructive",
+          });
+          setEnviando(false);
+          return;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('correction-files')
+          .getPublicUrl(fileName);
+
+        arquivoAnexoUrl = urlData.publicUrl;
+      }
+
+      // Criar conversa de suporte vinculada ao ticket
+      const { data: conversationData, error: conversationError } = await supabase
+        .from('support_conversations')
+        .insert({
+          franqueado_id: user.id,
+          subject: `Correção: ${arquivo.placa} - ${arquivo.servico}`,
+          status: 'open'
+        })
+        .select()
+        .single();
+
+      let conversationId: string | null = null;
+      if (!conversationError && conversationData) {
+        conversationId = conversationData.id;
+
+        await supabase
+          .from('support_messages')
+          .insert({
+            conversation_id: conversationId,
+            sender_id: user.id,
+            sender_type: 'franqueado',
+            content: `📋 **Solicitação de Correção**\n\n**Veículo:** ${arquivo.marca} ${arquivo.modelo}\n**Placa:** ${arquivo.placa}\n**Serviço:** ${arquivo.servico}\n\n**Descrição do problema:**\n${correcaoDescricao.trim()}${arquivoAnexoUrl ? '\n\n📎 Arquivo anexado' : ''}`
+          });
+      }
+
+      const { error: insertError } = await supabase
+        .from('correction_tickets')
+        .insert({
+          arquivo_id: String(arquivo.id),
+          franqueado_id: user.id,
+          motivo: correcaoDescricao.trim(),
+          arquivo_anexo_url: arquivoAnexoUrl,
+          status: 'aberto',
+          conversation_id: conversationId
+        });
+
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        toast({
+          title: "Erro ao criar solicitação",
+          description: "Não foi possível criar a solicitação. Tente novamente.",
+          variant: "destructive",
+        });
+        setEnviando(false);
+        return;
+      }
+
+      toast({
+        title: "Solicitação enviada",
+        description: "Sua solicitação de correção foi enviada com sucesso. Nossa equipe irá analisar em breve.",
+      });
+      
+      setCorrecaoDialogOpen(false);
+      setCorrecaoDescricao("");
+      setNovoArquivo(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -410,26 +545,52 @@ export default function ArquivoDetalhes() {
                 value={correcaoDescricao}
                 onChange={(e) => setCorrecaoDescricao(e.target.value)}
                 rows={4}
+                disabled={enviando}
               />
+              <p className="text-xs text-muted-foreground">Mínimo de 10 caracteres</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="arquivo">Novo Arquivo (opcional)</Label>
-              <div className="border-2 border-dashed border-border rounded-lg p-4">
-                <Input
-                  id="arquivo"
-                  type="file"
-                  accept=".bin,.ori,.mod"
-                  onChange={(e) => setNovoArquivo(e.target.files?.[0] || null)}
-                  className="cursor-pointer"
-                />
-                {novoArquivo && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    <Upload className="h-4 w-4 inline mr-1" />
-                    {novoArquivo.name}
-                  </p>
-                )}
-              </div>
+              <Label>Novo Arquivo (opcional)</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileSelect}
+                className="hidden"
+                accept=".bin,.ori,.mod"
+                disabled={enviando}
+              />
+              
+              {novoArquivo ? (
+                <div className="flex items-center gap-2 p-3 bg-secondary/30 rounded-lg border border-border/30">
+                  <Paperclip className="h-4 w-4 text-primary" />
+                  <span className="flex-1 text-sm truncate">{novoArquivo.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {(novoArquivo.size / 1024 / 1024).toFixed(2)} MB
+                  </span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6"
+                    onClick={handleRemoveFile}
+                    disabled={enviando}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-dashed"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={enviando}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Escolher Arquivo
+                  <span className="ml-2 text-muted-foreground">nenhum arquivo selecionado</span>
+                </Button>
+              )}
               <p className="text-xs text-muted-foreground">
                 Formatos aceitos: .bin, .ori, .mod
               </p>
@@ -450,7 +611,10 @@ export default function ArquivoDetalhes() {
               disabled={enviando}
             >
               {enviando ? (
-                <>Enviando...</>
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
               ) : (
                 <>
                   <Send className="h-4 w-4 mr-2" />

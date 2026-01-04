@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -10,10 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Download,
   User,
@@ -26,11 +22,7 @@ import {
   Gauge,
   Settings,
   Tag,
-  AlertCircle,
-  X,
-  Upload,
-  Loader2,
-  Paperclip,
+  AlertTriangle,
 } from "lucide-react";
 
 export interface ArquivoDetalhado {
@@ -77,198 +69,17 @@ const getStatusBadge = (status: string) => {
 };
 
 export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDetalheDialogProps) {
-  const [showCorrecao, setShowCorrecao] = useState(false);
-  const [correcaoMotivo, setCorrecaoMotivo] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const correcaoFormRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
-
-  // Scroll automático para o formulário de correção quando aberto
-  useEffect(() => {
-    if (showCorrecao && correcaoFormRef.current) {
-      setTimeout(() => {
-        correcaoFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      }, 100);
-    }
-  }, [showCorrecao]);
+  const navigate = useNavigate();
 
   if (!arquivo) return null;
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validar tamanho (máx 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: "Arquivo muito grande",
-          description: "O arquivo deve ter no máximo 10MB.",
-          variant: "destructive",
-        });
-        return;
-      }
-      setSelectedFile(file);
-    }
-  };
-
-  const handleRemoveFile = () => {
-    setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const handleSolicitarCorrecao = async () => {
-    if (!correcaoMotivo.trim()) {
-      toast({
-        title: "Campo obrigatório",
-        description: "Por favor, descreva o motivo da correção.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (correcaoMotivo.trim().length < 10) {
-      toast({
-        title: "Descrição muito curta",
-        description: "Por favor, forneça mais detalhes sobre a correção necessária.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Verificar se o usuário está autenticado
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Sessão expirada",
-          description: "Por favor, faça login novamente.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      let arquivoAnexoUrl: string | null = null;
-
-      // Upload do arquivo se existir
-      if (selectedFile) {
-        const fileExt = selectedFile.name.split('.').pop();
-        const fileName = `${user.id}/${arquivo.id}_${Date.now()}.${fileExt}`;
-
-        const { error: uploadError, data: uploadData } = await supabase.storage
-          .from('correction-files')
-          .upload(fileName, selectedFile, {
-            cacheControl: '3600',
-            upsert: false
-          });
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          toast({
-            title: "Erro no upload",
-            description: "Não foi possível enviar o arquivo. Tente novamente.",
-            variant: "destructive",
-          });
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Obter URL pública do arquivo
-        const { data: urlData } = supabase.storage
-          .from('correction-files')
-          .getPublicUrl(fileName);
-
-        arquivoAnexoUrl = urlData.publicUrl;
-      }
-
-      // Criar conversa de suporte vinculada ao ticket
-      const { data: conversationData, error: conversationError } = await supabase
-        .from('support_conversations')
-        .insert({
-          franqueado_id: user.id,
-          subject: `Correção: ${arquivo.placa} - ${arquivo.servico}`,
-          status: 'open'
-        })
-        .select()
-        .single();
-
-      let conversationId: string | null = null;
-      if (!conversationError && conversationData) {
-        conversationId = conversationData.id;
-
-        // Enviar primeira mensagem com o motivo da correção
-        await supabase
-          .from('support_messages')
-          .insert({
-            conversation_id: conversationId,
-            sender_id: user.id,
-            sender_type: 'franqueado',
-            content: `📋 **Solicitação de Correção**\n\n**Veículo:** ${arquivo.marca} ${arquivo.modelo}\n**Placa:** ${arquivo.placa}\n**Serviço:** ${arquivo.servico}\n\n**Descrição do problema:**\n${correcaoMotivo.trim()}${arquivoAnexoUrl ? '\n\n📎 Arquivo anexado' : ''}`
-          });
-      }
-
-      // Criar ticket de correção com link para a conversa
-      const { error: insertError } = await supabase
-        .from('correction_tickets')
-        .insert({
-          arquivo_id: String(arquivo.id),
-          franqueado_id: user.id,
-          motivo: correcaoMotivo.trim(),
-          arquivo_anexo_url: arquivoAnexoUrl,
-          status: 'aberto',
-          conversation_id: conversationId
-        });
-
-      if (insertError) {
-        console.error('Insert error:', insertError);
-        toast({
-          title: "Erro ao criar solicitação",
-          description: "Não foi possível criar a solicitação. Tente novamente.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      toast({
-        title: "Solicitação enviada",
-        description: "Sua solicitação de correção foi enviada com sucesso. Nossa equipe irá analisar em breve.",
-      });
-      
-      // Resetar estado
-      setShowCorrecao(false);
-      setCorrecaoMotivo("");
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error:', error);
-      toast({
-        title: "Erro inesperado",
-        description: "Ocorreu um erro. Tente novamente mais tarde.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleSolicitarCorrecao = () => {
+    // Fecha o dialog e navega para a página de detalhes do arquivo
+    onOpenChange(false);
+    navigate(`/franqueado/arquivos/${arquivo.id}`);
   };
 
   const handleClose = () => {
-    setShowCorrecao(false);
-    setCorrecaoMotivo("");
-    setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
     onOpenChange(false);
   };
 
@@ -417,139 +228,28 @@ export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDet
                 </div>
               </>
             )}
-
-            {/* Formulário de Correção */}
-            {showCorrecao && (
-              <>
-                <Separator className="bg-border/30" />
-                <div ref={correcaoFormRef} className="space-y-4 animate-fade-in">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-foreground flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 text-warning" />
-                      Solicitar Correção
-                    </h4>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowCorrecao(false)}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  {/* Campo de descrição */}
-                  <div className="space-y-2">
-                    <Label htmlFor="correcao-motivo">Descreva o problema ou correção necessária *</Label>
-                    <Textarea
-                      id="correcao-motivo"
-                      placeholder="Detalhe o motivo da solicitação de correção..."
-                      value={correcaoMotivo}
-                      onChange={(e) => setCorrecaoMotivo(e.target.value)}
-                      className="min-h-[100px] bg-secondary/30"
-                      disabled={isSubmitting}
-                    />
-                    <p className="text-xs text-muted-foreground">Mínimo de 10 caracteres</p>
-                  </div>
-
-                  {/* Upload de arquivo */}
-                  <div className="space-y-2">
-                    <Label>Anexar arquivo (opcional)</Label>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                      accept=".bin,.ori,.mod,.zip,.rar,.pdf,.jpg,.jpeg,.png"
-                      disabled={isSubmitting}
-                    />
-                    
-                    {selectedFile ? (
-                      <div className="flex items-center gap-2 p-3 bg-secondary/30 rounded-lg border border-border/30">
-                        <Paperclip className="h-4 w-4 text-primary" />
-                        <span className="flex-1 text-sm truncate">{selectedFile.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                        </span>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-6 w-6"
-                          onClick={handleRemoveFile}
-                          disabled={isSubmitting}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        className="w-full border-dashed"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isSubmitting}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Selecionar arquivo
-                      </Button>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Formatos aceitos: .bin, .ori, .mod, .zip, .rar, .pdf, .jpg, .png (máx. 10MB)
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
           </div>
         </ScrollArea>
 
-        {/* Footer fixo */}
-        <DialogFooter className="px-6 py-4 border-t border-border/30 bg-background/50 backdrop-blur-sm">
-          <div className="flex flex-col sm:flex-row gap-2 w-full">
-            {showCorrecao ? (
-              <>
-                <Button 
-                  variant="warning" 
-                  className="flex-1" 
-                  onClick={handleSolicitarCorrecao}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle className="h-4 w-4" />
-                      Enviar Solicitação
-                    </>
-                  )}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-1" 
-                  onClick={() => setShowCorrecao(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancelar
-                </Button>
-              </>
-            ) : (
-              <>
-                {arquivo.status === "completed" && (
-                  <Button variant="hero" className="flex-1">
-                    <Download className="h-4 w-4" />
-                    Baixar Arquivo
-                  </Button>
-                )}
-                <Button 
-                  variant="outline" 
-                  className="flex-1 border-warning/30 text-warning hover:bg-warning/10"
-                  onClick={() => setShowCorrecao(true)}
-                >
-                  <AlertCircle className="h-4 w-4" />
-                  Solicitar Correção
-                </Button>
-                <Button variant="ghost" onClick={handleClose}>
-                  Fechar
-                </Button>
-              </>
-            )}
+        <DialogFooter className="px-6 py-4 border-t border-border/30 flex-shrink-0">
+          <div className="flex gap-3 w-full justify-end">
+            <Button variant="outline" onClick={handleClose}>
+              Fechar
+            </Button>
+            <Button variant="default" className="gap-2" asChild>
+              <a href="#">
+                <Download className="h-4 w-4" />
+                Download
+              </a>
+            </Button>
+            <Button 
+              variant="destructive" 
+              className="gap-2"
+              onClick={handleSolicitarCorrecao}
+            >
+              <AlertTriangle className="h-4 w-4" />
+              Solicitar Correção
+            </Button>
           </div>
         </DialogFooter>
       </DialogContent>
