@@ -74,13 +74,17 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
                     to={item.path}
                     onClick={onClose}
                     className={cn(
-                      "relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300",
+                      "relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 group overflow-hidden",
                       isActive
                         ? "text-white"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground hover:text-sidebar-accent-foreground"
                     )}
                   >
-                    {/* Glow effect - solid light point on right with gradient propagation */}
+                    {/* Hover glow effect for non-active items */}
+                    {!isActive && (
+                      <div className="absolute inset-0 rounded-lg bg-gradient-to-l from-primary/0 via-primary/0 to-transparent opacity-0 group-hover:from-primary/10 group-hover:via-primary/5 group-hover:opacity-100 transition-all duration-300" />
+                    )}
+                    {/* Active glow effect - solid light point on right with gradient propagation */}
                     {isActive && (
                       <>
                         {/* Background gradient from right to left */}
