@@ -512,6 +512,7 @@ export default function EnviarArquivo() {
             <CardTitle className="text-lg">Dados do Veículo</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Linha 1: Categoria + Marca */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Categoria do Veículo *</Label>
@@ -531,7 +532,7 @@ export default function EnviarArquivo() {
               <div className="space-y-2">
                 <Label>Marca *</Label>
                 <Select value={marca} onValueChange={setMarca} disabled={!categoriaVeiculo}>
-                  <SelectTrigger className="glass-input">
+                  <SelectTrigger className={`glass-input ${placaEncontrada && marca ? "border-success/50" : ""}`}>
                     <SelectValue
                       placeholder={categoriaVeiculo ? "Selecione a marca" : "Selecione a categoria primeiro"}
                     />
@@ -547,64 +548,54 @@ export default function EnviarArquivo() {
               </div>
             </div>
 
-            {/* Placa (se exigir) */}
-            {exigePlaca && (
-              <div className="space-y-2">
-                <Label>Placa *</Label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Input 
-                      placeholder="ABC1234 ou ABC1D23" 
-                      value={placa}
-                      onChange={handlePlacaChange}
-                      className={`glass-input uppercase ${placaEncontrada ? "border-success" : ""}`}
-                      maxLength={7}
-                      required 
-                    />
-                    {placaEncontrada && (
-                      <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-success" />
-                    )}
-                  </div>
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={buscarPlaca}
-                    disabled={buscandoPlaca || placa.length < 7}
-                    className="gap-2"
-                  >
-                    {buscandoPlaca ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Search className="h-4 w-4" />
-                    )}
-                    Buscar
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Info className="h-3 w-3" />
-                  Digite a placa e clique em "Buscar" para preencher os dados automaticamente
-                </p>
-              </div>
-            )}
-
+            {/* Linha 2: Placa + Modelo */}
             <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Marca *</Label>
-                <Select value={marca} onValueChange={setMarca} disabled={!categoriaVeiculo}>
-                  <SelectTrigger className={`glass-input ${placaEncontrada && marca ? "border-success/50" : ""}`}>
-                    <SelectValue
-                      placeholder={categoriaVeiculo ? "Selecione a marca" : "Selecione a categoria primeiro"}
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="glass-card">
-                    {marcasDisponiveis.map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {exigePlaca ? (
+                <div className="space-y-2">
+                  <Label>Placa *</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input 
+                        placeholder="ABC1234 ou ABC1D23" 
+                        value={placa}
+                        onChange={handlePlacaChange}
+                        className={`glass-input uppercase ${placaEncontrada ? "border-success" : ""}`}
+                        maxLength={7}
+                        required 
+                      />
+                      {placaEncontrada && (
+                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-success" />
+                      )}
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={buscarPlaca}
+                      disabled={buscandoPlaca || placa.length < 7}
+                      className="gap-2 shrink-0"
+                    >
+                      {buscandoPlaca ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Search className="h-4 w-4" />
+                      )}
+                      Buscar
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Info className="h-3 w-3" />
+                    Consulta automática disponível via API
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Identificação</Label>
+                  <Input 
+                    placeholder="Ex: Chassi, Série, etc." 
+                    className="glass-input"
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Modelo *</Label>
                 <Input 
