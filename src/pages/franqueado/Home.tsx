@@ -15,6 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BannerCarousel, Banner } from "@/components/BannerCarousel";
 import { ArquivoDetalheDialog, ArquivoDetalhado } from "@/components/franqueado/ArquivoDetalheDialog";
 import { ContractAlert } from "@/components/ContractAlert";
+import { MetricTooltip, metricDefinitions } from "@/components/MetricTooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Dados mockados dos banners - em produção viriam do banco de dados
 const banners: Banner[] = [
@@ -37,10 +39,10 @@ const banners: Banner[] = [
 ];
 
 const stats = [
-  { label: "Arquivos Enviados", value: "24", icon: Upload, color: "text-primary", path: "/franqueado/arquivos" },
-  { label: "Concluídos", value: "18", icon: CheckCircle2, color: "text-success", path: "/franqueado/arquivos?status=completed" },
-  { label: "Em Processamento", value: "4", icon: Clock, color: "text-warning", path: "/franqueado/arquivos?status=processing" },
-  { label: "Downloads Disponíveis", value: "6", icon: Download, color: "text-info", path: "/franqueado/arquivos?status=completed" },
+  { label: "Arquivos Enviados", value: "24", icon: Upload, color: "text-primary", path: "/franqueado/arquivos", tooltip: metricDefinitions.arquivosEnviados },
+  { label: "Concluídos", value: "18", icon: CheckCircle2, color: "text-success", path: "/franqueado/arquivos?status=completed", tooltip: metricDefinitions.arquivosConcluidos },
+  { label: "Em Processamento", value: "4", icon: Clock, color: "text-warning", path: "/franqueado/arquivos?status=processing", tooltip: metricDefinitions.arquivosProcessando },
+  { label: "Downloads Disponíveis", value: "6", icon: Download, color: "text-info", path: "/franqueado/arquivos?status=completed", tooltip: metricDefinitions.downloadsDisponiveis },
 ];
 
 const recentFiles: ArquivoDetalhado[] = [
@@ -159,61 +161,65 @@ export default function FranqueadoHome() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Dialog de Detalhes */}
-      <ArquivoDetalheDialog
-        arquivo={selectedArquivo}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-      />
+    <TooltipProvider>
+      <div className="space-y-6">
+        {/* Dialog de Detalhes */}
+        <ArquivoDetalheDialog
+          arquivo={selectedArquivo}
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+        />
 
-      {/* Banner Carousel */}
-      <BannerCarousel banners={banners} autoPlay interval={6000} />
+        {/* Banner Carousel */}
+        <BannerCarousel banners={banners} autoPlay interval={6000} />
 
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Página Inicial</h1>
-          <p className="text-muted-foreground">Bem-vindo de volta! Aqui está um resumo da sua conta.</p>
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Página Inicial</h1>
+            <p className="text-muted-foreground">Bem-vindo de volta! Aqui está um resumo da sua conta.</p>
+          </div>
+          <Link to="/franqueado/enviar">
+            <Button variant="hero" size="lg">
+              <Upload className="h-5 w-5" />
+              Enviar Arquivo
+            </Button>
+          </Link>
         </div>
-        <Link to="/franqueado/enviar">
-          <Button variant="hero" size="lg">
-            <Upload className="h-5 w-5" />
-            Enviar Arquivo
-          </Button>
-        </Link>
-      </div>
 
-      {/* Contract Alert - usa dados do banco via hook */}
-      <ContractAlert useHook />
+        {/* Contract Alert - usa dados do banco via hook */}
+        <ContractAlert useHook />
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <Link to={stat.path}>
-              <Card className="glass-hover hover:border-primary/30 cursor-pointer">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{stat.label}</p>
-                      <p className="text-3xl font-bold mt-1 text-foreground">{stat.value}</p>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <Link to={stat.path}>
+                <Card className="glass-hover hover:border-primary/30 cursor-pointer">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm text-muted-foreground">{stat.label}</p>
+                          <MetricTooltip explanation={stat.tooltip} />
+                        </div>
+                        <p className="text-3xl font-bold mt-1 text-foreground">{stat.value}</p>
+                      </div>
+                      <div className={`p-3 rounded-xl bg-secondary/60 backdrop-blur-sm ${stat.color}`}>
+                        <stat.icon className="h-6 w-6" />
+                      </div>
                     </div>
-                    <div className={`p-3 rounded-xl bg-secondary/60 backdrop-blur-sm ${stat.color}`}>
-                      <stat.icon className="h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          </motion.div>
-        ))}
-      </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
 
       {/* Recent Files */}
       <Card>
@@ -320,8 +326,9 @@ export default function FranqueadoHome() {
               </div>
             </CardContent>
           </Card>
-        </Link>
+          </Link>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

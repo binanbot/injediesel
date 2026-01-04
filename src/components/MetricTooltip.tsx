@@ -43,17 +43,24 @@ export function MetricTooltip({ explanation, size = "sm" }: MetricTooltipProps) 
  * Definições de métricas comuns do sistema
  */
 export const metricDefinitions = {
-  // Franqueado
-  faturamentoTotal: "Soma de todos os valores dos serviços realizados no período selecionado.",
-  totalServicos: "Quantidade total de serviços de remapeamento concluídos no período.",
-  ticketMedio: "Valor médio por serviço = Faturamento Total ÷ Número de Serviços.",
+  // Franqueado - Dashboard
   arquivosEnviados: "Total de arquivos de ECU enviados para processamento.",
   arquivosConcluidos: "Arquivos que foram processados e estão prontos para download.",
   arquivosProcessando: "Arquivos que estão sendo analisados pela equipe técnica.",
   downloadsDisponiveis: "Arquivos modificados prontos para download.",
   
-  // Admin
-  totalFranqueados: "Número total de unidades franqueadas ativas no sistema.",
+  // Franqueado - Relatórios
+  faturamentoTotal: "Soma de todos os valores dos serviços realizados no período selecionado.",
+  totalServicos: "Quantidade total de serviços de remapeamento concluídos no período.",
+  ticketMedio: "Valor médio por serviço = Faturamento Total ÷ Número de Serviços.",
+  
+  // Admin - Dashboard
+  totalFranqueados: "Número total de unidades franqueadas cadastradas no sistema.",
+  arquivosPendentes: "Arquivos recebidos aguardando análise inicial da equipe.",
+  emProcessamento: "Arquivos sendo trabalhados pela equipe técnica.",
+  downloadsProntos: "Arquivos finalizados e disponíveis para o franqueado baixar.",
+  
+  // Admin - Relatórios
   franqueadosAtivos: "Franqueados com contrato válido e acesso liberado.",
   franqueadosVencendo: "Franqueados com contrato vencendo nos próximos 30 dias.",
   contratoVencido: "Franqueados com contrato vencido e acesso bloqueado.",
@@ -67,4 +74,7 @@ export const metricDefinitions = {
   evolucaoMensal: "Variação do volume de arquivos e receita mês a mês.",
   desempenhoCategoria: "Métricas de arquivos, receita e crescimento por tipo de veículo.",
   rankingRevendas: "Classificação das unidades por volume de arquivos e faturamento.",
+  arquivosPorMes: "Evolução mensal do volume de arquivos recebidos de todas as unidades.",
+  distribuicaoStatus: "Proporção de arquivos por situação atual (concluído, processando, etc.).",
+  topUnidades: "Ranking das unidades com maior volume de arquivos enviados.",
 };
