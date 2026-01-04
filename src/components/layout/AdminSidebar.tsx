@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -17,15 +18,24 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
-const menuItems = [
+interface MenuItem {
+  icon: React.ElementType;
+  label: string;
+  path: string;
+  badgeKey?: string;
+}
+
+const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
   { icon: Users, label: "Franqueados", path: "/admin/franqueados" },
   { icon: FileDown, label: "Arquivos Recebidos", path: "/admin/arquivos" },
-  { icon: AlertCircle, label: "Correções", path: "/admin/correcoes" },
+  { icon: AlertCircle, label: "Correções", path: "/admin/correcoes", badgeKey: "correcoes" },
   { icon: ImageIcon, label: "Banners", path: "/admin/banners" },
   { icon: MapPin, label: "Áreas de Atuação", path: "/admin/areas" },
-  { icon: Headphones, label: "Suporte", path: "/admin/suporte" },
+  { icon: Headphones, label: "Suporte", path: "/admin/suporte", badgeKey: "suporte" },
   { icon: MessageSquare, label: "Mensagens", path: "/admin/mensagens" },
   { icon: BarChart3, label: "Relatórios", path: "/admin/relatorios" },
   { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
@@ -39,6 +49,59 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
   const location = useLocation();
+  const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({
+    suporte: 0,
+    correcoes: 0,
+  });
+
+  // Load counts and subscribe to realtime updates
+  useEffect(() => {
+    const loadCounts = async () => {
+      // Count open support tickets
+      const { count: suporteCount } = await supabase
+        .from("support_conversations")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "open");
+
+      // Count open correction tickets
+      const { count: correcoesCount } = await supabase
+        .from("correction_tickets")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "aberto");
+
+      setBadgeCounts({
+        suporte: suporteCount || 0,
+        correcoes: correcoesCount || 0,
+      });
+    };
+
+    loadCounts();
+
+    // Subscribe to realtime updates for support_conversations
+    const suporteChannel = supabase
+      .channel("admin-sidebar-suporte")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "support_conversations" },
+        () => loadCounts()
+      )
+      .subscribe();
+
+    // Subscribe to realtime updates for correction_tickets
+    const correcoesChannel = supabase
+      .channel("admin-sidebar-correcoes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "correction_tickets" },
+        () => loadCounts()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(suporteChannel);
+      supabase.removeChannel(correcoesChannel);
+    };
+  }, []);
 
   return (
     <>
@@ -70,6 +133,7 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
           <ul className="space-y-1">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
+              const badgeCount = item.badgeKey ? badgeCounts[item.badgeKey] : 0;
               return (
                 <li key={item.path}>
                   <Link
@@ -101,7 +165,17 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
                       "relative z-10 h-5 w-5 transition-all duration-300",
                       isActive && "text-primary drop-shadow-[0_0_8px_hsl(var(--primary))]"
                     )} />
-                    <span className="relative z-10">{item.label}</span>
+                    <span className="relative z-10 flex-1">{item.label}</span>
+                    
+                    {/* Notification badge */}
+                    {badgeCount > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="relative z-10 h-5 min-w-5 px-1.5 text-[10px] font-bold animate-pulse shadow-[0_0_8px_hsl(var(--destructive)/0.6)]"
+                      >
+                        {badgeCount > 99 ? "99+" : badgeCount}
+                      </Badge>
+                    )}
                   </Link>
                 </li>
               );
