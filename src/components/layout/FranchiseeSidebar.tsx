@@ -13,6 +13,7 @@ import {
   X,
   Bell,
   BarChart3,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ const menuItems = [
   { icon: BarChart3, label: "Relatórios", path: "/franqueado/relatorios" },
   { icon: RefreshCw, label: "Atualizações", path: "/franqueado/atualizacoes" },
   { icon: HeadphonesIcon, label: "Suporte", path: "/franqueado/suporte" },
+  { icon: GraduationCap, label: "Cursos", path: "/franqueado/cursos" },
   { icon: BookOpen, label: "Tutoriais", path: "/franqueado/tutoriais" },
   { icon: Palette, label: "Materiais MKT", path: "/franqueado/materiais" },
   { icon: MessageSquare, label: "Mensagens", path: "/franqueado/mensagens" },
