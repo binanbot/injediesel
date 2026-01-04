@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      correction_tickets: {
+        Row: {
+          arquivo_anexo_url: string | null
+          arquivo_id: string
+          created_at: string
+          franqueado_id: string
+          id: string
+          motivo: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_anexo_url?: string | null
+          arquivo_id: string
+          created_at?: string
+          franqueado_id: string
+          id?: string
+          motivo: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_anexo_url?: string | null
+          arquivo_id?: string
+          created_at?: string
+          franqueado_id?: string
+          id?: string
+          motivo?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       support_conversations: {
         Row: {
           created_at: string
