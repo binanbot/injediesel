@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -82,7 +82,18 @@ export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDet
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const correcaoFormRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Scroll automático para o formulário de correção quando aberto
+  useEffect(() => {
+    if (showCorrecao && correcaoFormRef.current) {
+      setTimeout(() => {
+        correcaoFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 100);
+    }
+  }, [showCorrecao]);
 
   if (!arquivo) return null;
 
@@ -411,7 +422,7 @@ export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDet
             {showCorrecao && (
               <>
                 <Separator className="bg-border/30" />
-                <div className="space-y-4">
+                <div ref={correcaoFormRef} className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h4 className="font-semibold text-foreground flex items-center gap-2">
                       <AlertCircle className="h-4 w-4 text-warning" />
