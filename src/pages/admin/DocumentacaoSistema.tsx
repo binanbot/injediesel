@@ -1,4 +1,4 @@
-import { FileText, Download, Printer, ChevronDown, ChevronRight, Map, Users, Shield, Database, Palette, GitBranch, Workflow } from "lucide-react";
+import { FileText, Download, Printer, ChevronDown, ChevronRight, Map, Users, Shield, Database, Palette, GitBranch, Workflow, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,12 +11,149 @@ import {
 } from "@/components/ui/collapsible";
 import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { MermaidDiagram } from "@/components/MermaidDiagram";
+
+// Mermaid diagram definitions
+const ARCHITECTURE_DIAGRAM = `
+flowchart TB
+    subgraph Frontend["🖥️ Frontend (React + Vite)"]
+        UI[UI Components]
+        Router[React Router v7]
+        State[React Query]
+        Auth[Auth Context]
+    end
+    
+    subgraph Backend["☁️ Lovable Cloud (Supabase)"]
+        AuthService[Auth Service]
+        Database[(PostgreSQL)]
+        Storage[Storage Buckets]
+        Realtime[Realtime WebSocket]
+    end
+    
+    UI --> Router
+    Router --> State
+    State --> Auth
+    Auth --> AuthService
+    State --> Database
+    UI --> Storage
+    Realtime --> UI
+    
+    style Frontend fill:#1e3a5f,stroke:#3b82f6,color:#fff
+    style Backend fill:#1e293b,stroke:#f97316,color:#fff
+`;
+
+const DATA_FLOW_DIAGRAM = `
+sequenceDiagram
+    participant F as Franqueado
+    participant FE as Frontend
+    participant API as Supabase API
+    participant DB as PostgreSQL
+    participant RT as Realtime
+    participant A as Admin
+    
+    F->>FE: Login
+    FE->>API: signInWithPassword()
+    API->>DB: Valida credenciais
+    DB-->>API: user + session
+    API-->>FE: JWT Token
+    FE->>DB: Busca user_roles
+    DB-->>FE: role: franqueado
+    
+    F->>FE: Envia Arquivo ECU
+    FE->>API: Upload Storage
+    FE->>DB: INSERT arquivo
+    DB-->>RT: Notifica
+    RT-->>A: Novo arquivo
+    
+    A->>FE: Processa arquivo
+    FE->>DB: UPDATE status
+    DB-->>RT: Status changed
+    RT-->>F: Notificação
+`;
+
+const SUPPORT_FLOW_DIAGRAM = `
+flowchart LR
+    subgraph Franqueado
+        F1[Abre Ticket]
+        F2[Envia Mensagem]
+        F3[Recebe Resposta]
+    end
+    
+    subgraph Supabase
+        C[(Conversations)]
+        M[(Messages)]
+        RT{{Realtime}}
+    end
+    
+    subgraph Admin
+        A1[Visualiza Tickets]
+        A2[Responde]
+        A3[Fecha Ticket]
+    end
+    
+    F1 --> C
+    F2 --> M
+    M --> RT
+    RT --> F3
+    RT --> A1
+    A2 --> M
+    A3 --> C
+    
+    style Franqueado fill:#1e3a5f,stroke:#3b82f6
+    style Admin fill:#422006,stroke:#f97316
+    style Supabase fill:#1e293b,stroke:#22c55e
+`;
+
+const DATABASE_DIAGRAM = `
+erDiagram
+    AUTH_USERS ||--o{ USER_ROLES : has
+    AUTH_USERS ||--o{ SUPPORT_CONVERSATIONS : creates
+    AUTH_USERS ||--o{ CORRECTION_TICKETS : creates
+    SUPPORT_CONVERSATIONS ||--o{ SUPPORT_MESSAGES : contains
+    CORRECTION_TICKETS ||--o| SUPPORT_CONVERSATIONS : links
+    
+    USER_ROLES {
+        uuid id PK
+        uuid user_id FK
+        enum role
+        timestamp created_at
+    }
+    
+    SUPPORT_CONVERSATIONS {
+        uuid id PK
+        uuid franqueado_id FK
+        text subject
+        text status
+        text attachment_url
+        timestamp created_at
+    }
+    
+    SUPPORT_MESSAGES {
+        uuid id PK
+        uuid conversation_id FK
+        uuid sender_id
+        text sender_type
+        text content
+        timestamp created_at
+    }
+    
+    CORRECTION_TICKETS {
+        uuid id PK
+        text arquivo_id
+        uuid franqueado_id FK
+        text motivo
+        text status
+        uuid conversation_id FK
+        timestamp created_at
+    }
+`;
 
 export default function DocumentacaoSistema() {
   const { toast } = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    mapa: true,
+    diagramas: true,
+    mapa: false,
     visao: false,
     auth: false,
     franqueado: false,
@@ -33,6 +170,7 @@ export default function DocumentacaoSistema() {
 
   const expandAll = () => {
     setOpenSections({
+      diagramas: true,
       mapa: true,
       visao: true,
       auth: true,
@@ -144,6 +282,66 @@ export default function DocumentacaoSistema() {
         <CardContent className="p-6">
           <ScrollArea className="h-[calc(100vh-400px)] pr-4">
             <div className="space-y-4">
+              
+              {/* DIAGRAMAS DE ARQUITETURA */}
+              <Section
+                title="DIAGRAMAS DE ARQUITETURA"
+                icon={<Network className="h-5 w-5" />}
+                isOpen={openSections.diagramas}
+                onToggle={() => toggleSection("diagramas")}
+              >
+                <div className="space-y-8">
+                  {/* Arquitetura do Sistema */}
+                  <div>
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <Badge variant="outline">1</Badge>
+                      Arquitetura Geral do Sistema
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Visão geral da estrutura frontend/backend e suas conexões.
+                    </p>
+                    <MermaidDiagram chart={ARCHITECTURE_DIAGRAM} id="architecture" />
+                  </div>
+
+                  {/* Fluxo de Dados */}
+                  <div>
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <Badge variant="outline">2</Badge>
+                      Fluxo de Dados - Autenticação e Envio de Arquivo
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Sequência de operações desde o login até o processamento de arquivos.
+                    </p>
+                    <MermaidDiagram chart={DATA_FLOW_DIAGRAM} id="dataflow" />
+                  </div>
+
+                  {/* Fluxo de Suporte */}
+                  <div>
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <Badge variant="outline">3</Badge>
+                      Fluxo de Suporte em Tempo Real
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Comunicação bidirecional entre franqueados e administradores via Realtime.
+                    </p>
+                    <MermaidDiagram chart={SUPPORT_FLOW_DIAGRAM} id="support" />
+                  </div>
+
+                  {/* Modelo de Dados */}
+                  <div>
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <Badge variant="outline">4</Badge>
+                      Modelo de Dados (ER Diagram)
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Relacionamentos entre as tabelas do banco de dados PostgreSQL.
+                    </p>
+                    <MermaidDiagram chart={DATABASE_DIAGRAM} id="database" />
+                  </div>
+                </div>
+              </Section>
+
+              <Separator />
               
               {/* MAPA MENTAL DO SISTEMA */}
               <Section
