@@ -74,14 +74,30 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
                     to={item.path}
                     onClick={onClose}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                      "relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300",
                       isActive
-                        ? "bg-sidebar-accent text-sidebar-primary"
+                        ? "text-white"
                         : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                     )}
                   >
-                    <item.icon className={cn("h-5 w-5", isActive && "text-sidebar-primary")} />
-                    {item.label}
+                    {/* Glow background effect */}
+                    {isActive && (
+                      <div className="absolute inset-0 rounded-lg overflow-hidden">
+                        {/* Main glow background */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/30 via-primary/20 to-transparent" />
+                        {/* Light propagation effect extending right */}
+                        <div className="absolute inset-y-0 -right-8 w-24 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent blur-md" />
+                        {/* Inner glow for depth */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent rounded-lg" />
+                        {/* Subtle border glow */}
+                        <div className="absolute inset-0 rounded-lg ring-1 ring-primary/30" />
+                      </div>
+                    )}
+                    <item.icon className={cn(
+                      "relative z-10 h-5 w-5 transition-all duration-300",
+                      isActive && "text-primary drop-shadow-[0_0_8px_hsl(var(--primary))]"
+                    )} />
+                    <span className="relative z-10">{item.label}</span>
                   </Link>
                 </li>
               );
