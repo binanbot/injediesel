@@ -690,7 +690,11 @@ export default function Suporte() {
                       transition={{ duration: 0.2, delay: index * 0.05 }}
                     >
                       <Card 
-                        className="hover:border-primary/30 transition-all duration-200 cursor-pointer"
+                        className={`hover:border-primary/30 transition-all duration-200 cursor-pointer ${
+                          tempoDecorrido.level === "critical" && ticket.status !== "resolved" && ticket.status !== "closed"
+                            ? "animate-[pulse_3s_ease-in-out_infinite] border-destructive/50 shadow-[0_0_15px_hsl(0,70%,50%,0.15)]" 
+                            : ""
+                        }`}
                         onClick={() => handleOpenTicket(ticket)}
                       >
                         <CardContent className="py-4 px-4">

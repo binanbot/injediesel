@@ -544,7 +544,11 @@ export default function AdminSuporte() {
                     key={ticket.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer"
+                    className={`p-4 rounded-lg border transition-colors cursor-pointer ${
+                      tempoDecorrido.level === "critical" && ticket.status !== "resolved" && ticket.status !== "closed"
+                        ? "animate-[pulse_3s_ease-in-out_infinite] border-destructive/50 shadow-[0_0_15px_hsl(0,70%,50%,0.15)] hover:border-destructive/70" 
+                        : "border-border hover:border-primary/50"
+                    }`}
                     onClick={() => handleOpenTicket(ticket)}
                   >
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
