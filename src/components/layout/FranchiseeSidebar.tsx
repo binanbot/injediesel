@@ -85,20 +85,31 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
                     to={item.path}
                     onClick={onClose}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 relative group",
+                      "relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 group overflow-hidden",
                       isActive
-                        ? "bg-primary/15 text-primary border border-primary/20 shadow-lg shadow-primary/5"
+                        ? "text-primary"
                         : "text-sidebar-foreground hover:bg-secondary/50 hover:text-foreground"
                     )}
                   >
+                    {/* Glow effect - solid light point on right with gradient propagation */}
+                    {isActive && (
+                      <>
+                        {/* Background gradient from right to left */}
+                        <div className="absolute inset-0 bg-gradient-to-l from-primary/25 via-primary/10 to-transparent rounded-xl" />
+                        {/* Solid light bar on right edge */}
+                        <div className="absolute right-0 top-1 bottom-1 w-1 bg-primary rounded-full shadow-[0_0_12px_4px_hsl(var(--primary)/0.6)]" />
+                        {/* Light propagation glow */}
+                        <div className="absolute right-0 inset-y-0 w-16 bg-gradient-to-l from-primary/20 to-transparent blur-sm" />
+                      </>
+                    )}
                     <item.icon className={cn(
-                      "h-5 w-5 transition-colors",
-                      isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                      "relative z-10 h-5 w-5 transition-all duration-300",
+                      isActive ? "text-primary drop-shadow-[0_0_6px_hsl(var(--primary))]" : "text-muted-foreground group-hover:text-foreground"
                     )} />
-                    <span className="flex-1">{item.label}</span>
+                    <span className="relative z-10 flex-1">{item.label}</span>
                     
                     {notificationCount > 0 && (
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs font-semibold border border-primary/30">
+                      <span className="relative z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs font-semibold border border-primary/30">
                         <Bell className="h-3 w-3" />
                         {notificationCount}
                       </span>
