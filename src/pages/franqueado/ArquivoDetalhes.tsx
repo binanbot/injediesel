@@ -13,7 +13,8 @@ import {
   Send,
   Loader2,
   Paperclip,
-  X
+  X,
+  Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +42,9 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { useContractStatus } from "@/hooks/useContractStatus";
+import { ContractBlockBadge } from "@/components/ContractBlockOverlay";
+import { Link } from "react-router-dom";
 
 // Mock data - será substituído por dados reais
 const arquivosMock: Record<string, {
@@ -160,6 +164,7 @@ const getStatusBadge = (status: string) => {
 export default function ArquivoDetalhes() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const contractStatus = useContractStatus();
   const [correcaoDialogOpen, setCorrecaoDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [correcaoDescricao, setCorrecaoDescricao] = useState("");
@@ -508,13 +513,32 @@ export default function ArquivoDetalhes() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Aviso de contrato vencido */}
+            {contractStatus.isExpired && (
+              <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-center gap-3">
+                <Lock className="h-5 w-5 text-destructive flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-medium text-destructive">Downloads bloqueados</p>
+                  <p className="text-sm text-muted-foreground">Seu contrato está vencido. Renove para fazer download dos arquivos.</p>
+                </div>
+                <Link to="/franqueado/perfil">
+                  <Button variant="destructive" size="sm">Renovar</Button>
+                </Link>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 p-4 border border-border rounded-lg">
                 <p className="text-sm text-muted-foreground mb-2">Arquivo Original</p>
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{arquivo.arquivoOriginal}</span>
-                  <Button variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    disabled={contractStatus.isExpired}
+                    title={contractStatus.isExpired ? "Contrato vencido" : "Download"}
+                  >
+                    {contractStatus.isExpired ? <Lock className="h-4 w-4 mr-2" /> : <Download className="h-4 w-4 mr-2" />}
                     Download
                   </Button>
                 </div>
@@ -525,8 +549,12 @@ export default function ArquivoDetalhes() {
                   <p className="text-sm text-muted-foreground mb-2">Arquivo Modificado</p>
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-primary">{arquivo.arquivoModificado}</span>
-                    <Button size="sm">
-                      <Download className="h-4 w-4 mr-2" />
+                    <Button 
+                      size="sm" 
+                      disabled={contractStatus.isExpired}
+                      title={contractStatus.isExpired ? "Contrato vencido" : "Download"}
+                    >
+                      {contractStatus.isExpired ? <Lock className="h-4 w-4 mr-2" /> : <Download className="h-4 w-4 mr-2" />}
                       Download
                     </Button>
                   </div>
@@ -559,10 +587,20 @@ export default function ArquivoDetalhes() {
             <div className="flex flex-wrap gap-4 items-center">
               {/* CTA Primário: Download quando concluído */}
               {arquivo.status === "completed" && arquivo.arquivoModificado && (
-                <Button variant="hero" className="gap-2">
-                  <Download className="h-4 w-4" />
-                  Download Arquivo Modificado
-                </Button>
+                contractStatus.isExpired ? (
+                  <div className="flex flex-col gap-1">
+                    <Button variant="hero" className="gap-2" disabled>
+                      <Lock className="h-4 w-4" />
+                      Download Bloqueado
+                    </Button>
+                    <ContractBlockBadge />
+                  </div>
+                ) : (
+                  <Button variant="hero" className="gap-2">
+                    <Download className="h-4 w-4" />
+                    Download Arquivo Modificado
+                  </Button>
+                )
               )}
               
               {/* CTA Secundário: Solicitar Correção (outline + confirmação) */}
