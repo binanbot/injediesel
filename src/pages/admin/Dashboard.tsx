@@ -30,10 +30,10 @@ import {
 } from "recharts";
 
 const stats = [
-  { label: "Total Franqueados", value: "48", icon: Users, trend: "+3", trendUp: true },
-  { label: "Arquivos Recebidos", value: "324", icon: FileDown, trend: "+28", trendUp: true },
-  { label: "Taxa de Conclusão", value: "94%", icon: FileCheck, trend: "+2%", trendUp: true },
-  { label: "Cidades Atendidas", value: "156", icon: MapPin, trend: "+5", trendUp: true },
+  { label: "Total Franqueados", value: "48", icon: Users, trend: "+3", trendUp: true, path: "/admin/franqueados", cta: "Ver franqueados" },
+  { label: "Arquivos Pendentes", value: "12", icon: FileDown, trend: "+28", trendUp: true, path: "/admin/arquivos?status=pending", cta: "Ver pendentes" },
+  { label: "Em Processamento", value: "8", icon: Clock, trend: "+2", trendUp: true, path: "/admin/arquivos?status=processing", cta: "Ver em andamento" },
+  { label: "Downloads Prontos", value: "156", icon: FileCheck, trend: "+5", trendUp: true, path: "/admin/arquivos?status=completed", cta: "Ir para downloads" },
 ];
 
 const arquivosPorMes = [
@@ -94,7 +94,7 @@ export default function AdminDashboard() {
                 <p className="text-sm text-orange-300/70">Aguardando análise e resolução</p>
               </div>
             </div>
-            <span className="text-orange-400/70 text-sm hidden sm:block">Clique para ver →</span>
+            <span className="text-orange-400/70 text-sm hidden sm:block">Ver novos arquivos →</span>
           </div>
         </motion.div>
       </Link>
@@ -117,7 +117,7 @@ export default function AdminDashboard() {
                   Você tem <span className="text-xl font-bold">{novosSuporte}</span> novos suporte!
                 </p>
               </div>
-              <span className="text-amber-400/50 text-xs hidden lg:block">→</span>
+              <span className="text-amber-400/50 text-xs hidden lg:block">Ver solicitações →</span>
             </div>
           </motion.div>
         </Link>
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
                   Você tem <span className="text-xl font-bold">{novasMensagens}</span> mensagens
                 </p>
               </div>
-              <span className="text-blue-400/50 text-xs hidden lg:block">→</span>
+              <span className="text-blue-400/50 text-xs hidden lg:block">Ver mensagens →</span>
             </div>
           </motion.div>
         </Link>
@@ -153,23 +153,26 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <Card className="hover:border-primary/50 transition-colors">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="text-3xl font-bold mt-1">{stat.value}</p>
-                    <div className={`flex items-center gap-1 mt-1 text-sm ${stat.trendUp ? "text-success" : "text-destructive"}`}>
-                      {stat.trendUp ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-                      {stat.trend}
+            <Link to={stat.path}>
+              <Card className="hover:border-primary/50 transition-colors cursor-pointer group">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                      <p className="text-3xl font-bold mt-1">{stat.value}</p>
+                      <div className={`flex items-center gap-1 mt-1 text-sm ${stat.trendUp ? "text-success" : "text-destructive"}`}>
+                        {stat.trendUp ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                        {stat.trend}
+                      </div>
+                      <p className="text-xs text-primary/70 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">{stat.cta} →</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+                      <stat.icon className="h-6 w-6" />
                     </div>
                   </div>
-                  <div className="p-3 rounded-xl bg-primary/10 text-primary">
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
           </motion.div>
         ))}
       </div>
