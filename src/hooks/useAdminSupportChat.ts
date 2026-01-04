@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { playNotificationSound } from "@/utils/notificationSound";
 
 export interface Message {
   id: string;
@@ -83,9 +84,10 @@ export function useAdminSupportChat(conversationId: string | null) {
             if (prev.some(m => m.id === newMessage.id)) return prev;
             return [...prev, newMessage];
           });
-          // Increment unread if from franqueado
+          // Increment unread and play sound if from franqueado
           if (newMessage.sender_type === "franqueado") {
             setUnreadCount(prev => prev + 1);
+            playNotificationSound();
           }
         }
       )

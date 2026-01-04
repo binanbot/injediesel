@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { playNotificationSound } from "@/utils/notificationSound";
 
 export interface Message {
   id: string;
@@ -103,6 +104,10 @@ export function useSupportChat() {
         (payload) => {
           const newMessage = payload.new as Message;
           setMessages((prev) => [...prev, newMessage]);
+          // Play notification sound if message is from support
+          if (newMessage.sender_type === "suporte") {
+            playNotificationSound();
+          }
         }
       )
       .subscribe();
