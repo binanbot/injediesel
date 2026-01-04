@@ -118,6 +118,106 @@ export type Database = {
           },
         ]
       }
+      customers: {
+        Row: {
+          active_city: string | null
+          address_city: string | null
+          address_country: string | null
+          address_line: string | null
+          address_state: string | null
+          cnpj: string | null
+          cpf: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          unit_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          active_city?: string | null
+          address_city?: string | null
+          address_country?: string | null
+          address_line?: string | null
+          address_state?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          unit_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          active_city?: string | null
+          address_city?: string | null
+          address_country?: string | null
+          address_line?: string | null
+          address_state?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          unit_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exports_log: {
+        Row: {
+          accepted_at: string
+          accepted_privacy_terms: boolean
+          created_at: string | null
+          export_type: string
+          filters_used: Json | null
+          id: string
+          requested_by_user_id: string
+          unit_id: string | null
+        }
+        Insert: {
+          accepted_at: string
+          accepted_privacy_terms: boolean
+          created_at?: string | null
+          export_type: string
+          filters_used?: Json | null
+          id?: string
+          requested_by_user_id: string
+          unit_id?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          accepted_privacy_terms?: boolean
+          created_at?: string | null
+          export_type?: string
+          filters_used?: Json | null
+          id?: string
+          requested_by_user_id?: string
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exports_log_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       franchisee_profiles: {
         Row: {
           contract_expiration_date: string
@@ -247,6 +347,67 @@ export type Database = {
         }
         Relationships: []
       }
+      services: {
+        Row: {
+          amount_brl: number | null
+          created_at: string | null
+          customer_id: string
+          description: string | null
+          id: string
+          protocol: string | null
+          service_type: string
+          status: string | null
+          unit_id: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          amount_brl?: number | null
+          created_at?: string | null
+          customer_id: string
+          description?: string | null
+          id?: string
+          protocol?: string | null
+          service_type: string
+          status?: string | null
+          unit_id: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          amount_brl?: number | null
+          created_at?: string | null
+          customer_id?: string
+          description?: string | null
+          id?: string
+          protocol?: string | null
+          service_type?: string
+          status?: string | null
+          unit_id?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_conversations: {
         Row: {
           attachment_name: string | null
@@ -315,6 +476,47 @@ export type Database = {
           },
         ]
       }
+      units: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          franchisee_id: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          state: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          franchisee_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          state?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          franchisee_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          state?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_franchisee_id_fkey"
+            columns: ["franchisee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_franchisees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -336,11 +538,66 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicles: {
+        Row: {
+          brand: string | null
+          category: string | null
+          created_at: string | null
+          customer_id: string
+          engine: string | null
+          id: string
+          model: string | null
+          plate: string | null
+          unit_id: string
+          year: string | null
+        }
+        Insert: {
+          brand?: string | null
+          category?: string | null
+          created_at?: string | null
+          customer_id: string
+          engine?: string | null
+          id?: string
+          model?: string | null
+          plate?: string | null
+          unit_id: string
+          year?: string | null
+        }
+        Update: {
+          brand?: string | null
+          category?: string | null
+          created_at?: string | null
+          customer_id?: string
+          engine?: string | null
+          id?: string
+          model?: string | null
+          plate?: string | null
+          unit_id?: string
+          year?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_user_unit_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -348,6 +605,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_franchisor_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "suporte" | "franqueado"
