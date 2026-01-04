@@ -39,8 +39,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import CorrectionChatPanel from "@/components/admin/CorrectionChatPanel";
 
 interface CorrectionTicket {
   id: string;
@@ -457,146 +459,145 @@ export default function AdminCorrecoes() {
         </CardContent>
       </Card>
 
-      {/* Detail Dialog */}
+      {/* Detail Dialog with Chat */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col glass-card border-border/30 p-0">
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col glass-card border-border/30 p-0">
           <DialogHeader className="px-6 pt-6 pb-0">
             <DialogTitle className="flex items-center gap-2 text-xl">
               <AlertCircle className="h-5 w-5 text-warning" />
               Detalhes do Ticket
+              {selectedTicket && (
+                <span className="text-sm font-normal text-muted-foreground ml-2">
+                  #{selectedTicket.id.slice(0, 8)}
+                </span>
+              )}
             </DialogTitle>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 px-6 overflow-y-auto">
-            {selectedTicket && (
-              <div className="space-y-5 py-4">
-                {/* Status atual */}
-                <div className="flex items-center justify-between">
-                  {getStatusBadge(selectedTicket.status)}
-                  <span className="text-sm text-muted-foreground">
-                    #{selectedTicket.id.slice(0, 8)}
-                  </span>
-                </div>
+          <Tabs defaultValue="detalhes" className="flex-1 flex flex-col overflow-hidden">
+            <TabsList className="mx-6 mt-4 grid w-auto grid-cols-2">
+              <TabsTrigger value="detalhes" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Detalhes
+              </TabsTrigger>
+              <TabsTrigger value="chat" className="gap-2">
+                <MessageCircle className="h-4 w-4" />
+                Chat
+                {selectedTicket?.conversation_id && (
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                    Ativo
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
 
-                {/* Dados do arquivo */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-foreground">Arquivo Relacionado</h4>
-                  <div className="grid grid-cols-2 gap-3 text-sm bg-secondary/30 p-3 rounded-lg">
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">Franqueado</p>
-                      <p className="font-medium text-foreground">
-                        {mockTicketsData[selectedTicket.arquivo_id]?.franqueado || "N/A"}
+            <TabsContent value="detalhes" className="flex-1 overflow-hidden mt-0">
+              <ScrollArea className="flex-1 px-6 h-[400px]">
+                {selectedTicket && (
+                  <div className="space-y-5 py-4">
+                    {/* Status atual */}
+                    <div className="flex items-center justify-between">
+                      {getStatusBadge(selectedTicket.status)}
+                    </div>
+
+                    {/* Dados do arquivo */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Arquivo Relacionado</h4>
+                      <div className="grid grid-cols-2 gap-3 text-sm bg-secondary/30 p-3 rounded-lg">
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">Franqueado</p>
+                          <p className="font-medium text-foreground">
+                            {mockTicketsData[selectedTicket.arquivo_id]?.franqueado || "N/A"}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">Placa</p>
+                          <p className="font-medium text-foreground">
+                            {mockTicketsData[selectedTicket.arquivo_id]?.placa || "N/A"}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">Veículo</p>
+                          <p className="font-medium text-foreground">
+                            {mockTicketsData[selectedTicket.arquivo_id]?.veiculo || "N/A"}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-muted-foreground">Serviço</p>
+                          <p className="font-medium text-foreground">
+                            {mockTicketsData[selectedTicket.arquivo_id]?.servico || "N/A"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator className="bg-border/30" />
+
+                    {/* Motivo da correção */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Descrição do Problema</h4>
+                      <p className="text-sm text-foreground bg-secondary/30 p-3 rounded-lg">
+                        {selectedTicket.motivo}
                       </p>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">Placa</p>
-                      <p className="font-medium text-foreground">
-                        {mockTicketsData[selectedTicket.arquivo_id]?.placa || "N/A"}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">Veículo</p>
-                      <p className="font-medium text-foreground">
-                        {mockTicketsData[selectedTicket.arquivo_id]?.veiculo || "N/A"}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">Serviço</p>
-                      <p className="font-medium text-foreground">
-                        {mockTicketsData[selectedTicket.arquivo_id]?.servico || "N/A"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
 
-                <Separator className="bg-border/30" />
+                    {/* Arquivo anexo */}
+                    {selectedTicket.arquivo_anexo_url && (
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-foreground">Arquivo Anexado</h4>
+                        <Button variant="outline" className="w-full" asChild>
+                          <a href={selectedTicket.arquivo_anexo_url} target="_blank" rel="noopener noreferrer">
+                            <Download className="h-4 w-4 mr-2" />
+                            Baixar Anexo
+                          </a>
+                        </Button>
+                      </div>
+                    )}
 
-                {/* Motivo da correção */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-foreground">Descrição do Problema</h4>
-                  <p className="text-sm text-foreground bg-secondary/30 p-3 rounded-lg">
-                    {selectedTicket.motivo}
-                  </p>
-                </div>
+                    <Separator className="bg-border/30" />
 
-                {/* Arquivo anexo */}
-                {selectedTicket.arquivo_anexo_url && (
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-foreground">Arquivo Anexado</h4>
-                    <Button variant="outline" className="w-full" asChild>
-                      <a href={selectedTicket.arquivo_anexo_url} target="_blank" rel="noopener noreferrer">
-                        <Download className="h-4 w-4 mr-2" />
-                        Baixar Anexo
-                      </a>
-                    </Button>
+                    {/* Atualizar status */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Gerenciar Ticket</h4>
+                      <div className="space-y-2">
+                        <Label>Alterar Status</Label>
+                        <Select value={novoStatus} onValueChange={setNovoStatus}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="aberto">Aberto</SelectItem>
+                            <SelectItem value="em_analise">Em Análise</SelectItem>
+                            <SelectItem value="resolvido">Resolvido</SelectItem>
+                            <SelectItem value="rejeitado">Rejeitado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Observação Interna (opcional)</Label>
+                        <Textarea
+                          placeholder="Adicione uma nota sobre o ticket..."
+                          value={resposta}
+                          onChange={(e) => setResposta(e.target.value)}
+                          className="min-h-[80px] bg-secondary/30"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Datas */}
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Criado: {formatDate(selectedTicket.created_at)}</span>
+                      <span>Atualizado: {formatDate(selectedTicket.updated_at)}</span>
+                    </div>
                   </div>
                 )}
+              </ScrollArea>
+            </TabsContent>
 
-                {/* Chat vinculado */}
-                {selectedTicket.conversation_id && (
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-foreground flex items-center gap-2">
-                      <MessageCircle className="h-4 w-4 text-primary" />
-                      Chat de Suporte
-                    </h4>
-                    <Button 
-                      variant="outline" 
-                      className="w-full border-primary/30 text-primary hover:bg-primary/10"
-                      onClick={() => {
-                        // Em produção, isso abriria o chat vinculado
-                        toast({
-                          title: "Chat vinculado",
-                          description: "O chat de suporte está disponível para comunicação direta com o franqueado.",
-                        });
-                      }}
-                    >
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Abrir Conversa
-                    </Button>
-                    <p className="text-xs text-muted-foreground">
-                      Uma conversa de suporte foi criada automaticamente para este ticket.
-                    </p>
-                  </div>
-                )}
-
-                <Separator className="bg-border/30" />
-
-                {/* Atualizar status */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-foreground">Gerenciar Ticket</h4>
-                  <div className="space-y-2">
-                    <Label>Alterar Status</Label>
-                    <Select value={novoStatus} onValueChange={setNovoStatus}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="aberto">Aberto</SelectItem>
-                        <SelectItem value="em_analise">Em Análise</SelectItem>
-                        <SelectItem value="resolvido">Resolvido</SelectItem>
-                        <SelectItem value="rejeitado">Rejeitado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Observação Interna (opcional)</Label>
-                    <Textarea
-                      placeholder="Adicione uma nota sobre o ticket..."
-                      value={resposta}
-                      onChange={(e) => setResposta(e.target.value)}
-                      className="min-h-[80px] bg-secondary/30"
-                    />
-                  </div>
-                </div>
-
-                {/* Datas */}
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Criado: {formatDate(selectedTicket.created_at)}</span>
-                  <span>Atualizado: {formatDate(selectedTicket.updated_at)}</span>
-                </div>
-              </div>
-            )}
-          </ScrollArea>
+            <TabsContent value="chat" className="flex-1 overflow-hidden mt-0 h-[400px]">
+              <CorrectionChatPanel conversationId={selectedTicket?.conversation_id || null} />
+            </TabsContent>
+          </Tabs>
 
           <DialogFooter className="px-6 py-4 border-t border-border/30 bg-background/50 backdrop-blur-sm">
             <div className="flex gap-2 w-full">
