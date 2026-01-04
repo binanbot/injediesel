@@ -61,6 +61,7 @@ interface ArquivoDetalheDialogProps {
   arquivo: ArquivoDetalhado | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSolicitarCorrecao?: () => void;
 }
 
 const getStatusBadge = (status: string) => {
@@ -76,7 +77,7 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDetalheDialogProps) {
+export function ArquivoDetalheDialog({ arquivo, open, onOpenChange, onSolicitarCorrecao }: ArquivoDetalheDialogProps) {
   const [showCorrecao, setShowCorrecao] = useState(false);
   const [correcaoMotivo, setCorrecaoMotivo] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -529,7 +530,11 @@ export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDet
                 <Button 
                   variant="outline" 
                   className="flex-1 border-warning/30 text-warning hover:bg-warning/10"
-                  onClick={() => setShowCorrecao(true)}
+                  onClick={() => {
+                    setShowCorrecao(true);
+                    // Trigger scroll and highlight on parent
+                    onSolicitarCorrecao?.();
+                  }}
                 >
                   <AlertCircle className="h-4 w-4" />
                   Solicitar Correção
