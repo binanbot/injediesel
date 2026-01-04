@@ -44,6 +44,7 @@ import {
   Award
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { MetricTooltip, metricDefinitions } from "@/components/MetricTooltip";
 
 const arquivosPorUnidade = [
   { nome: "São Paulo - Centro", arquivos: 45 },
@@ -344,10 +345,13 @@ export default function AdminRelatorios() {
       >
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Desempenho por Categoria de Veículo
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Desempenho por Categoria de Veículo
+              </CardTitle>
+              <MetricTooltip explanation={metricDefinitions.desempenhoCategoria} />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -405,10 +409,13 @@ export default function AdminRelatorios() {
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-yellow-500" />
-                Top 10 Melhores Revendas
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                  Top 10 Melhores Revendas
+                </CardTitle>
+                <MetricTooltip explanation={metricDefinitions.rankingRevendas} />
+              </div>
               <Select value={categoriaFiltro} onValueChange={setCategoriaFiltro}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Filtrar por categoria" />
@@ -478,9 +485,12 @@ export default function AdminRelatorios() {
 
       {/* Evolution Chart */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Evolução Anual</CardTitle>
-        </CardHeader>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg">Evolução Anual</CardTitle>
+              <MetricTooltip explanation={metricDefinitions.evolucaoMensal} />
+            </div>
+          </CardHeader>
         <CardContent>
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
