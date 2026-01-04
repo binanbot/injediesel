@@ -80,18 +80,16 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
                         : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                     )}
                   >
-                    {/* Glow background effect */}
+                    {/* Glow effect - solid light point on right with gradient propagation */}
                     {isActive && (
-                      <div className="absolute inset-0 rounded-lg overflow-hidden">
-                        {/* Main glow background */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/30 via-primary/20 to-transparent" />
-                        {/* Light propagation effect extending right */}
-                        <div className="absolute inset-y-0 -right-8 w-24 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent blur-md" />
-                        {/* Inner glow for depth */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent rounded-lg" />
-                        {/* Subtle border glow */}
-                        <div className="absolute inset-0 rounded-lg ring-1 ring-primary/30" />
-                      </div>
+                      <>
+                        {/* Background gradient from right to left */}
+                        <div className="absolute inset-0 bg-gradient-to-l from-primary/25 via-primary/10 to-transparent rounded-lg" />
+                        {/* Solid light bar on right edge */}
+                        <div className="absolute right-0 top-1 bottom-1 w-1 bg-primary rounded-full shadow-[0_0_12px_4px_hsl(var(--primary)/0.6)]" />
+                        {/* Light propagation glow */}
+                        <div className="absolute right-0 inset-y-0 w-16 bg-gradient-to-l from-primary/20 to-transparent blur-sm" />
+                      </>
                     )}
                     <item.icon className={cn(
                       "relative z-10 h-5 w-5 transition-all duration-300",
