@@ -181,26 +181,24 @@ export default function Perfil() {
                 <span>Vencimento</span>
               </div>
 
-              {/* Renew Contract Button - appears when less than 30 days remaining */}
-              {contractStatus.daysRemaining && contractStatus.daysRemaining <= 30 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="pt-3"
+              {/* Renew Contract Button - always visible */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="pt-3"
+              >
+                <Button 
+                  variant={contractStatus.isExpired || (contractStatus.daysRemaining && contractStatus.daysRemaining <= 30) ? "hero" : "outline"} 
+                  className="w-full gap-2"
+                  onClick={() => toast({ 
+                    title: "Solicitação enviada!", 
+                    description: "Nossa equipe entrará em contato para renovação do contrato." 
+                  })}
                 >
-                  <Button 
-                    variant="hero" 
-                    className="w-full gap-2"
-                    onClick={() => toast({ 
-                      title: "Solicitação enviada!", 
-                      description: "Nossa equipe entrará em contato para renovação do contrato." 
-                    })}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    Renovar Contrato
-                  </Button>
-                </motion.div>
-              )}
+                  <RefreshCw className="h-4 w-4" />
+                  Renovar Contrato
+                </Button>
+              </motion.div>
             </div>
           </CardContent>
         </Card>
