@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Search, Filter, Download, Upload, Eye, MoreHorizontal, CheckCircle, RefreshCw, CalendarIcon, Clock } from "lucide-react";
@@ -74,14 +74,27 @@ const getStatusBadge = (status: string) => {
 export default function AdminArquivos() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [dataInicio, setDataInicio] = useState<Date>();
   const [dataFim, setDataFim] = useState<Date>();
   const [statusDialog, setStatusDialog] = useState<{ open: boolean; arquivo: typeof arquivos[0] | null }>({
     open: false,
     arquivo: null,
   });
+
+  // Lê o status da URL ou usa "all" como padrão
+  const statusFilter = searchParams.get("status") || "all";
+
+  // Função para atualizar o filtro de status (sincroniza com URL)
+  const setStatusFilter = (status: string) => {
+    if (status === "all") {
+      searchParams.delete("status");
+    } else {
+      searchParams.set("status", status);
+    }
+    setSearchParams(searchParams);
+  };
 
   // Função para converter string de data DD/MM/YYYY HH:mm para Date
   const parseData = (dataStr: string) => {
