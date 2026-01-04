@@ -335,9 +335,12 @@ export default function CoverageMap({ filterUf, filterTipo, filterUnidade, onCit
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
 
+    // Prevent re-initialization if map already exists
+    if (map.current) return;
+
     mapboxgl.accessToken = mapboxToken;
 
-    map.current = new mapboxgl.Map({
+    const mapInstance = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/light-v11',
       center: [-55, -15], // Center of Brazil
@@ -346,25 +349,56 @@ export default function CoverageMap({ filterUf, filterTipo, filterUnidade, onCit
       maxZoom: 12,
     });
 
+    map.current = mapInstance;
+
     // Add navigation controls
-    map.current.addControl(
+    mapInstance.addControl(
       new mapboxgl.NavigationControl({ visualizePitch: false }),
       'top-right'
     );
 
     // Add scale control
-    map.current.addControl(
+    mapInstance.addControl(
       new mapboxgl.ScaleControl({ maxWidth: 100 }),
       'bottom-left'
     );
 
-    map.current.on('load', () => {
-      addMarkers();
+    mapInstance.on('load', () => {
+      // Only add markers if component is still mounted
+      if (map.current === mapInstance) {
+        addMarkers();
+      }
     });
 
     return () => {
-      clearMarkers();
-      map.current?.remove();
+      // Clean up markers first
+      markersRef.current.forEach((marker) => {
+        try {
+          marker.remove();
+        } catch (e) {
+          // Ignore removal errors
+        }
+      });
+      markersRef.current = [];
+      
+      if (popupRef.current) {
+        try {
+          popupRef.current.remove();
+        } catch (e) {
+          // Ignore removal errors
+        }
+        popupRef.current = null;
+      }
+      
+      // Then remove the map
+      if (map.current === mapInstance) {
+        try {
+          mapInstance.remove();
+        } catch (e) {
+          // Ignore removal errors
+        }
+        map.current = null;
+      }
     };
   }, [mapboxToken]);
 
@@ -373,7 +407,7 @@ export default function CoverageMap({ filterUf, filterTipo, filterUnidade, onCit
     if (map.current && map.current.loaded()) {
       addMarkers();
     }
-  }, [addMarkers]);
+  }, [filteredCoverage, mapboxToken]);
 
   if (loading && !mapboxToken) {
     return (
