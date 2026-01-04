@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, 
@@ -165,9 +165,44 @@ export default function ArquivoDetalhes() {
   const [correcaoDescricao, setCorrecaoDescricao] = useState("");
   const [novoArquivo, setNovoArquivo] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [ticketExistente, setTicketExistente] = useState(false);
+  const [verificandoTicket, setVerificandoTicket] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const arquivo = id ? arquivosMock[id] : null;
+
+  // Verificar se já existe um ticket de correção aberto para este arquivo
+  useEffect(() => {
+    const verificarTicketExistente = async () => {
+      if (!id) return;
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setVerificandoTicket(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('correction_tickets')
+          .select('id, status')
+          .eq('arquivo_id', id)
+          .eq('franqueado_id', user.id)
+          .eq('status', 'aberto')
+          .maybeSingle();
+
+        if (!error && data) {
+          setTicketExistente(true);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar ticket:', error);
+      } finally {
+        setVerificandoTicket(false);
+      }
+    };
+
+    verificarTicketExistente();
+  }, [id]);
 
   if (!arquivo) {
     return (
@@ -521,7 +556,7 @@ export default function ArquivoDetalhes() {
             <CardTitle>Ações</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 items-center">
               {/* CTA Primário: Download quando concluído */}
               {arquivo.status === "completed" && arquivo.arquivoModificado && (
                 <Button variant="hero" className="gap-2">
@@ -531,14 +566,22 @@ export default function ArquivoDetalhes() {
               )}
               
               {/* CTA Secundário: Solicitar Correção (outline + confirmação) */}
-              <Button 
-                variant="outline"
-                onClick={() => setConfirmDialogOpen(true)}
-                className="gap-2"
-              >
-                <AlertTriangle className="h-4 w-4" />
-                Solicitar Correção
-              </Button>
+              {ticketExistente ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 px-4 py-2 rounded-lg border border-border/50">
+                  <AlertTriangle className="h-4 w-4 text-warning" />
+                  <span>Já existe uma solicitação de correção em aberto para este arquivo</span>
+                </div>
+              ) : (
+                <Button 
+                  variant="outline"
+                  onClick={() => setConfirmDialogOpen(true)}
+                  className="gap-2"
+                  disabled={verificandoTicket}
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  {verificandoTicket ? "Verificando..." : "Solicitar Correção"}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -35,6 +35,7 @@ import {
   Tag,
   AlertTriangle,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ArquivoDetalhado {
   id: number;
@@ -82,6 +83,44 @@ const getStatusBadge = (status: string) => {
 export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDetalheDialogProps) {
   const navigate = useNavigate();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [ticketExistente, setTicketExistente] = useState(false);
+  const [verificandoTicket, setVerificandoTicket] = useState(false);
+
+  // Verificar se já existe um ticket de correção aberto para este arquivo
+  useEffect(() => {
+    const verificarTicketExistente = async () => {
+      if (!arquivo || !open) return;
+      
+      setVerificandoTicket(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setVerificandoTicket(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('correction_tickets')
+          .select('id, status')
+          .eq('arquivo_id', String(arquivo.id))
+          .eq('franqueado_id', user.id)
+          .eq('status', 'aberto')
+          .maybeSingle();
+
+        if (!error && data) {
+          setTicketExistente(true);
+        } else {
+          setTicketExistente(false);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar ticket:', error);
+      } finally {
+        setVerificandoTicket(false);
+      }
+    };
+
+    verificarTicketExistente();
+  }, [arquivo, open]);
 
   if (!arquivo) return null;
 
@@ -247,20 +286,28 @@ export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDet
         </ScrollArea>
 
         <DialogFooter className="px-6 py-4 border-t border-border/30 flex-shrink-0">
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:justify-end">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:justify-end items-center">
             <Button variant="ghost" onClick={handleClose} className="order-3 sm:order-1">
               Fechar
             </Button>
             
-            {/* Solicitar Correção - Sempre secundário (outline) */}
-            <Button 
-              variant="outline" 
-              className="gap-2 order-2"
-              onClick={() => setConfirmDialogOpen(true)}
-            >
-              <AlertTriangle className="h-4 w-4" />
-              Solicitar Correção
-            </Button>
+            {/* Solicitar Correção - Sempre secundário (outline) ou mensagem se já existe ticket */}
+            {ticketExistente ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 px-3 py-2 rounded-lg border border-border/50 order-2">
+                <AlertTriangle className="h-3 w-3 text-warning flex-shrink-0" />
+                <span>Correção já solicitada</span>
+              </div>
+            ) : (
+              <Button 
+                variant="outline" 
+                className="gap-2 order-2"
+                onClick={() => setConfirmDialogOpen(true)}
+                disabled={verificandoTicket}
+              >
+                <AlertTriangle className="h-4 w-4" />
+                {verificandoTicket ? "Verificando..." : "Solicitar Correção"}
+              </Button>
+            )}
 
             {/* Download - Primário quando concluído */}
             {isCompleted && (
