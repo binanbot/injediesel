@@ -134,7 +134,7 @@ ou em conformidade com as leis aplicáveis da sua região.`;
 
 // Categorias de veículo (mantidas)
 export const categoriasVeiculo = [
-  "Caminhão",
+  "Truck",
   "Ônibus",
   "Veículo de Passeio",
   "Pick-up",
@@ -146,11 +146,11 @@ export const categoriasVeiculo = [
 ];
 
 // Categorias que exigem placa
-export const categoriasComPlaca = ["Caminhão", "Ônibus", "Veículo de Passeio", "Pick-up", "Moto"];
+export const categoriasComPlaca = ["Truck", "Ônibus", "Veículo de Passeio", "Pick-up", "Moto"];
 
 // Marcas por categoria disponíveis no Brasil
 export const marcasPorCategoria: Record<string, string[]> = {
-  "Caminhão": [
+  "Truck": [
     "Volvo", "Scania", "Mercedes-Benz", "DAF", "MAN", "Iveco", "Ford", "Volkswagen", "Outro"
   ],
   "Ônibus": [
