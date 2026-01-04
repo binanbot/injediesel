@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           arquivo_anexo_url: string | null
           arquivo_id: string
+          conversation_id: string | null
           created_at: string
           franqueado_id: string
           id: string
@@ -28,6 +29,7 @@ export type Database = {
         Insert: {
           arquivo_anexo_url?: string | null
           arquivo_id: string
+          conversation_id?: string | null
           created_at?: string
           franqueado_id: string
           id?: string
@@ -38,6 +40,7 @@ export type Database = {
         Update: {
           arquivo_anexo_url?: string | null
           arquivo_id?: string
+          conversation_id?: string | null
           created_at?: string
           franqueado_id?: string
           id?: string
@@ -45,7 +48,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "correction_tickets_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "support_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_conversations: {
         Row: {

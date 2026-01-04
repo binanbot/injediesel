@@ -177,7 +177,33 @@ export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDet
         arquivoAnexoUrl = urlData.publicUrl;
       }
 
-      // Criar ticket de correção
+      // Criar conversa de suporte vinculada ao ticket
+      const { data: conversationData, error: conversationError } = await supabase
+        .from('support_conversations')
+        .insert({
+          franqueado_id: user.id,
+          subject: `Correção: ${arquivo.placa} - ${arquivo.servico}`,
+          status: 'open'
+        })
+        .select()
+        .single();
+
+      let conversationId: string | null = null;
+      if (!conversationError && conversationData) {
+        conversationId = conversationData.id;
+
+        // Enviar primeira mensagem com o motivo da correção
+        await supabase
+          .from('support_messages')
+          .insert({
+            conversation_id: conversationId,
+            sender_id: user.id,
+            sender_type: 'franqueado',
+            content: `📋 **Solicitação de Correção**\n\n**Veículo:** ${arquivo.marca} ${arquivo.modelo}\n**Placa:** ${arquivo.placa}\n**Serviço:** ${arquivo.servico}\n\n**Descrição do problema:**\n${correcaoMotivo.trim()}${arquivoAnexoUrl ? '\n\n📎 Arquivo anexado' : ''}`
+          });
+      }
+
+      // Criar ticket de correção com link para a conversa
       const { error: insertError } = await supabase
         .from('correction_tickets')
         .insert({
@@ -185,7 +211,8 @@ export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDet
           franqueado_id: user.id,
           motivo: correcaoMotivo.trim(),
           arquivo_anexo_url: arquivoAnexoUrl,
-          status: 'aberto'
+          status: 'aberto',
+          conversation_id: conversationId
         });
 
       if (insertError) {
