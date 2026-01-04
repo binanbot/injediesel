@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Search, Filter, Download, Upload, Eye, MoreHorizontal, CheckCircle, RefreshCw, CalendarIcon } from "lucide-react";
+import { Search, Filter, Download, Upload, Eye, MoreHorizontal, CheckCircle, RefreshCw, CalendarIcon, Clock } from "lucide-react";
+import { calcularTempoDecorrido, getTempoClasses } from "@/utils/tempoDecorrido";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -219,24 +220,34 @@ export default function AdminArquivos() {
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Unidade</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Placa</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Veículo</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground hidden md:table-cell">Veículo</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Serviço</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Data</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground hidden sm:table-cell">Data</th>
                   <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredArquivos.map((arquivo) => (
+                {filteredArquivos.map((arquivo) => {
+                  const tempo = calcularTempoDecorrido(arquivo.data);
+                  return (
                   <tr key={arquivo.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
                     <td className="py-4 px-4 font-medium">{arquivo.unidade}</td>
                     <td className="py-4 px-4 text-muted-foreground">{arquivo.placa}</td>
-                    <td className="py-4 px-4 text-muted-foreground">
+                    <td className="py-4 px-4 text-muted-foreground hidden md:table-cell">
                       {arquivo.marca} {arquivo.modelo}
                     </td>
                     <td className="py-4 px-4 text-muted-foreground">{arquivo.servico}</td>
-                    <td className="py-4 px-4">{getStatusBadge(arquivo.status)}</td>
-                    <td className="py-4 px-4 text-muted-foreground">{arquivo.data}</td>
+                    <td className="py-4 px-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                        {getStatusBadge(arquivo.status)}
+                        <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${getTempoClasses(tempo.level)}`}>
+                          <Clock className="h-3 w-3" />
+                          {tempo.label}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 text-muted-foreground hidden sm:table-cell">{arquivo.data}</td>
                     <td className="py-4 px-4">
                       <div className="flex items-center justify-end gap-2">
                         <Button variant="ghost" size="icon">
@@ -275,7 +286,8 @@ export default function AdminArquivos() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
