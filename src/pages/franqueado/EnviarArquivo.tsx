@@ -10,6 +10,10 @@ import {
   AlertTriangle,
   User,
   DollarSign,
+  Clock,
+  FileCheck,
+  Bell,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -234,24 +238,80 @@ export default function EnviarArquivo() {
 
   if (submitted) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md"
+          className="text-center max-w-lg w-full"
         >
-          <div className="w-20 h-20 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="h-10 w-10 text-success" />
-          </div>
-          <h2 className="text-2xl font-bold mb-4">Arquivo Enviado!</h2>
-          <p className="text-muted-foreground mb-6">
-            Obrigado por enviar seu arquivo. Nossa equipe irá processá-lo e você receberá uma notificação assim que estiver pronto.
+          {/* Ícone de sucesso animado */}
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="w-24 h-24 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6"
+          >
+            <CheckCircle2 className="h-12 w-12 text-success" />
+          </motion.div>
+
+          <h2 className="text-2xl font-bold mb-2">Arquivo Enviado com Sucesso!</h2>
+          <p className="text-muted-foreground mb-8">
+            Seu arquivo foi recebido e está na fila de processamento.
           </p>
-          <div className="flex gap-4 justify-center">
-            <Button variant="outline" onClick={resetForm}>
-              Enviar Outro
+
+          {/* Próximos passos */}
+          <Card className="glass-card text-left mb-6">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ArrowRight className="h-4 w-4 text-primary" />
+                Próximos Passos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Clock className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Em Análise</p>
+                  <p className="text-xs text-muted-foreground">
+                    Nossa equipe irá analisar seu arquivo em breve
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center flex-shrink-0">
+                  <FileCheck className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Prazo Médio</p>
+                  <p className="text-xs text-muted-foreground">
+                    Processamento em até 2 horas (horário comercial)
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center flex-shrink-0">
+                  <Bell className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Notificação</p>
+                  <p className="text-xs text-muted-foreground">
+                    Você receberá um alerta quando o arquivo estiver pronto
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Botões de ação */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button variant="outline" onClick={resetForm} className="gap-2">
+              <Upload className="h-4 w-4" />
+              Enviar Outro Arquivo
             </Button>
-            <Button variant="hero" onClick={() => (window.location.href = "/franqueado/arquivos")}>
+            <Button variant="hero" onClick={() => (window.location.href = "/franqueado/arquivos")} className="gap-2">
+              <FileIcon className="h-4 w-4" />
               Ver Meus Arquivos
             </Button>
           </div>
