@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Send, Plus, Mail, MailOpen, Users, AlertTriangle, Info, Megaphone, Filter } from "lucide-react";
+import { Send, Plus, Mail, MailOpen, Users, AlertTriangle, Info, Megaphone, Filter, MapPin, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -88,22 +89,104 @@ const mensagens = [
   },
 ];
 
+// Mock data for regions and units
+const regioes = [
+  { id: "sudeste", nome: "Sudeste", unidades: 18 },
+  { id: "sul", nome: "Sul", unidades: 12 },
+  { id: "nordeste", nome: "Nordeste", unidades: 10 },
+  { id: "centro-oeste", nome: "Centro-Oeste", unidades: 5 },
+  { id: "norte", nome: "Norte", unidades: 3 },
+];
+
+const unidades = [
+  { id: "sp-capital", nome: "São Paulo - Capital", regiao: "sudeste" },
+  { id: "sp-campinas", nome: "Campinas", regiao: "sudeste" },
+  { id: "rj-capital", nome: "Rio de Janeiro - Capital", regiao: "sudeste" },
+  { id: "mg-bh", nome: "Belo Horizonte", regiao: "sudeste" },
+  { id: "pr-curitiba", nome: "Curitiba", regiao: "sul" },
+  { id: "rs-poa", nome: "Porto Alegre", regiao: "sul" },
+  { id: "sc-floripa", nome: "Florianópolis", regiao: "sul" },
+  { id: "ba-salvador", nome: "Salvador", regiao: "nordeste" },
+  { id: "pe-recife", nome: "Recife", regiao: "nordeste" },
+  { id: "ce-fortaleza", nome: "Fortaleza", regiao: "nordeste" },
+  { id: "go-goiania", nome: "Goiânia", regiao: "centro-oeste" },
+  { id: "df-brasilia", nome: "Brasília", regiao: "centro-oeste" },
+];
+
+type RecipientType = "all" | "region" | "unit";
+
 export default function AdminMensagens() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [newMessageCategory, setNewMessageCategory] = useState<MessageCategory>("informativo");
+  
+  // Recipient selection state
+  const [recipientType, setRecipientType] = useState<RecipientType>("all");
+  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+  const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
 
   const filteredMensagens = categoryFilter === "all" 
     ? mensagens 
     : mensagens.filter(m => m.categoria === categoryFilter);
 
+  // Calculate recipient count
+  const getRecipientCount = () => {
+    if (recipientType === "all") return 48;
+    if (recipientType === "region") {
+      return regioes
+        .filter(r => selectedRegions.includes(r.id))
+        .reduce((sum, r) => sum + r.unidades, 0);
+    }
+    return selectedUnits.length;
+  };
+
+  const getRecipientLabel = () => {
+    if (recipientType === "all") return "Todos os 48 franqueados ativos";
+    if (recipientType === "region") {
+      if (selectedRegions.length === 0) return "Nenhuma região selecionada";
+      const count = getRecipientCount();
+      return `${count} franqueado${count !== 1 ? 's' : ''} de ${selectedRegions.length} região(ões)`;
+    }
+    if (selectedUnits.length === 0) return "Nenhuma unidade selecionada";
+    return `${selectedUnits.length} unidade${selectedUnits.length !== 1 ? 's' : ''} selecionada${selectedUnits.length !== 1 ? 's' : ''}`;
+  };
+
   const handleEnviar = () => {
+    const count = getRecipientCount();
+    if (count === 0) {
+      toast({
+        title: "Selecione destinatários",
+        description: "Você precisa selecionar ao menos um destinatário.",
+        variant: "destructive",
+      });
+      return;
+    }
     toast({
       title: "Mensagem enviada!",
-      description: "A mensagem foi enviada para todos os franqueados.",
+      description: `A mensagem foi enviada para ${count} franqueado${count !== 1 ? 's' : ''}.`,
     });
     setDialogOpen(false);
+    // Reset recipient selection
+    setRecipientType("all");
+    setSelectedRegions([]);
+    setSelectedUnits([]);
+  };
+
+  const toggleRegion = (regionId: string) => {
+    setSelectedRegions(prev => 
+      prev.includes(regionId) 
+        ? prev.filter(r => r !== regionId)
+        : [...prev, regionId]
+    );
+  };
+
+  const toggleUnit = (unitId: string) => {
+    setSelectedUnits(prev => 
+      prev.includes(unitId) 
+        ? prev.filter(u => u !== unitId)
+        : [...prev, unitId]
+    );
   };
 
   return (
@@ -165,11 +248,95 @@ export default function AdminMensagens() {
                 <Label>Conteúdo</Label>
                 <Textarea placeholder="Digite o conteúdo completo da mensagem..." rows={8} />
               </div>
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-secondary/50">
-                <Users className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="font-medium">Destinatários</p>
-                  <p className="text-sm text-muted-foreground">Todos os 48 franqueados ativos</p>
+              {/* Recipient Selection */}
+              <div className="space-y-3">
+                <Label>Destinatários</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={recipientType === "all" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setRecipientType("all")}
+                    className="gap-2"
+                  >
+                    <Users className="h-4 w-4" />
+                    Todos
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={recipientType === "region" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setRecipientType("region")}
+                    className="gap-2"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Por Região
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={recipientType === "unit" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setRecipientType("unit")}
+                    className="gap-2"
+                  >
+                    <Building className="h-4 w-4" />
+                    Por Unidade
+                  </Button>
+                </div>
+
+                {/* Region Selection */}
+                {recipientType === "region" && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 rounded-lg bg-secondary/30 border border-border">
+                    {regioes.map((regiao) => (
+                      <label
+                        key={regiao.id}
+                        className="flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50 cursor-pointer transition-colors"
+                      >
+                        <Checkbox
+                          checked={selectedRegions.includes(regiao.id)}
+                          onCheckedChange={() => toggleRegion(regiao.id)}
+                        />
+                        <span className="text-sm">{regiao.nome}</span>
+                        <Badge variant="secondary" className="ml-auto text-xs">
+                          {regiao.unidades}
+                        </Badge>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {/* Unit Selection */}
+                {recipientType === "unit" && (
+                  <div className="max-h-48 overflow-y-auto p-3 rounded-lg bg-secondary/30 border border-border space-y-1">
+                    {unidades.map((unidade) => (
+                      <label
+                        key={unidade.id}
+                        className="flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50 cursor-pointer transition-colors"
+                      >
+                        <Checkbox
+                          checked={selectedUnits.includes(unidade.id)}
+                          onCheckedChange={() => toggleUnit(unidade.id)}
+                        />
+                        <span className="text-sm">{unidade.nome}</span>
+                        <Badge variant="outline" className="ml-auto text-xs capitalize">
+                          {unidade.regiao}
+                        </Badge>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {/* Recipient Summary */}
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                  <Users className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-medium text-sm">{getRecipientLabel()}</p>
+                    {getRecipientCount() > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Receberão a mensagem imediatamente
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex gap-4 justify-end">
