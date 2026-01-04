@@ -422,7 +422,7 @@ export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDet
             {showCorrecao && (
               <>
                 <Separator className="bg-border/30" />
-                <div ref={correcaoFormRef} className="space-y-4">
+                <div ref={correcaoFormRef} className="space-y-4 animate-fade-in">
                   <div className="flex items-center justify-between">
                     <h4 className="font-semibold text-foreground flex items-center gap-2">
                       <AlertCircle className="h-4 w-4 text-warning" />
