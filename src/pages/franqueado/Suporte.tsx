@@ -106,6 +106,37 @@ export default function Suporte() {
     }
   }, [selectedTicket]);
 
+  // Real-time subscription for messages
+  useEffect(() => {
+    if (!selectedTicket || !dialogOpen) return;
+
+    const channel = supabase
+      .channel(`ticket-messages-${selectedTicket.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'support_messages',
+          filter: `conversation_id=eq.${selectedTicket.id}`
+        },
+        (payload) => {
+          console.log('Nova mensagem recebida:', payload);
+          const newMsg = payload.new as Message;
+          setMessages((prev) => {
+            // Avoid duplicates
+            if (prev.some(m => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedTicket, dialogOpen]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
