@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -30,6 +31,13 @@ import {
 } from "recharts";
 import { MetricTooltip, metricDefinitions } from "@/components/MetricTooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import {
+  StatsGridSkeleton,
+  ChartSkeleton,
+  PieChartSkeleton,
+  BarChartSkeleton,
+  AlertSkeleton,
+} from "@/components/skeletons/DashboardSkeletons";
 
 const stats = [
   { label: "Total Franqueados", value: "48", icon: Users, trend: "+3", trendUp: true, path: "/admin/franqueados", cta: "Ver franqueados", tooltip: metricDefinitions.totalFranqueados },
@@ -63,10 +71,40 @@ const topUnidades = [
 ];
 
 export default function AdminDashboard() {
+  const [loading, setLoading] = useState(true);
+
+  // Simula carregamento de dados - em produção viria do banco
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Mock data - replace with real data from API
   const novosArquivos = 12;
   const novosSuporte = 5;
   const novasMensagens = 8;
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <div className="h-8 w-32 bg-muted animate-pulse rounded" />
+          <div className="h-4 w-56 bg-muted animate-pulse rounded mt-2" />
+        </div>
+        <AlertSkeleton />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <AlertSkeleton />
+          <AlertSkeleton />
+        </div>
+        <StatsGridSkeleton count={4} />
+        <div className="grid lg:grid-cols-2 gap-6">
+          <ChartSkeleton />
+          <PieChartSkeleton />
+        </div>
+        <BarChartSkeleton />
+      </div>
+    );
+  }
 
   return (
     <TooltipProvider>
