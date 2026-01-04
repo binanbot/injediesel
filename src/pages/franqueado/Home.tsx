@@ -64,7 +64,7 @@ const recentFiles: ArquivoDetalhado[] = [
     servico: "Stage 1",
     status: "completed",
     data: "28/12/2024",
-    categoria: "Caminhão",
+    categoria: "Truck",
     valor: "R$ 1.500,00",
     cliente: {
       nome: "João da Silva",
@@ -87,7 +87,7 @@ const recentFiles: ArquivoDetalhado[] = [
     servico: "DPF Off",
     status: "processing",
     data: "28/12/2024",
-    categoria: "Caminhão",
+    categoria: "Truck",
     valor: "R$ 2.000,00",
     cliente: {
       nome: "Carlos Transportes LTDA",
@@ -109,7 +109,7 @@ const recentFiles: ArquivoDetalhado[] = [
     servico: "EGR Off",
     status: "completed",
     data: "27/12/2024",
-    categoria: "Caminhão",
+    categoria: "Truck",
     valor: "R$ 1.800,00",
     cliente: {
       nome: "Pedro Santos",
@@ -131,7 +131,7 @@ const recentFiles: ArquivoDetalhado[] = [
     servico: "AdBlue Off",
     status: "cancelled",
     data: "27/12/2024",
-    categoria: "Caminhão",
+    categoria: "Truck",
     valor: "R$ 1.200,00",
     cliente: {
       nome: "Maria Oliveira",

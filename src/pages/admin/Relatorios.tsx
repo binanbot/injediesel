@@ -89,7 +89,7 @@ const evolucaoMensal = [
 
 // Dados de desempenho por categoria/nicho
 const desempenhoPorCategoria = [
-  { categoria: "Caminhão", icon: Truck, arquivos: 892, receita: 445000, crescimento: 15.2, cor: "hsl(217, 91%, 60%)" },
+  { categoria: "Truck", icon: Truck, arquivos: 892, receita: 445000, crescimento: 15.2, cor: "hsl(217, 91%, 60%)" },
   { categoria: "Agrícola", icon: Tractor, arquivos: 654, receita: 392000, crescimento: 22.8, cor: "hsl(142, 76%, 36%)" },
   { categoria: "Pick-up", icon: Car, arquivos: 523, receita: 261500, crescimento: 8.5, cor: "hsl(45, 93%, 47%)" },
   { categoria: "Pesados", icon: HardHat, arquivos: 412, receita: 329600, crescimento: 18.3, cor: "hsl(262, 83%, 58%)" },
@@ -202,7 +202,7 @@ const revendasPorCategoria: Record<string, Array<{ nome: string; arquivos: numbe
 
 const categoriaOptions = [
   { value: "all", label: "Todas as Categorias" },
-  { value: "caminhao", label: "Caminhão" },
+  { value: "caminhao", label: "Truck" },
   { value: "agricola", label: "Agrícola" },
   { value: "pickup", label: "Pick-up" },
   { value: "pesados", label: "Pesados" },
