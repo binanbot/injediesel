@@ -28,12 +28,14 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { MetricTooltip, metricDefinitions } from "@/components/MetricTooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const stats = [
-  { label: "Total Franqueados", value: "48", icon: Users, trend: "+3", trendUp: true, path: "/admin/franqueados", cta: "Ver franqueados" },
-  { label: "Arquivos Pendentes", value: "12", icon: FileDown, trend: "+28", trendUp: true, path: "/admin/arquivos?status=pending", cta: "Ver pendentes" },
-  { label: "Em Processamento", value: "8", icon: Clock, trend: "+2", trendUp: true, path: "/admin/arquivos?status=processing", cta: "Ver em andamento" },
-  { label: "Downloads Prontos", value: "156", icon: FileCheck, trend: "+5", trendUp: true, path: "/admin/arquivos?status=completed", cta: "Ir para downloads" },
+  { label: "Total Franqueados", value: "48", icon: Users, trend: "+3", trendUp: true, path: "/admin/franqueados", cta: "Ver franqueados", tooltip: metricDefinitions.totalFranqueados },
+  { label: "Arquivos Pendentes", value: "12", icon: FileDown, trend: "+28", trendUp: true, path: "/admin/arquivos?status=pending", cta: "Ver pendentes", tooltip: metricDefinitions.arquivosPendentes },
+  { label: "Em Processamento", value: "8", icon: Clock, trend: "+2", trendUp: true, path: "/admin/arquivos?status=processing", cta: "Ver em andamento", tooltip: metricDefinitions.emProcessamento },
+  { label: "Downloads Prontos", value: "156", icon: FileCheck, trend: "+5", trendUp: true, path: "/admin/arquivos?status=completed", cta: "Ir para downloads", tooltip: metricDefinitions.downloadsProntos },
 ];
 
 const arquivosPorMes = [
@@ -67,122 +69,129 @@ export default function AdminDashboard() {
   const novasMensagens = 8;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Visão geral do sistema Injediesel.</p>
-      </div>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">Visão geral do sistema Injediesel.</p>
+        </div>
 
-      {/* Alert: New Files */}
-      <Link to="/admin/arquivos">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-500/20 via-orange-500/10 to-orange-500/20 border border-orange-500/30 p-4 cursor-pointer hover:border-orange-500/50 transition-colors"
-        >
-          <div className="absolute inset-0 bg-orange-500/5 animate-pulse" />
-          <div className="absolute inset-0 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.3)] animate-pulse" />
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/20 text-orange-400">
-                <FileDown className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-orange-400">
-                  Você tem <span className="text-2xl font-bold">{novosArquivos}</span> novos arquivos
-                </p>
-                <p className="text-sm text-orange-300/70">Aguardando análise e resolução</p>
-              </div>
-            </div>
-            <span className="text-orange-400/70 text-sm hidden sm:block">Ver novos arquivos →</span>
-          </div>
-        </motion.div>
-      </Link>
-
-      {/* Alerts: Support & Messages */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Link to="/admin/suporte" className="block">
+        {/* Alert: New Files */}
+        <Link to="/admin/arquivos">
           <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="rounded-xl bg-gradient-to-r from-amber-500/15 to-amber-500/5 border border-amber-500/20 p-4 cursor-pointer hover:border-amber-500/40 transition-colors h-full"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
-                  <Headphones className="h-5 w-5" />
-                </div>
-                <p className="font-medium text-amber-400">
-                  Você tem <span className="text-xl font-bold">{novosSuporte}</span> novos suporte!
-                </p>
-              </div>
-              <span className="text-amber-400/50 text-xs hidden lg:block">Ver solicitações →</span>
-            </div>
-          </motion.div>
-        </Link>
-
-        <Link to="/admin/mensagens" className="block">
-          <motion.div
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.15 }}
-            className="rounded-xl bg-gradient-to-r from-blue-500/15 to-blue-500/5 border border-blue-500/20 p-4 cursor-pointer hover:border-blue-500/40 transition-colors h-full"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
-                  <MessageSquare className="h-5 w-5" />
-                </div>
-                <p className="font-medium text-blue-400">
-                  Você tem <span className="text-xl font-bold">{novasMensagens}</span> mensagens
-                </p>
-              </div>
-              <span className="text-blue-400/50 text-xs hidden lg:block">Ver mensagens →</span>
-            </div>
-          </motion.div>
-        </Link>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
+            className="relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-500/20 via-orange-500/10 to-orange-500/20 border border-orange-500/30 p-4 cursor-pointer hover:border-orange-500/50 transition-colors"
           >
-            <Link to={stat.path}>
-              <Card className="hover:border-primary/50 transition-colors cursor-pointer group">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{stat.label}</p>
-                      <p className="text-3xl font-bold mt-1">{stat.value}</p>
-                      <div className={`flex items-center gap-1 mt-1 text-sm ${stat.trendUp ? "text-success" : "text-destructive"}`}>
-                        {stat.trendUp ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-                        {stat.trend}
-                      </div>
-                      <p className="text-xs text-primary/70 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">{stat.cta} →</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
-                      <stat.icon className="h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+            <div className="absolute inset-0 bg-orange-500/5 animate-pulse" />
+            <div className="absolute inset-0 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.3)] animate-pulse" />
+            <div className="relative flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-orange-500/20 text-orange-400">
+                  <FileDown className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-lg font-semibold text-orange-400">
+                    Você tem <span className="text-2xl font-bold">{novosArquivos}</span> novos arquivos
+                  </p>
+                  <p className="text-sm text-orange-300/70">Aguardando análise e resolução</p>
+                </div>
+              </div>
+              <span className="text-orange-400/70 text-sm hidden sm:block">Ver novos arquivos →</span>
+            </div>
           </motion.div>
-        ))}
-      </div>
+        </Link>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Files Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Arquivos por Mês</CardTitle>
-          </CardHeader>
+        {/* Alerts: Support & Messages */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Link to="/admin/suporte" className="block">
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="rounded-xl bg-gradient-to-r from-amber-500/15 to-amber-500/5 border border-amber-500/20 p-4 cursor-pointer hover:border-amber-500/40 transition-colors h-full"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+                    <Headphones className="h-5 w-5" />
+                  </div>
+                  <p className="font-medium text-amber-400">
+                    Você tem <span className="text-xl font-bold">{novosSuporte}</span> novos suporte!
+                  </p>
+                </div>
+                <span className="text-amber-400/50 text-xs hidden lg:block">Ver solicitações →</span>
+              </div>
+            </motion.div>
+          </Link>
+
+          <Link to="/admin/mensagens" className="block">
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.15 }}
+              className="rounded-xl bg-gradient-to-r from-blue-500/15 to-blue-500/5 border border-blue-500/20 p-4 cursor-pointer hover:border-blue-500/40 transition-colors h-full"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
+                    <MessageSquare className="h-5 w-5" />
+                  </div>
+                  <p className="font-medium text-blue-400">
+                    Você tem <span className="text-xl font-bold">{novasMensagens}</span> mensagens
+                  </p>
+                </div>
+                <span className="text-blue-400/50 text-xs hidden lg:block">Ver mensagens →</span>
+              </div>
+            </motion.div>
+          </Link>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <Link to={stat.path}>
+                <Card className="hover:border-primary/50 transition-colors cursor-pointer group">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm text-muted-foreground">{stat.label}</p>
+                          <MetricTooltip explanation={stat.tooltip} />
+                        </div>
+                        <p className="text-3xl font-bold mt-1">{stat.value}</p>
+                        <div className={`flex items-center gap-1 mt-1 text-sm ${stat.trendUp ? "text-success" : "text-destructive"}`}>
+                          {stat.trendUp ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                          {stat.trend}
+                        </div>
+                        <p className="text-xs text-primary/70 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">{stat.cta} →</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+                        <stat.icon className="h-6 w-6" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Files Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                Arquivos por Mês
+                <MetricTooltip explanation={metricDefinitions.arquivosPorMes} />
+              </CardTitle>
+            </CardHeader>
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -216,11 +225,14 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Status Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Distribuição por Status</CardTitle>
-          </CardHeader>
+          {/* Status Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                Distribuição por Status
+                <MetricTooltip explanation={metricDefinitions.distribuicaoStatus} />
+              </CardTitle>
+            </CardHeader>
           <CardContent>
             <div className="h-[300px] flex items-center">
               <ResponsiveContainer width="50%" height="100%">
@@ -261,11 +273,14 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Top Units */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Top Unidades - Arquivos Enviados</CardTitle>
-        </CardHeader>
+        {/* Top Units */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              Top Unidades - Arquivos Enviados
+              <MetricTooltip explanation={metricDefinitions.topUnidades} />
+            </CardTitle>
+          </CardHeader>
         <CardContent>
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -285,7 +300,8 @@ export default function AdminDashboard() {
             </ResponsiveContainer>
           </div>
         </CardContent>
-      </Card>
-    </div>
+        </Card>
+      </div>
+    </TooltipProvider>
   );
 }
