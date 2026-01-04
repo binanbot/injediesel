@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Search, Filter, Eye, Edit, Lock, Unlock, MoreHorizontal, Plus, Loader2, Upload, Calendar, X } from "lucide-react";
+import { Search, Filter, Eye, Edit, Lock, Unlock, MoreHorizontal, Plus, Loader2, Upload, Calendar, X, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,6 +43,7 @@ interface FranchiseeProfile {
   contract_expiration_date: string | null;
   is_prepaid: boolean;
   created_at: string;
+  cidade: string | null;
 }
 
 const getStatusFromDate = (expirationDate: string | null): string => {
@@ -85,6 +86,7 @@ export default function AdminFranqueados() {
   const [contractTypeFilter, setContractTypeFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [cidadeFilter, setCidadeFilter] = useState("all");
   const [franqueados, setFranqueados] = useState<FranchiseeProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -116,9 +118,15 @@ export default function AdminFranqueados() {
     setContractTypeFilter("all");
     setDateFrom(undefined);
     setDateTo(undefined);
+    setCidadeFilter("all");
   };
 
-  const hasActiveFilters = search || statusFilter !== "all" || contractTypeFilter !== "all" || dateFrom || dateTo;
+  const hasActiveFilters = search || statusFilter !== "all" || contractTypeFilter !== "all" || dateFrom || dateTo || cidadeFilter !== "all";
+
+  // Extract unique cities for filter dropdown
+  const uniqueCidades = [...new Set(franqueados.map(f => f.cidade).filter(Boolean))].sort((a, b) => 
+    (a || "").localeCompare(b || "", "pt-BR")
+  );
 
   const filteredFranqueados = franqueados
     .filter((f) => {
@@ -136,8 +144,10 @@ export default function AdminFranqueados() {
       const createdDate = new Date(f.created_at);
       const matchesDateFrom = !dateFrom || createdDate >= dateFrom;
       const matchesDateTo = !dateTo || createdDate <= new Date(dateTo.getTime() + 86400000);
+
+      const matchesCidade = cidadeFilter === "all" || f.cidade === cidadeFilter;
       
-      return matchesSearch && matchesStatus && matchesContractType && matchesDateFrom && matchesDateTo;
+      return matchesSearch && matchesStatus && matchesContractType && matchesDateFrom && matchesDateTo && matchesCidade;
     })
     .sort((a, b) => {
       const nameA = (a.display_name || `${a.first_name || ""} ${a.last_name || ""}`).toLowerCase();
@@ -211,6 +221,18 @@ export default function AdminFranqueados() {
                       <SelectItem value="all">Todos os tipos</SelectItem>
                       <SelectItem value="Full">Full</SelectItem>
                       <SelectItem value="Leve">Leve</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={cidadeFilter} onValueChange={setCidadeFilter}>
+                    <SelectTrigger className="w-full sm:w-44">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Cidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas as cidades</SelectItem>
+                      {uniqueCidades.map((cidade) => (
+                        <SelectItem key={cidade} value={cidade!}>{cidade}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -304,6 +326,7 @@ export default function AdminFranqueados() {
                       <tr className="border-b border-border">
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Nome</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Email</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Cidade</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Tipo</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Criado em</th>
@@ -333,6 +356,9 @@ export default function AdminFranqueados() {
                             </td>
                             <td className="py-4 px-4 text-sm text-muted-foreground">
                               {franqueado.email}
+                            </td>
+                            <td className="py-4 px-4 text-sm text-muted-foreground">
+                              {franqueado.cidade || "-"}
                             </td>
                             <td className="py-4 px-4">{getTipoBadge(franqueado.contract_type)}</td>
                             <td className="py-4 px-4">{getStatusBadge(status)}</td>

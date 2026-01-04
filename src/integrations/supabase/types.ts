@@ -130,6 +130,7 @@ export type Database = {
       profiles_franchisees: {
         Row: {
           allow_manual_credits: boolean | null
+          cidade: string | null
           cnpj: string | null
           contract_expiration_date: string | null
           contract_type: string | null
@@ -159,6 +160,7 @@ export type Database = {
         }
         Insert: {
           allow_manual_credits?: boolean | null
+          cidade?: string | null
           cnpj?: string | null
           contract_expiration_date?: string | null
           contract_type?: string | null
@@ -188,6 +190,7 @@ export type Database = {
         }
         Update: {
           allow_manual_credits?: boolean | null
+          cidade?: string | null
           cnpj?: string | null
           contract_expiration_date?: string | null
           contract_type?: string | null
