@@ -35,6 +35,7 @@ const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
   { icon: Users, label: "Franqueados", path: "/admin/franqueados" },
   { icon: Upload, label: "Importar Franqueados", path: "/admin/importar" },
+  { icon: MapPin, label: "Gerenciar Cobertura", path: "/admin/cobertura" },
   { icon: CalendarCheck, label: "Contratos", path: "/admin/contratos" },
   { icon: FileDown, label: "Arquivos Recebidos", path: "/admin/arquivos" },
   { icon: AlertCircle, label: "Correções", path: "/admin/correcoes", badgeKey: "correcoes" },

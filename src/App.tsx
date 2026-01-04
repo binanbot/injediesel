@@ -44,6 +44,7 @@ import AdminCorrecoes from "./pages/admin/Correcoes";
 import AdminContratos from "./pages/admin/Contratos";
 import ImportarFranqueados from "./pages/admin/ImportarFranqueados";
 import FranqueadoDetalhe from "./pages/admin/FranqueadoDetalhe";
+import GerenciarCobertura from "./pages/admin/GerenciarCobertura";
 
 const queryClient = new QueryClient();
 
@@ -96,6 +97,7 @@ const App = () => (
               <Route path="franqueados" element={<AdminFranqueados />} />
               <Route path="franqueados/:id" element={<FranqueadoDetalhe />} />
               <Route path="importar" element={<ImportarFranqueados />} />
+              <Route path="cobertura" element={<GerenciarCobertura />} />
               <Route path="arquivos" element={<AdminArquivos />} />
               <Route path="arquivos/:id" element={<AdminArquivoDetalhes />} />
               <Route path="banners" element={<AdminBanners />} />
