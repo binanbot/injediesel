@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -13,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BannerCarousel, Banner } from "@/components/BannerCarousel";
+import { ArquivoDetalheDialog, ArquivoDetalhado } from "@/components/franqueado/ArquivoDetalheDialog";
 
 // Dados mockados dos banners - em produção viriam do banco de dados
 const banners: Banner[] = [
@@ -35,48 +37,102 @@ const banners: Banner[] = [
 ];
 
 const stats = [
-  { label: "Arquivos Enviados", value: "24", icon: Upload, color: "text-primary" },
-  { label: "Concluídos", value: "18", icon: CheckCircle2, color: "text-success" },
-  { label: "Em Processamento", value: "4", icon: Clock, color: "text-warning" },
-  { label: "Downloads Disponíveis", value: "6", icon: Download, color: "text-info" },
+  { label: "Arquivos Enviados", value: "24", icon: Upload, color: "text-primary", path: "/franqueado/arquivos" },
+  { label: "Concluídos", value: "18", icon: CheckCircle2, color: "text-success", path: "/franqueado/arquivos?status=completed" },
+  { label: "Em Processamento", value: "4", icon: Clock, color: "text-warning", path: "/franqueado/arquivos?status=processing" },
+  { label: "Downloads Disponíveis", value: "6", icon: Download, color: "text-info", path: "/franqueado/arquivos?status=completed" },
 ];
 
-const recentFiles = [
+const recentFiles: ArquivoDetalhado[] = [
   {
     id: 1,
     placa: "ABC-1234",
     marca: "Volvo",
     modelo: "FH 540",
+    ano: "2022",
+    cambio: "Automático",
+    combustivel: "Diesel",
+    horasKm: "145.000 km",
     servico: "Stage 1",
     status: "completed",
     data: "28/12/2024",
+    categoria: "Caminhão",
+    valor: "R$ 1.500,00",
+    cliente: {
+      nome: "João da Silva",
+      telefone: "(11) 99999-8888",
+      email: "joao.silva@email.com",
+      cidade: "São Paulo, SP",
+      servicosAnteriores: 5,
+    },
+    observacoes: "Cliente solicita entrega urgente. Arquivo processado com sucesso.",
   },
   {
     id: 2,
     placa: "DEF-5678",
     marca: "Scania",
     modelo: "R 450",
+    ano: "2021",
+    cambio: "Manual",
+    combustivel: "Diesel",
+    horasKm: "89.500 km",
     servico: "DPF Off",
     status: "processing",
     data: "28/12/2024",
+    categoria: "Caminhão",
+    valor: "R$ 2.000,00",
+    cliente: {
+      nome: "Carlos Transportes LTDA",
+      telefone: "(21) 98888-7777",
+      email: "carlos@transportes.com",
+      cidade: "Rio de Janeiro, RJ",
+      servicosAnteriores: 12,
+    },
   },
   {
     id: 3,
     placa: "GHI-9012",
     marca: "Mercedes",
     modelo: "Actros",
+    ano: "2023",
+    cambio: "Automático",
+    combustivel: "Diesel",
+    horasKm: "32.000 km",
     servico: "EGR Off",
     status: "completed",
     data: "27/12/2024",
+    categoria: "Caminhão",
+    valor: "R$ 1.800,00",
+    cliente: {
+      nome: "Pedro Santos",
+      telefone: "(31) 97777-6666",
+      email: "pedro.santos@gmail.com",
+      cidade: "Belo Horizonte, MG",
+      servicosAnteriores: 3,
+    },
   },
   {
     id: 4,
     placa: "JKL-3456",
     marca: "DAF",
     modelo: "XF 105",
+    ano: "2020",
+    cambio: "Manual",
+    combustivel: "Diesel",
+    horasKm: "210.000 km",
     servico: "AdBlue Off",
     status: "cancelled",
     data: "27/12/2024",
+    categoria: "Caminhão",
+    valor: "R$ 1.200,00",
+    cliente: {
+      nome: "Maria Oliveira",
+      telefone: "(41) 96666-5555",
+      email: "maria.oliveira@hotmail.com",
+      cidade: "Curitiba, PR",
+      servicosAnteriores: 1,
+    },
+    observacoes: "Cancelado a pedido do cliente.",
   },
 ];
 
@@ -94,8 +150,23 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function FranqueadoHome() {
+  const [selectedArquivo, setSelectedArquivo] = useState<ArquivoDetalhado | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleArquivoClick = (arquivo: ArquivoDetalhado) => {
+    setSelectedArquivo(arquivo);
+    setDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Dialog de Detalhes */}
+      <ArquivoDetalheDialog
+        arquivo={selectedArquivo}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
+
       {/* Banner Carousel */}
       <BannerCarousel banners={banners} autoPlay interval={6000} />
 
@@ -142,19 +213,21 @@ export default function FranqueadoHome() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <Card className="glass-hover hover:border-primary/30">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="text-3xl font-bold mt-1 text-foreground">{stat.value}</p>
+            <Link to={stat.path}>
+              <Card className="glass-hover hover:border-primary/30 cursor-pointer">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                      <p className="text-3xl font-bold mt-1 text-foreground">{stat.value}</p>
+                    </div>
+                    <div className={`p-3 rounded-xl bg-secondary/60 backdrop-blur-sm ${stat.color}`}>
+                      <stat.icon className="h-6 w-6" />
+                    </div>
                   </div>
-                  <div className={`p-3 rounded-xl bg-secondary/60 backdrop-blur-sm ${stat.color}`}>
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
           </motion.div>
         ))}
       </div>
@@ -185,7 +258,11 @@ export default function FranqueadoHome() {
               </thead>
               <tbody>
                 {recentFiles.map((file) => (
-                  <tr key={file.id} className="border-b border-border/20 hover:bg-secondary/30 transition-colors">
+                  <tr 
+                    key={file.id} 
+                    className="border-b border-border/20 hover:bg-secondary/30 transition-colors cursor-pointer"
+                    onClick={() => handleArquivoClick(file)}
+                  >
                     <td className="py-3 px-4 font-medium text-foreground">{file.placa}</td>
                     <td className="py-3 px-4 text-muted-foreground">
                       {file.marca} {file.modelo}
@@ -193,7 +270,7 @@ export default function FranqueadoHome() {
                     <td className="py-3 px-4 text-muted-foreground">{file.servico}</td>
                     <td className="py-3 px-4">{getStatusBadge(file.status)}</td>
                     <td className="py-3 px-4 text-muted-foreground">{file.data}</td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                       {file.status === "completed" ? (
                         <Button variant="ghost" size="sm">
                           <Download className="h-4 w-4" />
