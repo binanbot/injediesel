@@ -49,6 +49,7 @@ import { ptBR } from "date-fns/locale";
 import { playNotificationSound } from "@/utils/notificationSound";
 import { showBrowserNotification } from "@/utils/browserNotifications";
 import { ExpandableText } from "@/components/ui/expandable-text";
+import { calcularTempoDecorridoISO, getTempoClasses } from "@/utils/tempoDecorrido";
 
 type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 
@@ -500,6 +501,7 @@ export default function AdminSuporte() {
               {filteredTickets.map((ticket) => {
                 const status = getStatusConfig(ticket.status);
                 const StatusIcon = status.icon;
+                const tempoDecorrido = calcularTempoDecorridoISO(ticket.updated_at);
                 return (
                   <motion.div
                     key={ticket.id}
@@ -533,7 +535,14 @@ export default function AdminSuporte() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant="outline" 
+                          className={`${getTempoClasses(tempoDecorrido.level)} text-xs`}
+                        >
+                          <Clock className="h-3 w-3 mr-1" />
+                          {tempoDecorrido.label}
+                        </Badge>
                         <Badge variant="outline" className={status.color}>
                           {status.label}
                         </Badge>

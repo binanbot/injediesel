@@ -44,6 +44,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import CorrectionChatPanel from "@/components/admin/CorrectionChatPanel";
 import { ExpandableText, TechnicalDetails } from "@/components/ui/expandable-text";
+import { calcularTempoDecorridoISO, getTempoClasses } from "@/utils/tempoDecorrido";
 
 interface CorrectionTicket {
   id: string;
@@ -408,6 +409,7 @@ export default function AdminCorrecoes() {
                   veiculo: "Veículo",
                   servico: "Serviço"
                 };
+                const tempoDecorrido = calcularTempoDecorridoISO(ticket.updated_at);
 
                 return (
                   <motion.div
@@ -432,10 +434,13 @@ export default function AdminCorrecoes() {
                               Anexo
                             </Badge>
                           )}
-                          <span className="text-xs text-muted-foreground ml-auto">
-                            <Calendar className="h-3 w-3 inline mr-1" />
-                            {formatDate(ticket.created_at)}
-                          </span>
+                          <Badge 
+                            variant="outline" 
+                            className={`${getTempoClasses(tempoDecorrido.level)} text-xs`}
+                          >
+                            <Clock className="h-3 w-3 mr-1" />
+                            {tempoDecorrido.label}
+                          </Badge>
                         </div>
                         
                         {/* Info técnica em bullet points */}
