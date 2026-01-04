@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, Send, Plus, X, Loader2 } from "lucide-react";
+import { MessageCircle, Send, Plus, X, Loader2, Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { useSupportChat, type Message, type Conversation } from "@/hooks/useSupportChat";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { requestNotificationPermission, canShowNotifications } from "@/utils/browserNotifications";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SupportChat() {
   const {
@@ -26,7 +28,26 @@ export default function SupportChat() {
   const [newSubject, setNewSubject] = useState("");
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const [sending, setSending] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(canShowNotifications());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermission();
+    setNotificationsEnabled(granted);
+    if (granted) {
+      toast({
+        title: "Notificações ativadas",
+        description: "Você receberá alertas quando o suporte responder.",
+      });
+    } else {
+      toast({
+        title: "Permissão negada",
+        description: "Ative as notificações nas configurações do navegador.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -109,10 +130,25 @@ export default function SupportChat() {
           >
             <Card className="border-2 shadow-2xl overflow-hidden">
               <CardHeader className="bg-primary text-primary-foreground py-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <MessageCircle className="h-5 w-5" />
-                  Chat ao Vivo
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <MessageCircle className="h-5 w-5" />
+                    Chat ao Vivo
+                  </CardTitle>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20"
+                    onClick={handleEnableNotifications}
+                    title={notificationsEnabled ? "Notificações ativadas" : "Ativar notificações"}
+                  >
+                    {notificationsEnabled ? (
+                      <Bell className="h-4 w-4" />
+                    ) : (
+                      <BellOff className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               </CardHeader>
 
               <CardContent className="p-0">

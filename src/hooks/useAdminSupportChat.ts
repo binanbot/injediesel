@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { playNotificationSound } from "@/utils/notificationSound";
+import { showBrowserNotification } from "@/utils/browserNotifications";
 
 export interface Message {
   id: string;
@@ -88,6 +89,11 @@ export function useAdminSupportChat(conversationId: string | null) {
           if (newMessage.sender_type === "franqueado") {
             setUnreadCount(prev => prev + 1);
             playNotificationSound();
+            showBrowserNotification({
+              title: "Nova mensagem do franqueado",
+              body: newMessage.content.slice(0, 100) + (newMessage.content.length > 100 ? "..." : ""),
+              tag: `msg-${newMessage.id}`,
+            });
           }
         }
       )
