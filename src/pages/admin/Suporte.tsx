@@ -48,6 +48,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { playNotificationSound } from "@/utils/notificationSound";
 import { showBrowserNotification } from "@/utils/browserNotifications";
+import { ExpandableText } from "@/components/ui/expandable-text";
 
 type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 
@@ -508,28 +509,28 @@ export default function AdminSuporte() {
                     onClick={() => handleOpenTicket(ticket)}
                   >
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                      <div className="flex-1 space-y-2">
+                      <div className="flex-1 space-y-3">
+                        {/* Resumo - 1 linha */}
                         <div className="flex items-start gap-3">
-                          <div className={`p-2 rounded-lg ${status.color.split(" ")[0]}`}>
+                          <div className={`p-2 rounded-lg shrink-0 ${status.color.split(" ")[0]}`}>
                             <StatusIcon className={`h-4 w-4 ${status.color.split(" ")[1]}`} />
                           </div>
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-semibold">{ticket.subject}</h3>
+                              <h3 className="font-semibold truncate">{ticket.subject}</h3>
                               {ticket.attachment_url && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-xs shrink-0">
                                   <Paperclip className="h-3 w-3 mr-1" />
                                   Anexo
                                 </Badge>
                               )}
                             </div>
+                            {/* Data inline com resumo */}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              <Calendar className="h-3 w-3 inline mr-1" />
+                              {formatDate(ticket.created_at)}
+                            </p>
                           </div>
-                        </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground pl-11">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            {formatDate(ticket.created_at)}
-                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
