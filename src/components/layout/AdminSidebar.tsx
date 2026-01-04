@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface MenuItem {
   icon: React.ElementType;
@@ -49,10 +50,17 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({
     suporte: 0,
     correcoes: 0,
   });
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   // Load counts and subscribe to realtime updates
   useEffect(() => {
@@ -184,13 +192,13 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
         </nav>
 
         <div className="p-3 border-t border-sidebar-border">
-          <Link
-            to="/login"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
           >
             <LogOut className="h-5 w-5" />
             Sair
-          </Link>
+          </button>
         </div>
       </aside>
     </>

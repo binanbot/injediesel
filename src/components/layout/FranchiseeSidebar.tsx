@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   Upload,
@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
+import { useAuth } from "@/hooks/useAuth";
 
 // Dados mockados de notificações - em produção viriam do banco de dados
 const notifications: Record<string, number> = {
@@ -45,6 +46,13 @@ interface FranchiseeSidebarProps {
 
 export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   return (
     <>
@@ -127,13 +135,13 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
 
         {/* Logout */}
         <div className="p-3 border-t border-border/20">
-          <Link
-            to="/login"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-200"
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-200"
           >
             <LogOut className="h-5 w-5" />
             Sair
-          </Link>
+          </button>
         </div>
       </aside>
     </>
