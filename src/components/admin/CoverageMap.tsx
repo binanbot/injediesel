@@ -4,48 +4,81 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 
-// City coordinates for Brazil (simplified - in production would come from a geocoding service or database)
-const cityCoordinates: Record<string, [number, number]> = {
+// Extended city coordinates - will be geocoded dynamically if not found
+const cityCoordinatesCache: Record<string, [number, number]> = {
   // São Paulo
-  'São Paulo': [-46.6333, -23.5505],
-  'Guarulhos': [-46.5333, -23.4628],
-  'Campinas': [-47.0608, -22.9056],
-  'São Bernardo do Campo': [-46.5650, -23.6944],
-  'Santo André': [-46.5322, -23.6639],
-  'Osasco': [-46.7917, -23.5325],
-  'Ribeirão Preto': [-47.8103, -21.1775],
-  'Santos': [-46.3331, -23.9608],
-  'Sorocaba': [-47.4583, -23.5017],
-  // Rio de Janeiro
-  'Rio de Janeiro': [-43.1729, -22.9068],
-  'Niterói': [-43.1036, -22.8808],
-  'Nova Iguaçu': [-43.4508, -22.7556],
-  'Duque de Caxias': [-43.3117, -22.7858],
-  // Minas Gerais
-  'Belo Horizonte': [-43.9378, -19.9167],
-  'Uberlândia': [-48.2764, -18.9186],
-  'Contagem': [-44.0539, -19.9317],
-  'Juiz de Fora': [-43.3503, -21.7642],
+  'São Paulo-SP': [-46.6333, -23.5505],
+  'Guarulhos-SP': [-46.5333, -23.4628],
+  'Campinas-SP': [-47.0608, -22.9056],
+  'São Bernardo do Campo-SP': [-46.5650, -23.6944],
+  'Santo André-SP': [-46.5322, -23.6639],
+  'Osasco-SP': [-46.7917, -23.5325],
+  'Ribeirão Preto-SP': [-47.8103, -21.1775],
+  'Santos-SP': [-46.3331, -23.9608],
+  'Sorocaba-SP': [-47.4583, -23.5017],
+  'Assis-SP': [-50.4122, -22.6617],
   // Paraná
-  'Curitiba': [-49.2731, -25.4284],
-  'Londrina': [-51.1628, -23.3045],
-  'Maringá': [-51.9386, -23.4253],
+  'Curitiba-PR': [-49.2731, -25.4284],
+  'Londrina-PR': [-51.1628, -23.3045],
+  'Maringá-PR': [-51.9386, -23.4253],
+  'Cascavel-PR': [-53.4552, -24.9578],
+  'Toledo-PR': [-53.7428, -24.7136],
+  'Foz do Iguaçu-PR': [-54.5854, -25.5163],
+  'Ponta Grossa-PR': [-50.1619, -25.0916],
+  // Rio de Janeiro
+  'Rio de Janeiro-RJ': [-43.1729, -22.9068],
+  'Niterói-RJ': [-43.1036, -22.8808],
+  'Nova Iguaçu-RJ': [-43.4508, -22.7556],
+  'Duque de Caxias-RJ': [-43.3117, -22.7858],
+  // Minas Gerais
+  'Belo Horizonte-MG': [-43.9378, -19.9167],
+  'Uberlândia-MG': [-48.2764, -18.9186],
+  'Contagem-MG': [-44.0539, -19.9317],
+  'Juiz de Fora-MG': [-43.3503, -21.7642],
   // Rio Grande do Sul
-  'Porto Alegre': [-51.2177, -30.0346],
-  'Caxias do Sul': [-51.1789, -29.1634],
+  'Porto Alegre-RS': [-51.2177, -30.0346],
+  'Caxias do Sul-RS': [-51.1789, -29.1634],
   // Santa Catarina
-  'Florianópolis': [-48.5482, -27.5954],
-  'Joinville': [-48.8461, -26.3044],
+  'Florianópolis-SC': [-48.5482, -27.5954],
+  'Joinville-SC': [-48.8461, -26.3044],
   // Bahia
-  'Salvador': [-38.5016, -12.9711],
-  'Feira de Santana': [-38.9663, -12.2669],
+  'Salvador-BA': [-38.5016, -12.9711],
+  'Feira de Santana-BA': [-38.9663, -12.2669],
   // Goiás
-  'Goiânia': [-49.2539, -16.6864],
-  'Aparecida de Goiânia': [-49.2469, -16.8239],
+  'Goiânia-GO': [-49.2539, -16.6864],
+  'Aparecida de Goiânia-GO': [-49.2469, -16.8239],
+  // Maranhão
+  'Balsas-MA': [-46.0356, -7.5328],
   // Paraguay
-  'Asunción': [-57.5759, -25.2637],
-  'Ciudad del Este': [-54.6156, -25.5089],
+  'Asunción-AS': [-57.5759, -25.2637],
+  'Ciudad del Este-AL': [-54.6156, -25.5089],
 };
+
+// Geocode a city using Mapbox API
+async function geocodeCity(cityName: string, state: string, country: string, token: string): Promise<[number, number] | null> {
+  const cacheKey = `${cityName}-${state}`;
+  if (cityCoordinatesCache[cacheKey]) {
+    return cityCoordinatesCache[cacheKey];
+  }
+
+  try {
+    const countryCode = country === 'BR' ? 'br' : 'py';
+    const query = encodeURIComponent(`${cityName}, ${state}, ${country === 'BR' ? 'Brazil' : 'Paraguay'}`);
+    const response = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?country=${countryCode}&types=place&access_token=${token}`
+    );
+    const data = await response.json();
+    
+    if (data.features && data.features.length > 0) {
+      const [lng, lat] = data.features[0].center;
+      cityCoordinatesCache[cacheKey] = [lng, lat];
+      return [lng, lat];
+    }
+  } catch (error) {
+    console.error(`Failed to geocode ${cityName}:`, error);
+  }
+  return null;
+}
 
 interface ServiceArea {
   city_id: string;
@@ -54,19 +87,11 @@ interface ServiceArea {
   country: string;
 }
 
-interface FranchiseeWithCoverage {
-  id: string;
-  display_name: string;
-  email: string;
-  contract_type: string | null;
-  service_areas: ServiceArea[];
-  contract_expiration_date: string | null;
-}
-
 interface CityWithCoverage {
   city: string;
   state: string;
   country: string;
+  coordinates?: [number, number];
   franchisees: {
     id: string;
     name: string;
@@ -97,12 +122,10 @@ export default function CoverageMap({ filterUf, filterTipo, filterUnidade, onCit
   useEffect(() => {
     const fetchToken = async () => {
       try {
-        // Try to get from Supabase Edge Function secrets
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        const { data } = await supabase.functions.invoke('get-mapbox-token');
         if (data?.token) {
           setMapboxToken(data.token);
         } else {
-          // Fallback: check if token is in localStorage (for dev)
           const storedToken = localStorage.getItem('MAPBOX_PUBLIC_TOKEN');
           if (storedToken) {
             setMapboxToken(storedToken);
@@ -110,7 +133,6 @@ export default function CoverageMap({ filterUf, filterTipo, filterUnidade, onCit
         }
       } catch (err) {
         console.error('Error fetching Mapbox token:', err);
-        // Try localStorage fallback
         const storedToken = localStorage.getItem('MAPBOX_PUBLIC_TOKEN');
         if (storedToken) {
           setMapboxToken(storedToken);
@@ -217,14 +239,21 @@ export default function CoverageMap({ filterUf, filterTipo, filterUnidade, onCit
   }, []);
 
   // Add markers to map
-  const addMarkers = useCallback(() => {
-    if (!map.current) return;
+  const addMarkers = useCallback(async () => {
+    if (!map.current || !mapboxToken) return;
 
     clearMarkers();
 
-    filteredCoverage.forEach((city) => {
-      const coords = cityCoordinates[city.city];
-      if (!coords) return;
+    for (const city of filteredCoverage) {
+      // Try to get coordinates from cache or geocode
+      const cacheKey = `${city.city}-${city.state}`;
+      let coords = cityCoordinatesCache[cacheKey] || city.coordinates;
+      
+      if (!coords && mapboxToken) {
+        coords = await geocodeCity(city.city, city.state, city.country, mapboxToken) || undefined;
+      }
+      
+      if (!coords) continue;
 
       // Create custom marker element
       const el = document.createElement('div');
@@ -299,8 +328,8 @@ export default function CoverageMap({ filterUf, filterTipo, filterUnidade, onCit
         .addTo(map.current!);
 
       markersRef.current.push(marker);
-    });
-  }, [filteredCoverage, clearMarkers, onCityClick]);
+    }
+  }, [filteredCoverage, clearMarkers, onCityClick, mapboxToken]);
 
   // Initialize map
   useEffect(() => {
