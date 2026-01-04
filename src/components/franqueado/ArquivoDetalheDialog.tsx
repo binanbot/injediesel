@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -6,6 +7,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -70,11 +81,15 @@ const getStatusBadge = (status: string) => {
 
 export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDetalheDialogProps) {
   const navigate = useNavigate();
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   if (!arquivo) return null;
 
+  const isCompleted = arquivo.status === "completed";
+
   const handleSolicitarCorrecao = () => {
-    // Fecha o dialog e navega para a página de detalhes do arquivo
+    // Fecha o dialog de confirmação e navega para a página de detalhes do arquivo
+    setConfirmDialogOpen(false);
     onOpenChange(false);
     navigate(`/franqueado/arquivos/${arquivo.id}`);
   };
@@ -232,27 +247,55 @@ export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDet
         </ScrollArea>
 
         <DialogFooter className="px-6 py-4 border-t border-border/30 flex-shrink-0">
-          <div className="flex gap-3 w-full justify-end">
-            <Button variant="outline" onClick={handleClose}>
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:justify-end">
+            <Button variant="ghost" onClick={handleClose} className="order-3 sm:order-1">
               Fechar
             </Button>
-            <Button variant="default" className="gap-2" asChild>
-              <a href="#">
-                <Download className="h-4 w-4" />
-                Download
-              </a>
-            </Button>
+            
+            {/* Solicitar Correção - Sempre secundário (outline) */}
             <Button 
-              variant="destructive" 
-              className="gap-2"
-              onClick={handleSolicitarCorrecao}
+              variant="outline" 
+              className="gap-2 order-2"
+              onClick={() => setConfirmDialogOpen(true)}
             >
               <AlertTriangle className="h-4 w-4" />
               Solicitar Correção
             </Button>
+
+            {/* Download - Primário quando concluído */}
+            {isCompleted && (
+              <Button variant="hero" className="gap-2 order-1 sm:order-3" asChild>
+                <a href="#">
+                  <Download className="h-4 w-4" />
+                  Download Arquivo
+                </a>
+              </Button>
+            )}
           </div>
         </DialogFooter>
       </DialogContent>
+
+      {/* Dialog de confirmação para solicitar correção */}
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              Confirmar Solicitação de Correção
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja solicitar uma correção para este arquivo? 
+              Isso abrirá um ticket de correção que será analisado pela nossa equipe técnica.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSolicitarCorrecao}>
+              Sim, solicitar correção
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

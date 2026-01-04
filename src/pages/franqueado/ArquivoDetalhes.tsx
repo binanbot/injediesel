@@ -28,6 +28,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -151,6 +161,7 @@ export default function ArquivoDetalhes() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [correcaoDialogOpen, setCorrecaoDialogOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [correcaoDescricao, setCorrecaoDescricao] = useState("");
   const [novoArquivo, setNovoArquivo] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -511,17 +522,52 @@ export default function ArquivoDetalhes() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-4">
+              {/* CTA Primário: Download quando concluído */}
+              {arquivo.status === "completed" && arquivo.arquivoModificado && (
+                <Button variant="hero" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Download Arquivo Modificado
+                </Button>
+              )}
+              
+              {/* CTA Secundário: Solicitar Correção (outline + confirmação) */}
               <Button 
-                variant="destructive"
-                onClick={() => setCorrecaoDialogOpen(true)}
+                variant="outline"
+                onClick={() => setConfirmDialogOpen(true)}
+                className="gap-2"
               >
-                <AlertTriangle className="h-4 w-4 mr-2" />
+                <AlertTriangle className="h-4 w-4" />
                 Solicitar Correção
               </Button>
             </div>
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Dialog de confirmação para solicitar correção */}
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              Confirmar Solicitação de Correção
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja solicitar uma correção para este arquivo? 
+              Isso abrirá um ticket de correção que será analisado pela nossa equipe técnica.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setConfirmDialogOpen(false);
+              setCorrecaoDialogOpen(true);
+            }}>
+              Sim, solicitar correção
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Dialog de Solicitação de Correção */}
       <Dialog open={correcaoDialogOpen} onOpenChange={setCorrecaoDialogOpen}>
