@@ -87,11 +87,31 @@ const equipe: TeamMember[] = [
   { id: "4", nome: "Julia Atendimento" },
 ];
 
-const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  open: { label: "Aberto", color: "bg-blue-500/20 text-blue-400 border-blue-500/30", icon: MessageSquare },
-  in_progress: { label: "Em Andamento", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30", icon: Clock },
-  resolved: { label: "Resolvido", color: "bg-green-500/20 text-green-400 border-green-500/30", icon: CheckCircle2 },
-  closed: { label: "Fechado", color: "bg-gray-500/20 text-gray-400 border-gray-500/30", icon: XCircle },
+const statusConfig: Record<string, { label: string; color: string; bgSolid: string; icon: React.ElementType }> = {
+  open: { 
+    label: "Aberto", 
+    color: "bg-sky-500/20 text-sky-400 border-sky-500/40 shadow-[0_0_10px_hsl(200,100%,50%,0.2)]", 
+    bgSolid: "bg-sky-600 hover:bg-sky-700 text-white shadow-[0_0_15px_hsl(200,100%,50%,0.3)]",
+    icon: MessageSquare 
+  },
+  in_progress: { 
+    label: "Em Andamento", 
+    color: "bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-[0_0_10px_hsl(45,100%,50%,0.2)]", 
+    bgSolid: "bg-amber-600 hover:bg-amber-700 text-white shadow-[0_0_15px_hsl(45,100%,50%,0.3)]",
+    icon: Clock 
+  },
+  resolved: { 
+    label: "Resolvido", 
+    color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_10px_hsl(160,100%,40%,0.2)]", 
+    bgSolid: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-[0_0_15px_hsl(160,100%,40%,0.3)]",
+    icon: CheckCircle2 
+  },
+  closed: { 
+    label: "Fechado", 
+    color: "bg-slate-500/20 text-slate-400 border-slate-500/40", 
+    bgSolid: "bg-slate-600 hover:bg-slate-700 text-white",
+    icon: XCircle 
+  },
 };
 
 export default function AdminSuporte() {
