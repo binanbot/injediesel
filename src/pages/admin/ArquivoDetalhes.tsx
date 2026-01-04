@@ -69,7 +69,7 @@ const arquivosMock: Record<string, {
     data: "28/12/2024",
     cliente: "João Silva",
     valor: 1500,
-    categorias: ["Caminhão"],
+    categorias: ["Truck"],
     descricao: "Remapeamento Stage 1 para aumento de potência e torque",
     horasKm: "450.000 km",
     arquivoOriginal: "volvo_fh540_original.bin",
@@ -77,7 +77,7 @@ const arquivosMock: Record<string, {
     unidade: "São Paulo - Centro",
     franqueado: "Roberto Mendes"
   },
-  "2": { 
+  "2": {
     id: 2, 
     placa: "DEF-5678", 
     marca: "Scania", 
@@ -87,14 +87,14 @@ const arquivosMock: Record<string, {
     data: "28/12/2024",
     cliente: "Maria Santos",
     valor: 2000,
-    categorias: ["Caminhão"],
+    categorias: ["Truck"],
     descricao: "Remoção do DPF e ajuste de parâmetros",
     horasKm: "320.000 km",
     arquivoOriginal: "scania_r450_original.bin",
     unidade: "Rio de Janeiro",
     franqueado: "Carlos Ferreira"
   },
-  "3": { 
+  "3": {
     id: 3, 
     placa: "GHI-9012", 
     marca: "Mercedes", 
@@ -104,7 +104,7 @@ const arquivosMock: Record<string, {
     data: "27/12/2024",
     cliente: "Carlos Oliveira",
     valor: 1800,
-    categorias: ["Caminhão"],
+    categorias: ["Truck"],
     descricao: "Desativação do sistema EGR",
     horasKm: "280.000 km",
     arquivoOriginal: "mercedes_actros_original.bin",

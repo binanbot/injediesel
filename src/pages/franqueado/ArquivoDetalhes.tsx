@@ -73,13 +73,13 @@ const arquivosMock: Record<string, {
     data: "28/12/2024",
     cliente: "João Silva",
     valor: 1500,
-    categorias: ["Caminhão"],
+    categorias: ["Truck"],
     descricao: "Remapeamento Stage 1 para aumento de potência e torque",
     horasKm: "450.000 km",
     arquivoOriginal: "volvo_fh540_original.bin",
     arquivoModificado: "volvo_fh540_stage1.bin"
   },
-  "2": { 
+  "2": {
     id: 2, 
     placa: "DEF-5678", 
     marca: "Scania", 
@@ -89,12 +89,12 @@ const arquivosMock: Record<string, {
     data: "28/12/2024",
     cliente: "Maria Santos",
     valor: 2000,
-    categorias: ["Caminhão"],
+    categorias: ["Truck"],
     descricao: "Remoção do DPF e ajuste de parâmetros",
     horasKm: "320.000 km",
     arquivoOriginal: "scania_r450_original.bin"
   },
-  "3": { 
+  "3": {
     id: 3, 
     placa: "GHI-9012", 
     marca: "Mercedes", 
@@ -104,13 +104,13 @@ const arquivosMock: Record<string, {
     data: "27/12/2024",
     cliente: "Carlos Oliveira",
     valor: 1800,
-    categorias: ["Caminhão"],
+    categorias: ["Truck"],
     descricao: "Desativação do sistema EGR",
     horasKm: "280.000 km",
     arquivoOriginal: "mercedes_actros_original.bin",
     arquivoModificado: "mercedes_actros_egr_off.bin"
   },
-  "4": { 
+  "4": {
     id: 4, 
     placa: "JKL-3456", 
     marca: "DAF", 
@@ -120,12 +120,12 @@ const arquivosMock: Record<string, {
     data: "27/12/2024",
     cliente: "Ana Costa",
     valor: 1200,
-    categorias: ["Caminhão"],
+    categorias: ["Truck"],
     descricao: "Desativação do sistema AdBlue",
     horasKm: "520.000 km",
     arquivoOriginal: "daf_xf105_original.bin"
   },
-  "5": { 
+  "5": {
     id: 5, 
     placa: "MNO-7890", 
     marca: "MAN", 
@@ -135,7 +135,7 @@ const arquivosMock: Record<string, {
     data: "26/12/2024",
     cliente: "Pedro Alves",
     valor: 2500,
-    categorias: ["Caminhão"],
+    categorias: ["Truck"],
     descricao: "Remapeamento Stage 2 completo",
     horasKm: "180.000 km",
     arquivoOriginal: "man_tgx_original.bin"

@@ -43,7 +43,7 @@ import {
 import { MetricTooltip, metricDefinitions } from "@/components/MetricTooltip";
 // Dados mockados de faturamento por categoria de veículo
 const faturamentoMock = [
-  { categoria: "Caminhão", valor: 45800, quantidade: 28, icon: Truck },
+  { categoria: "Truck", valor: 45800, quantidade: 28, icon: Truck },
   { categoria: "Veículo de Passeio", valor: 32500, quantidade: 45, icon: Car },
   { categoria: "Pick-up", valor: 18900, quantidade: 22, icon: Truck },
   { categoria: "Ônibus", valor: 12500, quantidade: 8, icon: Bus },
