@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   User,
@@ -13,6 +13,8 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
+  History,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,15 +22,54 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ContractAlert } from "@/components/ContractAlert";
 import { useContractStatus } from "@/hooks/useContractStatus";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+
+interface ContractHistoryItem {
+  id: string;
+  start_date: string;
+  end_date: string;
+  contract_type: string;
+  status: string;
+  notes: string | null;
+}
 
 export default function Perfil() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [contractHistory, setContractHistory] = useState<ContractHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
   const contractStatus = useContractStatus();
+
+  // Fetch contract history
+  useEffect(() => {
+    const fetchContractHistory = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('contract_history')
+          .select('*')
+          .eq('franqueado_id', user.id)
+          .order('end_date', { ascending: false });
+
+        if (error) throw error;
+        setContractHistory(data || []);
+      } catch (error) {
+        console.error('Error fetching contract history:', error);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+
+    fetchContractHistory();
+  }, [user?.id]);
 
   const handlePasswordChange = (value: string) => {
     let strength = 0;
@@ -246,6 +287,69 @@ export default function Perfil() {
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Contract History */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <History className="h-5 w-5 text-primary" />
+            Histórico de Contratos
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingHistory ? (
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <div key={i} className="h-16 bg-secondary/50 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : contractHistory.length > 0 ? (
+            <div className="space-y-3">
+              {contractHistory.map((contract) => (
+                <div 
+                  key={contract.id} 
+                  className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 border border-border/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">
+                        {new Date(contract.start_date).toLocaleDateString('pt-BR')} — {new Date(contract.end_date).toLocaleDateString('pt-BR')}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Tipo: {contract.contract_type}
+                        {contract.notes && ` • ${contract.notes}`}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge 
+                    variant="outline" 
+                    className={
+                      contract.status === 'renewed' 
+                        ? "bg-success/10 text-success border-success/30" 
+                        : contract.status === 'expired' 
+                          ? "bg-muted text-muted-foreground border-muted" 
+                          : "bg-warning/10 text-warning border-warning/30"
+                    }
+                  >
+                    {contract.status === 'renewed' ? 'Renovado' : 
+                     contract.status === 'expired' ? 'Expirado' : 
+                     contract.status === 'cancelled' ? 'Cancelado' : contract.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <History className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Nenhum contrato anterior registrado</p>
+              <p className="text-xs mt-1">O histórico aparecerá aqui após renovações</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      contract_history: {
+        Row: {
+          contract_type: string
+          created_at: string
+          end_date: string
+          franqueado_id: string
+          id: string
+          notes: string | null
+          renewal_date: string | null
+          start_date: string
+          status: string
+        }
+        Insert: {
+          contract_type?: string
+          created_at?: string
+          end_date: string
+          franqueado_id: string
+          id?: string
+          notes?: string | null
+          renewal_date?: string | null
+          start_date: string
+          status?: string
+        }
+        Update: {
+          contract_type?: string
+          created_at?: string
+          end_date?: string
+          franqueado_id?: string
+          id?: string
+          notes?: string | null
+          renewal_date?: string | null
+          start_date?: string
+          status?: string
+        }
+        Relationships: []
+      }
       correction_tickets: {
         Row: {
           arquivo_anexo_url: string | null
