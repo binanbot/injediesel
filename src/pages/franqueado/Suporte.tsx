@@ -1,9 +1,12 @@
-import { HeadphonesIcon, Phone, Mail, Clock, Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import { HeadphonesIcon, Phone, Mail, Clock, Send, History, MessageSquare, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -14,6 +17,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import SupportChat from "@/components/franqueado/SupportChat";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 // WhatsApp SVG Icon component
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -26,8 +32,63 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+interface Ticket {
+  id: string;
+  subject: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+  open: { 
+    label: "Aberto", 
+    color: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    icon: <MessageSquare className="h-3 w-3" />
+  },
+  in_progress: { 
+    label: "Em Andamento", 
+    color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    icon: <AlertCircle className="h-3 w-3" />
+  },
+  resolved: { 
+    label: "Resolvido", 
+    color: "bg-green-500/20 text-green-400 border-green-500/30",
+    icon: <CheckCircle className="h-3 w-3" />
+  },
+  closed: { 
+    label: "Fechado", 
+    color: "bg-muted text-muted-foreground border-border",
+    icon: <CheckCircle className="h-3 w-3" />
+  },
+};
+
 export default function Suporte() {
   const { toast } = useToast();
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("novo");
+
+  useEffect(() => {
+    loadTickets();
+  }, []);
+
+  const loadTickets = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("support_conversations")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setTickets(data || []);
+    } catch (error) {
+      console.error("Erro ao carregar tickets:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +110,14 @@ export default function Suporte() {
     window.location.href = "mailto:suporte@injediesel.com.br?subject=Suporte Injediesel";
   };
 
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+  };
+
+  const getStatusConfig = (status: string) => {
+    return statusConfig[status] || statusConfig.open;
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -56,83 +125,185 @@ export default function Suporte() {
         <p className="text-muted-foreground">Entre em contato com nossa equipe de suporte.</p>
       </div>
 
-      {/* Support Form - Destaque Neon no Topo */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <Card className="relative overflow-hidden border-[hsl(180,100%,40%)]/40 shadow-[0_0_40px_hsl(180,100%,40%,0.15)] bg-gradient-to-br from-[hsl(180,100%,40%)]/5 to-transparent">
-          {/* Glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[hsl(180,100%,40%)]/10 via-transparent to-[hsl(200,100%,50%)]/10 pointer-events-none" />
-          <CardHeader className="relative">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[hsl(180,100%,40%)]/20 flex items-center justify-center">
-                <HeadphonesIcon className="h-5 w-5 text-[hsl(180,100%,40%)] drop-shadow-[0_0_6px_hsl(180,100%,40%)]" />
-              </div>
-              <span className="text-[hsl(180,100%,50%)] drop-shadow-[0_0_8px_hsl(180,100%,40%,0.5)]">
-                Abrir Ticket de Suporte
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="relative">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Categoria</Label>
-                  <Select required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="tecnico">Suporte Técnico</SelectItem>
-                      <SelectItem value="financeiro">Financeiro</SelectItem>
-                      <SelectItem value="contrato">Contrato</SelectItem>
-                      <SelectItem value="sistema">Sistema / Plataforma</SelectItem>
-                      <SelectItem value="outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
+      {/* Tabs para Novo Ticket e Histórico */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="novo" className="flex items-center gap-2">
+            <HeadphonesIcon className="h-4 w-4" />
+            Novo Ticket
+          </TabsTrigger>
+          <TabsTrigger value="historico" className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            Meus Tickets
+            {tickets.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {tickets.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab: Novo Ticket */}
+        <TabsContent value="novo" className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Card className="relative overflow-hidden border-[hsl(180,100%,40%)]/40 shadow-[0_0_40px_hsl(180,100%,40%,0.15)] bg-gradient-to-br from-[hsl(180,100%,40%)]/5 to-transparent">
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[hsl(180,100%,40%)]/10 via-transparent to-[hsl(200,100%,50%)]/10 pointer-events-none" />
+              <CardHeader className="relative">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-[hsl(180,100%,40%)]/20 flex items-center justify-center">
+                    <HeadphonesIcon className="h-5 w-5 text-[hsl(180,100%,40%)] drop-shadow-[0_0_6px_hsl(180,100%,40%)]" />
+                  </div>
+                  <span className="text-[hsl(180,100%,50%)] drop-shadow-[0_0_8px_hsl(180,100%,40%,0.5)]">
+                    Abrir Ticket de Suporte
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="relative">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Categoria</Label>
+                      <Select required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma categoria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="tecnico">Suporte Técnico</SelectItem>
+                          <SelectItem value="financeiro">Financeiro</SelectItem>
+                          <SelectItem value="contrato">Contrato</SelectItem>
+                          <SelectItem value="sistema">Sistema / Plataforma</SelectItem>
+                          <SelectItem value="outro">Outro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Prioridade</Label>
+                      <Select required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a prioridade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="baixa">Baixa</SelectItem>
+                          <SelectItem value="media">Média</SelectItem>
+                          <SelectItem value="alta">Alta</SelectItem>
+                          <SelectItem value="urgente">Urgente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Assunto</Label>
+                    <Input placeholder="Descreva brevemente o problema" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Descrição</Label>
+                    <Textarea
+                      placeholder="Descreva detalhadamente o problema ou dúvida..."
+                      rows={5}
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button 
+                      type="submit"
+                      className="bg-gradient-to-r from-[hsl(180,100%,35%)] to-[hsl(200,100%,45%)] hover:from-[hsl(180,100%,40%)] hover:to-[hsl(200,100%,50%)] text-white shadow-[0_0_20px_hsl(180,100%,40%,0.4)] hover:shadow-[0_0_30px_hsl(180,100%,40%,0.6)] transition-all duration-300"
+                    >
+                      <Send className="h-4 w-4" />
+                      Enviar Ticket
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+
+        {/* Tab: Histórico */}
+        <TabsContent value="historico" className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            {loading ? (
+              <Card className="p-8">
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Carregando tickets...</span>
                 </div>
-                <div className="space-y-2">
-                  <Label>Prioridade</Label>
-                  <Select required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a prioridade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="baixa">Baixa</SelectItem>
-                      <SelectItem value="media">Média</SelectItem>
-                      <SelectItem value="alta">Alta</SelectItem>
-                      <SelectItem value="urgente">Urgente</SelectItem>
-                    </SelectContent>
-                  </Select>
+              </Card>
+            ) : tickets.length === 0 ? (
+              <Card className="p-8">
+                <div className="text-center text-muted-foreground">
+                  <History className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                  <p className="font-medium">Nenhum ticket encontrado</p>
+                  <p className="text-sm mt-1">Você ainda não abriu nenhum ticket de suporte.</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => setActiveTab("novo")}
+                  >
+                    <HeadphonesIcon className="h-4 w-4 mr-2" />
+                    Abrir primeiro ticket
+                  </Button>
                 </div>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {tickets.map((ticket, index) => {
+                  const status = getStatusConfig(ticket.status);
+                  return (
+                    <motion.div
+                      key={ticket.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2, delay: index * 0.05 }}
+                    >
+                      <Card className="hover:border-primary/30 transition-all duration-200 cursor-pointer">
+                        <CardContent className="py-4 px-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge 
+                                  variant="outline" 
+                                  className={`${status.color} flex items-center gap-1 text-xs`}
+                                >
+                                  {status.icon}
+                                  {status.label}
+                                </Badge>
+                              </div>
+                              <h4 className="font-medium text-sm truncate">{ticket.subject}</h4>
+                              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  Criado: {formatDate(ticket.created_at)}
+                                </span>
+                                {ticket.updated_at !== ticket.created_at && (
+                                  <span className="text-muted-foreground/60">
+                                    Atualizado: {formatDate(ticket.updated_at)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <Button variant="ghost" size="sm" className="shrink-0">
+                              <MessageSquare className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
               </div>
-              <div className="space-y-2">
-                <Label>Assunto</Label>
-                <Input placeholder="Descreva brevemente o problema" required />
-              </div>
-              <div className="space-y-2">
-                <Label>Descrição</Label>
-                <Textarea
-                  placeholder="Descreva detalhadamente o problema ou dúvida..."
-                  rows={5}
-                  required
-                />
-              </div>
-              <div className="flex justify-end">
-                <Button 
-                  type="submit"
-                  className="bg-gradient-to-r from-[hsl(180,100%,35%)] to-[hsl(200,100%,45%)] hover:from-[hsl(180,100%,40%)] hover:to-[hsl(200,100%,50%)] text-white shadow-[0_0_20px_hsl(180,100%,40%,0.4)] hover:shadow-[0_0_30px_hsl(180,100%,40%,0.6)] transition-all duration-300"
-                >
-                  <Send className="h-4 w-4" />
-                  Enviar Ticket
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </motion.div>
+            )}
+          </motion.div>
+        </TabsContent>
+      </Tabs>
 
       {/* Contact Channels - Compacto no Final */}
       <div>
