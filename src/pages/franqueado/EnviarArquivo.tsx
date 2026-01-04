@@ -14,6 +14,7 @@ import {
   FileCheck,
   Bell,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { useContractStatus } from "@/hooks/useContractStatus";
 import { ContractBlockOverlay } from "@/components/ContractBlockOverlay";
@@ -69,6 +70,16 @@ export default function EnviarArquivo() {
   // Categoria de veículo e marca
   const [categoriaVeiculo, setCategoriaVeiculo] = useState<string>("");
   const [marca, setMarca] = useState<string>("");
+  
+  // Placa e dados do veículo (preenchidos via API)
+  const [placa, setPlaca] = useState<string>("");
+  const [modelo, setModelo] = useState<string>("");
+  const [motor, setMotor] = useState<string>("");
+  const [transmissao, setTransmissao] = useState<string>("");
+  const [anoModelo, setAnoModelo] = useState<string>("");
+  const [horasKm, setHorasKm] = useState<string>("");
+  const [buscandoPlaca, setBuscandoPlaca] = useState(false);
+  const [placaEncontrada, setPlacaEncontrada] = useState(false);
 
   // Cliente
   const [clienteId, setClienteId] = useState<string>("");
@@ -172,6 +183,71 @@ export default function EnviarArquivo() {
   const handleCategoriaVeiculoChange = (value: string) => {
     setCategoriaVeiculo(value);
     setMarca("");
+    // Reset vehicle data when category changes
+    setPlaca("");
+    setModelo("");
+    setMotor("");
+    setTransmissao("");
+    setAnoModelo("");
+    setPlacaEncontrada(false);
+  };
+
+  // Função para buscar dados do veículo pela placa
+  const buscarPlaca = async () => {
+    if (!placa || placa.length < 7) {
+      toast({
+        title: "Placa inválida",
+        description: "Digite uma placa válida (ex: ABC1234 ou ABC1D23).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setBuscandoPlaca(true);
+    
+    // Simulating API call - In production, this would call a real plate API
+    // Example APIs: Brasil API, Sinesp, etc.
+    setTimeout(() => {
+      // Mock response based on plate format
+      const mockData = {
+        marca: categoriaVeiculo === "Truck" ? "Volvo" : 
+               categoriaVeiculo === "Ônibus" ? "Mercedes-Benz" :
+               categoriaVeiculo === "Veículo de Passeio" ? "Volkswagen" :
+               categoriaVeiculo === "Pick-up" ? "Toyota" :
+               categoriaVeiculo === "Moto" ? "Honda" : "Outro",
+        modelo: categoriaVeiculo === "Truck" ? "FH 540" : 
+                categoriaVeiculo === "Ônibus" ? "O 500 RS" :
+                categoriaVeiculo === "Veículo de Passeio" ? "Golf GTI" :
+                categoriaVeiculo === "Pick-up" ? "Hilux SRX" :
+                categoriaVeiculo === "Moto" ? "CB 1000R" : "Modelo Genérico",
+        motor: categoriaVeiculo === "Truck" ? "D13K 540" : 
+               categoriaVeiculo === "Ônibus" ? "OM 457 LA" :
+               categoriaVeiculo === "Veículo de Passeio" ? "2.0 TSI" :
+               categoriaVeiculo === "Pick-up" ? "2.8 Diesel" :
+               categoriaVeiculo === "Moto" ? "998cc" : "",
+        ano: "2023/2024",
+      };
+
+      setMarca(mockData.marca);
+      setModelo(mockData.modelo);
+      setMotor(mockData.motor);
+      setAnoModelo(mockData.ano);
+      setPlacaEncontrada(true);
+      setBuscandoPlaca(false);
+
+      toast({
+        title: "Veículo encontrado!",
+        description: `${mockData.marca} ${mockData.modelo} - ${mockData.ano}`,
+      });
+    }, 1500);
+  };
+
+  // Format plate input
+  const handlePlacaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (value.length > 7) value = value.slice(0, 7);
+    setPlaca(value);
+    setPlacaEncontrada(false);
   };
 
   const handleClienteCriado = (novoCliente: { id: string; nome: string; telefone: string; email?: string; cidade?: string }) => {
@@ -232,6 +308,13 @@ export default function EnviarArquivo() {
     setServicoTexto("");
     setCategoriaVeiculo("");
     setMarca("");
+    setPlaca("");
+    setModelo("");
+    setMotor("");
+    setTransmissao("");
+    setAnoModelo("");
+    setHorasKm("");
+    setPlacaEncontrada(false);
     setClienteId("");
     setValor("");
     setFiles([]);
@@ -464,36 +547,89 @@ export default function EnviarArquivo() {
               </div>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              {exigePlaca && (
-                <div className="space-y-2">
-                  <Label>Placa *</Label>
-                  <div className="relative">
-                    <Input placeholder="ABC-1234" className="glass-input" required />
-                    <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2">
-                      <Search className="h-4 w-4" />
-                    </Button>
+            {/* Placa (se exigir) */}
+            {exigePlaca && (
+              <div className="space-y-2">
+                <Label>Placa *</Label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input 
+                      placeholder="ABC1234 ou ABC1D23" 
+                      value={placa}
+                      onChange={handlePlacaChange}
+                      className={`glass-input uppercase ${placaEncontrada ? "border-success" : ""}`}
+                      maxLength={7}
+                      required 
+                    />
+                    {placaEncontrada && (
+                      <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-success" />
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Info className="h-3 w-3" />
-                    Consulta automática disponível via API
-                  </p>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={buscarPlaca}
+                    disabled={buscandoPlaca || placa.length < 7}
+                    className="gap-2"
+                  >
+                    {buscandoPlaca ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                    Buscar
+                  </Button>
                 </div>
-              )}
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Info className="h-3 w-3" />
+                  Digite a placa e clique em "Buscar" para preencher os dados automaticamente
+                </p>
+              </div>
+            )}
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Marca *</Label>
+                <Select value={marca} onValueChange={setMarca} disabled={!categoriaVeiculo}>
+                  <SelectTrigger className={`glass-input ${placaEncontrada && marca ? "border-success/50" : ""}`}>
+                    <SelectValue
+                      placeholder={categoriaVeiculo ? "Selecione a marca" : "Selecione a categoria primeiro"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent className="glass-card">
+                    {marcasDisponiveis.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label>Modelo *</Label>
-                <Input placeholder="Ex: FH 540" className="glass-input" required />
+                <Input 
+                  placeholder="Ex: FH 540" 
+                  value={modelo}
+                  onChange={(e) => setModelo(e.target.value)}
+                  className={`glass-input ${placaEncontrada && modelo ? "border-success/50" : ""}`}
+                  required 
+                />
               </div>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Motor / Cilindrada</Label>
-                <Input placeholder="Ex: D13A 540" className="glass-input" />
+                <Input 
+                  placeholder="Ex: D13A 540" 
+                  value={motor}
+                  onChange={(e) => setMotor(e.target.value)}
+                  className={`glass-input ${placaEncontrada && motor ? "border-success/50" : ""}`}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Transmissão</Label>
-                <Select>
+                <Select value={transmissao} onValueChange={setTransmissao}>
                   <SelectTrigger className="glass-input">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
@@ -511,11 +647,22 @@ export default function EnviarArquivo() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Ano / Modelo *</Label>
-                <Input placeholder="Ex: 2020/2021" className="glass-input" required />
+                <Input 
+                  placeholder="Ex: 2020/2021" 
+                  value={anoModelo}
+                  onChange={(e) => setAnoModelo(e.target.value)}
+                  className={`glass-input ${placaEncontrada && anoModelo ? "border-success/50" : ""}`}
+                  required 
+                />
               </div>
               <div className="space-y-2">
                 <Label>Horas / Km do veículo</Label>
-                <Input placeholder="Ex: 15.000" className="glass-input" />
+                <Input 
+                  placeholder="Ex: 15.000" 
+                  value={horasKm}
+                  onChange={(e) => setHorasKm(e.target.value)}
+                  className="glass-input" 
+                />
               </div>
             </div>
           </CardContent>
