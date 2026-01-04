@@ -21,11 +21,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { ContractAlert } from "@/components/ContractAlert";
+import { useContractStatus } from "@/hooks/useContractStatus";
 
 export default function Perfil() {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const contractStatus = useContractStatus();
 
   const handlePasswordChange = (value: string) => {
     let strength = 0;
@@ -48,6 +50,25 @@ export default function Perfil() {
     if (passwordStrength <= 50) return "Regular";
     if (passwordStrength <= 75) return "Boa";
     return "Forte";
+  };
+
+  // Contract progress bar color based on days remaining
+  const getContractProgressColor = () => {
+    if (!contractStatus.daysRemaining) return "bg-success";
+    const days = contractStatus.daysRemaining;
+    if (days <= 15) return "bg-destructive";
+    if (days <= 30) return "bg-orange-600";
+    if (days <= 60) return "bg-warning";
+    if (days <= 90) return "bg-yellow-500";
+    return "bg-success";
+  };
+
+  // Calculate contract progress percentage (assuming 365 days contract)
+  const getContractProgress = () => {
+    if (!contractStatus.daysRemaining) return 100;
+    const totalDays = 365;
+    const daysUsed = totalDays - contractStatus.daysRemaining;
+    return Math.min(100, Math.max(0, (daysUsed / totalDays) * 100));
   };
 
   return (
@@ -94,7 +115,11 @@ export default function Perfil() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Data de vencimento</p>
-                <p className="font-medium text-warning">10/01/2025</p>
+                <p className="font-medium text-warning">
+                  {contractStatus.expirationDate 
+                    ? new Date(contractStatus.expirationDate).toLocaleDateString('pt-BR')
+                    : "10/01/2025"}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Tipo de revenda</p>
@@ -102,7 +127,53 @@ export default function Perfil() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Status</p>
-                <span className="status-badge status-processing">Vencendo</span>
+                <span className={`status-badge ${
+                  contractStatus.isExpired 
+                    ? "status-rejected" 
+                    : contractStatus.isNearExpiration 
+                      ? "status-processing" 
+                      : "status-approved"
+                }`}>
+                  {contractStatus.isExpired 
+                    ? "Vencido" 
+                    : contractStatus.isNearExpiration 
+                      ? "Vencendo" 
+                      : "Ativo"}
+                </span>
+              </div>
+            </div>
+
+            {/* Contract Progress Bar */}
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Vigência do contrato</span>
+                <span className={`font-medium ${
+                  contractStatus.daysRemaining && contractStatus.daysRemaining <= 30 
+                    ? "text-destructive" 
+                    : contractStatus.daysRemaining && contractStatus.daysRemaining <= 60 
+                      ? "text-warning" 
+                      : "text-foreground"
+                }`}>
+                  {contractStatus.isExpired 
+                    ? "Contrato vencido" 
+                    : contractStatus.daysRemaining 
+                      ? `${contractStatus.daysRemaining} dias restantes`
+                      : "365 dias restantes"}
+                </span>
+              </div>
+              <div className="relative">
+                <Progress 
+                  value={getContractProgress()} 
+                  className="h-3 bg-secondary"
+                />
+                <div 
+                  className={`absolute top-0 left-0 h-3 rounded-full transition-all duration-500 ${getContractProgressColor()}`}
+                  style={{ width: `${getContractProgress()}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Início</span>
+                <span>Vencimento</span>
               </div>
             </div>
           </CardContent>
