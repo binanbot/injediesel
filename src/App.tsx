@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import DocumentacaoPublica from "./pages/DocumentacaoPublica";
 
 // Franqueado
 import { FranchiseeLayout } from "./components/layout/FranchiseeLayout";
@@ -53,6 +54,7 @@ const App = () => (
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/docs" element={<DocumentacaoPublica />} />
 
             {/* Franqueado Routes */}
             <Route
