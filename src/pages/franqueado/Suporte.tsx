@@ -60,26 +60,30 @@ interface Message {
   created_at: string;
 }
 
-const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+const statusConfig: Record<string, { label: string; color: string; bgSolid: string; icon: React.ReactNode }> = {
   open: { 
     label: "Aberto", 
-    color: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    color: "bg-sky-500/20 text-sky-400 border-sky-500/40 shadow-[0_0_10px_hsl(200,100%,50%,0.2)]",
+    bgSolid: "bg-sky-600 hover:bg-sky-700 text-white shadow-[0_0_15px_hsl(200,100%,50%,0.3)]",
     icon: <MessageSquare className="h-3 w-3" />
   },
   in_progress: { 
     label: "Em Andamento", 
-    color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    color: "bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-[0_0_10px_hsl(45,100%,50%,0.2)]",
+    bgSolid: "bg-amber-600 hover:bg-amber-700 text-white shadow-[0_0_15px_hsl(45,100%,50%,0.3)]",
     icon: <AlertCircle className="h-3 w-3" />
   },
   resolved: { 
     label: "Resolvido", 
-    color: "bg-green-500/20 text-green-400 border-green-500/30",
+    color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_10px_hsl(160,100%,40%,0.2)]",
+    bgSolid: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-[0_0_15px_hsl(160,100%,40%,0.3)]",
     icon: <CheckCircle className="h-3 w-3" />
   },
   closed: { 
     label: "Fechado", 
-    color: "bg-muted text-muted-foreground border-border",
-    icon: <CheckCircle className="h-3 w-3" />
+    color: "bg-slate-500/20 text-slate-400 border-slate-500/40",
+    bgSolid: "bg-slate-600 hover:bg-slate-700 text-white",
+    icon: <X className="h-3 w-3" />
   },
 };
 
@@ -597,7 +601,7 @@ export default function Suporte() {
               variant={statusFilter === "open" ? "default" : "outline"}
               size="sm"
               onClick={() => setStatusFilter("open")}
-              className={statusFilter === "open" ? "bg-blue-600 hover:bg-blue-700" : "border-blue-500/30 text-blue-400 hover:bg-blue-500/10"}
+              className={statusFilter === "open" ? statusConfig.open.bgSolid : "border-sky-500/40 text-sky-400 hover:bg-sky-500/10"}
             >
               <MessageSquare className="h-3.5 w-3.5 mr-1" />
               Aberto
@@ -609,7 +613,7 @@ export default function Suporte() {
               variant={statusFilter === "in_progress" ? "default" : "outline"}
               size="sm"
               onClick={() => setStatusFilter("in_progress")}
-              className={statusFilter === "in_progress" ? "bg-yellow-600 hover:bg-yellow-700" : "border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10"}
+              className={statusFilter === "in_progress" ? statusConfig.in_progress.bgSolid : "border-amber-500/40 text-amber-400 hover:bg-amber-500/10"}
             >
               <AlertCircle className="h-3.5 w-3.5 mr-1" />
               Em Andamento
@@ -621,12 +625,24 @@ export default function Suporte() {
               variant={statusFilter === "resolved" ? "default" : "outline"}
               size="sm"
               onClick={() => setStatusFilter("resolved")}
-              className={statusFilter === "resolved" ? "bg-green-600 hover:bg-green-700" : "border-green-500/30 text-green-400 hover:bg-green-500/10"}
+              className={statusFilter === "resolved" ? statusConfig.resolved.bgSolid : "border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"}
             >
               <CheckCircle className="h-3.5 w-3.5 mr-1" />
               Resolvido
               <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-xs">
                 {tickets.filter(t => t.status === "resolved").length}
+              </Badge>
+            </Button>
+            <Button
+              variant={statusFilter === "closed" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("closed")}
+              className={statusFilter === "closed" ? statusConfig.closed.bgSolid : "border-slate-500/40 text-slate-400 hover:bg-slate-500/10"}
+            >
+              <X className="h-3.5 w-3.5 mr-1" />
+              Fechado
+              <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-xs">
+                {tickets.filter(t => t.status === "closed").length}
               </Badge>
             </Button>
           </div>
