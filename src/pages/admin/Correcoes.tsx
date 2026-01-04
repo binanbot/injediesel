@@ -15,6 +15,7 @@ import {
   User,
   Calendar,
   Car,
+  MessageCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ interface CorrectionTicket {
   status: string;
   created_at: string;
   updated_at: string;
+  conversation_id: string | null;
 }
 
 // Dados mockados para exibição (em produção viriam do banco)
@@ -111,6 +113,7 @@ const mockTickets: CorrectionTicket[] = [
     status: "aberto",
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    conversation_id: "conv-1",
   },
   {
     id: "2",
@@ -121,6 +124,7 @@ const mockTickets: CorrectionTicket[] = [
     status: "em_analise",
     created_at: new Date(Date.now() - 86400000).toISOString(),
     updated_at: new Date().toISOString(),
+    conversation_id: "conv-2",
   },
   {
     id: "3",
@@ -131,6 +135,7 @@ const mockTickets: CorrectionTicket[] = [
     status: "resolvido",
     created_at: new Date(Date.now() - 172800000).toISOString(),
     updated_at: new Date().toISOString(),
+    conversation_id: null,
   },
 ];
 
@@ -524,6 +529,33 @@ export default function AdminCorrecoes() {
                         Baixar Anexo
                       </a>
                     </Button>
+                  </div>
+                )}
+
+                {/* Chat vinculado */}
+                {selectedTicket.conversation_id && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-foreground flex items-center gap-2">
+                      <MessageCircle className="h-4 w-4 text-primary" />
+                      Chat de Suporte
+                    </h4>
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-primary/30 text-primary hover:bg-primary/10"
+                      onClick={() => {
+                        // Em produção, isso abriria o chat vinculado
+                        toast({
+                          title: "Chat vinculado",
+                          description: "O chat de suporte está disponível para comunicação direta com o franqueado.",
+                        });
+                      }}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Abrir Conversa
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Uma conversa de suporte foi criada automaticamente para este ticket.
+                    </p>
                   </div>
                 )}
 
