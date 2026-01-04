@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Search, Filter, Eye, Edit, Lock, Unlock, MoreHorizontal, Plus, Loader2, Upload, Calendar, X, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -30,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { CitySearchBox } from "@/components/admin/CitySearchBox";
 
 interface FranchiseeProfile {
   id: string;
@@ -198,6 +199,22 @@ export default function AdminFranqueados() {
         </TabsList>
 
         <TabsContent value="usuarios" className="space-y-4 mt-4">
+          {/* City Search */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Buscar por Cidade Atendida
+              </CardTitle>
+              <CardDescription>
+                Verifique qual franquia atende uma cidade específica
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CitySearchBox />
+            </CardContent>
+          </Card>
+
           {/* Filters */}
           <Card>
             <CardContent className="pt-6">

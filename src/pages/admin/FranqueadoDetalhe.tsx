@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, Loader2, User, Building, FileText, History } from "lucide-react";
+import { ArrowLeft, Save, Loader2, User, Building, FileText, History, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { CitiesChipsInput } from "@/components/admin/CitiesChipsInput";
+
+interface ServiceArea {
+  country: string;
+  state: string;
+  city: string;
+  city_id: string;
+}
 
 interface FranchiseeProfile {
   id: string;
@@ -38,12 +46,14 @@ interface FranchiseeProfile {
   contract_expiration_date: string | null;
   created_at: string;
   updated_at: string;
+  service_areas: ServiceArea[];
 }
 
 export default function FranqueadoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<FranchiseeProfile | null>(null);
+  const [serviceAreas, setServiceAreas] = useState<ServiceArea[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -63,7 +73,27 @@ export default function FranqueadoDetalhe() {
         .single();
 
       if (error) throw error;
-      setProfile(data);
+      
+      // Parse service_areas from JSONB
+      const rawAreas = data?.service_areas;
+      const areas: ServiceArea[] = Array.isArray(rawAreas) 
+        ? rawAreas.map((a: unknown) => {
+            const area = a as Record<string, unknown>;
+            return {
+              country: String(area.country || ""),
+              state: String(area.state || ""),
+              city: String(area.city || ""),
+              city_id: String(area.city_id || ""),
+            };
+          })
+        : [];
+      setServiceAreas(areas);
+      
+      // Set profile without service_areas to avoid type issues
+      setProfile({
+        ...data,
+        service_areas: areas,
+      } as FranchiseeProfile);
     } catch (error) {
       console.error("Error loading profile:", error);
       toast.error("Erro ao carregar perfil");
@@ -96,7 +126,8 @@ export default function FranqueadoDetalhe() {
           ktag_expires_at: profile.ktag_expires_at,
           contract_type: profile.contract_type,
           contract_expiration_date: profile.contract_expiration_date,
-          requires_password_reset: profile.requires_password_reset
+          requires_password_reset: profile.requires_password_reset,
+          service_areas: JSON.parse(JSON.stringify(serviceAreas))
         })
         .eq("id", profile.id);
 
@@ -172,10 +203,14 @@ export default function FranqueadoDetalhe() {
       </div>
 
       <Tabs defaultValue="cadastro">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="cadastro" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Cadastro
+          </TabsTrigger>
+          <TabsTrigger value="cobertura" className="flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Cobertura
           </TabsTrigger>
           <TabsTrigger value="equipamentos" className="flex items-center gap-2">
             <Building className="h-4 w-4" />
@@ -251,6 +286,29 @@ export default function FranqueadoDetalhe() {
                   value={profile.equipment_type || ""}
                   onChange={(e) => updateField("equipment_type", e.target.value)}
                 />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="cobertura" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Cidades Atendidas</CardTitle>
+              <CardDescription>
+                Gerencie as cidades que esta franquia atende
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Label>Áreas de Cobertura</Label>
+                <CitiesChipsInput
+                  value={serviceAreas}
+                  onChange={setServiceAreas}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Total: {serviceAreas.length} cidade{serviceAreas.length !== 1 ? "s" : ""} cadastrada{serviceAreas.length !== 1 ? "s" : ""}
+                </p>
               </div>
             </CardContent>
           </Card>
