@@ -106,6 +106,9 @@ export default function Suporte() {
   const [ticketAttachment, setTicketAttachment] = useState<File | null>(null);
   const [submittingTicket, setSubmittingTicket] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Filter state
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     loadTickets();
@@ -575,6 +578,57 @@ export default function Suporte() {
 
         {/* Tab: Histórico */}
         <TabsContent value="historico" className="space-y-4">
+          {/* Status Filters */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={statusFilter === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("all")}
+              className={statusFilter === "all" ? "bg-primary" : ""}
+            >
+              Todos
+              <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-xs">
+                {tickets.length}
+              </Badge>
+            </Button>
+            <Button
+              variant={statusFilter === "open" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("open")}
+              className={statusFilter === "open" ? "bg-blue-600 hover:bg-blue-700" : "border-blue-500/30 text-blue-400 hover:bg-blue-500/10"}
+            >
+              <MessageSquare className="h-3.5 w-3.5 mr-1" />
+              Aberto
+              <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-xs">
+                {tickets.filter(t => t.status === "open").length}
+              </Badge>
+            </Button>
+            <Button
+              variant={statusFilter === "in_progress" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("in_progress")}
+              className={statusFilter === "in_progress" ? "bg-yellow-600 hover:bg-yellow-700" : "border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10"}
+            >
+              <AlertCircle className="h-3.5 w-3.5 mr-1" />
+              Em Andamento
+              <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-xs">
+                {tickets.filter(t => t.status === "in_progress").length}
+              </Badge>
+            </Button>
+            <Button
+              variant={statusFilter === "resolved" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("resolved")}
+              className={statusFilter === "resolved" ? "bg-green-600 hover:bg-green-700" : "border-green-500/30 text-green-400 hover:bg-green-500/10"}
+            >
+              <CheckCircle className="h-3.5 w-3.5 mr-1" />
+              Resolvido
+              <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-xs">
+                {tickets.filter(t => t.status === "resolved").length}
+              </Badge>
+            </Button>
+          </div>
+
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -605,7 +659,9 @@ export default function Suporte() {
               </Card>
             ) : (
               <div className="space-y-3">
-                {tickets.map((ticket, index) => {
+                {tickets
+                  .filter(ticket => statusFilter === "all" || ticket.status === statusFilter)
+                  .map((ticket, index) => {
                   const status = getStatusConfig(ticket.status);
                   return (
                     <motion.div
