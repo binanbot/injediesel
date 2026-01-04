@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      cities_reference: {
+        Row: {
+          city: string
+          country: string
+          id: string
+          search_key: string
+          state: string
+        }
+        Insert: {
+          city: string
+          country: string
+          id: string
+          search_key: string
+          state: string
+        }
+        Update: {
+          city?: string
+          country?: string
+          id?: string
+          search_key?: string
+          state?: string
+        }
+        Relationships: []
+      }
       contract_history: {
         Row: {
           contract_type: string
@@ -154,6 +178,7 @@ export type Database = {
           legacy_user_registered_at: string | null
           rental_value_brl: number | null
           requires_password_reset: boolean | null
+          service_areas: Json | null
           start_date: string | null
           updated_at: string | null
           user_id: string | null
@@ -184,6 +209,7 @@ export type Database = {
           legacy_user_registered_at?: string | null
           rental_value_brl?: number | null
           requires_password_reset?: boolean | null
+          service_areas?: Json | null
           start_date?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -214,6 +240,7 @@ export type Database = {
           legacy_user_registered_at?: string | null
           rental_value_brl?: number | null
           requires_password_reset?: boolean | null
+          service_areas?: Json | null
           start_date?: string | null
           updated_at?: string | null
           user_id?: string | null
