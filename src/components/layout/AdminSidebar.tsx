@@ -12,6 +12,7 @@ import {
   X,
   ImageIcon,
   FileText,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
   { icon: Users, label: "Franqueados", path: "/admin/franqueados" },
   { icon: FileDown, label: "Arquivos Recebidos", path: "/admin/arquivos" },
+  { icon: AlertCircle, label: "Correções", path: "/admin/correcoes" },
   { icon: ImageIcon, label: "Banners", path: "/admin/banners" },
   { icon: MapPin, label: "Áreas de Atuação", path: "/admin/areas" },
   { icon: Headphones, label: "Suporte", path: "/admin/suporte" },
