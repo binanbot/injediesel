@@ -9,7 +9,6 @@ import {
   Camera,
   Lock,
   Calendar,
-  AlertTriangle,
   CheckCircle2,
   Eye,
   EyeOff,
@@ -21,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { ContractAlert } from "@/components/ContractAlert";
 
 export default function Perfil() {
   const { toast } = useToast();
@@ -58,22 +58,7 @@ export default function Perfil() {
       </div>
 
       {/* Contract Alert */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-4 rounded-xl bg-warning/10 border border-warning/20 flex items-start gap-3"
-      >
-        <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
-        <div className="flex-1">
-          <p className="font-medium text-warning">Contrato próximo do vencimento</p>
-          <p className="text-sm text-muted-foreground">
-            Seu contrato vence em 15 dias (10/01/2025). Renove agora para continuar utilizando o sistema.
-          </p>
-        </div>
-        <Button variant="warning" size="sm">
-          Renovar agora
-        </Button>
-      </motion.div>
+      <ContractAlert expirationDate="2025-01-10" />
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Avatar Card */}

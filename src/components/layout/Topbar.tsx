@@ -1,4 +1,5 @@
-import { Bell, Search, Menu } from "lucide-react";
+import { Bell, Search, Menu, Clock, AlertTriangle } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -58,9 +59,20 @@ export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuB
                 <span className="font-medium text-foreground">Nova atualização disponível</span>
                 <span className="text-xs text-muted-foreground">AlienTech v3.2 disponível para download</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-col items-start gap-1 cursor-pointer focus:bg-secondary/50">
-                <span className="font-medium text-foreground">Contrato próximo do vencimento</span>
-                <span className="text-xs text-muted-foreground">Seu contrato vence em 15 dias</span>
+              <DropdownMenuItem asChild className="cursor-pointer focus:bg-warning/10">
+                <Link to="/franqueado/perfil" className="flex items-start gap-2 p-2">
+                  <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-warning">Contrato próximo do vencimento</span>
+                      <Badge variant="outline" className="bg-amber-500/20 text-amber-400 border-amber-500/40 text-xs">
+                        <Clock className="h-3 w-3 mr-1" />
+                        15 dias
+                      </Badge>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Clique para renovar agora</span>
+                  </div>
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
