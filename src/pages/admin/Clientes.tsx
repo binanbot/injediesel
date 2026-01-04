@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { LGPDExportModal } from "@/components/admin/LGPDExportModal";
+import { NovoClienteDrawer } from "@/components/admin/NovoClienteDrawer";
 
 interface Customer {
   id: string;
@@ -70,6 +71,7 @@ export default function Clientes() {
   const [cityFilter, setCityFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showNovoClienteDrawer, setShowNovoClienteDrawer] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
   const isFranchisor = userRole === "admin" || userRole === "suporte";
@@ -261,7 +263,7 @@ export default function Clientes() {
             <Download className="h-4 w-4 mr-2" />
             Exportar CSV
           </Button>
-          <Button variant="hero">
+          <Button variant="hero" onClick={() => setShowNovoClienteDrawer(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Cliente
           </Button>
@@ -483,6 +485,12 @@ export default function Clientes() {
         onConfirm={handleExport}
         exportType="Lista de Clientes (CSV)"
         isLoading={isExporting}
+      />
+
+      <NovoClienteDrawer
+        open={showNovoClienteDrawer}
+        onOpenChange={setShowNovoClienteDrawer}
+        onSuccess={loadData}
       />
     </div>
   );
