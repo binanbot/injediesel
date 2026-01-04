@@ -40,7 +40,7 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
-
+import { MetricTooltip, metricDefinitions } from "@/components/MetricTooltip";
 // Dados mockados de faturamento por categoria de veículo
 const faturamentoMock = [
   { categoria: "Caminhão", valor: 45800, quantidade: 28, icon: Truck },
@@ -251,8 +251,11 @@ export default function Relatorios() {
                 <div className="p-3 rounded-xl bg-success/20">
                   <DollarSign className="h-6 w-6 text-success" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Faturamento Total</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm text-muted-foreground">Faturamento Total</p>
+                    <MetricTooltip explanation={metricDefinitions.faturamentoTotal} />
+                  </div>
                   <p className="text-2xl font-bold text-success">
                     {formatCurrency(totalFaturamento)}
                   </p>
@@ -276,8 +279,11 @@ export default function Relatorios() {
                 <div className="p-3 rounded-xl bg-primary/20">
                   <TrendingUp className="h-6 w-6 text-primary" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total de Serviços</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm text-muted-foreground">Total de Serviços</p>
+                    <MetricTooltip explanation={metricDefinitions.totalServicos} />
+                  </div>
                   <p className="text-2xl font-bold">{totalServicos}</p>
                   <p className="text-xs text-muted-foreground">
                     {periodoLabels[periodo]}
@@ -299,8 +305,11 @@ export default function Relatorios() {
                 <div className="p-3 rounded-xl bg-warning/20">
                   <DollarSign className="h-6 w-6 text-warning" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Ticket Médio</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm text-muted-foreground">Ticket Médio</p>
+                    <MetricTooltip explanation={metricDefinitions.ticketMedio} />
+                  </div>
                   <p className="text-2xl font-bold">{formatCurrency(ticketMedio)}</p>
                   <p className="text-xs text-muted-foreground">Por serviço</p>
                 </div>
@@ -318,9 +327,12 @@ export default function Relatorios() {
       >
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="text-lg">
-              Faturamento por Categoria de Veículo
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg">
+                Faturamento por Categoria de Veículo
+              </CardTitle>
+              <MetricTooltip explanation={metricDefinitions.distribuicaoCategoria} />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="h-[350px]">
