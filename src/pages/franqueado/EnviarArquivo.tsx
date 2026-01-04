@@ -15,6 +15,8 @@ import {
   Bell,
   ArrowRight,
 } from "lucide-react";
+import { useContractStatus } from "@/hooks/useContractStatus";
+import { ContractBlockOverlay } from "@/components/ContractBlockOverlay";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -320,8 +322,13 @@ export default function EnviarArquivo() {
     );
   }
 
+  const contractStatus = useContractStatus();
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 relative">
+      {/* Overlay de bloqueio se contrato vencido */}
+      {contractStatus.isExpired && <ContractBlockOverlay action="upload" />}
+
       <div>
         <h1 className="text-2xl font-bold">Enviar Arquivo</h1>
         <p className="text-muted-foreground">Preencha os dados abaixo para enviar seu arquivo de ECU.</p>

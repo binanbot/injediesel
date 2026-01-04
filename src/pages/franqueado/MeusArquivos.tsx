@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Download, Search, Filter, Eye, MoreHorizontal, CalendarIcon, Clock, X } from "lucide-react";
+import { Download, Search, Filter, Eye, MoreHorizontal, CalendarIcon, Clock, X, Lock } from "lucide-react";
 import { calcularTempoDecorrido, getTempoClasses } from "@/utils/tempoDecorrido";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { useContractStatus } from "@/hooks/useContractStatus";
+import { toast } from "@/hooks/use-toast";
 
 const arquivos = [
   { id: 1, placa: "ABC-1234", marca: "Volvo", modelo: "FH 540", servico: "Stage 1", status: "completed", data: "28/12/2024" },
@@ -72,10 +74,23 @@ const getStatusBadge = (status: string) => {
 
 export default function MeusArquivos() {
   const navigate = useNavigate();
+  const contractStatus = useContractStatus();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [dataInicio, setDataInicio] = useState<Date>();
   const [dataFim, setDataFim] = useState<Date>();
+
+  const handleDownloadClick = (e: React.MouseEvent) => {
+    if (contractStatus.isExpired) {
+      e.preventDefault();
+      e.stopPropagation();
+      toast({
+        title: "Download bloqueado",
+        description: "Seu contrato está vencido. Renove para fazer download dos arquivos.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Lê o status da URL ou usa "all" como padrão
   const statusFilter = searchParams.get("status") || "all";
@@ -333,10 +348,12 @@ export default function MeusArquivos() {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-8 w-8 text-success hover:text-success"
-                              title="Download"
+                              className={`h-8 w-8 ${contractStatus.isExpired ? "text-muted-foreground" : "text-success hover:text-success"}`}
+                              title={contractStatus.isExpired ? "Contrato vencido" : "Download"}
+                              onClick={handleDownloadClick}
+                              disabled={contractStatus.isExpired}
                             >
-                              <Download className="h-4 w-4" />
+                              {contractStatus.isExpired ? <Lock className="h-4 w-4" /> : <Download className="h-4 w-4" />}
                             </Button>
                           )}
                         </div>
@@ -358,9 +375,13 @@ export default function MeusArquivos() {
                               Ver detalhes
                             </DropdownMenuItem>
                             {arquivo.status === "completed" && (
-                              <DropdownMenuItem className="sm:hidden">
-                                <Download className="h-4 w-4 mr-2" />
-                                Download
+                              <DropdownMenuItem 
+                                className="sm:hidden" 
+                                onClick={handleDownloadClick}
+                                disabled={contractStatus.isExpired}
+                              >
+                                {contractStatus.isExpired ? <Lock className="h-4 w-4 mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                                {contractStatus.isExpired ? "Bloqueado" : "Download"}
                               </DropdownMenuItem>
                             )}
                             {/* Ações secundárias */}
