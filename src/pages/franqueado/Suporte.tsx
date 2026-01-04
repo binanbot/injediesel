@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { HeadphonesIcon, Phone, Mail, Clock, Send, History, MessageSquare, CheckCircle, AlertCircle, Loader2, X, User, Headphones } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { HeadphonesIcon, Phone, Mail, Clock, Send, History, MessageSquare, CheckCircle, AlertCircle, Loader2, X, User, Headphones, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,6 +28,8 @@ import SupportChat from "@/components/franqueado/SupportChat";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { playNotificationSound } from "@/utils/notificationSound";
+import { showBrowserNotification } from "@/utils/browserNotifications";
 
 // WhatsApp SVG Icon component
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -93,6 +95,7 @@ export default function Suporte() {
   const [newMessage, setNewMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [hasNewMessage, setHasNewMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -123,6 +126,24 @@ export default function Suporte() {
         (payload) => {
           console.log('Nova mensagem recebida:', payload);
           const newMsg = payload.new as Message;
+          
+          // Only play sound for support messages (not user's own)
+          if (newMsg.sender_type === 'suporte' && newMsg.sender_id !== userId) {
+            playNotificationSound();
+            setHasNewMessage(true);
+            
+            // Show browser notification if page is not visible
+            if (document.hidden) {
+              showBrowserNotification({
+                title: 'Nova mensagem no ticket',
+                body: `Suporte respondeu: ${newMsg.content.substring(0, 50)}${newMsg.content.length > 50 ? '...' : ''}`
+              });
+            }
+            
+            // Clear indicator after 3 seconds
+            setTimeout(() => setHasNewMessage(false), 3000);
+          }
+          
           setMessages((prev) => {
             // Avoid duplicates
             if (prev.some(m => m.id === newMsg.id)) return prev;
@@ -135,7 +156,7 @@ export default function Suporte() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedTicket, dialogOpen]);
+  }, [selectedTicket, dialogOpen, userId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -552,8 +573,20 @@ export default function Suporte() {
 
       {/* Ticket Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0">
-          <DialogHeader className="p-6 pb-4 border-b border-border/50">
+        <DialogContent className={`max-w-2xl max-h-[85vh] flex flex-col p-0 transition-all duration-300 ${hasNewMessage ? 'ring-2 ring-[hsl(180,100%,40%)] shadow-[0_0_30px_hsl(180,100%,40%,0.3)]' : ''}`}>
+          <DialogHeader className="p-6 pb-4 border-b border-border/50 relative">
+            {/* New message indicator */}
+            {hasNewMessage && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[hsl(180,100%,40%)]/20 border border-[hsl(180,100%,40%)]/40"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-[hsl(180,100%,40%)] animate-pulse" />
+                <span className="text-xs font-medium text-[hsl(180,100%,40%)]">Nova mensagem</span>
+              </motion.div>
+            )}
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <DialogTitle className="text-lg font-semibold mb-2">
