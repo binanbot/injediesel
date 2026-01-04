@@ -15,6 +15,8 @@ import {
   Bell,
   ArrowRight,
   Loader2,
+  Lock,
+  ShieldAlert,
 } from "lucide-react";
 import { useContractStatus } from "@/hooks/useContractStatus";
 import { ContractBlockOverlay } from "@/components/ContractBlockOverlay";
@@ -33,6 +35,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   categoriasServicos,
@@ -80,6 +91,12 @@ export default function EnviarArquivo() {
   const [horasKm, setHorasKm] = useState<string>("");
   const [buscandoPlaca, setBuscandoPlaca] = useState(false);
   const [placaEncontrada, setPlacaEncontrada] = useState(false);
+  const [placaConsultada, setPlacaConsultada] = useState(false);
+  const [dadosManuais, setDadosManuais] = useState(false);
+  
+  // Modal de responsabilidade
+  const [modalResponsabilidadeOpen, setModalResponsabilidadeOpen] = useState(false);
+  const [aceitouTermoPlaca, setAceitouTermoPlaca] = useState(false);
 
   // Cliente
   const [clienteId, setClienteId] = useState<string>("");
@@ -190,7 +207,13 @@ export default function EnviarArquivo() {
     setTransmissao("");
     setAnoModelo("");
     setPlacaEncontrada(false);
+    setPlacaConsultada(false);
+    setDadosManuais(false);
+    setAceitouTermoPlaca(false);
   };
+
+  // Verifica se os campos devem estar bloqueados
+  const camposBloqueados = exigePlaca && !placaConsultada && !dadosManuais;
 
   // Função para buscar dados do veículo pela placa
   const buscarPlaca = async () => {
@@ -204,42 +227,74 @@ export default function EnviarArquivo() {
     }
 
     setBuscandoPlaca(true);
+    setPlacaConsultada(true);
     
     // Simulating API call - In production, this would call a real plate API
-    // Example APIs: Brasil API, Sinesp, etc.
+    // Simula 70% de chance de encontrar a placa para demonstração
+    const encontrou = Math.random() > 0.3;
+    
     setTimeout(() => {
-      // Mock response based on plate format
-      const mockData = {
-        marca: categoriaVeiculo === "Truck" ? "Volvo" : 
-               categoriaVeiculo === "Ônibus" ? "Mercedes-Benz" :
-               categoriaVeiculo === "Veículo de Passeio" ? "Volkswagen" :
-               categoriaVeiculo === "Pick-up" ? "Toyota" :
-               categoriaVeiculo === "Moto" ? "Honda" : "Outro",
-        modelo: categoriaVeiculo === "Truck" ? "FH 540" : 
-                categoriaVeiculo === "Ônibus" ? "O 500 RS" :
-                categoriaVeiculo === "Veículo de Passeio" ? "Golf GTI" :
-                categoriaVeiculo === "Pick-up" ? "Hilux SRX" :
-                categoriaVeiculo === "Moto" ? "CB 1000R" : "Modelo Genérico",
-        motor: categoriaVeiculo === "Truck" ? "D13K 540" : 
-               categoriaVeiculo === "Ônibus" ? "OM 457 LA" :
-               categoriaVeiculo === "Veículo de Passeio" ? "2.0 TSI" :
-               categoriaVeiculo === "Pick-up" ? "2.8 Diesel" :
-               categoriaVeiculo === "Moto" ? "998cc" : "",
-        ano: "2023/2024",
-      };
+      if (encontrou) {
+        // Mock response based on plate format
+        const mockData = {
+          marca: categoriaVeiculo === "Truck" ? "Volvo" : 
+                 categoriaVeiculo === "Ônibus" ? "Mercedes-Benz" :
+                 categoriaVeiculo === "Veículo de Passeio" ? "Volkswagen" :
+                 categoriaVeiculo === "Pick-up" ? "Toyota" :
+                 categoriaVeiculo === "Moto" ? "Honda" : "Outro",
+          modelo: categoriaVeiculo === "Truck" ? "FH 540" : 
+                  categoriaVeiculo === "Ônibus" ? "O 500 RS" :
+                  categoriaVeiculo === "Veículo de Passeio" ? "Golf GTI" :
+                  categoriaVeiculo === "Pick-up" ? "Hilux SRX" :
+                  categoriaVeiculo === "Moto" ? "CB 1000R" : "Modelo Genérico",
+          motor: categoriaVeiculo === "Truck" ? "D13K 540" : 
+                 categoriaVeiculo === "Ônibus" ? "OM 457 LA" :
+                 categoriaVeiculo === "Veículo de Passeio" ? "2.0 TSI" :
+                 categoriaVeiculo === "Pick-up" ? "2.8 Diesel" :
+                 categoriaVeiculo === "Moto" ? "998cc" : "",
+          ano: "2023/2024",
+          transmissao: "Automática",
+        };
 
-      setMarca(mockData.marca);
-      setModelo(mockData.modelo);
-      setMotor(mockData.motor);
-      setAnoModelo(mockData.ano);
-      setPlacaEncontrada(true);
-      setBuscandoPlaca(false);
+        setMarca(mockData.marca);
+        setModelo(mockData.modelo);
+        setMotor(mockData.motor);
+        setAnoModelo(mockData.ano);
+        setTransmissao(mockData.transmissao);
+        setPlacaEncontrada(true);
+        setDadosManuais(false);
+        setBuscandoPlaca(false);
 
-      toast({
-        title: "Veículo encontrado!",
-        description: `${mockData.marca} ${mockData.modelo} - ${mockData.ano}`,
-      });
+        toast({
+          title: "Veículo encontrado!",
+          description: `${mockData.marca} ${mockData.modelo} - ${mockData.ano}`,
+        });
+      } else {
+        // Placa não encontrada - abrir modal de responsabilidade
+        setBuscandoPlaca(false);
+        setPlacaEncontrada(false);
+        setModalResponsabilidadeOpen(true);
+      }
     }, 1500);
+  };
+
+  // Confirmar termo de responsabilidade
+  const confirmarTermoResponsabilidade = () => {
+    setDadosManuais(true);
+    setModalResponsabilidadeOpen(false);
+    setAceitouTermoPlaca(false);
+    toast({
+      title: "Dados liberados para edição",
+      description: "Preencha os dados do veículo manualmente.",
+    });
+  };
+
+  // Cancelar termo de responsabilidade
+  const cancelarTermoResponsabilidade = () => {
+    setModalResponsabilidadeOpen(false);
+    setPlaca("");
+    setPlacaConsultada(false);
+    setAceitouTermoPlaca(false);
   };
 
   // Format plate input
@@ -248,6 +303,8 @@ export default function EnviarArquivo() {
     if (value.length > 7) value = value.slice(0, 7);
     setPlaca(value);
     setPlacaEncontrada(false);
+    setPlacaConsultada(false);
+    setDadosManuais(false);
   };
 
   const handleClienteCriado = (novoCliente: { id: string; nome: string; telefone: string; email?: string; cidade?: string }) => {
@@ -315,6 +372,9 @@ export default function EnviarArquivo() {
     setAnoModelo("");
     setHorasKm("");
     setPlacaEncontrada(false);
+    setPlacaConsultada(false);
+    setDadosManuais(false);
+    setAceitouTermoPlaca(false);
     setClienteId("");
     setValor("");
     setFiles([]);
@@ -508,11 +568,23 @@ export default function EnviarArquivo() {
 
         {/* Dados do Veículo */}
         <Card className="glass-card">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Dados do Veículo</CardTitle>
+            {dadosManuais && (
+              <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30 gap-1">
+                <ShieldAlert className="h-3 w-3" />
+                Dados manuais
+              </Badge>
+            )}
+            {placaEncontrada && (
+              <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                Dados via API
+              </Badge>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Linha 1: Categoria + Marca */}
+            {/* Linha 1: Categoria + Placa (conforme imagem) */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Categoria do Veículo *</Label>
@@ -529,42 +601,31 @@ export default function EnviarArquivo() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Marca *</Label>
-                <Select value={marca} onValueChange={setMarca} disabled={!categoriaVeiculo}>
-                  <SelectTrigger className={`glass-input ${placaEncontrada && marca ? "border-success/50" : ""}`}>
-                    <SelectValue
-                      placeholder={categoriaVeiculo ? "Selecione a marca" : "Selecione a categoria primeiro"}
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="glass-card">
-                    {marcasDisponiveis.map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Linha 2: Placa + Modelo */}
-            <div className="grid sm:grid-cols-2 gap-4">
+              
               {exigePlaca ? (
                 <div className="space-y-2">
                   <Label>Placa *</Label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <Input 
-                        placeholder="ABC1234 ou ABC1D23" 
+                        placeholder="ABC1234" 
                         value={placa}
                         onChange={handlePlacaChange}
-                        className={`glass-input uppercase ${placaEncontrada ? "border-success" : ""}`}
+                        className={`glass-input uppercase ${
+                          placaEncontrada ? "border-success" : 
+                          dadosManuais ? "border-warning" : ""
+                        }`}
                         maxLength={7}
                         required 
                       />
-                      {placaEncontrada && (
+                      {buscandoPlaca && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                      {placaEncontrada && !buscandoPlaca && (
                         <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-success" />
+                      )}
+                      {dadosManuais && !buscandoPlaca && (
+                        <ShieldAlert className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-warning" />
                       )}
                     </div>
                     <Button 
@@ -582,10 +643,24 @@ export default function EnviarArquivo() {
                       Buscar
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Info className="h-3 w-3" />
-                    Consulta automática disponível via API
-                  </p>
+                  {placaEncontrada && (
+                    <p className="text-xs text-success flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Dados preenchidos automaticamente via consulta de placa
+                    </p>
+                  )}
+                  {dadosManuais && (
+                    <p className="text-xs text-warning flex items-center gap-1">
+                      <ShieldAlert className="h-3 w-3" />
+                      Dados informados manualmente sob responsabilidade do franqueado
+                    </p>
+                  )}
+                  {!placaEncontrada && !dadosManuais && !buscandoPlaca && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Info className="h-3 w-3" />
+                      Digite a placa e clique em "Buscar" para preencher automaticamente
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -596,33 +671,89 @@ export default function EnviarArquivo() {
                   />
                 </div>
               )}
+            </div>
+
+            {/* Linha 2: Marca + Modelo (conforme imagem) */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2 relative">
+                <Label className="flex items-center gap-2">
+                  Marca *
+                  {camposBloqueados && <Lock className="h-3 w-3 text-muted-foreground" />}
+                </Label>
+                <Select 
+                  value={marca} 
+                  onValueChange={setMarca} 
+                  disabled={!categoriaVeiculo || (placaEncontrada && !dadosManuais) || camposBloqueados}
+                >
+                  <SelectTrigger className={`glass-input ${
+                    placaEncontrada && marca ? "border-success/50" : 
+                    dadosManuais && marca ? "border-warning/50" : ""
+                  } ${camposBloqueados ? "opacity-50" : ""}`}>
+                    <SelectValue
+                      placeholder={
+                        camposBloqueados ? "Busque a placa primeiro" :
+                        categoriaVeiculo ? "Selecione a marca" : "Selecione a categoria primeiro"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent className="glass-card">
+                    {marcasDisponiveis.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
-                <Label>Modelo *</Label>
+                <Label className="flex items-center gap-2">
+                  Modelo *
+                  {camposBloqueados && <Lock className="h-3 w-3 text-muted-foreground" />}
+                </Label>
                 <Input 
-                  placeholder="Ex: FH 540" 
+                  placeholder={camposBloqueados ? "Busque a placa primeiro" : "Ex: FH 540"}
                   value={modelo}
                   onChange={(e) => setModelo(e.target.value)}
-                  className={`glass-input ${placaEncontrada && modelo ? "border-success/50" : ""}`}
+                  className={`glass-input ${
+                    placaEncontrada && modelo ? "border-success/50" : 
+                    dadosManuais && modelo ? "border-warning/50" : ""
+                  } ${camposBloqueados ? "opacity-50" : ""}`}
+                  disabled={(placaEncontrada && !dadosManuais) || camposBloqueados}
                   required 
                 />
               </div>
             </div>
 
+            {/* Linha 3: Motor + Transmissão */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Motor / Cilindrada</Label>
+                <Label className="flex items-center gap-2">
+                  Motor / Cilindrada
+                  {camposBloqueados && <Lock className="h-3 w-3 text-muted-foreground" />}
+                </Label>
                 <Input 
-                  placeholder="Ex: D13A 540" 
+                  placeholder={camposBloqueados ? "Busque a placa primeiro" : "Ex: D13A 540"}
                   value={motor}
                   onChange={(e) => setMotor(e.target.value)}
-                  className={`glass-input ${placaEncontrada && motor ? "border-success/50" : ""}`}
+                  className={`glass-input ${
+                    placaEncontrada && motor ? "border-success/50" : 
+                    dadosManuais && motor ? "border-warning/50" : ""
+                  } ${camposBloqueados ? "opacity-50" : ""}`}
+                  disabled={(placaEncontrada && !dadosManuais) || camposBloqueados}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Transmissão</Label>
-                <Select value={transmissao} onValueChange={setTransmissao}>
-                  <SelectTrigger className="glass-input">
-                    <SelectValue placeholder="Selecione" />
+                <Label className="flex items-center gap-2">
+                  Transmissão
+                  {camposBloqueados && <Lock className="h-3 w-3 text-muted-foreground" />}
+                </Label>
+                <Select 
+                  value={transmissao} 
+                  onValueChange={setTransmissao}
+                  disabled={(placaEncontrada && !dadosManuais) || camposBloqueados}
+                >
+                  <SelectTrigger className={`glass-input ${camposBloqueados ? "opacity-50" : ""}`}>
+                    <SelectValue placeholder={camposBloqueados ? "Busque a placa primeiro" : "Selecione"} />
                   </SelectTrigger>
                   <SelectContent className="glass-card">
                     {transmissoes.map((t) => (
@@ -635,14 +766,22 @@ export default function EnviarArquivo() {
               </div>
             </div>
 
+            {/* Linha 4: Ano + Horas/Km */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Ano / Modelo *</Label>
+                <Label className="flex items-center gap-2">
+                  Ano / Modelo *
+                  {camposBloqueados && <Lock className="h-3 w-3 text-muted-foreground" />}
+                </Label>
                 <Input 
-                  placeholder="Ex: 2020/2021" 
+                  placeholder={camposBloqueados ? "Busque a placa primeiro" : "Ex: 2020/2021"}
                   value={anoModelo}
                   onChange={(e) => setAnoModelo(e.target.value)}
-                  className={`glass-input ${placaEncontrada && anoModelo ? "border-success/50" : ""}`}
+                  className={`glass-input ${
+                    placaEncontrada && anoModelo ? "border-success/50" : 
+                    dadosManuais && anoModelo ? "border-warning/50" : ""
+                  } ${camposBloqueados ? "opacity-50" : ""}`}
+                  disabled={(placaEncontrada && !dadosManuais) || camposBloqueados}
                   required 
                 />
               </div>
@@ -654,6 +793,10 @@ export default function EnviarArquivo() {
                   onChange={(e) => setHorasKm(e.target.value)}
                   className="glass-input" 
                 />
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Info className="h-3 w-3" />
+                  Campo sempre editável
+                </p>
               </div>
             </div>
           </CardContent>
@@ -771,6 +914,59 @@ export default function EnviarArquivo() {
         open={clientePerfilOpen}
         onOpenChange={setClientePerfilOpen}
       />
+
+      {/* Modal de Responsabilidade - Placa não encontrada */}
+      <Dialog open={modalResponsabilidadeOpen} onOpenChange={() => {}}>
+        <DialogContent className="max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-warning">
+              <AlertTriangle className="h-5 w-5" />
+              Confirmação de Responsabilidade
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              A placa informada não foi encontrada em nossa base de dados.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
+              <p className="text-sm leading-relaxed">
+                Declaro que os dados do veículo informados manualmente são verídicos, corretos e conferidos.
+              </p>
+              <p className="text-sm leading-relaxed mt-2">
+                Assumo total responsabilidade pelo arquivo enviado, pelos dados fornecidos e pela garantia 
+                do serviço executado, isentando a franqueadora de qualquer divergência decorrente dessas informações.
+              </p>
+            </div>
+
+            <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg hover:bg-secondary/50 transition-colors">
+              <Checkbox
+                checked={aceitouTermoPlaca}
+                onCheckedChange={(checked) => setAceitouTermoPlaca(checked === true)}
+                className="mt-0.5"
+              />
+              <span className="text-sm font-medium">
+                Li e aceito o termo de responsabilidade
+              </span>
+            </label>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={cancelarTermoResponsabilidade}>
+              Cancelar
+            </Button>
+            <Button 
+              variant="hero" 
+              onClick={confirmarTermoResponsabilidade}
+              disabled={!aceitouTermoPlaca}
+              className="gap-2"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Confirmar e continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
