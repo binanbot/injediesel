@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Search, Filter, Download, Upload, Eye, MoreHorizontal, CheckCircle, RefreshCw, CalendarIcon, Clock } from "lucide-react";
+import { Search, Filter, Download, Upload, Eye, MoreHorizontal, CheckCircle, RefreshCw, CalendarIcon, Clock, X } from "lucide-react";
 import { calcularTempoDecorrido, getTempoClasses } from "@/utils/tempoDecorrido";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,11 +127,36 @@ export default function AdminArquivos() {
 
   const statusCounts = getStatusCounts();
 
+  // Verifica se há filtros ativos
+  const hasActiveFilters = statusFilter !== "all" || search !== "" || dataInicio || dataFim;
+
+  // Função para limpar todos os filtros
+  const clearAllFilters = () => {
+    setSearch("");
+    setDataInicio(undefined);
+    setDataFim(undefined);
+    setSearchParams(new URLSearchParams());
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Arquivos Recebidos</h1>
-        <p className="text-muted-foreground">Gerencie os arquivos enviados pelos franqueados.</p>
+      {/* Header com título e botão limpar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Arquivos Recebidos</h1>
+          <p className="text-muted-foreground">Gerencie os arquivos enviados pelos franqueados.</p>
+        </div>
+        {hasActiveFilters && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={clearAllFilters}
+            className="gap-2 self-start sm:self-auto"
+          >
+            <X className="h-4 w-4" />
+            Limpar filtros
+          </Button>
+        )}
       </div>
 
       {/* Status Tabs */}
