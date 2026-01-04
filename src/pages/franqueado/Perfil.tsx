@@ -167,7 +167,11 @@ export default function Perfil() {
                   className="h-3 bg-secondary"
                 />
                 <div 
-                  className={`absolute top-0 left-0 h-3 rounded-full transition-all duration-500 ${getContractProgressColor()}`}
+                  className={`absolute top-0 left-0 h-3 rounded-full transition-all duration-500 ${getContractProgressColor()} ${
+                    contractStatus.daysRemaining && contractStatus.daysRemaining <= 15 
+                      ? "animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.6)]" 
+                      : ""
+                  }`}
                   style={{ width: `${getContractProgress()}%` }}
                 />
               </div>
