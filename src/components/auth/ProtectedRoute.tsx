@@ -31,15 +31,16 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <>{children}</>;
   }
 
+  // Admin and suporte can access everything
+  if (userRole === "admin" || userRole === "suporte") {
+    return <>{children}</>;
+  }
+
   // Check if user has an allowed role
   if (userRole && allowedRoles.includes(userRole)) {
     return <>{children}</>;
   }
 
-  // User doesn't have the required role - redirect to appropriate dashboard
-  if (userRole === "admin" || userRole === "suporte") {
-    return <Navigate to="/admin" replace />;
-  }
-
+  // User doesn't have the required role - redirect to franqueado by default
   return <Navigate to="/franqueado" replace />;
 }
