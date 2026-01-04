@@ -40,6 +40,7 @@ import AdminRelatorios from "./pages/admin/Relatorios";
 import AdminConfiguracoes from "./pages/admin/Configuracoes";
 import DocumentacaoSistema from "./pages/admin/DocumentacaoSistema";
 import AdminCorrecoes from "./pages/admin/Correcoes";
+import AdminContratos from "./pages/admin/Contratos";
 
 const queryClient = new QueryClient();
 
@@ -98,6 +99,7 @@ const App = () => (
               <Route path="relatorios" element={<AdminRelatorios />} />
               <Route path="configuracoes" element={<AdminConfiguracoes />} />
               <Route path="correcoes" element={<AdminCorrecoes />} />
+              <Route path="contratos" element={<AdminContratos />} />
               <Route path="documentacao" element={<DocumentacaoSistema />} />
             </Route>
 
