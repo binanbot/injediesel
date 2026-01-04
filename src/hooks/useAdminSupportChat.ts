@@ -15,6 +15,8 @@ export function useAdminSupportChat(conversationId: string | null) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [lastReadTime, setLastReadTime] = useState<Date | null>(null);
   const { toast } = useToast();
 
   // Get current user
@@ -30,6 +32,7 @@ export function useAdminSupportChat(conversationId: string | null) {
   const loadMessages = useCallback(async () => {
     if (!conversationId) {
       setMessages([]);
+      setUnreadCount(0);
       return;
     }
 
@@ -43,10 +46,17 @@ export function useAdminSupportChat(conversationId: string | null) {
     if (error) {
       console.error("Error loading messages:", error);
     } else {
-      setMessages(data as Message[]);
+      const msgs = data as Message[];
+      setMessages(msgs);
+      // Count messages from franqueado that are newer than lastReadTime
+      const unread = msgs.filter(
+        m => m.sender_type === "franqueado" && 
+        (!lastReadTime || new Date(m.created_at) > lastReadTime)
+      ).length;
+      setUnreadCount(unread);
     }
     setLoading(false);
-  }, [conversationId]);
+  }, [conversationId, lastReadTime]);
 
   useEffect(() => {
     loadMessages();
@@ -73,6 +83,10 @@ export function useAdminSupportChat(conversationId: string | null) {
             if (prev.some(m => m.id === newMessage.id)) return prev;
             return [...prev, newMessage];
           });
+          // Increment unread if from franqueado
+          if (newMessage.sender_type === "franqueado") {
+            setUnreadCount(prev => prev + 1);
+          }
         }
       )
       .subscribe();
@@ -81,6 +95,12 @@ export function useAdminSupportChat(conversationId: string | null) {
       supabase.removeChannel(channel);
     };
   }, [conversationId]);
+
+  // Mark messages as read
+  const markAsRead = useCallback(() => {
+    setLastReadTime(new Date());
+    setUnreadCount(0);
+  }, []);
 
   // Send message as support
   const sendMessage = async (content: string): Promise<boolean> => {
@@ -119,7 +139,9 @@ export function useAdminSupportChat(conversationId: string | null) {
     messages,
     loading,
     userId,
+    unreadCount,
     sendMessage,
     loadMessages,
+    markAsRead,
   };
 }

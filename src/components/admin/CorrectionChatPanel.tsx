@@ -8,19 +8,39 @@ import { cn } from "@/lib/utils";
 
 interface CorrectionChatPanelProps {
   conversationId: string | null;
+  onUnreadCountChange?: (count: number) => void;
+  isActive?: boolean;
 }
 
-export default function CorrectionChatPanel({ conversationId }: CorrectionChatPanelProps) {
+export default function CorrectionChatPanel({ 
+  conversationId, 
+  onUnreadCountChange,
+  isActive = false 
+}: CorrectionChatPanelProps) {
   const {
     messages,
     loading,
     userId,
+    unreadCount,
     sendMessage,
+    markAsRead,
   } = useAdminSupportChat(conversationId);
 
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Notify parent of unread count changes
+  useEffect(() => {
+    onUnreadCountChange?.(unreadCount);
+  }, [unreadCount, onUnreadCountChange]);
+
+  // Mark as read when chat becomes active
+  useEffect(() => {
+    if (isActive && unreadCount > 0) {
+      markAsRead();
+    }
+  }, [isActive, unreadCount, markAsRead]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
