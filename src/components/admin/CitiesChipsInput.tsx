@@ -237,36 +237,37 @@ export function CitiesChipsInput({ value, onChange, disabled }: CitiesChipsInput
             {isLoading && (
               <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
             )}
+            
+            {/* Dropdown de sugestões dentro do container relativo */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div
+                ref={suggestionsRef}
+                className="absolute left-0 top-full z-50 w-full max-w-md mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto"
+              >
+                {suggestions.map((city, index) => (
+                  <button
+                    key={city.id}
+                    type="button"
+                    onClick={() => addCity(city)}
+                    className={cn(
+                      "w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2",
+                      index === selectedIndex && "bg-accent"
+                    )}
+                  >
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>
+                      {city.city} - {city.state}
+                    </span>
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {city.country === "BR" ? "🇧🇷" : "🇵🇾"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
-
-      {showSuggestions && suggestions.length > 0 && (
-        <div
-          ref={suggestionsRef}
-          className="absolute z-50 w-full max-w-md mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto"
-        >
-          {suggestions.map((city, index) => (
-            <button
-              key={city.id}
-              type="button"
-              onClick={() => addCity(city)}
-              className={cn(
-                "w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2",
-                index === selectedIndex && "bg-accent"
-              )}
-            >
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span>
-                {city.city} - {city.state}
-              </span>
-              <span className="ml-auto text-xs text-muted-foreground">
-                {city.country === "BR" ? "🇧🇷" : "🇵🇾"}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
 
       <p className="text-xs text-muted-foreground">
         Digite a cidade e pressione vírgula (,) ou Enter para adicionar. Você também pode colar uma lista separada por vírgulas.
