@@ -281,6 +281,33 @@ export type Database = {
         }
         Relationships: []
       }
+      plate_lookup_cache: {
+        Row: {
+          country: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          payload: Json
+          plate: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          payload: Json
+          plate: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          payload?: Json
+          plate?: string
+        }
+        Relationships: []
+      }
       profiles_franchisees: {
         Row: {
           allow_manual_credits: boolean | null
@@ -389,9 +416,15 @@ export type Database = {
           descricao: string | null
           horas_km: string | null
           id: string
+          manual_vehicle_data: boolean | null
           marca: string | null
           modelo: string | null
           placa: string
+          plate_lookup_at: string | null
+          plate_lookup_payload: Json | null
+          plate_lookup_success: boolean | null
+          plate_lookup_unit_id: string | null
+          plate_lookup_user_id: string | null
           servico: string
           status: string
           unit_id: string
@@ -410,9 +443,15 @@ export type Database = {
           descricao?: string | null
           horas_km?: string | null
           id?: string
+          manual_vehicle_data?: boolean | null
           marca?: string | null
           modelo?: string | null
           placa: string
+          plate_lookup_at?: string | null
+          plate_lookup_payload?: Json | null
+          plate_lookup_success?: boolean | null
+          plate_lookup_unit_id?: string | null
+          plate_lookup_user_id?: string | null
           servico: string
           status?: string
           unit_id: string
@@ -431,9 +470,15 @@ export type Database = {
           descricao?: string | null
           horas_km?: string | null
           id?: string
+          manual_vehicle_data?: boolean | null
           marca?: string | null
           modelo?: string | null
           placa?: string
+          plate_lookup_at?: string | null
+          plate_lookup_payload?: Json | null
+          plate_lookup_success?: boolean | null
+          plate_lookup_unit_id?: string | null
+          plate_lookup_user_id?: string | null
           servico?: string
           status?: string
           unit_id?: string
