@@ -90,10 +90,10 @@ export default function Loja() {
     });
   }, [products, searchTerm, selectedCategory]);
 
-  const handleAddToCart = (productId: string) => {
+  const handleAddToCart = (productId: string, quantity: number) => {
     setAddingProductId(productId);
     addItem.mutate(
-      { productId },
+      { productId, quantity },
       { onSettled: () => setAddingProductId(null) }
     );
   };
