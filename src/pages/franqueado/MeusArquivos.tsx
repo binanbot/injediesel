@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Download, Search, Filter, Eye, MoreHorizontal, CalendarIcon, Clock, X, Lock } from "lucide-react";
+import { Download, Search, Filter, Eye, MoreHorizontal, CalendarIcon, Clock, X, Lock, Sparkles } from "lucide-react";
 import { calcularTempoDecorrido, getTempoClasses } from "@/utils/tempoDecorrido";
+import { useRecentlyUpdatedFiles } from "@/hooks/useRecentlyUpdatedFiles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -75,6 +76,7 @@ const getStatusBadge = (status: string) => {
 export default function MeusArquivos() {
   const navigate = useNavigate();
   const contractStatus = useContractStatus();
+  const { isRecentlyUpdated } = useRecentlyUpdatedFiles();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [dataInicio, setDataInicio] = useState<Date>();
@@ -310,13 +312,23 @@ export default function MeusArquivos() {
               <tbody>
                 {filteredArquivos.map((arquivo) => {
                   const tempo = calcularTempoDecorrido(arquivo.data);
+                  const isUpdated = isRecentlyUpdated(arquivo.id.toString());
                   return (
                   <tr 
                     key={arquivo.id} 
-                    className="border-b border-border/50 hover:bg-secondary/30 transition-colors cursor-pointer group"
+                    className={`border-b border-border/50 hover:bg-secondary/30 transition-colors cursor-pointer group ${isUpdated ? "bg-primary/5 animate-pulse" : ""}`}
                     onClick={() => navigate(`/franqueado/arquivos/${arquivo.id}`)}
                   >
-                    <td className="py-4 px-4 font-medium">{arquivo.placa}</td>
+                    <td className="py-4 px-4 font-medium">
+                      <div className="flex items-center gap-2">
+                        {isUpdated && (
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground animate-bounce">
+                            <Sparkles className="h-3 w-3" />
+                          </span>
+                        )}
+                        {arquivo.placa}
+                      </div>
+                    </td>
                     <td className="py-4 px-4 text-muted-foreground">
                       {arquivo.marca} {arquivo.modelo}
                     </td>
