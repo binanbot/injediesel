@@ -44,10 +44,18 @@ const productSchema = z.object({
     const num = parseFloat(val.replace(",", ".").replace(/[^\d.]/g, ""));
     return isNaN(num) ? 0 : num;
   }),
-  available: z.string().transform((val) => {
-    const lower = val.toLowerCase().trim();
-    return lower === "sim" || lower === "true" || lower === "1" || lower === "s";
-  }).default("true"),
+  available: z.preprocess(
+    (val) => (val === undefined || val === null || val === "") ? "sim" : val,
+    z.string().transform((val) => {
+      const lower = val.toLowerCase().trim();
+      // Se vazio ou não especificado, assume disponível
+      if (lower === "" || lower === undefined) return true;
+      // Valores que indicam indisponível
+      if (lower === "não" || lower === "nao" || lower === "false" || lower === "0" || lower === "n") return false;
+      // Qualquer outro valor assume disponível
+      return true;
+    })
+  ),
   category: z.string().trim().max(100, "Categoria muito longa").optional().nullable(),
   weight_kg: z.string().optional().nullable().transform((val) => {
     if (!val) return null;
