@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Upload,
@@ -17,6 +17,7 @@ import {
   Loader2,
   Lock,
   ShieldAlert,
+  AlertCircle,
 } from "lucide-react";
 import { useContractStatus } from "@/hooks/useContractStatus";
 import { ContractBlockOverlay } from "@/components/ContractBlockOverlay";
@@ -68,6 +69,20 @@ interface UploadedFile {
   file: File;
 }
 
+// Interface para dados da placa
+interface PlateData {
+  placa: string;
+  marca: string;
+  modelo: string;
+  anoModelo: string;
+  motor: string;
+  transmissao: string;
+  rawPayload?: Record<string, unknown>;
+}
+
+// Campos que vieram incompletos da API
+type IncompleteField = "motor" | "transmissao";
+
 export default function EnviarArquivo() {
   const { toast } = useToast();
   const [files, setFiles] = useState<UploadedFile[]>([]);
@@ -96,6 +111,13 @@ export default function EnviarArquivo() {
   const [placaConsultada, setPlacaConsultada] = useState(false);
   const [dadosManuais, setDadosManuais] = useState(false);
   
+  // Auditoria de placa
+  const [plateLookupPayload, setPlateLookupPayload] = useState<Record<string, unknown> | null>(null);
+  const [plateLookupSuccess, setPlateLookupSuccess] = useState<boolean | null>(null);
+  
+  // Campos incompletos (P2)
+  const [incompleteFields, setIncompleteFields] = useState<IncompleteField[]>([]);
+  
   // Modal de responsabilidade
   const [modalResponsabilidadeOpen, setModalResponsabilidadeOpen] = useState(false);
   const [aceitouTermoPlaca, setAceitouTermoPlaca] = useState(false);
@@ -116,6 +138,11 @@ export default function EnviarArquivo() {
   // Verifica se alguma categoria selecionada exige aviso legal (Emissões)
   const exigeAvisoLegal = categoriasSelecionadas.includes("emissoes");
 
+  // Verifica se um campo específico é editável por estar incompleto
+  const isFieldIncomplete = useCallback((field: IncompleteField) => {
+    return incompleteFields.includes(field);
+  }, [incompleteFields]);
+
   // Validação do formulário
   const formValido = useMemo(() => {
     const temCliente = !!clienteId;
@@ -126,9 +153,12 @@ export default function EnviarArquivo() {
     const temValor = !!valor && parseFloat(valor.replace(/[^\d,]/g, "").replace(",", ".")) > 0;
     const temArquivos = files.length > 0;
     const aceitouSeNecessario = exigeAvisoLegal ? aceitouResponsabilidade : true;
+    
+    // Para veículos emplacados, deve ter consultado a placa ou ter dados manuais
+    const validacaoPlaca = exigePlaca ? (placaEncontrada || dadosManuais) : true;
 
-    return temCliente && temCategoria && temServico && temCategoriaVeiculo && temMarca && temValor && temArquivos && aceitouSeNecessario;
-  }, [clienteId, categoriasSelecionadas, servicoTexto, categoriaVeiculo, marca, valor, files, exigeAvisoLegal, aceitouResponsabilidade]);
+    return temCliente && temCategoria && temServico && temCategoriaVeiculo && temMarca && temValor && temArquivos && aceitouSeNecessario && validacaoPlaca;
+  }, [clienteId, categoriasSelecionadas, servicoTexto, categoriaVeiculo, marca, valor, files, exigeAvisoLegal, aceitouResponsabilidade, exigePlaca, placaEncontrada, dadosManuais]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -217,11 +247,23 @@ export default function EnviarArquivo() {
   };
 
   // Verifica se os campos devem estar bloqueados (apenas para veículos emplacados)
-  const camposBloqueados = exigePlaca && !placaConsultada && !dadosManuais;
+  // Campos bloqueados ANTES da consulta da placa
+  const camposBloqueadosPreConsulta = exigePlaca && !placaConsultada && !dadosManuais;
+  
+  // Campos bloqueados APÓS consulta bem-sucedida (exceto campos incompletos)
+  const camposBloqueadosPosConsulta = placaEncontrada && !dadosManuais;
 
-  // Função para buscar dados do veículo pela placa
-  // TODO: Integrar com API real (https://apiplacas.com.br/contratar.php)
+  // Função para buscar dados do veículo pela placa via Edge Function
   const buscarPlaca = async () => {
+    if (!categoriaVeiculo) {
+      toast({
+        title: "Selecione a categoria",
+        description: "Selecione a categoria do veículo antes de buscar a placa.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!placa || placa.length < 7) {
       toast({
         title: "Placa inválida",
@@ -233,54 +275,72 @@ export default function EnviarArquivo() {
 
     setBuscandoPlaca(true);
     setPlacaConsultada(true);
+    setIncompleteFields([]);
     
-    // Mock API - substituir por chamada real à API de placas
-    // A API retorna: marca, modelo, motor/cilindrada/CV, transmissão, ano/modelo
-    const encontrou = Math.random() > 0.3; // 70% de chance para demo
-    
-    setTimeout(() => {
-      if (encontrou) {
-        // Mock response - em produção virá da API apiplacas.com.br
-        const mockData = {
-          marca: categoriaVeiculo === "Truck" ? "Volvo" : 
-                 categoriaVeiculo === "Ônibus" ? "Mercedes-Benz" :
-                 categoriaVeiculo === "Veículo de Passeio" ? "Volkswagen" :
-                 categoriaVeiculo === "Pick-up" ? "Toyota" :
-                 categoriaVeiculo === "Moto" ? "Honda" : "Outro",
-          modelo: categoriaVeiculo === "Truck" ? "FH 540" : 
-                  categoriaVeiculo === "Ônibus" ? "O 500 RS" :
-                  categoriaVeiculo === "Veículo de Passeio" ? "Golf GTI" :
-                  categoriaVeiculo === "Pick-up" ? "Hilux SRX" :
-                  categoriaVeiculo === "Moto" ? "CB 1000R" : "Modelo Genérico",
-          motor: categoriaVeiculo === "Truck" ? "D13K 540cv" : 
-                 categoriaVeiculo === "Ônibus" ? "OM 457 LA 360cv" :
-                 categoriaVeiculo === "Veículo de Passeio" ? "2.0 TSI 230cv" :
-                 categoriaVeiculo === "Pick-up" ? "2.8 Diesel 204cv" :
-                 categoriaVeiculo === "Moto" ? "998cc 143cv" : "",
-          ano: "2023/2024",
-          transmissao: "Automática",
-        };
+    try {
+      const { data, error } = await supabase.functions.invoke("lookup-plate", {
+        body: { plate: placa.toUpperCase(), country: "BR" },
+      });
 
-        setMarca(mockData.marca);
-        setModelo(mockData.modelo);
-        setMotor(mockData.motor);
-        setAnoModelo(mockData.ano);
-        setTransmissao(mockData.transmissao);
-        setPlacaEncontrada(true);
-        setDadosManuais(false);
-        setBuscandoPlaca(false);
+      if (error) {
+        console.error("Erro ao consultar placa:", error);
+        
+        // Verificar se é erro 406 (placa não encontrada)
+        if (error.message?.includes("406") || error.message?.includes("PLATE_NOT_FOUND")) {
+          setBuscandoPlaca(false);
+          setPlacaEncontrada(false);
+          setPlateLookupSuccess(false);
+          setModalResponsabilidadeOpen(true);
+          return;
+        }
+        
+        throw error;
+      }
 
-        toast({
-          title: "Veículo encontrado!",
-          description: `${mockData.marca} ${mockData.modelo} - ${mockData.ano}`,
-        });
-      } else {
+      if (!data?.success) {
         // Placa não encontrada - abrir modal de responsabilidade
         setBuscandoPlaca(false);
         setPlacaEncontrada(false);
+        setPlateLookupSuccess(false);
         setModalResponsabilidadeOpen(true);
+        return;
       }
-    }, 1500);
+
+      // Sucesso - preencher campos
+      const plateData = data.data as PlateData;
+      
+      setMarca(plateData.marca || "");
+      setModelo(plateData.modelo || "");
+      setMotor(plateData.motor || "");
+      setAnoModelo(plateData.anoModelo || "");
+      setTransmissao(plateData.transmissao || "");
+      setPlacaEncontrada(true);
+      setDadosManuais(false);
+      setPlateLookupSuccess(true);
+      setPlateLookupPayload(plateData.rawPayload || null);
+      
+      // Verificar campos incompletos (P2)
+      if (data.incompleteFields && data.incompleteFields.length > 0) {
+        setIncompleteFields(data.incompleteFields as IncompleteField[]);
+        toast({
+          title: "Veículo encontrado!",
+          description: `${plateData.marca} ${plateData.modelo} - Alguns campos requerem preenchimento manual.`,
+        });
+      } else {
+        toast({
+          title: "Veículo encontrado!",
+          description: `${plateData.marca} ${plateData.modelo} - ${plateData.anoModelo}`,
+        });
+      }
+    } catch (error: any) {
+      console.error("Erro ao buscar placa:", error);
+      setBuscandoPlaca(false);
+      setPlacaEncontrada(false);
+      setPlateLookupSuccess(false);
+      setModalResponsabilidadeOpen(true);
+    } finally {
+      setBuscandoPlaca(false);
+    }
   };
 
   // Confirmar termo de responsabilidade
@@ -288,6 +348,7 @@ export default function EnviarArquivo() {
     setDadosManuais(true);
     setModalResponsabilidadeOpen(false);
     setAceitouTermoPlaca(false);
+    setPlateLookupSuccess(false);
     toast({
       title: "Dados liberados para edição",
       description: "Preencha os dados do veículo manualmente.",
@@ -407,8 +468,9 @@ export default function EnviarArquivo() {
       // Converte valor para número
       const valorNumerico = parseFloat(valor.replace(/\./g, "").replace(",", "."));
 
-      // Insere o registro no banco
-      const { error: insertError } = await supabase.from("received_files").insert({
+      // Insere o registro no banco com campos de auditoria de placa
+      // Nota: Campos de auditoria adicionados via migração - cast para any para evitar erro de tipo
+      const insertData: Record<string, unknown> = {
         id: arquivoId,
         unit_id: unitData.id,
         placa: placa || "SEM PLACA",
@@ -422,7 +484,18 @@ export default function EnviarArquivo() {
         arquivo_original_url: arquivoOriginalUrl,
         arquivo_original_nome: arquivoOriginalNome,
         status: "pending",
-      });
+        // Campos de auditoria de busca de placa
+        plate_lookup_success: plateLookupSuccess,
+        manual_vehicle_data: dadosManuais,
+        plate_lookup_payload: plateLookupPayload,
+        plate_lookup_at: placaConsultada ? new Date().toISOString() : null,
+        plate_lookup_user_id: userData.user.id,
+        plate_lookup_unit_id: unitData.id,
+      };
+
+      const { error: insertError } = await supabase
+        .from("received_files")
+        .insert(insertData as any);
 
       if (insertError) {
         console.error("Erro ao inserir:", insertError);
@@ -466,6 +539,10 @@ export default function EnviarArquivo() {
     setValor("");
     setFiles([]);
     setAceitouResponsabilidade(false);
+    // Reset de auditoria
+    setPlateLookupPayload(null);
+    setPlateLookupSuccess(null);
+    setIncompleteFields([]);
   };
 
   if (submitted) {
@@ -757,20 +834,20 @@ export default function EnviarArquivo() {
               <div className="space-y-2 relative">
                 <Label className="flex items-center gap-2">
                   Marca *
-                  {camposBloqueados && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  {camposBloqueadosPreConsulta && <Lock className="h-3 w-3 text-muted-foreground" />}
                 </Label>
                 <Select 
                   value={marca} 
                   onValueChange={setMarca} 
-                  disabled={!categoriaVeiculo || (placaEncontrada && !dadosManuais) || camposBloqueados}
+                  disabled={!categoriaVeiculo || camposBloqueadosPosConsulta || camposBloqueadosPreConsulta || buscandoPlaca}
                 >
                   <SelectTrigger className={`glass-input ${
                     placaEncontrada && marca ? "border-success/50" : 
                     dadosManuais && marca ? "border-warning/50" : ""
-                  } ${camposBloqueados ? "opacity-50" : ""}`}>
+                  } ${camposBloqueadosPreConsulta ? "opacity-50" : ""}`}>
                     <SelectValue
                       placeholder={
-                        camposBloqueados ? "Busque a placa primeiro" :
+                        camposBloqueadosPreConsulta ? "Busque a placa primeiro" :
                         categoriaVeiculo ? "Selecione a marca" : "Selecione a categoria primeiro"
                       }
                     />
@@ -787,17 +864,17 @@ export default function EnviarArquivo() {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   Modelo *
-                  {camposBloqueados && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  {camposBloqueadosPreConsulta && <Lock className="h-3 w-3 text-muted-foreground" />}
                 </Label>
                 <Input 
-                  placeholder={camposBloqueados ? "Busque a placa primeiro" : "Ex: FH 540"}
+                  placeholder={camposBloqueadosPreConsulta ? "Busque a placa primeiro" : "Ex: FH 540"}
                   value={modelo}
                   onChange={(e) => setModelo(e.target.value)}
                   className={`glass-input ${
                     placaEncontrada && modelo ? "border-success/50" : 
                     dadosManuais && modelo ? "border-warning/50" : ""
-                  } ${camposBloqueados ? "opacity-50" : ""}`}
-                  disabled={(placaEncontrada && !dadosManuais) || camposBloqueados}
+                  } ${camposBloqueadosPreConsulta ? "opacity-50" : ""}`}
+                  disabled={camposBloqueadosPosConsulta || camposBloqueadosPreConsulta || buscandoPlaca}
                   required 
                 />
               </div>
@@ -808,31 +885,52 @@ export default function EnviarArquivo() {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   Motor / Cilindrada
-                  {camposBloqueados && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  {camposBloqueadosPreConsulta && !isFieldIncomplete("motor") && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  {isFieldIncomplete("motor") && (
+                    <Badge variant="outline" className="text-xs bg-warning/10 text-warning border-warning/30">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Preencher
+                    </Badge>
+                  )}
                 </Label>
                 <Input 
-                  placeholder={camposBloqueados ? "Busque a placa primeiro" : "Ex: D13A 540"}
+                  placeholder={camposBloqueadosPreConsulta ? "Busque a placa primeiro" : "Ex: D13A 540"}
                   value={motor}
                   onChange={(e) => setMotor(e.target.value)}
                   className={`glass-input ${
-                    placaEncontrada && motor ? "border-success/50" : 
-                    dadosManuais && motor ? "border-warning/50" : ""
-                  } ${camposBloqueados ? "opacity-50" : ""}`}
-                  disabled={(placaEncontrada && !dadosManuais) || camposBloqueados}
+                    placaEncontrada && motor && !isFieldIncomplete("motor") ? "border-success/50" : 
+                    (dadosManuais || isFieldIncomplete("motor")) && motor ? "border-warning/50" :
+                    isFieldIncomplete("motor") ? "border-warning" : ""
+                  } ${camposBloqueadosPreConsulta ? "opacity-50" : ""}`}
+                  disabled={(camposBloqueadosPosConsulta && !isFieldIncomplete("motor")) || camposBloqueadosPreConsulta || buscandoPlaca}
                 />
+                {isFieldIncomplete("motor") && !motor && (
+                  <p className="text-xs text-warning flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Campo não retornado pela API - preencha manualmente
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   Transmissão
-                  {camposBloqueados && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  {camposBloqueadosPreConsulta && !isFieldIncomplete("transmissao") && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  {isFieldIncomplete("transmissao") && (
+                    <Badge variant="outline" className="text-xs bg-warning/10 text-warning border-warning/30">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Preencher
+                    </Badge>
+                  )}
                 </Label>
                 <Select 
                   value={transmissao} 
                   onValueChange={setTransmissao}
-                  disabled={(placaEncontrada && !dadosManuais) || camposBloqueados}
+                  disabled={(camposBloqueadosPosConsulta && !isFieldIncomplete("transmissao")) || camposBloqueadosPreConsulta || buscandoPlaca}
                 >
-                  <SelectTrigger className={`glass-input ${camposBloqueados ? "opacity-50" : ""}`}>
-                    <SelectValue placeholder={camposBloqueados ? "Busque a placa primeiro" : "Selecione"} />
+                  <SelectTrigger className={`glass-input ${
+                    isFieldIncomplete("transmissao") ? "border-warning" : ""
+                  } ${camposBloqueadosPreConsulta ? "opacity-50" : ""}`}>
+                    <SelectValue placeholder={camposBloqueadosPreConsulta ? "Busque a placa primeiro" : "Selecione"} />
                   </SelectTrigger>
                   <SelectContent className="glass-card">
                     {transmissoes.map((t) => (
@@ -842,6 +940,12 @@ export default function EnviarArquivo() {
                     ))}
                   </SelectContent>
                 </Select>
+                {isFieldIncomplete("transmissao") && !transmissao && (
+                  <p className="text-xs text-warning flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Campo não retornado pela API - preencha manualmente
+                  </p>
+                )}
               </div>
             </div>
 
@@ -850,17 +954,17 @@ export default function EnviarArquivo() {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   Ano / Modelo *
-                  {camposBloqueados && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  {camposBloqueadosPreConsulta && <Lock className="h-3 w-3 text-muted-foreground" />}
                 </Label>
                 <Input 
-                  placeholder={camposBloqueados ? "Busque a placa primeiro" : "Ex: 2020/2021"}
+                  placeholder={camposBloqueadosPreConsulta ? "Busque a placa primeiro" : "Ex: 2020/2021"}
                   value={anoModelo}
                   onChange={(e) => setAnoModelo(e.target.value)}
                   className={`glass-input ${
                     placaEncontrada && anoModelo ? "border-success/50" : 
                     dadosManuais && anoModelo ? "border-warning/50" : ""
-                  } ${camposBloqueados ? "opacity-50" : ""}`}
-                  disabled={(placaEncontrada && !dadosManuais) || camposBloqueados}
+                  } ${camposBloqueadosPreConsulta ? "opacity-50" : ""}`}
+                  disabled={camposBloqueadosPosConsulta || camposBloqueadosPreConsulta || buscandoPlaca}
                   required 
                 />
               </div>
@@ -1000,7 +1104,7 @@ export default function EnviarArquivo() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-warning">
               <AlertTriangle className="h-5 w-5" />
-              Confirmação de Responsabilidade
+              Responsabilidade sobre os dados informados
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
               A placa informada não foi encontrada em nossa base de dados.
@@ -1009,16 +1113,12 @@ export default function EnviarArquivo() {
           
           <div className="space-y-4 py-4">
             <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
-              <p className="text-sm leading-relaxed">
-                Declaro que os dados do veículo informados manualmente são verídicos, corretos e conferidos.
-              </p>
-              <p className="text-sm leading-relaxed mt-2">
-                Assumo total responsabilidade pelo arquivo enviado, pelos dados fornecidos e pela garantia 
-                do serviço executado, isentando a franqueadora de qualquer divergência decorrente dessas informações.
+              <p className="text-sm leading-relaxed font-medium">
+                Declaro que os dados do veículo foram informados manualmente por mim e assumo total responsabilidade pela veracidade das informações, bem como pelos arquivos, serviços e garantias gerados a partir destes dados.
               </p>
             </div>
 
-            <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg hover:bg-secondary/50 transition-colors">
+            <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg hover:bg-secondary/50 transition-colors border border-border/50">
               <Checkbox
                 checked={aceitouTermoPlaca}
                 onCheckedChange={(checked) => setAceitouTermoPlaca(checked === true)}

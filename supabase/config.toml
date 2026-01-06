@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.import-ibge-cities]
 verify_jwt = false
+
+[functions.lookup-plate]
+verify_jwt = true
