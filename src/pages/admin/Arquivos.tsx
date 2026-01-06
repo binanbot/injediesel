@@ -81,10 +81,14 @@ export default function AdminArquivos() {
   const [dataInicioInput, setDataInicioInput] = useState("");
   const [dataFimInput, setDataFimInput] = useState("");
   const [anoSelecionado, setAnoSelecionado] = useState<string>("");
+  const [unidadeSelecionada, setUnidadeSelecionada] = useState<string>("");
   const [statusDialog, setStatusDialog] = useState<{ open: boolean; arquivo: typeof arquivos[0] | null }>({
     open: false,
     arquivo: null,
   });
+
+  // Lista única de unidades para o filtro
+  const unidades = [...new Set(arquivos.map(a => a.unidade))].sort();
 
   // Gera lista de anos (últimos 10 anos)
   const currentYear = new Date().getFullYear();
@@ -181,13 +185,14 @@ export default function AdminArquivos() {
       a.placa.toLowerCase().includes(search.toLowerCase()) ||
       a.unidade.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || a.status === statusFilter;
+    const matchesUnidade = !unidadeSelecionada || a.unidade === unidadeSelecionada;
     
     // Filtro por data
     const arquivoData = parseData(a.data);
     const matchesDataInicio = !dataInicio || arquivoData >= dataInicio;
     const matchesDataFim = !dataFim || arquivoData <= dataFim;
     
-    return matchesSearch && matchesStatus && matchesDataInicio && matchesDataFim;
+    return matchesSearch && matchesStatus && matchesUnidade && matchesDataInicio && matchesDataFim;
   });
 
   const handleStatusChange = (newStatus: string) => {
@@ -201,7 +206,7 @@ export default function AdminArquivos() {
   const statusCounts = getStatusCounts();
 
   // Verifica se há filtros ativos
-  const hasActiveFilters = statusFilter !== "all" || search !== "" || dataInicio || dataFim || anoSelecionado !== "";
+  const hasActiveFilters = statusFilter !== "all" || search !== "" || dataInicio || dataFim || anoSelecionado !== "" || unidadeSelecionada !== "";
 
   // Função para limpar todos os filtros
   const clearAllFilters = () => {
@@ -209,6 +214,7 @@ export default function AdminArquivos() {
     setDataInicio(undefined);
     setDataFim(undefined);
     setAnoSelecionado("");
+    setUnidadeSelecionada("");
     setSearchParams(new URLSearchParams());
   };
 
@@ -287,6 +293,26 @@ export default function AdminArquivos() {
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-10"
                 />
+              </div>
+              
+              {/* Filtro por Unidade */}
+              <div className="sm:w-[250px]">
+                <Select 
+                  value={unidadeSelecionada || "all"} 
+                  onValueChange={(val) => setUnidadeSelecionada(val === "all" ? "" : val)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Filtrar por unidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as unidades</SelectItem>
+                    {unidades.map((unidade) => (
+                      <SelectItem key={unidade} value={unidade}>
+                        {unidade}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             
