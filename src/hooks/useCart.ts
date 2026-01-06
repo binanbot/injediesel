@@ -109,7 +109,7 @@ export function useCart() {
 
   // Add item to cart
   const addItem = useMutation({
-    mutationFn: async ({ productId, quantity = 1 }: { productId: string; quantity?: number }) => {
+    mutationFn: async ({ productId, quantity = 1, productName }: { productId: string; quantity?: number; productName?: string }) => {
       if (!cart) throw new Error("Carrinho não disponível");
 
       // Check if item already exists
@@ -135,10 +135,16 @@ export function useCart() {
         
         if (error) throw error;
       }
+
+      return { productName, quantity };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
-      toast.success("Produto adicionado ao carrinho");
+      if (data?.productName) {
+        toast.success(`${data.quantity}x ${data.productName} adicionado ao carrinho`);
+      } else {
+        toast.success("Produto adicionado ao carrinho");
+      }
     },
     onError: (error) => {
       toast.error("Erro ao adicionar produto: " + error.message);

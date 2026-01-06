@@ -91,9 +91,10 @@ export default function Loja() {
   }, [products, searchTerm, selectedCategory]);
 
   const handleAddToCart = (productId: string, quantity: number) => {
+    const product = products?.find(p => p.id === productId);
     setAddingProductId(productId);
     addItem.mutate(
-      { productId, quantity },
+      { productId, quantity, productName: product?.name },
       { onSettled: () => setAddingProductId(null) }
     );
   };
