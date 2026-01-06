@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { 
   Upload, 
@@ -127,6 +127,15 @@ export default function ImportarProdutos() {
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
 
+  // Keep stats derived from current parsedProducts (avoid nested state updates)
+  useEffect(() => {
+    setStats((prev) => {
+      if (!prev) return prev;
+      const valid = parsedProducts.filter((p) => p.isValid).length;
+      return { ...prev, valid, invalid: prev.total - valid };
+    });
+  }, [parsedProducts]);
+
   // Parse CSV file
   const parseCSV = useCallback((content: string): ParsedProduct[] => {
     const lines = content.split(/\r?\n/).filter((line) => line.trim());
@@ -237,10 +246,10 @@ export default function ImportarProdutos() {
       if (index === -1) return prev;
 
       const updatedData = { ...newProducts[index].data, [field]: value };
-      
+
       // Revalidate
       const result = productParsedSchema.safeParse(updatedData);
-      
+
       if (result.success) {
         newProducts[index] = {
           ...newProducts[index],
@@ -257,17 +266,6 @@ export default function ImportarProdutos() {
           isValid: false,
         };
       }
-
-      // Update stats
-      setStats((prevStats) => {
-        if (!prevStats) return null;
-        const valid = newProducts.filter((p) => p.isValid).length;
-        return {
-          ...prevStats,
-          valid,
-          invalid: prevStats.total - valid,
-        };
-      });
 
       return newProducts;
     });
@@ -644,13 +642,49 @@ interface EditableProductRowProps {
   formatPrice: (value: number) => string;
 }
 
+type EditableField = Extract<keyof ProductRow, "sku" | "name" | "category" | "price" | "image_url">;
+
 function EditableProductRow({ product, onUpdate, formatPrice }: EditableProductRowProps) {
-  const [editingField, setEditingField] = useState<keyof ProductRow | null>(null);
+  const [editingField, setEditingField] = useState<EditableField | null>(null);
   const [tempValue, setTempValue] = useState<string>("");
 
-  const startEditing = (field: keyof ProductRow, currentValue: any) => {
+  const skuRef = useRef<HTMLInputElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const categoryRef = useRef<HTMLInputElement>(null);
+  const priceRef = useRef<HTMLInputElement>(null);
+  const imageUrlRef = useRef<HTMLInputElement>(null);
+
+  const getRef = (field: EditableField) => {
+    switch (field) {
+      case "sku":
+        return skuRef;
+      case "name":
+        return nameRef;
+      case "category":
+        return categoryRef;
+      case "price":
+        return priceRef;
+      case "image_url":
+        return imageUrlRef;
+      default:
+        return skuRef;
+    }
+  };
+
+  useEffect(() => {
+    if (!editingField) return;
+    const ref = getRef(editingField);
+    // Wait a frame so the element is visible before focusing
+    requestAnimationFrame(() => {
+      ref.current?.focus();
+      ref.current?.select?.();
+    });
+  }, [editingField]);
+
+  const startEditing = (field: EditableField, currentValue: any) => {
     setEditingField(field);
-    setTempValue(currentValue?.toString() || "");
+    // Keep raw value while editing (especially for price)
+    setTempValue(currentValue === null || currentValue === undefined ? "" : String(currentValue));
   };
 
   const cancelEditing = () => {
@@ -659,23 +693,17 @@ function EditableProductRow({ product, onUpdate, formatPrice }: EditableProductR
   };
 
   const saveEdit = () => {
-    if (editingField) {
-      let value: any = tempValue;
-      if (editingField === "price") {
-        value = parseFloat(tempValue.replace(",", ".").replace(/[^\d.]/g, "")) || 0;
-      }
-      const fieldToUpdate = editingField;
-      // Cancel editing FIRST to prevent DOM sync issues
-      setEditingField(null);
-      setTempValue("");
-      // Then update after state is cleared
-      setTimeout(() => {
-        onUpdate(product.row, fieldToUpdate, value);
-      }, 0);
-    } else {
-      setEditingField(null);
-      setTempValue("");
+    if (!editingField) return;
+
+    const fieldToUpdate = editingField;
+    let value: any = tempValue;
+
+    if (fieldToUpdate === "price") {
+      value = parseFloat(tempValue.replace(",", ".").replace(/[^\d.]/g, "")) || 0;
     }
+
+    cancelEditing();
+    onUpdate(product.row, fieldToUpdate, value);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -687,50 +715,63 @@ function EditableProductRow({ product, onUpdate, formatPrice }: EditableProductR
   };
 
   const renderEditableCell = (
-    field: keyof ProductRow,
+    field: EditableField,
     value: any,
     displayValue: React.ReactNode,
-    className?: string
+    className?: string,
   ) => {
-    if (editingField === field) {
-      return (
-        <div className="flex items-center gap-1">
+    const isEditing = editingField === field;
+
+    return (
+      <div className="min-h-[28px]">
+        {/* Display (kept mounted to avoid DOM remove/insert race conditions) */}
+        <div
+          className={cn(
+            "cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 -mx-1 group flex items-center gap-1",
+            className,
+            isEditing && "hidden",
+          )}
+          onClick={() => startEditing(field, value)}
+        >
+          {displayValue}
+          <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+
+        {/* Editor (also kept mounted) */}
+        <div className={cn("flex items-center gap-1", className, !isEditing && "hidden")}>
           <Input
+            ref={getRef(field)}
             value={tempValue}
             onChange={(e) => setTempValue(e.target.value)}
             onKeyDown={handleKeyDown}
             className="h-7 text-xs"
-            autoFocus
           />
-          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={saveEdit}>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-6 w-6"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={saveEdit}
+          >
             <Save className="h-3 w-3" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={cancelEditing}>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-6 w-6"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={cancelEditing}
+          >
             <X className="h-3 w-3" />
           </Button>
         </div>
-      );
-    }
-
-    return (
-      <div
-        className={cn(
-          "cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 -mx-1 group flex items-center gap-1",
-          className
-        )}
-        onClick={() => startEditing(field, value)}
-      >
-        {displayValue}
-        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
     );
   };
 
   return (
     <TableRow className={cn(!product.isValid && "bg-destructive/5")}>
-      <TableCell className="font-mono text-xs">
-        {product.row}
-      </TableCell>
+      <TableCell className="font-mono text-xs">{product.row}</TableCell>
       <TableCell>
         {product.isValid ? (
           <CheckCircle className="h-4 w-4 text-success" />
@@ -739,22 +780,27 @@ function EditableProductRow({ product, onUpdate, formatPrice }: EditableProductR
             <XCircle className="h-4 w-4 text-destructive cursor-help" />
             <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 w-64 p-2 bg-popover border rounded-lg shadow-lg text-xs">
               {product.errors.map((e, i) => (
-                <p key={i} className="text-destructive">{e}</p>
+                <p key={i} className="text-destructive">
+                  {e}
+                </p>
               ))}
             </div>
           </div>
         )}
       </TableCell>
+
       <TableCell className="font-mono text-xs">
         {renderEditableCell("sku", product.data.sku, product.data.sku)}
       </TableCell>
+
       <TableCell className="max-w-[200px]">
         {renderEditableCell(
           "name",
           product.data.name,
-          <span className="truncate block">{product.data.name}</span>
+          <span className="truncate block">{product.data.name}</span>,
         )}
       </TableCell>
+
       <TableCell>
         {renderEditableCell(
           "category",
@@ -765,64 +811,41 @@ function EditableProductRow({ product, onUpdate, formatPrice }: EditableProductR
             </Badge>
           ) : (
             <span className="text-muted-foreground text-xs">—</span>
-          )
+          ),
         )}
       </TableCell>
+
       <TableCell className="text-right font-medium">
         {renderEditableCell(
           "price",
           product.data.price,
-          typeof product.data.price === "number"
-            ? formatPrice(product.data.price)
-            : product.data.price,
-          "justify-end"
+          typeof product.data.price === "number" ? formatPrice(product.data.price) : String(product.data.price),
+          "justify-end",
         )}
       </TableCell>
+
       <TableCell>
-        {editingField === "image_url" ? (
-          <div className="flex items-center gap-1">
-            <Input
-              value={tempValue}
-              onChange={(e) => setTempValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="h-7 text-xs w-full"
-              placeholder="https://..."
-              autoFocus
-            />
-            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={saveEdit}>
-              <Save className="h-3 w-3" />
-            </Button>
-            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={cancelEditing}>
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
-        ) : (
-          <div
-            className="cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 -mx-1 group flex items-center gap-1"
-            onClick={() => startEditing("image_url", product.data.image_url)}
-          >
-            {product.data.image_url ? (
-              <a
-                href={product.data.image_url as string}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline text-xs truncate max-w-[100px] inline-block"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Ver imagem
-              </a>
-            ) : (
-              <span className="text-muted-foreground text-xs">—</span>
-            )}
-            <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
+        {renderEditableCell(
+          "image_url",
+          product.data.image_url,
+          product.data.image_url ? (
+            <a
+              href={product.data.image_url as string}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline text-xs truncate max-w-[100px] inline-block"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Ver imagem
+            </a>
+          ) : (
+            <span className="text-muted-foreground text-xs">—</span>
+          ),
         )}
       </TableCell>
+
       <TableCell>
-        <Switch
-          checked={product.data.available as boolean}
-          onCheckedChange={(checked) => onUpdate(product.row, "available", checked)}
-        />
+        <Switch checked={product.data.available as boolean} onCheckedChange={(checked) => onUpdate(product.row, "available", checked)} />
       </TableCell>
     </TableRow>
   );
