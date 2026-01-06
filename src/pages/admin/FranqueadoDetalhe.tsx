@@ -1,16 +1,22 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, Loader2, User, Building, FileText, History, MapPin } from "lucide-react";
+import { 
+  ArrowLeft, Save, Loader2, User, Building, FileText, 
+  History, MapPin, Users, BarChart3, MessageSquare, Shield 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CitiesChipsInput } from "@/components/admin/CitiesChipsInput";
+import { ContractSection } from "@/components/admin/franqueado/ContractSection";
+import { CustomersSection } from "@/components/admin/franqueado/CustomersSection";
+import { RevenueChartSection } from "@/components/admin/franqueado/RevenueChartSection";
+import { SupportHistorySection } from "@/components/admin/franqueado/SupportHistorySection";
+import { AccessControlSection } from "@/components/admin/franqueado/AccessControlSection";
 
 interface ServiceArea {
   country: string;
@@ -47,12 +53,20 @@ interface FranchiseeProfile {
   created_at: string;
   updated_at: string;
   service_areas: ServiceArea[];
+  cidade: string | null;
+}
+
+interface Unit {
+  id: string;
+  name: string;
+  is_active: boolean;
 }
 
 export default function FranqueadoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<FranchiseeProfile | null>(null);
+  const [unit, setUnit] = useState<Unit | null>(null);
   const [serviceAreas, setServiceAreas] = useState<ServiceArea[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -66,6 +80,7 @@ export default function FranqueadoDetalhe() {
 
     setIsLoading(true);
     try {
+      // Load franchisee profile
       const { data, error } = await supabase
         .from("profiles_franchisees")
         .select("*")
@@ -89,11 +104,23 @@ export default function FranqueadoDetalhe() {
         : [];
       setServiceAreas(areas);
       
-      // Set profile without service_areas to avoid type issues
       setProfile({
         ...data,
         service_areas: areas,
       } as FranchiseeProfile);
+
+      // Load unit data
+      if (data?.id) {
+        const { data: unitData } = await supabase
+          .from("units")
+          .select("*")
+          .eq("franchisee_id", data.id)
+          .maybeSingle();
+        
+        if (unitData) {
+          setUnit(unitData);
+        }
+      }
     } catch (error) {
       console.error("Error loading profile:", error);
       toast.error("Erro ao carregar perfil");
@@ -133,7 +160,7 @@ export default function FranqueadoDetalhe() {
 
       if (error) throw error;
 
-      // Also update franchisee_profiles for contract sync
+      // Sync to franchisee_profiles
       if (profile.user_id) {
         await supabase
           .from("franchisee_profiles")
@@ -153,10 +180,30 @@ export default function FranqueadoDetalhe() {
     }
   };
 
-  const updateField = (field: keyof FranchiseeProfile, value: unknown) => {
+  const updateField = (field: string, value: unknown) => {
     if (!profile) return;
     setProfile({ ...profile, [field]: value });
   };
+
+  const handleToggleAccess = async (active: boolean) => {
+    if (!unit) {
+      toast.error("Unidade não encontrada");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("units")
+      .update({ is_active: active })
+      .eq("id", unit.id);
+
+    if (error) throw error;
+
+    setUnit({ ...unit, is_active: active });
+  };
+
+  const franchiseeName = profile?.display_name || 
+    `${profile?.first_name || ""} ${profile?.last_name || ""}`.trim() || 
+    "Franqueado";
 
   if (isLoading) {
     return (
@@ -180,6 +227,7 @@ export default function FranqueadoDetalhe() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
@@ -187,7 +235,7 @@ export default function FranqueadoDetalhe() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              {profile.display_name || `${profile.first_name || ""} ${profile.last_name || ""}`}
+              {franchiseeName}
             </h1>
             <p className="text-muted-foreground">{profile.email}</p>
           </div>
@@ -202,31 +250,50 @@ export default function FranqueadoDetalhe() {
         </Button>
       </div>
 
-      <Tabs defaultValue="cadastro">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="cadastro" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Cadastro
-          </TabsTrigger>
-          <TabsTrigger value="cobertura" className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Cobertura
-          </TabsTrigger>
-          <TabsTrigger value="equipamentos" className="flex items-center gap-2">
-            <Building className="h-4 w-4" />
-            Equipamentos
-          </TabsTrigger>
-          <TabsTrigger value="contrato" className="flex items-center gap-2">
+      {/* Tabs */}
+      <Tabs defaultValue="contrato" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-8 h-auto">
+          <TabsTrigger value="contrato" className="flex flex-col items-center gap-1 py-3">
             <FileText className="h-4 w-4" />
-            Contrato
+            <span className="text-xs">Contrato</span>
           </TabsTrigger>
-          <TabsTrigger value="auditoria" className="flex items-center gap-2">
-            <History className="h-4 w-4" />
-            Auditoria
+          <TabsTrigger value="cadastro" className="flex flex-col items-center gap-1 py-3">
+            <User className="h-4 w-4" />
+            <span className="text-xs">Cadastro</span>
+          </TabsTrigger>
+          <TabsTrigger value="cobertura" className="flex flex-col items-center gap-1 py-3">
+            <MapPin className="h-4 w-4" />
+            <span className="text-xs">Cidades</span>
+          </TabsTrigger>
+          <TabsTrigger value="clientes" className="flex flex-col items-center gap-1 py-3">
+            <Users className="h-4 w-4" />
+            <span className="text-xs">Clientes</span>
+          </TabsTrigger>
+          <TabsTrigger value="faturamento" className="flex flex-col items-center gap-1 py-3">
+            <BarChart3 className="h-4 w-4" />
+            <span className="text-xs">Faturamento</span>
+          </TabsTrigger>
+          <TabsTrigger value="suporte" className="flex flex-col items-center gap-1 py-3">
+            <MessageSquare className="h-4 w-4" />
+            <span className="text-xs">Suporte</span>
+          </TabsTrigger>
+          <TabsTrigger value="acesso" className="flex flex-col items-center gap-1 py-3">
+            <Shield className="h-4 w-4" />
+            <span className="text-xs">Acesso</span>
+          </TabsTrigger>
+          <TabsTrigger value="equipamentos" className="flex flex-col items-center gap-1 py-3">
+            <Building className="h-4 w-4" />
+            <span className="text-xs">Equipamentos</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="cadastro" className="mt-6">
+        {/* Contract Tab */}
+        <TabsContent value="contrato">
+          <ContractSection profile={profile} onUpdate={updateField} />
+        </TabsContent>
+
+        {/* Registration Tab */}
+        <TabsContent value="cadastro">
           <Card>
             <CardHeader>
               <CardTitle>Dados Cadastrais</CardTitle>
@@ -273,25 +340,27 @@ export default function FranqueadoDetalhe() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Data de Início</Label>
+                <Label>Cidade Principal</Label>
                 <Input
-                  type="date"
-                  value={profile.start_date || ""}
-                  onChange={(e) => updateField("start_date", e.target.value)}
+                  value={profile.cidade || ""}
+                  disabled
+                  className="bg-muted"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Tipo de Equipamento</Label>
+                <Label>Data de Cadastro</Label>
                 <Input
-                  value={profile.equipment_type || ""}
-                  onChange={(e) => updateField("equipment_type", e.target.value)}
+                  value={new Date(profile.created_at).toLocaleDateString("pt-BR")}
+                  disabled
+                  className="bg-muted"
                 />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="cobertura" className="mt-6">
+        {/* Coverage Tab */}
+        <TabsContent value="cobertura">
           <Card>
             <CardHeader>
               <CardTitle>Cidades Atendidas</CardTitle>
@@ -314,13 +383,54 @@ export default function FranqueadoDetalhe() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="equipamentos" className="mt-6">
+        {/* Customers Tab */}
+        <TabsContent value="clientes">
+          <CustomersSection unitId={unit?.id || null} franchiseeName={franchiseeName} />
+        </TabsContent>
+
+        {/* Revenue Tab */}
+        <TabsContent value="faturamento">
+          <RevenueChartSection unitId={unit?.id || null} />
+        </TabsContent>
+
+        {/* Support Tab */}
+        <TabsContent value="suporte">
+          <SupportHistorySection userId={profile.user_id} />
+        </TabsContent>
+
+        {/* Access Tab */}
+        <TabsContent value="acesso">
+          <AccessControlSection
+            profile={profile}
+            isActive={unit?.is_active ?? true}
+            onUpdate={updateField}
+            onToggleAccess={handleToggleAccess}
+          />
+        </TabsContent>
+
+        {/* Equipment Tab */}
+        <TabsContent value="equipamentos">
           <Card>
             <CardHeader>
               <CardTitle>Licenças e Equipamentos</CardTitle>
               <CardDescription>Seriais e datas de expiração</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Tipo de Equipamento</Label>
+                <Input
+                  value={profile.equipment_type || ""}
+                  onChange={(e) => updateField("equipment_type", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Data de Início</Label>
+                <Input
+                  type="date"
+                  value={profile.start_date || ""}
+                  onChange={(e) => updateField("start_date", e.target.value)}
+                />
+              </div>
               <div className="space-y-2">
                 <Label>Serial KESS</Label>
                 <Input
@@ -353,76 +463,15 @@ export default function FranqueadoDetalhe() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="contrato" className="mt-6">
-          <Card>
+          {/* Audit Card */}
+          <Card className="mt-6">
             <CardHeader>
-              <CardTitle>Dados Contratuais</CardTitle>
-              <CardDescription>Configurações financeiras e contratuais</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Tipo de Contrato</Label>
-                <Select
-                  value={profile.contract_type || "Full"}
-                  onValueChange={(value) => updateField("contract_type", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Full">Full</SelectItem>
-                    <SelectItem value="Leve">Leve</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Vencimento do Contrato</Label>
-                <Input
-                  type="date"
-                  value={profile.contract_expiration_date || ""}
-                  onChange={(e) => updateField("contract_expiration_date", e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Valor Locação (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={profile.rental_value_brl || ""}
-                  onChange={(e) => updateField("rental_value_brl", parseFloat(e.target.value) || null)}
-                />
-              </div>
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                <div>
-                  <Label>Pré-pago</Label>
-                  <p className="text-sm text-muted-foreground">Modalidade pré-paga</p>
-                </div>
-                <Switch
-                  checked={profile.is_prepaid}
-                  onCheckedChange={(checked) => updateField("is_prepaid", checked)}
-                />
-              </div>
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                <div>
-                  <Label>Créditos Manuais</Label>
-                  <p className="text-sm text-muted-foreground">Permitir adicionar créditos manualmente</p>
-                </div>
-                <Switch
-                  checked={profile.allow_manual_credits}
-                  onCheckedChange={(checked) => updateField("allow_manual_credits", checked)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="auditoria" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Dados de Auditoria</CardTitle>
-              <CardDescription>Informações do sistema legado e controle</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <History className="h-5 w-5" />
+                Dados de Auditoria
+              </CardTitle>
+              <CardDescription>Informações do sistema legado</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
@@ -455,18 +504,6 @@ export default function FranqueadoDetalhe() {
                   value={new Date(profile.updated_at).toLocaleString("pt-BR")} 
                   disabled 
                   className="bg-muted" 
-                />
-              </div>
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg col-span-2">
-                <div>
-                  <Label>Requer Reset de Senha</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Usuário precisa definir uma nova senha no próximo login
-                  </p>
-                </div>
-                <Switch
-                  checked={profile.requires_password_reset}
-                  onCheckedChange={(checked) => updateField("requires_password_reset", checked)}
                 />
               </div>
             </CardContent>
