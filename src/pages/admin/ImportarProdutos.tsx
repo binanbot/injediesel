@@ -43,7 +43,7 @@ const productRawSchema = z.object({
   brand: z.string().trim().max(100, "Marca muito longa").optional().nullable(),
   models: z.string().optional().nullable(),
   description_short: z.string().trim().max(500, "Descrição curta muito longa").optional().nullable(),
-  description_full: z.string().trim().max(5000, "Descrição completa muito longa").optional().nullable(),
+  description_full: z.string().trim().max(50000, "Descrição completa muito longa").optional().nullable(),
   specifications: z.string().optional().nullable(),
   price: z.string().transform((val) => {
     const num = parseFloat(val.replace(",", ".").replace(/[^\d.]/g, ""));
@@ -76,7 +76,7 @@ const productParsedSchema = z.object({
   brand: z.string().trim().max(100, "Marca muito longa").optional().nullable(),
   models: z.string().optional().nullable(),
   description_short: z.string().trim().max(500, "Descrição curta muito longa").optional().nullable(),
-  description_full: z.string().trim().max(5000, "Descrição completa muito longa").optional().nullable(),
+  description_full: z.string().trim().max(50000, "Descrição completa muito longa").optional().nullable(),
   specifications: z.string().optional().nullable(),
   price: z.number().min(0, "Preço inválido"),
   available: z.boolean(),
