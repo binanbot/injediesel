@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Bell, Shield, Database, Palette, Globe, Save, Facebook, Instagram, ShoppingBag } from "lucide-react";
+import { Settings, Bell, Shield, Database, Palette, Globe, Save, Facebook, Instagram, ShoppingBag, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,16 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useSocialLinks } from "@/hooks/useSocialLinks";
+
+const isValidUrl = (url: string): boolean => {
+  if (!url || url.trim() === "") return true; // Empty is valid
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 
 // TikTok icon component (not available in lucide-react)
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -27,17 +37,47 @@ export default function AdminConfiguracoes() {
     shop: "",
   });
 
+  const [urlErrors, setUrlErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
     if (!loading) {
       setFormLinks(socialLinks);
     }
   }, [socialLinks, loading]);
 
+  const validateUrls = (): boolean => {
+    const errors: Record<string, string> = {};
+    Object.entries(formLinks).forEach(([key, value]) => {
+      if (value && !isValidUrl(value)) {
+        errors[key] = "URL inválida. Use o formato: https://exemplo.com";
+      }
+    });
+    setUrlErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSocialLinkChange = (key: keyof typeof formLinks, value: string) => {
     setFormLinks((prev) => ({ ...prev, [key]: value }));
+    // Clear error when user starts typing
+    if (urlErrors[key]) {
+      setUrlErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[key];
+        return newErrors;
+      });
+    }
   };
 
   const handleSave = async () => {
+    if (!validateUrls()) {
+      toast({
+        title: "Erro de validação",
+        description: "Corrija as URLs inválidas antes de salvar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const success = await updateSocialLinks(formLinks);
     if (success) {
       toast({
@@ -81,7 +121,14 @@ export default function AdminConfiguracoes() {
                   placeholder="https://facebook.com/suapagina" 
                   value={formLinks.facebook}
                   onChange={(e) => handleSocialLinkChange("facebook", e.target.value)}
+                  className={urlErrors.facebook ? "border-destructive" : ""}
                 />
+                {urlErrors.facebook && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {urlErrors.facebook}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
@@ -92,7 +139,14 @@ export default function AdminConfiguracoes() {
                   placeholder="https://instagram.com/suapagina" 
                   value={formLinks.instagram}
                   onChange={(e) => handleSocialLinkChange("instagram", e.target.value)}
+                  className={urlErrors.instagram ? "border-destructive" : ""}
                 />
+                {urlErrors.instagram && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {urlErrors.instagram}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
@@ -103,7 +157,14 @@ export default function AdminConfiguracoes() {
                   placeholder="https://tiktok.com/@suapagina" 
                   value={formLinks.tiktok}
                   onChange={(e) => handleSocialLinkChange("tiktok", e.target.value)}
+                  className={urlErrors.tiktok ? "border-destructive" : ""}
                 />
+                {urlErrors.tiktok && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {urlErrors.tiktok}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
@@ -114,7 +175,14 @@ export default function AdminConfiguracoes() {
                   placeholder="https://sualoja.com.br" 
                   value={formLinks.shop}
                   onChange={(e) => handleSocialLinkChange("shop", e.target.value)}
+                  className={urlErrors.shop ? "border-destructive" : ""}
                 />
+                {urlErrors.shop && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {urlErrors.shop}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
