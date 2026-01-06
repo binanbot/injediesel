@@ -536,6 +536,10 @@ export default function AdminArquivos() {
                               <Download className="h-4 w-4 mr-2" />
                               Download original
                             </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Download className="h-4 w-4 mr-2" />
+                              Baixar Modificado
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => setStatusDialog({ open: true, arquivo })}>
                               <RefreshCw className="h-4 w-4 mr-2" />

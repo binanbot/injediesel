@@ -456,7 +456,7 @@ export default function AdminArquivoDetalhes() {
                     <span className="font-medium text-primary">{arquivo.arquivoModificado}</span>
                     <Button size="sm">
                       <Download className="h-4 w-4 mr-2" />
-                      Download
+                      Baixar Modificado
                     </Button>
                   </div>
                 </div>
