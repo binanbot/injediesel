@@ -52,6 +52,8 @@ import GerenciarCobertura from "./pages/admin/GerenciarCobertura";
 import Clientes from "./pages/admin/Clientes";
 import ClienteDetalhe from "./pages/admin/ClienteDetalhe";
 import ImportarProdutos from "./pages/admin/ImportarProdutos";
+import ComprasFranqueados from "./pages/admin/ComprasFranqueados";
+import CompraDetalhe from "./pages/admin/CompraDetalhe";
 
 const queryClient = new QueryClient();
 
@@ -123,6 +125,8 @@ const App = () => (
               <Route path="contratos" element={<AdminContratos />} />
               <Route path="documentacao" element={<DocumentacaoSistema />} />
               <Route path="importar-produtos" element={<ImportarProdutos />} />
+              <Route path="compras" element={<ComprasFranqueados />} />
+              <Route path="compras/:id" element={<CompraDetalhe />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

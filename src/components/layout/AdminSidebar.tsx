@@ -48,6 +48,7 @@ const menuItems: MenuItem[] = [
   { icon: Headphones, label: "Suporte", path: "/admin/suporte", badgeKey: "suporte" },
   { icon: MessageSquare, label: "Mensagens", path: "/admin/mensagens" },
   { icon: BarChart3, label: "Relatórios", path: "/admin/relatorios" },
+  { icon: ShoppingBag, label: "Compras Franqueados", path: "/admin/compras" },
   { icon: Package, label: "Importar Produtos", path: "/admin/importar-produtos" },
   { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
   { icon: FileText, label: "Documentação", path: "/admin/documentacao" },
