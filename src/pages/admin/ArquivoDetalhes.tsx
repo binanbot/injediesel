@@ -222,7 +222,7 @@ export default function AdminArquivoDetalhes() {
   }
 
   const handleUploadArquivo = async () => {
-    if (!arquivoProcessado) {
+    if (!arquivoProcessado || !arquivo) {
       toast({
         title: "Erro",
         description: "Por favor, selecione um arquivo.",
@@ -232,19 +232,71 @@ export default function AdminArquivoDetalhes() {
     }
 
     setEnviando(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setEnviando(false);
-    setUploadDialogOpen(false);
-    setArquivoProcessado(null);
 
-    toast({
-      title: "Arquivo enviado",
-      description: "O arquivo processado foi enviado com sucesso.",
-    });
+    try {
+      // Gera nome único para o arquivo
+      const fileExt = arquivoProcessado.name.split('.').pop();
+      const fileName = `${arquivo.id}/${Date.now()}_modificado.${fileExt}`;
+
+      // Upload para o storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("received-files")
+        .upload(fileName, arquivoProcessado, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Obtém URL pública do arquivo
+      const { data: urlData } = supabase.storage
+        .from("received-files")
+        .getPublicUrl(fileName);
+
+      // Atualiza o registro no banco
+      const { error: updateError } = await supabase
+        .from("received_files")
+        .update({
+          arquivo_modificado_url: urlData.publicUrl,
+          arquivo_modificado_nome: arquivoProcessado.name,
+          status: "completed",
+        })
+        .eq("id", arquivo.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Atualiza o estado local
+      setArquivo({
+        ...arquivo,
+        arquivoModificado: arquivoProcessado.name,
+        status: "completed",
+      });
+
+      toast({
+        title: "Arquivo enviado",
+        description: "O arquivo processado foi enviado com sucesso e o status foi atualizado para Concluído.",
+      });
+
+      setUploadDialogOpen(false);
+      setArquivoProcessado(null);
+    } catch (error: any) {
+      console.error("Erro ao enviar arquivo:", error);
+      toast({
+        title: "Erro ao enviar arquivo",
+        description: error.message || "Ocorreu um erro ao enviar o arquivo processado.",
+        variant: "destructive",
+      });
+    } finally {
+      setEnviando(false);
+    }
   };
 
   const handleAlterarStatus = async () => {
-    if (!novoStatus) {
+    if (!novoStatus || !arquivo) {
       toast({
         title: "Erro",
         description: "Por favor, selecione um status.",
@@ -254,15 +306,46 @@ export default function AdminArquivoDetalhes() {
     }
 
     setEnviando(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setEnviando(false);
-    setStatusDialogOpen(false);
-    setNovoStatus("");
 
-    toast({
-      title: "Status atualizado",
-      description: `O status foi alterado para ${novoStatus}.`,
-    });
+    try {
+      // Salva o histórico de alteração
+      const { data: userData } = await supabase.auth.getUser();
+      
+      await supabase.from("file_status_history").insert({
+        arquivo_id: arquivo.id,
+        status_anterior: arquivo.status,
+        status_novo: novoStatus,
+        alterado_por: userData.user?.id,
+      });
+
+      // Atualiza o status no banco
+      const { error } = await supabase
+        .from("received_files")
+        .update({ status: novoStatus.toLowerCase() })
+        .eq("id", arquivo.id);
+
+      if (error) throw error;
+
+      // Atualiza estado local
+      setArquivo({ ...arquivo, status: novoStatus.toLowerCase() });
+
+      toast({
+        title: "Status atualizado",
+        description: `O status foi alterado para ${novoStatus}.`,
+      });
+
+      setStatusDialogOpen(false);
+      setNovoStatus("");
+    } catch (error: any) {
+      console.error("Erro ao atualizar status:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    } finally {
+      setEnviando(false);
+    }
   };
 
   const handleResponderCorrecao = async () => {
