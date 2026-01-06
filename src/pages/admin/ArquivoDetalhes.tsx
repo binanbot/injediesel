@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import { 
   ArrowLeft, 
   Download, 
@@ -13,7 +14,8 @@ import {
   AlertTriangle,
   Clock,
   MessageSquare,
-  Building2
+  Building2,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,116 +41,28 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock data - será substituído por dados reais
-const arquivosMock: Record<string, {
-  id: number;
+// Tipo para arquivo do banco
+type ArquivoType = {
+  id: string;
   placa: string;
-  marca: string;
-  modelo: string;
+  marca: string | null;
+  modelo: string | null;
   servico: string;
   status: string;
   data: string;
-  cliente: string;
-  valor: number;
+  valor: number | null;
   categorias: string[];
-  descricao: string;
-  horasKm: string;
-  arquivoOriginal: string;
-  arquivoModificado?: string;
+  descricao: string | null;
+  horasKm: string | null;
+  arquivoOriginal: string | null;
+  arquivoModificado: string | null;
   unidade: string;
-  franqueado: string;
-}> = {
-  "1": { 
-    id: 1, 
-    placa: "ABC-1234", 
-    marca: "Volvo", 
-    modelo: "FH 540", 
-    servico: "Stage 1", 
-    status: "completed", 
-    data: "28/12/2024",
-    cliente: "João Silva",
-    valor: 1500,
-    categorias: ["Truck"],
-    descricao: "Remapeamento Stage 1 para aumento de potência e torque",
-    horasKm: "450.000 km",
-    arquivoOriginal: "volvo_fh540_original.bin",
-    arquivoModificado: "volvo_fh540_stage1.bin",
-    unidade: "São Paulo - Centro",
-    franqueado: "Roberto Mendes"
-  },
-  "2": {
-    id: 2, 
-    placa: "DEF-5678", 
-    marca: "Scania", 
-    modelo: "R 450", 
-    servico: "DPF Off", 
-    status: "processing", 
-    data: "28/12/2024",
-    cliente: "Maria Santos",
-    valor: 2000,
-    categorias: ["Truck"],
-    descricao: "Remoção do DPF e ajuste de parâmetros",
-    horasKm: "320.000 km",
-    arquivoOriginal: "scania_r450_original.bin",
-    unidade: "Rio de Janeiro",
-    franqueado: "Carlos Ferreira"
-  },
-  "3": {
-    id: 3, 
-    placa: "GHI-9012", 
-    marca: "Mercedes", 
-    modelo: "Actros", 
-    servico: "EGR Off", 
-    status: "completed", 
-    data: "27/12/2024",
-    cliente: "Carlos Oliveira",
-    valor: 1800,
-    categorias: ["Truck"],
-    descricao: "Desativação do sistema EGR",
-    horasKm: "280.000 km",
-    arquivoOriginal: "mercedes_actros_original.bin",
-    arquivoModificado: "mercedes_actros_egr_off.bin",
-    unidade: "Belo Horizonte",
-    franqueado: "Ana Paula Costa"
-  },
+  franqueado: string | null;
 };
 
-// Mock de solicitações de correção
-const correcoesMock: Record<string, Array<{
-  id: number;
-  data: string;
-  descricao: string;
-  status: "pendente" | "em_analise" | "resolvido";
-  arquivoEnviado?: string;
-  respostaAdmin?: string;
-}>> = {
-  "1": [
-    {
-      id: 1,
-      data: "29/12/2024 10:30",
-      descricao: "O arquivo não está funcionando corretamente. O veículo apresenta falha de injeção após a instalação.",
-      status: "pendente",
-      arquivoEnviado: "volvo_fh540_erro_log.bin"
-    }
-  ],
-  "3": [
-    {
-      id: 1,
-      data: "28/12/2024 15:00",
-      descricao: "Luz do motor acendeu após o remapeamento. Preciso de correção urgente.",
-      status: "resolvido",
-      respostaAdmin: "Arquivo corrigido e reenviado. Problema identificado no mapeamento do sensor de temperatura."
-    },
-    {
-      id: 2,
-      data: "29/12/2024 09:15",
-      descricao: "Nova falha detectada no sistema de freio motor.",
-      status: "em_analise",
-      arquivoEnviado: "mercedes_actros_freio_log.bin"
-    }
-  ]
-};
+// Tipo para correção (já buscado do banco)
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -189,11 +103,107 @@ export default function AdminArquivoDetalhes() {
   const [arquivoProcessado, setArquivoProcessado] = useState<File | null>(null);
   const [novoStatus, setNovoStatus] = useState("");
   const [respostaCorrecao, setRespostaCorrecao] = useState("");
-  const [correcaoSelecionada, setCorrecaoSelecionada] = useState<number | null>(null);
+  const [correcaoSelecionada, setCorrecaoSelecionada] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [arquivo, setArquivo] = useState<ArquivoType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [correcoes, setCorrecoes] = useState<Array<{
+    id: string;
+    data: string;
+    descricao: string;
+    status: "pendente" | "em_analise" | "resolvido";
+    arquivoEnviado?: string;
+    respostaAdmin?: string;
+  }>>([]);
 
-  const arquivo = id ? arquivosMock[id] : null;
-  const correcoes = id ? correcoesMock[id] || [] : [];
+  // Carrega arquivo do banco de dados
+  useEffect(() => {
+    const fetchArquivo = async () => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("received_files")
+        .select(`
+          id,
+          placa,
+          marca,
+          modelo,
+          servico,
+          status,
+          created_at,
+          valor_brl,
+          categorias,
+          descricao,
+          horas_km,
+          arquivo_original_nome,
+          arquivo_original_url,
+          arquivo_modificado_nome,
+          arquivo_modificado_url,
+          unit_id,
+          units!inner(name)
+        `)
+        .eq("id", id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Erro ao carregar arquivo:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os detalhes do arquivo.",
+          variant: "destructive",
+        });
+      } else if (data) {
+        setArquivo({
+          id: data.id,
+          placa: data.placa,
+          marca: data.marca,
+          modelo: data.modelo,
+          servico: data.servico,
+          status: data.status,
+          data: format(new Date(data.created_at), "dd/MM/yyyy"),
+          valor: data.valor_brl,
+          categorias: data.categorias || [],
+          descricao: data.descricao,
+          horasKm: data.horas_km,
+          arquivoOriginal: data.arquivo_original_nome,
+          arquivoModificado: data.arquivo_modificado_nome,
+          unidade: (data.units as any)?.name || "Sem unidade",
+          franqueado: null, // Pode ser expandido depois
+        });
+      }
+      setLoading(false);
+
+      // Carrega correções relacionadas
+      const { data: correcoesData } = await supabase
+        .from("correction_tickets")
+        .select("id, created_at, motivo, status")
+        .eq("arquivo_id", id)
+        .order("created_at", { ascending: false });
+
+      if (correcoesData) {
+        setCorrecoes(correcoesData.map(c => ({
+          id: c.id,
+          data: format(new Date(c.created_at), "dd/MM/yyyy HH:mm"),
+          descricao: c.motivo,
+          status: c.status as "pendente" | "em_analise" | "resolvido",
+        })));
+      }
+    };
+
+    fetchArquivo();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!arquivo) {
     return (
@@ -368,17 +378,17 @@ export default function AdminArquivoDetalhes() {
                   <p className="font-medium">{arquivo.franqueado}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Cliente Final</p>
+                  <p className="text-sm text-muted-foreground">Responsável</p>
                   <p className="font-medium flex items-center gap-1">
                     <User className="h-4 w-4" />
-                    {arquivo.cliente}
+                    {arquivo.franqueado || "Não informado"}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Valor</p>
                   <p className="font-medium flex items-center gap-1 text-green-600">
                     <DollarSign className="h-4 w-4" />
-                    R$ {arquivo.valor.toLocaleString('pt-BR')}
+                    R$ {(arquivo.valor || 0).toLocaleString('pt-BR')}
                   </p>
                 </div>
               </div>
