@@ -24,6 +24,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -86,6 +96,15 @@ export default function AdminArquivos() {
   const [statusDialog, setStatusDialog] = useState<{ open: boolean; arquivo: typeof arquivos[0] | null }>({
     open: false,
     arquivo: null,
+  });
+  const [confirmDialog, setConfirmDialog] = useState<{ 
+    open: boolean; 
+    arquivo: typeof arquivos[0] | null; 
+    novoStatus: string;
+  }>({
+    open: false,
+    arquivo: null,
+    novoStatus: "",
   });
   const [unidades, setUnidades] = useState<{ id: string; name: string }[]>([]);
   const [loadingUnidades, setLoadingUnidades] = useState(true);
@@ -214,6 +233,23 @@ export default function AdminArquivos() {
     
     return matchesSearch && matchesStatus && matchesUnidade && matchesDataInicio && matchesDataFim;
   });
+
+  // Abre o diálogo de confirmação
+  const solicitarMudancaStatus = (arquivo: typeof arquivos[0], novoStatus: string) => {
+    setConfirmDialog({ open: true, arquivo, novoStatus });
+  };
+
+  // Confirma e aplica a mudança de status
+  const confirmarMudancaStatus = () => {
+    if (confirmDialog.arquivo && confirmDialog.novoStatus) {
+      toast({
+        title: "Status atualizado",
+        description: `O arquivo ${confirmDialog.arquivo.placa} foi marcado como ${confirmDialog.novoStatus}.`,
+      });
+    }
+    setConfirmDialog({ open: false, arquivo: null, novoStatus: "" });
+    setStatusDialog({ open: false, arquivo: null });
+  };
 
   const handleStatusChange = (newStatus: string) => {
     toast({
@@ -465,27 +501,27 @@ export default function AdminArquivos() {
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start" className="bg-popover border border-border z-50">
-                            <DropdownMenuItem onClick={() => handleStatusChange("Pendente")}>
+                            <DropdownMenuItem onClick={() => solicitarMudancaStatus(arquivo, "Pendente")}>
                               <span className="status-badge status-pending">Pendente</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange("Processando")}>
+                            <DropdownMenuItem onClick={() => solicitarMudancaStatus(arquivo, "Processando")}>
                               <span className="status-badge status-processing">Processando</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange("Concluído")}>
+                            <DropdownMenuItem onClick={() => solicitarMudancaStatus(arquivo, "Concluído")}>
                               <span className="status-badge status-completed">Concluído</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleStatusChange("Recall Original")}>
+                            <DropdownMenuItem onClick={() => solicitarMudancaStatus(arquivo, "Recall Original")}>
                               <span className="text-sm">Recall Original</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange("Arquivo complexo 48h")}>
+                            <DropdownMenuItem onClick={() => solicitarMudancaStatus(arquivo, "Arquivo complexo 48h")}>
                               <span className="text-sm">Arquivo complexo 48h</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange("Contate o financeiro")}>
+                            <DropdownMenuItem onClick={() => solicitarMudancaStatus(arquivo, "Contate o financeiro")}>
                               <span className="text-sm">Contate o financeiro</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleStatusChange("Cancelado")} className="text-destructive">
+                            <DropdownMenuItem onClick={() => solicitarMudancaStatus(arquivo, "Cancelado")} className="text-destructive">
                               <span className="status-badge status-cancelled">Cancelado</span>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -641,6 +677,24 @@ export default function AdminArquivos() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmDialog.open} onOpenChange={(open) => !open && setConfirmDialog({ open: false, arquivo: null, novoStatus: "" })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar alteração de status</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja alterar o status do arquivo <strong>{confirmDialog.arquivo?.placa}</strong> para <strong>{confirmDialog.novoStatus}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarMudancaStatus}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
