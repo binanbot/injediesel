@@ -240,12 +240,29 @@ export default function AdminArquivos() {
   };
 
   // Confirma e aplica a mudança de status
-  const confirmarMudancaStatus = () => {
+  const confirmarMudancaStatus = async () => {
     if (confirmDialog.arquivo && confirmDialog.novoStatus) {
-      toast({
-        title: "Status atualizado",
-        description: `O arquivo ${confirmDialog.arquivo.placa} foi marcado como ${confirmDialog.novoStatus}.`,
+      // Salva o histórico de alteração no banco
+      const { error } = await supabase.from("file_status_history").insert({
+        arquivo_id: confirmDialog.arquivo.id.toString(),
+        status_anterior: confirmDialog.arquivo.status,
+        status_novo: confirmDialog.novoStatus,
+        alterado_por: (await supabase.auth.getUser()).data.user?.id,
       });
+
+      if (error) {
+        console.error("Erro ao salvar histórico:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível salvar o histórico de alteração.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Status atualizado",
+          description: `O arquivo ${confirmDialog.arquivo.placa} foi marcado como ${confirmDialog.novoStatus}.`,
+        });
+      }
     }
     setConfirmDialog({ open: false, arquivo: null, novoStatus: "" });
     setStatusDialog({ open: false, arquivo: null });

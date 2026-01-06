@@ -218,6 +218,36 @@ export type Database = {
           },
         ]
       }
+      file_status_history: {
+        Row: {
+          alterado_por: string
+          arquivo_id: string
+          created_at: string
+          id: string
+          observacao: string | null
+          status_anterior: string | null
+          status_novo: string
+        }
+        Insert: {
+          alterado_por: string
+          arquivo_id: string
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          status_anterior?: string | null
+          status_novo: string
+        }
+        Update: {
+          alterado_por?: string
+          arquivo_id?: string
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          status_anterior?: string | null
+          status_novo?: string
+        }
+        Relationships: []
+      }
       franchisee_profiles: {
         Row: {
           contract_expiration_date: string
