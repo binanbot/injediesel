@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Search, Filter, Download, Upload, Eye, MoreHorizontal, CheckCircle, RefreshCw, CalendarIcon, Clock, X } from "lucide-react";
 import { calcularTempoDecorrido, getTempoClasses } from "@/utils/tempoDecorrido";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -86,9 +87,28 @@ export default function AdminArquivos() {
     open: false,
     arquivo: null,
   });
+  const [unidades, setUnidades] = useState<{ id: string; name: string }[]>([]);
+  const [loadingUnidades, setLoadingUnidades] = useState(true);
 
-  // Lista única de unidades para o filtro
-  const unidades = [...new Set(arquivos.map(a => a.unidade))].sort();
+  // Carrega unidades do banco de dados
+  useEffect(() => {
+    const fetchUnidades = async () => {
+      setLoadingUnidades(true);
+      const { data, error } = await supabase
+        .from("units")
+        .select("id, name")
+        .order("name");
+      
+      if (error) {
+        console.error("Erro ao carregar unidades:", error);
+      } else {
+        setUnidades(data || []);
+      }
+      setLoadingUnidades(false);
+    };
+    
+    fetchUnidades();
+  }, []);
 
   // Gera lista de anos (últimos 10 anos)
   const currentYear = new Date().getFullYear();
@@ -307,8 +327,8 @@ export default function AdminArquivos() {
                   <SelectContent>
                     <SelectItem value="all">Todas as unidades</SelectItem>
                     {unidades.map((unidade) => (
-                      <SelectItem key={unidade} value={unidade}>
-                        {unidade}
+                      <SelectItem key={unidade.id} value={unidade.name}>
+                        {unidade.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
