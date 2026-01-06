@@ -27,24 +27,63 @@ interface Cart {
 export function useCart() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
+
+  // Check if user is admin
+  const { data: isAdmin } = useQuery({
+    queryKey: ["isAdmin"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+      
+      const { data } = await supabase
+        .rpc("is_franchisor_admin", { _user_id: user.id });
+      
+      return !!data;
+    },
+  });
+
+  // Fetch units for admin
+  const { data: units } = useQuery({
+    queryKey: ["units-for-cart"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("units")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!isAdmin,
+  });
 
   // Fetch or create cart
   const { data: cart, isLoading } = useQuery({
-    queryKey: ["cart"],
+    queryKey: ["cart", selectedUnitId],
     queryFn: async () => {
       // Get current user's unit_id
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
-      // Get unit_id using the database function
-      const { data: unitData, error: unitError } = await supabase
-        .rpc("get_user_unit_id", { _user_id: user.id });
-      
-      if (unitError || !unitData) {
-        throw new Error("Unidade não encontrada");
+      let unitId: string | null = null;
+
+      // If admin with selected unit
+      if (isAdmin && selectedUnitId) {
+        unitId = selectedUnitId;
+      } else {
+        // Get unit_id using the database function for franchisees
+        const { data: unitData } = await supabase
+          .rpc("get_user_unit_id", { _user_id: user.id });
+        
+        unitId = unitData;
       }
 
-      const unitId = unitData;
+      if (!unitId) {
+        // Return null cart if no unit (admin needs to select)
+        return null;
+      }
 
       // Try to get existing cart
       let { data: existingCart, error: cartError } = await supabase
@@ -105,6 +144,7 @@ export function useCart() {
       } as Cart;
     },
     staleTime: 1000 * 60, // 1 minute
+    enabled: !isAdmin || !!selectedUnitId,
   });
 
   // Add item to cart
@@ -215,6 +255,7 @@ export function useCart() {
   });
 
   const itemCount = cart?.items.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const needsUnitSelection = isAdmin && !selectedUnitId;
 
   return {
     cart,
@@ -226,5 +267,11 @@ export function useCart() {
     removeItem,
     clearCart,
     itemCount,
+    // Admin-specific
+    isAdmin,
+    units,
+    selectedUnitId,
+    setSelectedUnitId,
+    needsUnitSelection,
   };
 }
