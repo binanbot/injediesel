@@ -17,6 +17,8 @@ import {
   CalendarCheck,
   Upload,
   UserCircle,
+  ShoppingBag,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -46,6 +48,7 @@ const menuItems: MenuItem[] = [
   { icon: Headphones, label: "Suporte", path: "/admin/suporte", badgeKey: "suporte" },
   { icon: MessageSquare, label: "Mensagens", path: "/admin/mensagens" },
   { icon: BarChart3, label: "Relatórios", path: "/admin/relatorios" },
+  { icon: Package, label: "Importar Produtos", path: "/admin/importar-produtos" },
   { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
   { icon: FileText, label: "Documentação", path: "/admin/documentacao" },
 ];
