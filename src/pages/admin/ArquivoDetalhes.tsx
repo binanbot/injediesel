@@ -57,7 +57,9 @@ type ArquivoType = {
   descricao: string | null;
   horasKm: string | null;
   arquivoOriginal: string | null;
+  arquivoOriginalUrl: string | null;
   arquivoModificado: string | null;
+  arquivoModificadoUrl: string | null;
   unidade: string;
   franqueado: string | null;
 };
@@ -170,7 +172,9 @@ export default function AdminArquivoDetalhes() {
           descricao: data.descricao,
           horasKm: data.horas_km,
           arquivoOriginal: data.arquivo_original_nome,
+          arquivoOriginalUrl: data.arquivo_original_url,
           arquivoModificado: data.arquivo_modificado_nome,
+          arquivoModificadoUrl: data.arquivo_modificado_url,
           unidade: (data.units as any)?.name || "Sem unidade",
           franqueado: null, // Pode ser expandido depois
         });
@@ -273,6 +277,7 @@ export default function AdminArquivoDetalhes() {
       setArquivo({
         ...arquivo,
         arquivoModificado: arquivoProcessado.name,
+        arquivoModificadoUrl: urlData.publicUrl,
         status: "completed",
       });
 
@@ -345,6 +350,30 @@ export default function AdminArquivoDetalhes() {
       });
     } finally {
       setEnviando(false);
+    }
+  };
+
+  // Função para download de arquivo
+  const handleDownload = async (url: string | null, fileName: string | null) => {
+    if (!url) {
+      toast({
+        title: "Arquivo não disponível",
+        description: "Este arquivo ainda não foi enviado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Abre o arquivo em nova aba para download
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error("Erro ao baixar arquivo:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível baixar o arquivo.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -534,8 +563,13 @@ export default function AdminArquivoDetalhes() {
               <div className="flex-1 p-4 border border-border rounded-lg">
                 <p className="text-sm text-muted-foreground mb-2">Arquivo Original</p>
                 <div className="flex items-center justify-between">
-                  <span className="font-medium">{arquivo.arquivoOriginal}</span>
-                  <Button variant="outline" size="sm">
+                  <span className="font-medium">{arquivo.arquivoOriginal || "Não enviado"}</span>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleDownload(arquivo.arquivoOriginalUrl, arquivo.arquivoOriginal)}
+                    disabled={!arquivo.arquivoOriginalUrl}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Download
                   </Button>
@@ -547,7 +581,10 @@ export default function AdminArquivoDetalhes() {
                   <p className="text-sm text-muted-foreground mb-2">Arquivo Modificado</p>
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-primary">{arquivo.arquivoModificado}</span>
-                    <Button size="sm">
+                    <Button 
+                      size="sm"
+                      onClick={() => handleDownload(arquivo.arquivoModificadoUrl, arquivo.arquivoModificado)}
+                    >
                       <Download className="h-4 w-4 mr-2" />
                       Baixar Modificado
                     </Button>
