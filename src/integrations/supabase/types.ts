@@ -377,6 +377,94 @@ export type Database = {
         }
         Relationships: []
       }
+      received_files: {
+        Row: {
+          arquivo_modificado_nome: string | null
+          arquivo_modificado_url: string | null
+          arquivo_original_nome: string | null
+          arquivo_original_url: string | null
+          categorias: string[] | null
+          created_at: string
+          customer_id: string | null
+          descricao: string | null
+          horas_km: string | null
+          id: string
+          marca: string | null
+          modelo: string | null
+          placa: string
+          servico: string
+          status: string
+          unit_id: string
+          updated_at: string
+          valor_brl: number | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          arquivo_modificado_nome?: string | null
+          arquivo_modificado_url?: string | null
+          arquivo_original_nome?: string | null
+          arquivo_original_url?: string | null
+          categorias?: string[] | null
+          created_at?: string
+          customer_id?: string | null
+          descricao?: string | null
+          horas_km?: string | null
+          id?: string
+          marca?: string | null
+          modelo?: string | null
+          placa: string
+          servico: string
+          status?: string
+          unit_id: string
+          updated_at?: string
+          valor_brl?: number | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          arquivo_modificado_nome?: string | null
+          arquivo_modificado_url?: string | null
+          arquivo_original_nome?: string | null
+          arquivo_original_url?: string | null
+          categorias?: string[] | null
+          created_at?: string
+          customer_id?: string | null
+          descricao?: string | null
+          horas_km?: string | null
+          id?: string
+          marca?: string | null
+          modelo?: string | null
+          placa?: string
+          servico?: string
+          status?: string
+          unit_id?: string
+          updated_at?: string
+          valor_brl?: number | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "received_files_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "received_files_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "received_files_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           amount_brl: number | null
