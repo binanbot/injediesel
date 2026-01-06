@@ -26,6 +26,10 @@ import Perfil from "./pages/franqueado/Perfil";
 import Suporte from "./pages/franqueado/Suporte";
 import FranqueadoRelatorios from "./pages/franqueado/Relatorios";
 import Cursos from "./pages/franqueado/Cursos";
+import Loja from "./pages/franqueado/Loja";
+import LojaCheckout from "./pages/franqueado/LojaCheckout";
+import MeusPedidos from "./pages/franqueado/MeusPedidos";
+import PedidoDetalhe from "./pages/franqueado/PedidoDetalhe";
 
 // Admin
 import { AdminLayout } from "./components/layout/AdminLayout";
@@ -84,6 +88,10 @@ const App = () => (
               <Route path="suporte" element={<Suporte />} />
               <Route path="relatorios" element={<FranqueadoRelatorios />} />
               <Route path="cursos" element={<Cursos />} />
+              <Route path="loja" element={<Loja />} />
+              <Route path="loja/checkout" element={<LojaCheckout />} />
+              <Route path="loja/pedidos" element={<MeusPedidos />} />
+              <Route path="loja/pedidos/:id" element={<PedidoDetalhe />} />
             </Route>
 
             {/* Admin Routes */}
