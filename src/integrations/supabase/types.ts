@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      cart_items: {
+        Row: {
+          cart_id: string
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          cart_id: string
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          cart_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_cart_id_fkey"
+            columns: ["cart_id"]
+            isOneToOne: false
+            referencedRelation: "carts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carts: {
+        Row: {
+          created_at: string
+          id: string
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cities_reference: {
         Row: {
           city: string
@@ -281,6 +344,87 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          order_id: string
+          product_id: string
+          quantity: number
+          subtotal: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          order_id: string
+          product_id: string
+          quantity?: number
+          subtotal: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          order_id?: string
+          product_id?: string
+          quantity?: number
+          subtotal?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          id: string
+          installments: number | null
+          payment_method: string | null
+          status: string
+          total: number
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          installments?: number | null
+          payment_method?: string | null
+          status?: string
+          total?: number
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          installments?: number | null
+          payment_method?: string | null
+          status?: string
+          total?: number
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plate_lookup_cache: {
         Row: {
           country: string | null
@@ -305,6 +449,66 @@ export type Database = {
           id?: string
           payload?: Json
           plate?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          available: boolean
+          brand: string
+          category: string | null
+          created_at: string
+          description_full: string | null
+          description_short: string | null
+          dimensions_mm: string | null
+          id: string
+          image_url: string | null
+          models: string[] | null
+          name: string
+          price: number
+          ref: string | null
+          sku: string
+          specifications: string[] | null
+          updated_at: string
+          weight_kg: number | null
+        }
+        Insert: {
+          available?: boolean
+          brand?: string
+          category?: string | null
+          created_at?: string
+          description_full?: string | null
+          description_short?: string | null
+          dimensions_mm?: string | null
+          id?: string
+          image_url?: string | null
+          models?: string[] | null
+          name: string
+          price?: number
+          ref?: string | null
+          sku: string
+          specifications?: string[] | null
+          updated_at?: string
+          weight_kg?: number | null
+        }
+        Update: {
+          available?: boolean
+          brand?: string
+          category?: string | null
+          created_at?: string
+          description_full?: string | null
+          description_short?: string | null
+          dimensions_mm?: string | null
+          id?: string
+          image_url?: string | null
+          models?: string[] | null
+          name?: string
+          price?: number
+          ref?: string | null
+          sku?: string
+          specifications?: string[] | null
+          updated_at?: string
+          weight_kg?: number | null
         }
         Relationships: []
       }
