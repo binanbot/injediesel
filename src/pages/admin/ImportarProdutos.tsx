@@ -10,6 +10,9 @@ import {
   Download,
   Trash2,
   Package,
+  Pencil,
+  Save,
+  X,
 } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -30,16 +35,16 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-// Product validation schema
-const productSchema = z.object({
+// Product validation schema for raw input
+const productRawSchema = z.object({
   sku: z.string().trim().min(1, "SKU obrigatório").max(50, "SKU muito longo"),
   ref: z.string().trim().max(50, "Referência muito longa").optional().nullable(),
   name: z.string().trim().min(1, "Nome obrigatório").max(255, "Nome muito longo"),
-  brand: z.string().trim().max(100, "Marca muito longa").default("PROMAX"),
-  models: z.string().optional().nullable(), // Will be parsed as array
+  brand: z.string().trim().max(100, "Marca muito longa").optional().nullable(),
+  models: z.string().optional().nullable(),
   description_short: z.string().trim().max(500, "Descrição curta muito longa").optional().nullable(),
   description_full: z.string().trim().max(5000, "Descrição completa muito longa").optional().nullable(),
-  specifications: z.string().optional().nullable(), // Will be parsed as array
+  specifications: z.string().optional().nullable(),
   price: z.string().transform((val) => {
     const num = parseFloat(val.replace(",", ".").replace(/[^\d.]/g, ""));
     return isNaN(num) ? 0 : num;
@@ -48,11 +53,8 @@ const productSchema = z.object({
     (val) => (val === undefined || val === null || val === "") ? "sim" : val,
     z.string().transform((val) => {
       const lower = val.toLowerCase().trim();
-      // Se vazio ou não especificado, assume disponível
       if (lower === "" || lower === undefined) return true;
-      // Valores que indicam indisponível
       if (lower === "não" || lower === "nao" || lower === "false" || lower === "0" || lower === "n") return false;
-      // Qualquer outro valor assume disponível
       return true;
     })
   ),
@@ -66,7 +68,25 @@ const productSchema = z.object({
   image_url: z.string().url("URL inválida").max(500, "URL muito longa").optional().nullable().or(z.literal("")),
 });
 
-type ProductRow = z.infer<typeof productSchema>;
+// Schema for already parsed data (used for inline editing)
+const productParsedSchema = z.object({
+  sku: z.string().trim().min(1, "SKU obrigatório").max(50, "SKU muito longo"),
+  ref: z.string().trim().max(50, "Referência muito longa").optional().nullable(),
+  name: z.string().trim().min(1, "Nome obrigatório").max(255, "Nome muito longo"),
+  brand: z.string().trim().max(100, "Marca muito longa").optional().nullable(),
+  models: z.string().optional().nullable(),
+  description_short: z.string().trim().max(500, "Descrição curta muito longa").optional().nullable(),
+  description_full: z.string().trim().max(5000, "Descrição completa muito longa").optional().nullable(),
+  specifications: z.string().optional().nullable(),
+  price: z.number().min(0, "Preço inválido"),
+  available: z.boolean(),
+  category: z.string().trim().max(100, "Categoria muito longa").optional().nullable(),
+  weight_kg: z.number().nullable().optional(),
+  dimensions_mm: z.string().trim().max(100, "Dimensões muito longas").optional().nullable(),
+  image_url: z.string().url("URL inválida").max(500, "URL muito longa").optional().nullable().or(z.literal("")),
+});
+
+type ProductRow = z.infer<typeof productParsedSchema>;
 
 interface ParsedProduct {
   row: number;
@@ -186,7 +206,7 @@ export default function ImportarProdutos() {
       });
 
       // Validate
-      const result = productSchema.safeParse(rawProduct);
+      const result = productRawSchema.safeParse(rawProduct);
       
       if (result.success) {
         products.push({
@@ -207,6 +227,50 @@ export default function ImportarProdutos() {
     }
 
     return products;
+  }, []);
+
+  // Update a single product in the list
+  const updateProduct = useCallback((row: number, field: keyof ProductRow, value: any) => {
+    setParsedProducts((prev) => {
+      const newProducts = [...prev];
+      const index = newProducts.findIndex((p) => p.row === row);
+      if (index === -1) return prev;
+
+      const updatedData = { ...newProducts[index].data, [field]: value };
+      
+      // Revalidate
+      const result = productParsedSchema.safeParse(updatedData);
+      
+      if (result.success) {
+        newProducts[index] = {
+          ...newProducts[index],
+          data: result.data,
+          errors: [],
+          isValid: true,
+        };
+      } else {
+        const errors = result.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`);
+        newProducts[index] = {
+          ...newProducts[index],
+          data: updatedData,
+          errors,
+          isValid: false,
+        };
+      }
+
+      // Update stats
+      setStats((prevStats) => {
+        if (!prevStats) return null;
+        const valid = newProducts.filter((p) => p.isValid).length;
+        return {
+          ...prevStats,
+          valid,
+          invalid: prevStats.total - valid,
+        };
+      });
+
+      return newProducts;
+    });
   }, []);
 
   // Handle file upload
@@ -484,7 +548,7 @@ export default function ImportarProdutos() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {parsedProducts.filter((p) => !p.isValid).length} produto(s) com erros de validação. Corrija o arquivo e tente novamente.
+            {parsedProducts.filter((p) => !p.isValid).length} produto(s) com erros de validação. Edite diretamente na tabela abaixo para corrigir.
           </AlertDescription>
         </Alert>
       )}
@@ -498,7 +562,7 @@ export default function ImportarProdutos() {
               Preview dos produtos
             </CardTitle>
             <CardDescription>
-              Confira os dados antes de importar
+              Clique nos campos para editar diretamente antes de importar
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -508,79 +572,22 @@ export default function ImportarProdutos() {
                   <TableRow>
                     <TableHead className="w-12">Linha</TableHead>
                     <TableHead className="w-12">Status</TableHead>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead className="text-right">Preço</TableHead>
-                    <TableHead>Imagem</TableHead>
-                    <TableHead>Disponível</TableHead>
+                    <TableHead className="min-w-[100px]">SKU</TableHead>
+                    <TableHead className="min-w-[200px]">Nome</TableHead>
+                    <TableHead className="min-w-[120px]">Categoria</TableHead>
+                    <TableHead className="min-w-[100px] text-right">Preço</TableHead>
+                    <TableHead className="min-w-[150px]">Imagem URL</TableHead>
+                    <TableHead className="min-w-[80px]">Disponível</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {parsedProducts.slice(0, 100).map((product) => (
-                    <TableRow 
+                    <EditableProductRow
                       key={product.row}
-                      className={cn(!product.isValid && "bg-destructive/5")}
-                    >
-                      <TableCell className="font-mono text-xs">
-                        {product.row}
-                      </TableCell>
-                      <TableCell>
-                        {product.isValid ? (
-                          <CheckCircle className="h-4 w-4 text-success" />
-                        ) : (
-                          <div className="relative group">
-                            <XCircle className="h-4 w-4 text-destructive cursor-help" />
-                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 w-64 p-2 bg-popover border rounded-lg shadow-lg text-xs">
-                              {product.errors.map((e, i) => (
-                                <p key={i} className="text-destructive">{e}</p>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {product.data.sku}
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {product.data.name}
-                      </TableCell>
-                      <TableCell>
-                        {product.data.category && (
-                          <Badge variant="secondary" className="text-xs">
-                            {product.data.category}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {typeof product.data.price === "number" 
-                          ? formatPrice(product.data.price)
-                          : product.data.price
-                        }
-                      </TableCell>
-                      <TableCell>
-                        {product.data.image_url ? (
-                          <a 
-                            href={product.data.image_url as string} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline text-xs truncate max-w-[100px] inline-block"
-                          >
-                            Ver imagem
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={product.data.available ? "default" : "secondary"}
-                          className="text-xs"
-                        >
-                          {product.data.available ? "Sim" : "Não"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
+                      product={product}
+                      onUpdate={updateProduct}
+                      formatPrice={formatPrice}
+                    />
                   ))}
                 </TableBody>
               </Table>
@@ -627,5 +634,187 @@ export default function ImportarProdutos() {
         </Card>
       )}
     </div>
+  );
+}
+
+// Editable row component
+interface EditableProductRowProps {
+  product: ParsedProduct;
+  onUpdate: (row: number, field: keyof ProductRow, value: any) => void;
+  formatPrice: (value: number) => string;
+}
+
+function EditableProductRow({ product, onUpdate, formatPrice }: EditableProductRowProps) {
+  const [editingField, setEditingField] = useState<keyof ProductRow | null>(null);
+  const [tempValue, setTempValue] = useState<string>("");
+
+  const startEditing = (field: keyof ProductRow, currentValue: any) => {
+    setEditingField(field);
+    setTempValue(currentValue?.toString() || "");
+  };
+
+  const cancelEditing = () => {
+    setEditingField(null);
+    setTempValue("");
+  };
+
+  const saveEdit = () => {
+    if (editingField) {
+      let value: any = tempValue;
+      if (editingField === "price") {
+        value = parseFloat(tempValue.replace(",", ".").replace(/[^\d.]/g, "")) || 0;
+      }
+      onUpdate(product.row, editingField, value);
+    }
+    cancelEditing();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      saveEdit();
+    } else if (e.key === "Escape") {
+      cancelEditing();
+    }
+  };
+
+  const renderEditableCell = (
+    field: keyof ProductRow,
+    value: any,
+    displayValue: React.ReactNode,
+    className?: string
+  ) => {
+    if (editingField === field) {
+      return (
+        <div className="flex items-center gap-1">
+          <Input
+            value={tempValue}
+            onChange={(e) => setTempValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="h-7 text-xs"
+            autoFocus
+          />
+          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={saveEdit}>
+            <Save className="h-3 w-3" />
+          </Button>
+          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={cancelEditing}>
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className={cn(
+          "cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 -mx-1 group flex items-center gap-1",
+          className
+        )}
+        onClick={() => startEditing(field, value)}
+      >
+        {displayValue}
+        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+    );
+  };
+
+  return (
+    <TableRow className={cn(!product.isValid && "bg-destructive/5")}>
+      <TableCell className="font-mono text-xs">
+        {product.row}
+      </TableCell>
+      <TableCell>
+        {product.isValid ? (
+          <CheckCircle className="h-4 w-4 text-success" />
+        ) : (
+          <div className="relative group">
+            <XCircle className="h-4 w-4 text-destructive cursor-help" />
+            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 w-64 p-2 bg-popover border rounded-lg shadow-lg text-xs">
+              {product.errors.map((e, i) => (
+                <p key={i} className="text-destructive">{e}</p>
+              ))}
+            </div>
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="font-mono text-xs">
+        {renderEditableCell("sku", product.data.sku, product.data.sku)}
+      </TableCell>
+      <TableCell className="max-w-[200px]">
+        {renderEditableCell(
+          "name",
+          product.data.name,
+          <span className="truncate block">{product.data.name}</span>
+        )}
+      </TableCell>
+      <TableCell>
+        {renderEditableCell(
+          "category",
+          product.data.category,
+          product.data.category ? (
+            <Badge variant="secondary" className="text-xs">
+              {product.data.category}
+            </Badge>
+          ) : (
+            <span className="text-muted-foreground text-xs">—</span>
+          )
+        )}
+      </TableCell>
+      <TableCell className="text-right font-medium">
+        {renderEditableCell(
+          "price",
+          product.data.price,
+          typeof product.data.price === "number"
+            ? formatPrice(product.data.price)
+            : product.data.price,
+          "justify-end"
+        )}
+      </TableCell>
+      <TableCell>
+        {editingField === "image_url" ? (
+          <div className="flex items-center gap-1">
+            <Input
+              value={tempValue}
+              onChange={(e) => setTempValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="h-7 text-xs w-full"
+              placeholder="https://..."
+              autoFocus
+            />
+            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={saveEdit}>
+              <Save className="h-3 w-3" />
+            </Button>
+            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={cancelEditing}>
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        ) : (
+          <div
+            className="cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5 -mx-1 group flex items-center gap-1"
+            onClick={() => startEditing("image_url", product.data.image_url)}
+          >
+            {product.data.image_url ? (
+              <a
+                href={product.data.image_url as string}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline text-xs truncate max-w-[100px] inline-block"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Ver imagem
+              </a>
+            ) : (
+              <span className="text-muted-foreground text-xs">—</span>
+            )}
+            <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        )}
+      </TableCell>
+      <TableCell>
+        <Switch
+          checked={product.data.available as boolean}
+          onCheckedChange={(checked) => onUpdate(product.row, "available", checked)}
+        />
+      </TableCell>
+    </TableRow>
   );
 }
