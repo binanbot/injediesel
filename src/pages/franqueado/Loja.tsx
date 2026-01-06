@@ -27,6 +27,7 @@ interface Product {
 export default function Loja() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [addingProductId, setAddingProductId] = useState<string | null>(null);
   
   const {
     cart,
@@ -90,7 +91,11 @@ export default function Loja() {
   }, [products, searchTerm, selectedCategory]);
 
   const handleAddToCart = (productId: string) => {
-    addItem.mutate({ productId });
+    setAddingProductId(productId);
+    addItem.mutate(
+      { productId },
+      { onSettled: () => setAddingProductId(null) }
+    );
   };
 
   return (
@@ -216,7 +221,7 @@ export default function Loja() {
               key={product.id}
               product={product}
               onAddToCart={handleAddToCart}
-              isAdding={addItem.isPending}
+              isAdding={addingProductId === product.id}
             />
           ))}
         </div>
