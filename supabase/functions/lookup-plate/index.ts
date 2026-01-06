@@ -96,6 +96,15 @@ serve(async (req) => {
   }
 
   try {
+    // Validar autenticação manualmente
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Não autorizado", code: "UNAUTHORIZED" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { plate, country = "BR" } = await req.json();
 
     if (!plate || plate.length < 7) {
