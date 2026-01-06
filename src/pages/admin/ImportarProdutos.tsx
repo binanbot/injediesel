@@ -664,9 +664,18 @@ function EditableProductRow({ product, onUpdate, formatPrice }: EditableProductR
       if (editingField === "price") {
         value = parseFloat(tempValue.replace(",", ".").replace(/[^\d.]/g, "")) || 0;
       }
-      onUpdate(product.row, editingField, value);
+      const fieldToUpdate = editingField;
+      // Cancel editing FIRST to prevent DOM sync issues
+      setEditingField(null);
+      setTempValue("");
+      // Then update after state is cleared
+      setTimeout(() => {
+        onUpdate(product.row, fieldToUpdate, value);
+      }, 0);
+    } else {
+      setEditingField(null);
+      setTempValue("");
     }
-    cancelEditing();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
