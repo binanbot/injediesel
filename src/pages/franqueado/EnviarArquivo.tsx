@@ -57,6 +57,7 @@ import { ClienteSelect } from "@/components/franqueado/ClienteSelect";
 import { NovoClienteDrawer } from "@/components/franqueado/NovoClienteDrawer";
 import { ClientePerfilDialog } from "@/components/franqueado/ClientePerfilDialog";
 import { Cliente, clientesMock } from "@/data/clientes-mock";
+import { supabase } from "@/integrations/supabase/client";
 
 const MAX_FILES = 2;
 
@@ -64,6 +65,7 @@ interface UploadedFile {
   name: string;
   size: number;
   type: string;
+  file: File;
 }
 
 export default function EnviarArquivo() {
@@ -136,6 +138,7 @@ export default function EnviarArquivo() {
       name: file.name,
       size: file.size,
       type: file.type,
+      file: file,
     }));
 
     const totalFiles = files.length + droppedFiles.length;
@@ -158,6 +161,7 @@ export default function EnviarArquivo() {
         name: file.name,
         size: file.size,
         type: file.type,
+        file: file,
       }));
 
       const totalFiles = files.length + selectedFiles.length;
@@ -336,7 +340,7 @@ export default function EnviarArquivo() {
     setValor(formatted);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formValido) {
@@ -350,14 +354,96 @@ export default function EnviarArquivo() {
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    try {
+      // Obtém o user_id e unit_id
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        throw new Error("Usuário não autenticado");
+      }
+
+      // Busca o unit_id do franqueado
+      const { data: unitData } = await supabase
+        .from("units")
+        .select("id")
+        .limit(1)
+        .maybeSingle();
+
+      if (!unitData) {
+        throw new Error("Unidade não encontrada. Entre em contato com o suporte.");
+      }
+
+      // Gera ID único para o arquivo
+      const arquivoId = crypto.randomUUID();
+
+      // Upload do primeiro arquivo (original)
+      let arquivoOriginalUrl = null;
+      let arquivoOriginalNome = null;
+
+      if (files.length > 0) {
+        const file = files[0];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${unitData.id}/${arquivoId}/${Date.now()}_original.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("received-files")
+          .upload(fileName, file.file, {
+            cacheControl: "3600",
+            upsert: false,
+          });
+
+        if (uploadError) {
+          console.error("Erro no upload:", uploadError);
+          throw new Error("Erro ao fazer upload do arquivo");
+        }
+
+        const { data: urlData } = supabase.storage
+          .from("received-files")
+          .getPublicUrl(fileName);
+
+        arquivoOriginalUrl = urlData.publicUrl;
+        arquivoOriginalNome = file.name;
+      }
+
+      // Converte valor para número
+      const valorNumerico = parseFloat(valor.replace(/\./g, "").replace(",", "."));
+
+      // Insere o registro no banco
+      const { error: insertError } = await supabase.from("received_files").insert({
+        id: arquivoId,
+        unit_id: unitData.id,
+        placa: placa || "SEM PLACA",
+        marca: marca,
+        modelo: modelo,
+        horas_km: horasKm,
+        servico: servicoTexto,
+        categorias: categoriasSelecionadas,
+        descricao: `Categoria: ${categoriaVeiculo}. Motor: ${motor}. Transmissão: ${transmissao}. Ano: ${anoModelo}`,
+        valor_brl: valorNumerico,
+        arquivo_original_url: arquivoOriginalUrl,
+        arquivo_original_nome: arquivoOriginalNome,
+        status: "pending",
+      });
+
+      if (insertError) {
+        console.error("Erro ao inserir:", insertError);
+        throw new Error("Erro ao salvar os dados do arquivo");
+      }
+
       setIsSubmitting(false);
       setSubmitted(true);
       toast({
         title: "Arquivo enviado com sucesso!",
         description: "Você receberá uma notificação quando o processamento for concluído.",
       });
-    }, 2000);
+    } catch (error: any) {
+      console.error("Erro ao enviar arquivo:", error);
+      setIsSubmitting(false);
+      toast({
+        title: "Erro ao enviar arquivo",
+        description: error.message || "Ocorreu um erro. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const resetForm = () => {
