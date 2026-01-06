@@ -2,9 +2,13 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { AdminSidebar } from "./AdminSidebar";
 import { Topbar } from "./Topbar";
+import { useFileStatusNotifications } from "@/hooks/useFileStatusNotifications";
 
 export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Escuta notificações de mudança de status de arquivos
+  useFileStatusNotifications();
 
   return (
     <div className="min-h-screen bg-background">
