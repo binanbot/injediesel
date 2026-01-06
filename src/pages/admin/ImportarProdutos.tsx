@@ -315,7 +315,7 @@ export default function ImportarProdutos() {
       "Filtros",
       "4.3",
       "695 x 113",
-      "",
+      "https://exemplo.com/imagem-produto.jpg",
     ].join(";");
 
     const csv = `${header}\n${example}`;
@@ -504,6 +504,7 @@ export default function ImportarProdutos() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Categoria</TableHead>
                     <TableHead className="text-right">Preço</TableHead>
+                    <TableHead>Imagem</TableHead>
                     <TableHead>Disponível</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -548,6 +549,20 @@ export default function ImportarProdutos() {
                           ? formatPrice(product.data.price)
                           : product.data.price
                         }
+                      </TableCell>
+                      <TableCell>
+                        {product.data.image_url ? (
+                          <a 
+                            href={product.data.image_url as string} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline text-xs truncate max-w-[100px] inline-block"
+                          >
+                            Ver imagem
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge 
