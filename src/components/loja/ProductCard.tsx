@@ -37,7 +37,17 @@ export function ProductCard({ product, onAddToCart, isAdding }: ProductCardProps
   };
 
   const handleIncrement = () => {
-    setQuantity((prev) => prev + 1);
+    setQuantity((prev) => Math.min(999, prev + 1));
+  };
+
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "");
+    if (value === "") {
+      setQuantity(1);
+    } else {
+      const num = Math.max(1, Math.min(999, parseInt(value, 10)));
+      setQuantity(num);
+    }
   };
 
   const handleAddToCart = () => {
@@ -116,7 +126,14 @@ export function ProductCard({ product, onAddToCart, isAdding }: ProductCardProps
             >
               <Minus className="h-3 w-3" />
             </Button>
-            <span className="w-8 text-center text-sm font-medium">{quantity}</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={quantity}
+              onChange={handleQuantityChange}
+              disabled={!product.available}
+              className="w-10 h-8 text-center text-sm font-medium bg-transparent border-x border-border focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+            />
             <Button
               type="button"
               variant="ghost"
