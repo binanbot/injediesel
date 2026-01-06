@@ -1,7 +1,7 @@
-import { Package, ShoppingCart } from "lucide-react";
+import { useState } from "react";
+import { Package, ShoppingCart, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -18,16 +18,31 @@ interface Product {
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart: (productId: string) => void;
+  onAddToCart: (productId: string, quantity: number) => void;
   isAdding?: boolean;
 }
 
 export function ProductCard({ product, onAddToCart, isAdding }: ProductCardProps) {
+  const [quantity, setQuantity] = useState(1);
+
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
     }).format(value);
+  };
+
+  const handleDecrement = () => {
+    setQuantity((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleIncrement = () => {
+    setQuantity((prev) => prev + 1);
+  };
+
+  const handleAddToCart = () => {
+    onAddToCart(product.id, quantity);
+    setQuantity(1);
   };
 
   return (
@@ -81,16 +96,43 @@ export function ProductCard({ product, onAddToCart, isAdding }: ProductCardProps
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Price & Action */}
-        <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-border/30">
+        {/* Price */}
+        <div className="mt-3 pt-3 border-t border-border/30">
           <span className="text-lg font-bold text-primary">
             {formatPrice(product.price)}
           </span>
+        </div>
+
+        {/* Quantity Selector & Add Button */}
+        <div className="flex items-center gap-2 mt-3">
+          <div className="flex items-center border border-border rounded-md">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-r-none"
+              onClick={handleDecrement}
+              disabled={quantity <= 1 || !product.available}
+            >
+              <Minus className="h-3 w-3" />
+            </Button>
+            <span className="w-8 text-center text-sm font-medium">{quantity}</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-l-none"
+              onClick={handleIncrement}
+              disabled={!product.available}
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
           <Button
             size="sm"
-            onClick={() => onAddToCart(product.id)}
+            onClick={handleAddToCart}
             disabled={!product.available || isAdding}
-            className="gap-1"
+            className="flex-1 gap-1"
           >
             <ShoppingCart className="h-4 w-4" />
             <span className="hidden sm:inline">Adicionar</span>
