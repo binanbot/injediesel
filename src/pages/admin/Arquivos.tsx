@@ -279,7 +279,6 @@ export default function AdminArquivos() {
   const solicitarMudancaStatus = (arquivo: ArquivoType, novoStatus: string) => {
     setConfirmDialog({ open: true, arquivo, novoStatus });
   };
-  };
 
   // Confirma e aplica a mudança de status
   const confirmarMudancaStatus = async () => {
