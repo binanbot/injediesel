@@ -78,10 +78,83 @@ export default function AdminArquivos() {
   const [search, setSearch] = useState("");
   const [dataInicio, setDataInicio] = useState<Date>();
   const [dataFim, setDataFim] = useState<Date>();
+  const [dataInicioInput, setDataInicioInput] = useState("");
+  const [dataFimInput, setDataFimInput] = useState("");
+  const [anoSelecionado, setAnoSelecionado] = useState<string>("");
   const [statusDialog, setStatusDialog] = useState<{ open: boolean; arquivo: typeof arquivos[0] | null }>({
     open: false,
     arquivo: null,
   });
+
+  // Gera lista de anos (últimos 10 anos)
+  const currentYear = new Date().getFullYear();
+  const anos = Array.from({ length: 10 }, (_, i) => (currentYear - i).toString());
+
+  // Função para parsear data no formato DD/MM/YYYY
+  const parseDateInput = (value: string): Date | undefined => {
+    const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (match) {
+      const [, dia, mes, ano] = match;
+      const date = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    return undefined;
+  };
+
+  // Função para formatar input de data enquanto digita
+  const formatDateInput = (value: string): string => {
+    const numbers = value.replace(/\D/g, "");
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length <= 4) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
+  };
+
+  // Handlers para input manual de data
+  const handleDataInicioInputChange = (value: string) => {
+    const formatted = formatDateInput(value);
+    setDataInicioInput(formatted);
+    if (formatted.length === 10) {
+      const parsed = parseDateInput(formatted);
+      if (parsed) setDataInicio(parsed);
+    }
+  };
+
+  const handleDataFimInputChange = (value: string) => {
+    const formatted = formatDateInput(value);
+    setDataFimInput(formatted);
+    if (formatted.length === 10) {
+      const parsed = parseDateInput(formatted);
+      if (parsed) setDataFim(parsed);
+    }
+  };
+
+  // Sincroniza input com calendário
+  useEffect(() => {
+    if (dataInicio) {
+      setDataInicioInput(format(dataInicio, "dd/MM/yyyy"));
+    } else {
+      setDataInicioInput("");
+    }
+  }, [dataInicio]);
+
+  useEffect(() => {
+    if (dataFim) {
+      setDataFimInput(format(dataFim, "dd/MM/yyyy"));
+    } else {
+      setDataFimInput("");
+    }
+  }, [dataFim]);
+
+  // Quando o ano é selecionado, define o range do ano inteiro
+  useEffect(() => {
+    if (anoSelecionado) {
+      const ano = parseInt(anoSelecionado);
+      setDataInicio(new Date(ano, 0, 1));
+      setDataFim(new Date(ano, 11, 31));
+    }
+  }, [anoSelecionado]);
 
   // Lê o status da URL ou usa "all" como padrão
   const statusFilter = searchParams.get("status") || "all";
@@ -128,13 +201,14 @@ export default function AdminArquivos() {
   const statusCounts = getStatusCounts();
 
   // Verifica se há filtros ativos
-  const hasActiveFilters = statusFilter !== "all" || search !== "" || dataInicio || dataFim;
+  const hasActiveFilters = statusFilter !== "all" || search !== "" || dataInicio || dataFim || anoSelecionado !== "";
 
   // Função para limpar todos os filtros
   const clearAllFilters = () => {
     setSearch("");
     setDataInicio(undefined);
     setDataFim(undefined);
+    setAnoSelecionado("");
     setSearchParams(new URLSearchParams());
   };
 
@@ -217,21 +291,39 @@ export default function AdminArquivos() {
             </div>
             
             {/* Filtros de data */}
-            <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="flex flex-col sm:flex-row gap-4 items-end flex-wrap">
+              {/* Seletor de Ano */}
+              <div className="flex-1 sm:max-w-[150px]">
+                <label className="text-sm font-medium mb-2 block text-muted-foreground">Selecione o Ano</label>
+                <Select value={anoSelecionado} onValueChange={setAnoSelecionado}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Ano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {anos.map((ano) => (
+                      <SelectItem key={ano} value={ano}>
+                        {ano}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Data Início com input manual */}
               <div className="flex-1 sm:max-w-[200px]">
                 <label className="text-sm font-medium mb-2 block text-muted-foreground">Data Início</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !dataInicio && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dataInicio ? format(dataInicio, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
-                    </Button>
+                    <div className="relative">
+                      <Input
+                        placeholder="dd/mm/aaaa"
+                        value={dataInicioInput}
+                        onChange={(e) => handleDataInicioInputChange(e.target.value)}
+                        className="pr-10"
+                        maxLength={10}
+                      />
+                      <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer" />
+                    </div>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
@@ -245,20 +337,21 @@ export default function AdminArquivos() {
                 </Popover>
               </div>
               
+              {/* Data Fim com input manual */}
               <div className="flex-1 sm:max-w-[200px]">
                 <label className="text-sm font-medium mb-2 block text-muted-foreground">Data Fim</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !dataFim && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dataFim ? format(dataFim, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
-                    </Button>
+                    <div className="relative">
+                      <Input
+                        placeholder="dd/mm/aaaa"
+                        value={dataFimInput}
+                        onChange={(e) => handleDataFimInputChange(e.target.value)}
+                        className="pr-10"
+                        maxLength={10}
+                      />
+                      <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer" />
+                    </div>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
@@ -272,13 +365,14 @@ export default function AdminArquivos() {
                 </Popover>
               </div>
               
-              {(dataInicio || dataFim) && (
+              {(dataInicio || dataFim || anoSelecionado) && (
                 <Button 
                   variant="ghost" 
                   size="sm"
                   onClick={() => {
                     setDataInicio(undefined);
                     setDataFim(undefined);
+                    setAnoSelecionado("");
                   }}
                 >
                   Limpar datas
