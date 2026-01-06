@@ -458,7 +458,38 @@ export default function AdminArquivos() {
                     <td className="py-4 px-4 text-muted-foreground">{arquivo.servico}</td>
                     <td className="py-4 px-4">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                        {getStatusBadge(arquivo.status)}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="cursor-pointer hover:opacity-80 transition-opacity">
+                              {getStatusBadge(arquivo.status)}
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="bg-popover border border-border z-50">
+                            <DropdownMenuItem onClick={() => handleStatusChange("Pendente")}>
+                              <span className="status-badge status-pending">Pendente</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange("Processando")}>
+                              <span className="status-badge status-processing">Processando</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange("Concluído")}>
+                              <span className="status-badge status-completed">Concluído</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleStatusChange("Recall Original")}>
+                              <span className="text-sm">Recall Original</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange("Arquivo complexo 48h")}>
+                              <span className="text-sm">Arquivo complexo 48h</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange("Contate o financeiro")}>
+                              <span className="text-sm">Contate o financeiro</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleStatusChange("Cancelado")} className="text-destructive">
+                              <span className="status-badge status-cancelled">Cancelado</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${getTempoClasses(tempo.level)}`}>
                           <Clock className="h-3 w-3" />
                           {tempo.label}
