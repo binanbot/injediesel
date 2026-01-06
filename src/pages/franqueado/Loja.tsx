@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Filter, Package, Loader2 } from "lucide-react";
+import { Search, Filter, Package, Loader2, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ProductCard } from "@/components/loja/ProductCard";
 import { CartDrawer } from "@/components/loja/CartDrawer";
 import { useCart } from "@/hooks/useCart";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Product {
   id: string;
@@ -38,6 +39,11 @@ export default function Loja() {
     updateQuantity,
     removeItem,
     itemCount,
+    isAdmin,
+    units,
+    selectedUnitId,
+    setSelectedUnitId,
+    needsUnitSelection,
   } = useCart();
 
   // Fetch products
@@ -101,6 +107,31 @@ export default function Loja() {
 
   return (
     <div className="space-y-6">
+      {/* Admin Unit Selector */}
+      {isAdmin && (
+        <Alert className="bg-primary/10 border-primary/30">
+          <Building2 className="h-4 w-4" />
+          <AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <span>Você está logado como Admin. Selecione uma unidade para gerenciar o carrinho:</span>
+            <Select 
+              value={selectedUnitId || ""} 
+              onValueChange={setSelectedUnitId}
+            >
+              <SelectTrigger className="w-full sm:w-64 bg-background">
+                <SelectValue placeholder="Selecione uma unidade" />
+              </SelectTrigger>
+              <SelectContent>
+                {units?.map((unit) => (
+                  <SelectItem key={unit.id} value={unit.id}>
+                    {unit.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
