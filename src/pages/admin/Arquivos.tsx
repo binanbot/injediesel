@@ -49,22 +49,18 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
-const arquivos = [
-  { id: 1, unidade: "São Paulo - Centro", placa: "ABC-1234", marca: "Volvo", modelo: "FH 540", servico: "Stage 1", status: "pending", data: "28/12/2024 14:30" },
-  { id: 2, unidade: "Rio de Janeiro", placa: "DEF-5678", marca: "Scania", modelo: "R 450", servico: "DPF Off", status: "processing", data: "28/12/2024 13:15" },
-  { id: 3, unidade: "Belo Horizonte", placa: "GHI-9012", marca: "Mercedes", modelo: "Actros", servico: "EGR Off", status: "completed", data: "28/12/2024 11:00" },
-  { id: 4, unidade: "Curitiba", placa: "JKL-3456", marca: "DAF", modelo: "XF 105", servico: "AdBlue Off", status: "pending", data: "28/12/2024 10:45" },
-  { id: 5, unidade: "Porto Alegre", placa: "MNO-7890", marca: "MAN", modelo: "TGX", servico: "Stage 2", status: "cancelled", data: "27/12/2024 16:20" },
-  { id: 6, unidade: "São Paulo - Centro", placa: "PQR-1234", marca: "Iveco", modelo: "Stralis", servico: "Speed Limiter", status: "completed", data: "27/12/2024 15:00" },
-];
-
-// Contagem por status para exibir nas tabs
-const getStatusCounts = () => {
-  const counts = { all: arquivos.length, pending: 0, processing: 0, completed: 0, cancelled: 0 };
-  arquivos.forEach(a => {
-    if (a.status in counts) counts[a.status as keyof typeof counts]++;
-  });
-  return counts;
+// Tipo para arquivo do banco
+type ArquivoType = {
+  id: string;
+  unidade: string;
+  unit_id: string;
+  placa: string;
+  marca: string | null;
+  modelo: string | null;
+  servico: string;
+  status: string;
+  data: string;
+  arquivo_modificado_url: string | null;
 };
 
 const getStatusBadge = (status: string) => {
@@ -93,13 +89,13 @@ export default function AdminArquivos() {
   const [dataFimInput, setDataFimInput] = useState("");
   const [anoSelecionado, setAnoSelecionado] = useState<string>("");
   const [unidadeSelecionada, setUnidadeSelecionada] = useState<string>("");
-  const [statusDialog, setStatusDialog] = useState<{ open: boolean; arquivo: typeof arquivos[0] | null }>({
+  const [statusDialog, setStatusDialog] = useState<{ open: boolean; arquivo: ArquivoType | null }>({
     open: false,
     arquivo: null,
   });
   const [confirmDialog, setConfirmDialog] = useState<{ 
     open: boolean; 
-    arquivo: typeof arquivos[0] | null; 
+    arquivo: ArquivoType | null; 
     novoStatus: string;
   }>({
     open: false,
@@ -108,6 +104,51 @@ export default function AdminArquivos() {
   });
   const [unidades, setUnidades] = useState<{ id: string; name: string }[]>([]);
   const [loadingUnidades, setLoadingUnidades] = useState(true);
+  const [arquivos, setArquivos] = useState<ArquivoType[]>([]);
+  const [loadingArquivos, setLoadingArquivos] = useState(true);
+
+  // Carrega arquivos do banco de dados
+  useEffect(() => {
+    const fetchArquivos = async () => {
+      setLoadingArquivos(true);
+      const { data, error } = await supabase
+        .from("received_files")
+        .select(`
+          id,
+          placa,
+          marca,
+          modelo,
+          servico,
+          status,
+          created_at,
+          arquivo_modificado_url,
+          unit_id,
+          units!inner(name)
+        `)
+        .order("created_at", { ascending: false });
+      
+      if (error) {
+        console.error("Erro ao carregar arquivos:", error);
+      } else {
+        const formattedData = (data || []).map((item: any) => ({
+          id: item.id,
+          unidade: item.units?.name || "Sem unidade",
+          unit_id: item.unit_id,
+          placa: item.placa,
+          marca: item.marca,
+          modelo: item.modelo,
+          servico: item.servico,
+          status: item.status,
+          data: format(new Date(item.created_at), "dd/MM/yyyy HH:mm"),
+          arquivo_modificado_url: item.arquivo_modificado_url,
+        }));
+        setArquivos(formattedData);
+      }
+      setLoadingArquivos(false);
+    };
+    
+    fetchArquivos();
+  }, []);
 
   // Carrega unidades do banco de dados
   useEffect(() => {
@@ -235,8 +276,9 @@ export default function AdminArquivos() {
   });
 
   // Abre o diálogo de confirmação
-  const solicitarMudancaStatus = (arquivo: typeof arquivos[0], novoStatus: string) => {
+  const solicitarMudancaStatus = (arquivo: ArquivoType, novoStatus: string) => {
     setConfirmDialog({ open: true, arquivo, novoStatus });
+  };
   };
 
   // Confirma e aplica a mudança de status
@@ -276,7 +318,14 @@ export default function AdminArquivos() {
     setStatusDialog({ open: false, arquivo: null });
   };
 
-  const statusCounts = getStatusCounts();
+  // Contagem por status
+  const statusCounts = {
+    all: arquivos.length,
+    pending: arquivos.filter(a => a.status === 'pending').length,
+    processing: arquivos.filter(a => a.status === 'processing').length,
+    completed: arquivos.filter(a => a.status === 'completed').length,
+    cancelled: arquivos.filter(a => a.status === 'cancelled').length,
+  };
 
   // Verifica se há filtros ativos
   const hasActiveFilters = statusFilter !== "all" || search !== "" || dataInicio || dataFim || anoSelecionado !== "" || unidadeSelecionada !== "";
