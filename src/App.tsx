@@ -28,6 +28,7 @@ import FranqueadoRelatorios from "./pages/franqueado/Relatorios";
 import Cursos from "./pages/franqueado/Cursos";
 import Loja from "./pages/franqueado/Loja";
 import LojaCheckout from "./pages/franqueado/LojaCheckout";
+import Carrinho from "./pages/franqueado/Carrinho";
 import MeusPedidos from "./pages/franqueado/MeusPedidos";
 import PedidoDetalhe from "./pages/franqueado/PedidoDetalhe";
 
@@ -92,6 +93,7 @@ const App = () => (
               <Route path="relatorios" element={<FranqueadoRelatorios />} />
               <Route path="cursos" element={<Cursos />} />
               <Route path="loja" element={<Loja />} />
+              <Route path="loja/carrinho" element={<Carrinho />} />
               <Route path="loja/checkout" element={<LojaCheckout />} />
               <Route path="loja/pedidos" element={<MeusPedidos />} />
               <Route path="loja/pedidos/:id" element={<PedidoDetalhe />} />

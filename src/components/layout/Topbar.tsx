@@ -1,5 +1,5 @@
-import { Bell, Search, Menu, Clock, AlertTriangle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Bell, Search, Menu, Clock, AlertTriangle, ShoppingCart } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useContractStatus } from "@/hooks/useContractStatus";
-
+import { useCart } from "@/hooks/useCart";
 interface TopbarProps {
   unitName?: string;
   onMenuClick?: () => void;
@@ -23,7 +23,8 @@ interface TopbarProps {
 export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuButton = false }: TopbarProps) {
   const contractStatus = useContractStatus();
   const showContractAlert = contractStatus.isNearExpiration || contractStatus.isExpired;
-
+  const { itemCount, setIsOpen } = useCart();
+  const navigate = useNavigate();
   return (
     <header className="h-16 glass-topbar sticky top-0 z-40">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
@@ -43,6 +44,21 @@ export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuB
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Cart Icon */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="relative hover:bg-secondary/50"
+            onClick={() => navigate("/franqueado/loja/carrinho")}
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {itemCount > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground border-0">
+                {itemCount > 9 ? "9+" : itemCount}
+              </Badge>
+            )}
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative hover:bg-secondary/50">

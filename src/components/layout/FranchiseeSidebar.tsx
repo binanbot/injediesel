@@ -17,6 +17,7 @@ import {
   Facebook,
   Instagram,
   ShoppingBag,
+  ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ const menuItems = [
   { icon: Upload, label: "Enviar Arquivo", path: "/franqueado/enviar" },
   { icon: FolderOpen, label: "Meus Arquivos", path: "/franqueado/arquivos" },
   { icon: ShoppingBag, label: "Loja Promax", path: "/franqueado/loja" },
+  { icon: ShoppingCart, label: "Meu Carrinho", path: "/franqueado/loja/carrinho" },
   { icon: BarChart3, label: "Relatórios", path: "/franqueado/relatorios" },
   { icon: RefreshCw, label: "Atualizações", path: "/franqueado/atualizacoes" },
   { icon: HeadphonesIcon, label: "Suporte", path: "/franqueado/suporte" },
