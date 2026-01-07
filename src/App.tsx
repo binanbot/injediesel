@@ -55,6 +55,7 @@ import ClienteDetalhe from "./pages/admin/ClienteDetalhe";
 import ImportarProdutos from "./pages/admin/ImportarProdutos";
 import ComprasFranqueados from "./pages/admin/ComprasFranqueados";
 import CompraDetalhe from "./pages/admin/CompraDetalhe";
+import Produtos from "./pages/admin/Produtos";
 
 const queryClient = new QueryClient();
 
@@ -126,6 +127,7 @@ const App = () => (
               <Route path="correcoes" element={<AdminCorrecoes />} />
               <Route path="contratos" element={<AdminContratos />} />
               <Route path="documentacao" element={<DocumentacaoSistema />} />
+              <Route path="produtos" element={<Produtos />} />
               <Route path="importar-produtos" element={<ImportarProdutos />} />
               <Route path="compras" element={<ComprasFranqueados />} />
               <Route path="compras/:id" element={<CompraDetalhe />} />

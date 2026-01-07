@@ -466,6 +466,9 @@ export type Database = {
           models: string[] | null
           name: string
           price: number
+          promo_price: number | null
+          promo_type: string | null
+          promo_value: number | null
           ref: string | null
           sku: string
           specifications: string[] | null
@@ -485,6 +488,9 @@ export type Database = {
           models?: string[] | null
           name: string
           price?: number
+          promo_price?: number | null
+          promo_type?: string | null
+          promo_value?: number | null
           ref?: string | null
           sku: string
           specifications?: string[] | null
@@ -504,6 +510,9 @@ export type Database = {
           models?: string[] | null
           name?: string
           price?: number
+          promo_price?: number | null
+          promo_type?: string | null
+          promo_value?: number | null
           ref?: string | null
           sku?: string
           specifications?: string[] | null
