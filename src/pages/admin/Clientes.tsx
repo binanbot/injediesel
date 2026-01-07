@@ -34,6 +34,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useDebounce } from "@/hooks/useDebounce";
 import { LGPDExportModal } from "@/components/admin/LGPDExportModal";
 import { NovoClienteDrawer } from "@/components/admin/NovoClienteDrawer";
 
@@ -74,6 +75,9 @@ export default function Clientes() {
   const [showNovoClienteDrawer, setShowNovoClienteDrawer] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
+  // Debounce search para evitar re-renders excessivos
+  const debouncedSearch = useDebounce(search, 300);
+
   const isFranchisor = userRole === "admin" || userRole === "suporte";
 
   useEffect(() => {
@@ -92,7 +96,8 @@ export default function Clientes() {
         setUnits(unitsData || []);
       }
 
-      // Load customers with unit info
+      // Load customers with unit info and service stats in ONE query (fix N+1)
+      // Using a subquery approach to avoid N+1 queries
       const { data: customersData, error } = await supabase
         .from("customers")
         .select(`
@@ -103,22 +108,36 @@ export default function Clientes() {
 
       if (error) throw error;
 
-      // Get last service and total services for each customer
-      const customersWithServices = await Promise.all(
-        (customersData || []).map(async (customer) => {
-          const { data: services } = await supabase
-            .from("services")
-            .select("created_at")
-            .eq("customer_id", customer.id)
-            .order("created_at", { ascending: false });
+      // Get all services in a single query instead of N queries
+      const customerIds = (customersData || []).map(c => c.id);
+      
+      let serviceStats: Record<string, { count: number; lastDate: string | null }> = {};
+      
+      if (customerIds.length > 0) {
+        const { data: servicesData } = await supabase
+          .from("services")
+          .select("customer_id, created_at")
+          .in("customer_id", customerIds)
+          .order("created_at", { ascending: false });
 
-          return {
-            ...customer,
-            last_service_date: services?.[0]?.created_at || null,
-            total_services: services?.length || 0,
-          };
-        })
-      );
+        // Aggregate service stats in memory
+        (servicesData || []).forEach(service => {
+          if (!serviceStats[service.customer_id]) {
+            serviceStats[service.customer_id] = {
+              count: 0,
+              lastDate: service.created_at // First one is the most recent due to ordering
+            };
+          }
+          serviceStats[service.customer_id].count++;
+        });
+      }
+
+      // Merge service stats into customers
+      const customersWithServices = (customersData || []).map(customer => ({
+        ...customer,
+        last_service_date: serviceStats[customer.id]?.lastDate || null,
+        total_services: serviceStats[customer.id]?.count || 0,
+      }));
 
       setCustomers(customersWithServices);
     } catch (error) {
@@ -140,14 +159,15 @@ export default function Clientes() {
     return [...new Set(states)].sort();
   }, [customers]);
 
+  // Use debounced search for filtering
   const filteredCustomers = useMemo(() => {
     return customers.filter((c) => {
-      const searchLower = search.toLowerCase();
+      const searchLower = debouncedSearch.toLowerCase();
       const matchesSearch =
-        !search ||
+        !debouncedSearch ||
         c.full_name.toLowerCase().includes(searchLower) ||
-        c.cpf?.includes(search) ||
-        c.cnpj?.includes(search) ||
+        c.cpf?.includes(debouncedSearch) ||
+        c.cnpj?.includes(debouncedSearch) ||
         c.email?.toLowerCase().includes(searchLower);
 
       const matchesUnit = unitFilter === "all" || c.unit_id === unitFilter;
@@ -156,7 +176,7 @@ export default function Clientes() {
 
       return matchesSearch && matchesUnit && matchesCity && matchesState;
     });
-  }, [customers, search, unitFilter, cityFilter, stateFilter]);
+  }, [customers, debouncedSearch, unitFilter, cityFilter, stateFilter]);
 
   const clearFilters = () => {
     setSearch("");
