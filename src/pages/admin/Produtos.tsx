@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Package,
@@ -14,6 +14,9 @@ import {
   Check,
   Eye,
   EyeOff,
+  Upload,
+  Loader2,
+  Link as LinkIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -114,7 +117,9 @@ export default function Produtos() {
   const [formData, setFormData] = useState<ProductFormData>(emptyProduct);
   const [modelsInput, setModelsInput] = useState("");
   const [specsInput, setSpecsInput] = useState("");
-
+  const [imageInputMode, setImageInputMode] = useState<"url" | "upload">("url");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // Fetch products
   const { data: products, isLoading } = useQuery({
     queryKey: ["admin-products"],
@@ -247,6 +252,50 @@ export default function Produtos() {
     setFormData(emptyProduct);
     setModelsInput("");
     setSpecsInput("");
+    setImageInputMode("url");
+    setIsUploading(false);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem válido");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `products/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(filePath);
+
+      setFormData({ ...formData, image_url: urlData.publicUrl });
+      toast.success("Imagem enviada com sucesso!");
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error("Erro ao enviar imagem: " + error.message);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSave = () => {
@@ -686,23 +735,102 @@ export default function Produtos() {
             </div>
 
             {/* Image & Details */}
-            <div className="space-y-2">
-              <Label htmlFor="image_url">URL da Imagem</Label>
-              <Input
-                id="image_url"
-                value={formData.image_url || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, image_url: e.target.value })
-                }
-                placeholder="https://..."
-              />
-              {formData.image_url && (
-                <img
-                  src={formData.image_url}
-                  alt="Preview"
-                  className="h-24 w-24 object-cover rounded-md mt-2"
-                  onError={(e) => (e.currentTarget.style.display = "none")}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Imagem do Produto</Label>
+                <div className="flex gap-1">
+                  <Button
+                    type="button"
+                    variant={imageInputMode === "url" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setImageInputMode("url")}
+                  >
+                    <LinkIcon className="h-3 w-3 mr-1" />
+                    URL
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={imageInputMode === "upload" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setImageInputMode("upload")}
+                  >
+                    <Upload className="h-3 w-3 mr-1" />
+                    Upload
+                  </Button>
+                </div>
+              </div>
+
+              {imageInputMode === "url" ? (
+                <Input
+                  id="image_url"
+                  value={formData.image_url || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, image_url: e.target.value })
+                  }
+                  placeholder="https://..."
                 />
+              ) : (
+                <div className="space-y-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(file);
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-20 border-dashed"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Enviando...
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1">
+                        <Upload className="h-6 w-6 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          Clique para selecionar uma imagem
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          Máx. 5MB
+                        </span>
+                      </div>
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {formData.image_url && (
+                <div className="flex items-start gap-3 p-3 border rounded-lg bg-muted/30">
+                  <img
+                    src={formData.image_url}
+                    alt="Preview"
+                    className="h-20 w-20 object-cover rounded-md"
+                    onError={(e) => (e.currentTarget.style.display = "none")}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground mb-2 truncate">
+                      {formData.image_url}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setFormData({ ...formData, image_url: "" })}
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Remover
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
 
