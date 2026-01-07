@@ -422,17 +422,22 @@ export default function AdminSuporte() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <Card className={`hover:border-sky-500/50 transition-colors cursor-pointer ${filter === "open" ? "border-sky-500 shadow-[0_0_15px_hsl(200,100%,50%,0.2)]" : ""}`} onClick={() => setFilter("open")}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Abertos</p>
-                  <p className="text-3xl font-bold text-sky-400">{stats.open}</p>
+            <CardContent className="p-4 sm:pt-6 sm:px-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center justify-between sm:block">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Abertos</p>
+                  <div className="p-2 rounded-lg bg-sky-500/10 text-sky-400 sm:hidden">
+                    <MessageSquare className="h-4 w-4" />
+                  </div>
                 </div>
-                <div className="p-3 rounded-xl bg-sky-500/10 text-sky-400">
-                  <MessageSquare className="h-6 w-6" />
+                <div className="flex items-center justify-between">
+                  <p className="text-2xl sm:text-3xl font-bold text-sky-400">{stats.open}</p>
+                  <div className="hidden sm:block p-3 rounded-xl bg-sky-500/10 text-sky-400">
+                    <MessageSquare className="h-6 w-6" />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -441,14 +446,19 @@ export default function AdminSuporte() {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card className={`hover:border-amber-500/50 transition-colors cursor-pointer ${filter === "in_progress" ? "border-amber-500 shadow-[0_0_15px_hsl(45,100%,50%,0.2)]" : ""}`} onClick={() => setFilter("in_progress")}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Em Andamento</p>
-                  <p className="text-3xl font-bold text-amber-400">{stats.in_progress}</p>
+            <CardContent className="p-4 sm:pt-6 sm:px-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center justify-between sm:block">
+                  <p className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">Em Andamento</p>
+                  <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 sm:hidden">
+                    <Clock className="h-4 w-4" />
+                  </div>
                 </div>
-                <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400">
-                  <Clock className="h-6 w-6" />
+                <div className="flex items-center justify-between">
+                  <p className="text-2xl sm:text-3xl font-bold text-amber-400">{stats.in_progress}</p>
+                  <div className="hidden sm:block p-3 rounded-xl bg-amber-500/10 text-amber-400">
+                    <Clock className="h-6 w-6" />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -457,14 +467,19 @@ export default function AdminSuporte() {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Card className={`hover:border-emerald-500/50 transition-colors cursor-pointer ${filter === "resolved" ? "border-emerald-500 shadow-[0_0_15px_hsl(160,100%,40%,0.2)]" : ""}`} onClick={() => setFilter("resolved")}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Resolvidos</p>
-                  <p className="text-3xl font-bold text-emerald-400">{stats.resolved}</p>
+            <CardContent className="p-4 sm:pt-6 sm:px-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center justify-between sm:block">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Resolvidos</p>
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 sm:hidden">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </div>
                 </div>
-                <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
-                  <CheckCircle2 className="h-6 w-6" />
+                <div className="flex items-center justify-between">
+                  <p className="text-2xl sm:text-3xl font-bold text-emerald-400">{stats.resolved}</p>
+                  <div className="hidden sm:block p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
+                    <CheckCircle2 className="h-6 w-6" />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -473,30 +488,40 @@ export default function AdminSuporte() {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <Card className={`hover:border-slate-500/50 transition-colors cursor-pointer ${filter === "closed" ? "border-slate-500 shadow-[0_0_15px_hsl(220,10%,50%,0.2)]" : ""}`} onClick={() => setFilter("closed")}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Fechados</p>
-                  <p className="text-3xl font-bold text-slate-400">{stats.closed}</p>
+            <CardContent className="p-4 sm:pt-6 sm:px-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center justify-between sm:block">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Fechados</p>
+                  <div className="p-2 rounded-lg bg-slate-500/10 text-slate-400 sm:hidden">
+                    <XCircle className="h-4 w-4" />
+                  </div>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-500/10 text-slate-400">
-                  <XCircle className="h-6 w-6" />
+                <div className="flex items-center justify-between">
+                  <p className="text-2xl sm:text-3xl font-bold text-slate-400">{stats.closed}</p>
+                  <div className="hidden sm:block p-3 rounded-xl bg-slate-500/10 text-slate-400">
+                    <XCircle className="h-6 w-6" />
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="col-span-2 lg:col-span-1">
           <Card className={`hover:border-primary/50 transition-colors cursor-pointer ${filter === "todos" ? "border-primary shadow-[0_0_15px_hsl(var(--primary),0.2)]" : ""}`} onClick={() => setFilter("todos")}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total</p>
-                  <p className="text-3xl font-bold">{stats.total}</p>
+            <CardContent className="p-4 sm:pt-6 sm:px-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center justify-between sm:block">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Total</p>
+                  <div className="p-2 rounded-lg bg-primary/10 text-primary sm:hidden">
+                    <Headphones className="h-4 w-4" />
+                  </div>
                 </div>
-                <div className="p-3 rounded-xl bg-primary/10 text-primary">
-                  <Headphones className="h-6 w-6" />
+                <div className="flex items-center justify-between">
+                  <p className="text-2xl sm:text-3xl font-bold">{stats.total}</p>
+                  <div className="hidden sm:block p-3 rounded-xl bg-primary/10 text-primary">
+                    <Headphones className="h-6 w-6" />
+                  </div>
                 </div>
               </div>
             </CardContent>
