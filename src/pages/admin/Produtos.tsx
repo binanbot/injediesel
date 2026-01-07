@@ -120,6 +120,8 @@ export default function Produtos() {
   const [imageInputMode, setImageInputMode] = useState<"url" | "upload">("url");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [newCategoryInput, setNewCategoryInput] = useState("");
   // Fetch products
   const { data: products, isLoading } = useQuery({
     queryKey: ["admin-products"],
@@ -133,6 +135,15 @@ export default function Produtos() {
       return data as Product[];
     },
   });
+
+  // Get unique categories from products
+  const existingCategories = Array.from(
+    new Set(
+      products
+        ?.map((p) => p.category)
+        .filter((c): c is string => !!c && c.trim() !== "")
+    )
+  ).sort();
 
   // Create/Update product
   const saveMutation = useMutation({
@@ -254,6 +265,8 @@ export default function Produtos() {
     setSpecsInput("");
     setImageInputMode("url");
     setIsUploading(false);
+    setShowNewCategory(false);
+    setNewCategoryInput("");
   };
 
   const handleImageUpload = async (file: File) => {
@@ -574,14 +587,69 @@ export default function Produtos() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Categoria</Label>
-                <Input
-                  id="category"
-                  value={formData.category || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                  placeholder="Filtros"
-                />
+                {showNewCategory ? (
+                  <div className="flex gap-2">
+                    <Input
+                      id="category"
+                      value={newCategoryInput}
+                      onChange={(e) => setNewCategoryInput(e.target.value)}
+                      placeholder="Nova categoria..."
+                      autoFocus
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      onClick={() => {
+                        if (newCategoryInput.trim()) {
+                          setFormData({ ...formData, category: newCategoryInput.trim() });
+                        }
+                        setShowNewCategory(false);
+                        setNewCategoryInput("");
+                      }}
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      onClick={() => {
+                        setShowNewCategory(false);
+                        setNewCategoryInput("");
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Select
+                    value={formData.category || ""}
+                    onValueChange={(value) => {
+                      if (value === "__new__") {
+                        setShowNewCategory(true);
+                      } else {
+                        setFormData({ ...formData, category: value });
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {existingCategories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="__new__" className="text-primary font-medium">
+                        <span className="flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          Criar nova categoria
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
 
