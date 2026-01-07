@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Package, ShoppingCart, Minus, Plus } from "lucide-react";
+import { Package, ShoppingCart, Minus, Plus, Percent, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -10,6 +10,9 @@ interface Product {
   name: string;
   brand: string;
   price: number;
+  promo_price: number | null;
+  promo_type: "percent" | "fixed" | null;
+  promo_value: number | null;
   available: boolean;
   category: string | null;
   image_url: string | null;
@@ -24,6 +27,9 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onAddToCart, isAdding }: ProductCardProps) {
   const [quantity, setQuantity] = useState(1);
+
+  const hasPromo = product.promo_price && product.promo_type && product.promo_value;
+  const displayPrice = hasPromo ? product.promo_price! : product.price;
 
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -56,9 +62,29 @@ export function ProductCard({ product, onAddToCart, isAdding }: ProductCardProps
   };
 
   return (
-    <div className="glass-card p-4 flex flex-col h-full group hover:border-primary/30 transition-all duration-300">
+    <div className={`glass-card p-4 flex flex-col h-full group transition-all duration-300 relative overflow-hidden ${
+      hasPromo 
+        ? "border-green-500/50 hover:border-green-500 ring-1 ring-green-500/20" 
+        : "hover:border-primary/30"
+    }`}>
+      {/* Promo Badge */}
+      {hasPromo && (
+        <div className="absolute top-0 right-0 z-10">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-bl-lg flex items-center gap-1 shadow-lg">
+            <Sparkles className="h-3 w-3" />
+            {product.promo_type === "percent" ? (
+              <span>{product.promo_value}% OFF</span>
+            ) : (
+              <span>-{formatPrice(product.promo_value!)}</span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Image */}
-      <div className="aspect-square mb-4 rounded-lg bg-muted/30 flex items-center justify-center overflow-hidden">
+      <div className={`aspect-square mb-4 rounded-lg flex items-center justify-center overflow-hidden ${
+        hasPromo ? "bg-gradient-to-br from-green-500/5 to-emerald-500/10" : "bg-muted/30"
+      }`}>
         {product.image_url ? (
           <img
             src={product.image_url}
@@ -108,9 +134,26 @@ export function ProductCard({ product, onAddToCart, isAdding }: ProductCardProps
 
         {/* Price */}
         <div className="mt-3 pt-3 border-t border-border/30">
-          <span className="text-lg font-bold text-primary">
-            {formatPrice(product.price)}
-          </span>
+          {hasPromo ? (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground line-through">
+                  {formatPrice(product.price)}
+                </span>
+                <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-600 border-green-500/30">
+                  <Percent className="h-2.5 w-2.5 mr-0.5" />
+                  PROMO
+                </Badge>
+              </div>
+              <span className="text-xl font-bold text-green-600">
+                {formatPrice(displayPrice)}
+              </span>
+            </div>
+          ) : (
+            <span className="text-lg font-bold text-primary">
+              {formatPrice(displayPrice)}
+            </span>
+          )}
         </div>
 
         {/* Quantity Selector & Add Button */}
@@ -149,7 +192,7 @@ export function ProductCard({ product, onAddToCart, isAdding }: ProductCardProps
             size="sm"
             onClick={handleAddToCart}
             disabled={!product.available || isAdding}
-            className="flex-1 gap-1"
+            className={`flex-1 gap-1 ${hasPromo ? "bg-green-600 hover:bg-green-700" : ""}`}
           >
             <ShoppingCart className="h-4 w-4" />
             <span className="hidden sm:inline">Adicionar</span>
