@@ -50,6 +50,7 @@ import { playNotificationSound } from "@/utils/notificationSound";
 import { showBrowserNotification } from "@/utils/browserNotifications";
 import { ExpandableText } from "@/components/ui/expandable-text";
 import { calcularTempoDecorridoISO, getTempoClasses } from "@/utils/tempoDecorrido";
+import { SecureAttachment } from "@/components/admin/SecureAttachment";
 
 type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 
@@ -299,11 +300,8 @@ export default function AdminSuporte() {
           throw new Error("Erro ao enviar anexo");
         }
         
-        const { data: urlData } = supabase.storage
-          .from('support-attachments')
-          .getPublicUrl(fileName);
-        
-        attachmentUrl = urlData.publicUrl;
+        // Armazenar apenas o path do arquivo (bucket privado usa signed URLs)
+        attachmentUrl = fileName;
         attachmentName = messageAttachment.name;
       }
 
@@ -657,48 +655,11 @@ export default function AdminSuporte() {
               <TabsContent value="chat" className="flex-1 flex flex-col overflow-hidden mt-0 px-6 pb-6">
                 {/* Attachment Preview (if ticket has one) */}
                 {selectedTicket.attachment_url && (
-                  <div className="mb-4 p-3 rounded-lg bg-[hsl(180,100%,40%)]/10 border border-[hsl(180,100%,40%)]/30">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-[hsl(180,100%,40%)]/20 flex items-center justify-center">
-                        <FileIcon className="h-5 w-5 text-[hsl(180,100%,40%)]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">Anexo do Ticket</p>
-                        <p className="text-xs text-muted-foreground truncate">{selectedTicket.attachment_name || "Arquivo anexado"}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        {isImageFile(selectedTicket.attachment_url) && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => window.open(selectedTicket.attachment_url!, '_blank')}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          asChild
-                        >
-                          <a href={selectedTicket.attachment_url} download={selectedTicket.attachment_name} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-4 w-4 mr-1" />
-                            Baixar
-                          </a>
-                        </Button>
-                      </div>
-                    </div>
-                    {isImageFile(selectedTicket.attachment_url) && (
-                      <div className="mt-3">
-                        <img 
-                          src={selectedTicket.attachment_url} 
-                          alt="Anexo" 
-                          className="max-h-48 rounded-lg object-contain"
-                        />
-                      </div>
-                    )}
-                  </div>
+                  <SecureAttachment
+                    attachmentPath={selectedTicket.attachment_url}
+                    attachmentName={selectedTicket.attachment_name}
+                    className="mb-4"
+                  />
                 )}
 
                 {/* Messages */}

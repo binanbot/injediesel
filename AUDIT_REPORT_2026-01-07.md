@@ -74,15 +74,27 @@
 
 ---
 
-### 🟡 Issue P1-SEC-002: Bucket support-attachments público
-**Status:** ⚠️ PENDENTE (requer migração DB)
+### ✅ Issue P1-SEC-002: Bucket support-attachments público
+**Status:** ✅ CORRIGIDO
 
-**Problema:** Bucket `support-attachments` com `public=true` expõe anexos de suporte.
+**Problema:** Bucket `support-attachments` com `public=true` expunha anexos de suporte.
 
-**Recomendação:**
-1. Criar migração para mudar bucket para privado
-2. Usar `createSignedUrl()` ao invés de `getPublicUrl()`
-3. Validar acesso antes de gerar URL
+**Correção Aplicada:**
+1. Migração para mudar bucket para privado (`public = false`)
+2. RLS policies criadas para acesso seguro:
+   - `Users can upload support attachments` - Upload autenticado na própria pasta
+   - `Franchisees can read own support attachments` - Leitura própria
+   - `Admins can read all support attachments` - Admin lê todos
+3. Código atualizado para usar `createSignedUrl()` ao invés de `getPublicUrl()`
+4. Criado hook `useSignedUrl` e componente `SecureAttachment` para exibição segura
+
+**Arquivos Criados:**
+- `src/hooks/useSignedUrl.ts`
+- `src/components/admin/SecureAttachment.tsx`
+
+**Arquivos Modificados:**
+- `src/pages/admin/Suporte.tsx`
+- `src/pages/franqueado/Suporte.tsx`
 
 ---
 

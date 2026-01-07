@@ -322,11 +322,8 @@ export default function Suporte() {
           throw new Error("Erro ao enviar anexo");
         }
         
-        const { data: urlData } = supabase.storage
-          .from('support-attachments')
-          .getPublicUrl(fileName);
-        
-        attachmentUrl = urlData.publicUrl;
+        // Armazenar apenas o path do arquivo (bucket privado usa signed URLs)
+        attachmentUrl = fileName;
         attachmentName = ticketAttachment.name;
       }
 
