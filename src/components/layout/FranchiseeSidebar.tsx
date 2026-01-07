@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/hooks/useCart";
 import { useSocialLinks } from "@/hooks/useSocialLinks";
 
 // TikTok icon component
@@ -65,6 +66,7 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { socialLinks, loading: loadingSocial } = useSocialLinks();
+  const { itemCount } = useCart();
 
   const handleLogout = async () => {
     await signOut();
@@ -104,9 +106,11 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4 px-3">
           <ul className="space-y-1">
-            {menuItems.map((item) => {
+          {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
-              const notificationCount = notifications[item.path] || 0;
+              // Use cart item count for cart menu item
+              const isCartItem = item.path === "/franqueado/loja/carrinho";
+              const notificationCount = isCartItem ? itemCount : (notifications[item.path] || 0);
               
               return (
                 <li key={item.path}>
