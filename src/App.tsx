@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Pages
 import Landing from "./pages/Landing";
@@ -57,7 +58,14 @@ import ComprasFranqueados from "./pages/admin/ComprasFranqueados";
 import CompraDetalhe from "./pages/admin/CompraDetalhe";
 import Produtos from "./pages/admin/Produtos";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -82,7 +90,11 @@ const App = () => (
               }
             >
               <Route index element={<FranqueadoHome />} />
-              <Route path="enviar" element={<EnviarArquivo />} />
+              <Route path="enviar" element={
+                <ErrorBoundary moduleName="Enviar Arquivo">
+                  <EnviarArquivo />
+                </ErrorBoundary>
+              } />
               <Route path="arquivos" element={<MeusArquivos />} />
               <Route path="arquivos/:id" element={<ArquivoDetalhes />} />
               <Route path="atualizacoes" element={<Atualizacoes />} />
@@ -93,9 +105,17 @@ const App = () => (
               <Route path="suporte" element={<Suporte />} />
               <Route path="relatorios" element={<FranqueadoRelatorios />} />
               <Route path="cursos" element={<Cursos />} />
-              <Route path="loja" element={<Loja />} />
+              <Route path="loja" element={
+                <ErrorBoundary moduleName="Loja">
+                  <Loja />
+                </ErrorBoundary>
+              } />
               <Route path="loja/carrinho" element={<Carrinho />} />
-              <Route path="loja/checkout" element={<LojaCheckout />} />
+              <Route path="loja/checkout" element={
+                <ErrorBoundary moduleName="Checkout">
+                  <LojaCheckout />
+                </ErrorBoundary>
+              } />
               <Route path="loja/pedidos" element={<MeusPedidos />} />
               <Route path="loja/pedidos/:id" element={<PedidoDetalhe />} />
             </Route>
@@ -112,8 +132,16 @@ const App = () => (
               <Route index element={<AdminDashboard />} />
               <Route path="franqueados" element={<AdminFranqueados />} />
               <Route path="franqueados/:id" element={<FranqueadoDetalhe />} />
-              <Route path="importar" element={<ImportarFranqueados />} />
-              <Route path="cobertura" element={<GerenciarCobertura />} />
+              <Route path="importar" element={
+                <ErrorBoundary moduleName="Importar Franqueados">
+                  <ImportarFranqueados />
+                </ErrorBoundary>
+              } />
+              <Route path="cobertura" element={
+                <ErrorBoundary moduleName="Mapa de Cobertura">
+                  <GerenciarCobertura />
+                </ErrorBoundary>
+              } />
               <Route path="clientes" element={<Clientes />} />
               <Route path="clientes/:id" element={<ClienteDetalhe />} />
               <Route path="arquivos" element={<AdminArquivos />} />
@@ -122,13 +150,21 @@ const App = () => (
               <Route path="areas" element={<AdminAreas />} />
               <Route path="mensagens" element={<AdminMensagens />} />
               <Route path="suporte" element={<AdminSuporte />} />
-              <Route path="relatorios" element={<AdminRelatorios />} />
+              <Route path="relatorios" element={
+                <ErrorBoundary moduleName="Relatórios">
+                  <AdminRelatorios />
+                </ErrorBoundary>
+              } />
               <Route path="configuracoes" element={<AdminConfiguracoes />} />
               <Route path="correcoes" element={<AdminCorrecoes />} />
               <Route path="contratos" element={<AdminContratos />} />
               <Route path="documentacao" element={<DocumentacaoSistema />} />
               <Route path="produtos" element={<Produtos />} />
-              <Route path="importar-produtos" element={<ImportarProdutos />} />
+              <Route path="importar-produtos" element={
+                <ErrorBoundary moduleName="Importar Produtos">
+                  <ImportarProdutos />
+                </ErrorBoundary>
+              } />
               <Route path="compras" element={<ComprasFranqueados />} />
               <Route path="compras/:id" element={<CompraDetalhe />} />
             </Route>
