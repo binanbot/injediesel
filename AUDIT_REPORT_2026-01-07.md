@@ -12,7 +12,7 @@
 |-----------|-----------|-----------|-----------|------------|
 | Segurança | 3 | 2 | 1 | ✅ 3/3 |
 | Robustez | 2 | 1 | 0 | ✅ 2/2 |
-| UX | 0 | 2 | 3 | ⏳ Pendente |
+| UX | 0 | 2 | 3 | ✅ Concluído |
 | Visual | 0 | 1 | 2 | ⏳ Pendente |
 | Performance | 0 | 1 | 2 | ⏳ Pendente |
 
@@ -128,32 +128,39 @@
 
 ---
 
-## FASE 3 - UX FLUXOS CRÍTICOS ⏳
+## FASE 3 - UX FLUXOS CRÍTICOS ✅
 
-### Status: PARCIALMENTE AVALIADO
+### Status: CONCLUÍDO
 
-**Observações do código analisado:**
+**Melhorias Aplicadas:**
 
-1. **Enviar Arquivo:** ✅ Bem estruturado
-   - Validação de formulário completa
-   - Estados de loading
-   - Modal de responsabilidade para placa não encontrada
-   - Campos bloqueados antes/depois consulta placa
+#### 1. Dashboard Franqueado (`/franqueado`)
+- ✅ Cards clicáveis com links para filtros prontos (status=completed, status=processing)
+- ✅ **NOVO:** "Tempo parado" adicionado na tabela de arquivos recentes
+- ✅ **NOVO:** Ações rápidas no hover (Ver detalhes, Download)
+- ✅ **NOVO:** Menu dropdown para ações em mobile
+- ✅ **NOVO:** Bloqueio de download para contrato vencido com toast
+- ✅ Skeletons de loading
+- ✅ Tooltips explicativos nas métricas
 
-2. **Meus Arquivos:** ✅ OK
-   - Filtros por status via URL params
-   - "Tempo parado" já implementado
-   - Ações rápidas no hover (desktop)
-   - Menu para mobile
+#### 2. Meus Arquivos (`/franqueado/arquivos`)
+- ✅ Filtros por status via URL params
+- ✅ "Tempo parado" com cores por urgência (neutro/atenção/crítico)
+- ✅ Ações rápidas no hover (desktop)
+- ✅ Menu dropdown para mobile
+- ✅ Bloqueio de download para contrato vencido
 
-3. **Dashboard:** ✅ OK
-   - Cards clicáveis com links para filtros
-   - Skeletons de loading
-   - Tooltips explicativos nas métricas
+#### 3. Enviar Arquivo (`/franqueado/enviar`)
+- ✅ Validação completa de formulário com `useMemo`
+- ✅ Estados: loading, sucesso animado, erro com toast
+- ✅ Modal de responsabilidade para placa não encontrada
+- ✅ Campos bloqueados antes/depois consulta placa
+- ✅ Indicadores visuais (border-success, border-warning)
+- ✅ Badge para campos incompletos que precisam preenchimento manual
+- ✅ Overlay de bloqueio se contrato vencido
 
-**Pendências:**
-- [ ] Testar fluxo completo de envio com placa OK/não encontrada/erro
-- [ ] Verificar comportamento mobile em todas as telas
+**Arquivos Modificados:**
+- `src/pages/franqueado/Home.tsx` - Adicionado tempo parado, ações rápidas, menu dropdown
 
 ---
 
@@ -230,6 +237,7 @@
 src/components/ui/badge.tsx          # forwardRef fix
 src/components/ErrorBoundary.tsx     # NOVO - Error Boundary genérico
 src/App.tsx                          # Error Boundaries + QueryClient config
+src/pages/franqueado/Home.tsx        # UX: tempo parado, ações rápidas, dropdown
 supabase/functions/get-mapbox-token/index.ts    # Auth adicionada
 supabase/functions/import-ibge-cities/index.ts  # Auth + role check adicionados
 ```

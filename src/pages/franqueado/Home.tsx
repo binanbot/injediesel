@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Upload,
@@ -9,6 +9,9 @@ import {
   ArrowRight,
   FileText,
   CheckCircle2,
+  Eye,
+  MoreHorizontal,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +26,15 @@ import {
   QuickActionSkeleton,
   BannerSkeleton,
 } from "@/components/skeletons/DashboardSkeletons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { calcularTempoDecorrido, getTempoClasses } from "@/utils/tempoDecorrido";
+import { useContractStatus } from "@/hooks/useContractStatus";
+import { toast } from "@/hooks/use-toast";
 
 // Dados mockados dos banners - em produção viriam do banco de dados
 const banners: Banner[] = [
@@ -158,6 +170,8 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function FranqueadoHome() {
+  const navigate = useNavigate();
+  const contractStatus = useContractStatus();
   const [selectedArquivo, setSelectedArquivo] = useState<ArquivoDetalhado | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -171,6 +185,24 @@ export default function FranqueadoHome() {
   const handleArquivoClick = (arquivo: ArquivoDetalhado) => {
     setSelectedArquivo(arquivo);
     setDialogOpen(true);
+  };
+
+  const handleDownloadClick = (e: React.MouseEvent, arquivo: ArquivoDetalhado) => {
+    e.stopPropagation();
+    if (contractStatus.isExpired) {
+      e.preventDefault();
+      toast({
+        title: "Download bloqueado",
+        description: "Seu contrato está vencido. Renove para fazer download dos arquivos.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // Em produção: disparar download real
+    toast({
+      title: "Download iniciado",
+      description: `Baixando arquivo ${arquivo.placa}...`,
+    });
   };
 
   if (loading) {
@@ -272,40 +304,90 @@ export default function FranqueadoHome() {
               <thead>
                 <tr className="border-b border-border/30">
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Placa</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Veículo</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Serviço</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground hidden sm:table-cell">Veículo</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground hidden md:table-cell">Serviço</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Data</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Ação</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {recentFiles.map((file) => (
+                {recentFiles.map((file) => {
+                  const tempo = calcularTempoDecorrido(file.data);
+                  return (
                   <tr 
                     key={file.id} 
-                    className="border-b border-border/20 hover:bg-secondary/30 transition-colors cursor-pointer"
+                    className="border-b border-border/20 hover:bg-secondary/30 transition-colors cursor-pointer group"
                     onClick={() => handleArquivoClick(file)}
                   >
                     <td className="py-3 px-4 font-medium text-foreground">{file.placa}</td>
-                    <td className="py-3 px-4 text-muted-foreground">
+                    <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">
                       {file.marca} {file.modelo}
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground">{file.servico}</td>
-                    <td className="py-3 px-4">{getStatusBadge(file.status)}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{file.data}</td>
-                    <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      {file.status === "completed" ? (
-                        <Button variant="ghost" size="sm">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button variant="ghost" size="sm" disabled>
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      )}
+                    <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">{file.servico}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                        {getStatusBadge(file.status)}
+                        <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${getTempoClasses(tempo.level)}`}>
+                          <Clock className="h-3 w-3" />
+                          {tempo.label}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1">
+                        {/* Ações rápidas visíveis no hover (desktop) */}
+                        <div className="hidden sm:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => navigate(`/franqueado/arquivos/${file.id}`)}
+                            title="Ver detalhes"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {file.status === "completed" && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className={`h-8 w-8 ${contractStatus.isExpired ? "text-muted-foreground" : "text-success hover:text-success"}`}
+                              title={contractStatus.isExpired ? "Contrato vencido" : "Download"}
+                              onClick={(e) => handleDownloadClick(e, file)}
+                              disabled={contractStatus.isExpired}
+                            >
+                              {contractStatus.isExpired ? <Lock className="h-4 w-4" /> : <Download className="h-4 w-4" />}
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {/* Menu para ações (sempre visível) */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => navigate(`/franqueado/arquivos/${file.id}`)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Ver detalhes
+                            </DropdownMenuItem>
+                            {file.status === "completed" && (
+                              <DropdownMenuItem 
+                                onClick={(e) => handleDownloadClick(e as any, file)}
+                                disabled={contractStatus.isExpired}
+                              >
+                                {contractStatus.isExpired ? <Lock className="h-4 w-4 mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                                {contractStatus.isExpired ? "Bloqueado" : "Download"}
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
