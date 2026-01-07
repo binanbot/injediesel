@@ -215,87 +215,205 @@ export default function LandingLancamento() {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center px-4 py-20 overflow-hidden">
-        {/* Background effects */}
+        {/* Animated Background effects */}
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" 
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" 
+        />
+        <motion.div 
+          animate={{ y: [-10, 10, -10] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/3 right-1/3 w-64 h-64 bg-primary/5 rounded-full blur-2xl" 
+        />
+        
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,black_40%,transparent_100%)]" />
         
         <div className="relative z-10 max-w-5xl mx-auto text-center">
+          {/* Badge with glow effect */}
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-6"
+            initial={{ opacity: 0, scale: 0.8, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="mb-8"
           >
-            <Badge variant="outline" className="px-4 py-2 text-sm border-primary/30 bg-primary/5">
-              <Sparkles className="w-4 h-4 mr-2 text-primary" />
+            <Badge variant="outline" className="px-4 py-2 text-sm border-primary/30 bg-primary/5 backdrop-blur-sm shadow-[0_0_20px_rgba(var(--primary-rgb),0.15)]">
+              <motion.div
+                animate={{ rotate: [0, 15, -15, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Sparkles className="w-4 h-4 mr-2 text-primary" />
+              </motion.div>
               LANÇAMENTO • Plataforma Injediesel
             </Badge>
           </motion.div>
 
+          {/* Animated headline with blur reveal */}
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            initial={{ opacity: 0, y: 40, filter: "blur(10px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.8 }}
             className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight"
           >
             Sua operação, agora em um{" "}
-            <span className="text-primary">novo nível</span> de controle,{" "}
-            <span className="text-primary">segurança</span> e performance.
+            <motion.span 
+              className="text-primary inline-block"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4, duration: 0.5, type: "spring", stiffness: 200 }}
+            >
+              novo nível
+            </motion.span>{" "}
+            de controle,{" "}
+            <motion.span 
+              className="text-primary inline-block relative"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6, duration: 0.5, type: "spring", stiffness: 200 }}
+            >
+              segurança
+              <motion.span 
+                className="absolute -inset-2 bg-primary/10 rounded-lg -z-10"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.8, duration: 0.4 }}
+              />
+            </motion.span>{" "}
+            e performance.
           </motion.h1>
 
+          {/* Subtitle with staggered words */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
             className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto"
           >
-            Centralize arquivos, clientes, produtos e suporte em uma plataforma única — 
-            com auditoria, demografia e indicadores em tempo real para acelerar sua unidade.
+            <motion.span
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+            >
+              Centralize arquivos, clientes, produtos e suporte em uma plataforma única —{" "}
+            </motion.span>
+            <motion.span
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+              className="text-foreground/80"
+            >
+              com auditoria, demografia e indicadores em tempo real para acelerar sua unidade.
+            </motion.span>
           </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
-          >
-            <Button 
-              size="lg" 
-              className="group px-8"
-              onClick={() => navigate("/franqueado")}
-            >
-              Entrar no Painel
-              <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              onClick={() => document.getElementById("novidades")?.scrollIntoView({ behavior: "smooth" })}
-            >
-              Ver novidades do mês
-              <ChevronDown className="ml-2 w-4 h-4" />
-            </Button>
-          </motion.div>
-
-          {/* Hero metrics */}
+          {/* CTAs with hover glow */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto"
+            transition={{ delay: 0.6, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
           >
-            {heroMetrics.map((metric, index) => (
-              <div 
-                key={index}
-                className="glass-card p-4 rounded-xl text-center"
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Button 
+                size="lg" 
+                className="group px-8 relative overflow-hidden shadow-[0_0_30px_rgba(var(--primary-rgb),0.2)] hover:shadow-[0_0_40px_rgba(var(--primary-rgb),0.3)] transition-shadow"
+                onClick={() => navigate("/login")}
               >
-                <div className="text-2xl font-bold text-primary mb-1">{metric.value}</div>
-                <div className="text-sm text-muted-foreground">{metric.label}</div>
-              </div>
-            ))}
+                <motion.span
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  initial={{ x: "-100%" }}
+                  whileHover={{ x: "100%" }}
+                  transition={{ duration: 0.6 }}
+                />
+                Entrar no Painel
+                <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="backdrop-blur-sm"
+                onClick={() => document.getElementById("novidades")?.scrollIntoView({ behavior: "smooth" })}
+              >
+                Ver novidades do mês
+                <motion.span
+                  animate={{ y: [0, 4, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  <ChevronDown className="ml-2 w-4 h-4" />
+                </motion.span>
+              </Button>
+            </motion.div>
           </motion.div>
+
+          {/* Hero metrics with 3D card effect */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto perspective-1000">
+            {heroMetrics.map((metric, index) => (
+              <motion.div 
+                key={index}
+                initial={{ opacity: 0, scale: 0.8, rotateX: -15 }}
+                animate={{ opacity: 1, scale: 1, rotateX: 0 }}
+                transition={{ delay: 0.5 + index * 0.15, duration: 0.6 }}
+                whileHover={{ 
+                  scale: 1.05, 
+                  rotateY: 5,
+                  boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
+                }}
+                className="glass-card p-4 rounded-xl text-center cursor-default transform-gpu"
+              >
+                <motion.div 
+                  className="text-2xl font-bold text-primary mb-1"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.7 + index * 0.1, type: "spring", stiffness: 200 }}
+                >
+                  {metric.value}
+                </motion.div>
+                <div className="text-sm text-muted-foreground">{metric.label}</div>
+              </motion.div>
+            ))}
+          </div>
         </div>
+
+        {/* Scroll indicator */}
+        <motion.div 
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2 }}
+        >
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex items-start justify-center p-2"
+          >
+            <motion.div 
+              className="w-1 h-2 bg-primary rounded-full"
+              animate={{ y: [0, 12, 0], opacity: [1, 0.3, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Novidades Section */}
