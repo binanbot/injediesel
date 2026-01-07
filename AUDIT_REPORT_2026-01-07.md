@@ -11,7 +11,7 @@
 
 | Categoria | Issues P0 | Issues P1 | Issues P2 | Corrigidos |
 |-----------|-----------|-----------|-----------|------------|
-| Segurança | 3 | 2 | 1 | ✅ 3/3 |
+| Segurança | 3 | 2 | 1 | ✅ 4/4 |
 | Robustez | 2 | 1 | 0 | ✅ 2/2 |
 | UX | 0 | 2 | 3 | ✅ Concluído |
 | Visual | 0 | 1 | 2 | ✅ Concluído |
@@ -360,15 +360,16 @@ src/pages/franqueado/MeusArquivos.tsx          # Debounce + memoização
 ## 🚧 PENDÊNCIAS E RECOMENDAÇÕES
 
 ### Alta Prioridade (P0/P1)
-1. **Bucket support-attachments:** Criar migração para tornar privado
+1. ~~**Bucket support-attachments:**~~ ✅ CORRIGIDO - Tornado privado com signed URLs
 2. **Leaked password protection:** Habilitar no Lovable Cloud
 
 ### Média Prioridade (P1)
 3. **Testes manuais:** Executar checklist com usuário logado (franqueado e admin)
 4. **Paginação server-side:** Implementar quando tabelas ultrapassarem 500 registros
+5. **Buckets correction-files e received-files:** Verificar se também precisam de signed URLs
 
 ### Baixa Prioridade (P2)
-5. **UX mobile:** Testar todos os fluxos em dispositivo móvel
+6. **UX mobile:** Testar todos os fluxos em dispositivo móvel
 
 ---
 
@@ -406,10 +407,11 @@ A auditoria completa do frontend Injediesel foi executada com sucesso em 6 fases
 
 ### Próximos passos recomendados
 
-1. Resolver pendência do bucket público (requer migração)
+1. ~~Resolver pendência do bucket público~~ ✅ RESOLVIDO
 2. Habilitar leaked password protection no Lovable Cloud
 3. Executar testes manuais com usuário logado
-4. Monitorar performance em produção
+4. Verificar buckets `correction-files` e `received-files` (também privados)
+5. Monitorar performance em produção
 
 ---
 
