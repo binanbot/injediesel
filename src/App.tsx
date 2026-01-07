@@ -17,7 +17,7 @@ const PageLoader = () => (
 );
 
 // Non-lazy pages (critical path)
-import Landing from "./pages/Landing";
+
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -91,7 +91,7 @@ const App = () => (
               {/* Public Routes */}
               <Route path="/" element={<LandingLancamento />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/landing-old" element={<Landing />} />
+              
               <Route path="/docs" element={<DocumentacaoPublica />} />
 
               {/* Franqueado Routes */}
