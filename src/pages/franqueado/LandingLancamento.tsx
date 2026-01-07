@@ -795,7 +795,7 @@ export default function LandingLancamento() {
           ))}
         </motion.div>
         <div className="text-center">
-          <Button size="lg" onClick={() => navigate("/franqueado")} className="group px-8">
+          <Button size="lg" onClick={() => navigate("/login")} className="group px-8">
             Ir para o Dashboard
             <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Button>
