@@ -39,7 +39,7 @@ const LojaCheckout = lazy(() => import("./pages/franqueado/LojaCheckout"));
 const Carrinho = lazy(() => import("./pages/franqueado/Carrinho"));
 const MeusPedidos = lazy(() => import("./pages/franqueado/MeusPedidos"));
 const PedidoDetalhe = lazy(() => import("./pages/franqueado/PedidoDetalhe"));
-const LandingLancamento = lazy(() => import("./pages/franqueado/LandingLancamento"));
+import LandingLancamento from "./pages/franqueado/LandingLancamento";
 const DocumentacaoPublica = lazy(() => import("./pages/DocumentacaoPublica"));
 
 // Lazy-loaded pages - Admin (heavy pages)
@@ -89,8 +89,9 @@ const App = () => (
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public Routes */}
-              <Route path="/" element={<Landing />} />
+              <Route path="/" element={<LandingLancamento />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/landing-old" element={<Landing />} />
               <Route path="/docs" element={<DocumentacaoPublica />} />
 
               {/* Franqueado Routes */}
@@ -131,7 +132,7 @@ const App = () => (
                 } />
                 <Route path="loja/pedidos" element={<MeusPedidos />} />
                 <Route path="loja/pedidos/:id" element={<PedidoDetalhe />} />
-                <Route path="landing" element={<LandingLancamento />} />
+                
               </Route>
 
               {/* Admin Routes */}
