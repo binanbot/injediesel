@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -6,6 +6,7 @@ import { Search, Filter, Download, Upload, Eye, MoreHorizontal, CheckCircle, Ref
 import { calcularTempoDecorrido, getTempoClasses } from "@/utils/tempoDecorrido";
 import { supabase } from "@/integrations/supabase/client";
 import { useRecentlyUpdatedFiles } from "@/hooks/useRecentlyUpdatedFiles";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -262,10 +263,13 @@ export default function AdminArquivos() {
     return new Date(ano, mes - 1, dia);
   };
 
-  const filteredArquivos = arquivos.filter((a) => {
+  // Debounce search para evitar re-renders excessivos
+  const debouncedSearch = useDebounce(search, 300);
+
+  const filteredArquivos = useMemo(() => arquivos.filter((a) => {
     const matchesSearch =
-      a.placa.toLowerCase().includes(search.toLowerCase()) ||
-      a.unidade.toLowerCase().includes(search.toLowerCase());
+      a.placa.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      a.unidade.toLowerCase().includes(debouncedSearch.toLowerCase());
     const matchesStatus = statusFilter === "all" || a.status === statusFilter;
     const matchesUnidade = !unidadeSelecionada || a.unidade === unidadeSelecionada;
     
@@ -275,7 +279,7 @@ export default function AdminArquivos() {
     const matchesDataFim = !dataFim || arquivoData <= dataFim;
     
     return matchesSearch && matchesStatus && matchesUnidade && matchesDataInicio && matchesDataFim;
-  });
+  }), [arquivos, debouncedSearch, statusFilter, unidadeSelecionada, dataInicio, dataFim]);
 
   // Abre o diálogo de confirmação
   const solicitarMudancaStatus = (arquivo: ArquivoType, novoStatus: string) => {

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,57 +7,67 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Loader2 } from "lucide-react";
 
-// Pages
+// Fallback component for lazy loading
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-64">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
+
+// Non-lazy pages (critical path)
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
-import DocumentacaoPublica from "./pages/DocumentacaoPublica";
 
-// Franqueado
+// Lazy-loaded pages - Franqueado (less critical)
+const FranqueadoHome = lazy(() => import("./pages/franqueado/Home"));
+const EnviarArquivo = lazy(() => import("./pages/franqueado/EnviarArquivo"));
+const MeusArquivos = lazy(() => import("./pages/franqueado/MeusArquivos"));
+const ArquivoDetalhes = lazy(() => import("./pages/franqueado/ArquivoDetalhes"));
+const Atualizacoes = lazy(() => import("./pages/franqueado/Atualizacoes"));
+const Tutoriais = lazy(() => import("./pages/franqueado/Tutoriais"));
+const Materiais = lazy(() => import("./pages/franqueado/Materiais"));
+const Mensagens = lazy(() => import("./pages/franqueado/Mensagens"));
+const Perfil = lazy(() => import("./pages/franqueado/Perfil"));
+const Suporte = lazy(() => import("./pages/franqueado/Suporte"));
+const FranqueadoRelatorios = lazy(() => import("./pages/franqueado/Relatorios"));
+const Cursos = lazy(() => import("./pages/franqueado/Cursos"));
+const Loja = lazy(() => import("./pages/franqueado/Loja"));
+const LojaCheckout = lazy(() => import("./pages/franqueado/LojaCheckout"));
+const Carrinho = lazy(() => import("./pages/franqueado/Carrinho"));
+const MeusPedidos = lazy(() => import("./pages/franqueado/MeusPedidos"));
+const PedidoDetalhe = lazy(() => import("./pages/franqueado/PedidoDetalhe"));
+const DocumentacaoPublica = lazy(() => import("./pages/DocumentacaoPublica"));
+
+// Lazy-loaded pages - Admin (heavy pages)
+const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const AdminFranqueados = lazy(() => import("./pages/admin/Franqueados"));
+const AdminArquivos = lazy(() => import("./pages/admin/Arquivos"));
+const AdminArquivoDetalhes = lazy(() => import("./pages/admin/ArquivoDetalhes"));
+const AdminBanners = lazy(() => import("./pages/admin/Banners"));
+const AdminAreas = lazy(() => import("./pages/admin/Areas"));
+const AdminMensagens = lazy(() => import("./pages/admin/Mensagens"));
+const AdminSuporte = lazy(() => import("./pages/admin/Suporte"));
+const AdminRelatorios = lazy(() => import("./pages/admin/Relatorios"));
+const AdminConfiguracoes = lazy(() => import("./pages/admin/Configuracoes"));
+const DocumentacaoSistema = lazy(() => import("./pages/admin/DocumentacaoSistema"));
+const AdminCorrecoes = lazy(() => import("./pages/admin/Correcoes"));
+const AdminContratos = lazy(() => import("./pages/admin/Contratos"));
+const ImportarFranqueados = lazy(() => import("./pages/admin/ImportarFranqueados"));
+const FranqueadoDetalhe = lazy(() => import("./pages/admin/FranqueadoDetalhe"));
+const GerenciarCobertura = lazy(() => import("./pages/admin/GerenciarCobertura"));
+const Clientes = lazy(() => import("./pages/admin/Clientes"));
+const ClienteDetalhe = lazy(() => import("./pages/admin/ClienteDetalhe"));
+const ImportarProdutos = lazy(() => import("./pages/admin/ImportarProdutos"));
+const ComprasFranqueados = lazy(() => import("./pages/admin/ComprasFranqueados"));
+const CompraDetalhe = lazy(() => import("./pages/admin/CompraDetalhe"));
+const Produtos = lazy(() => import("./pages/admin/Produtos"));
+
+// Layouts (keep non-lazy for instant routing)
 import { FranchiseeLayout } from "./components/layout/FranchiseeLayout";
-import FranqueadoHome from "./pages/franqueado/Home";
-import EnviarArquivo from "./pages/franqueado/EnviarArquivo";
-import MeusArquivos from "./pages/franqueado/MeusArquivos";
-import ArquivoDetalhes from "./pages/franqueado/ArquivoDetalhes";
-import Atualizacoes from "./pages/franqueado/Atualizacoes";
-import Tutoriais from "./pages/franqueado/Tutoriais";
-import Materiais from "./pages/franqueado/Materiais";
-import Mensagens from "./pages/franqueado/Mensagens";
-import Perfil from "./pages/franqueado/Perfil";
-import Suporte from "./pages/franqueado/Suporte";
-import FranqueadoRelatorios from "./pages/franqueado/Relatorios";
-import Cursos from "./pages/franqueado/Cursos";
-import Loja from "./pages/franqueado/Loja";
-import LojaCheckout from "./pages/franqueado/LojaCheckout";
-import Carrinho from "./pages/franqueado/Carrinho";
-import MeusPedidos from "./pages/franqueado/MeusPedidos";
-import PedidoDetalhe from "./pages/franqueado/PedidoDetalhe";
-
-// Admin
 import { AdminLayout } from "./components/layout/AdminLayout";
-import AdminDashboard from "./pages/admin/Dashboard";
-import AdminFranqueados from "./pages/admin/Franqueados";
-import AdminArquivos from "./pages/admin/Arquivos";
-import AdminArquivoDetalhes from "./pages/admin/ArquivoDetalhes";
-import AdminBanners from "./pages/admin/Banners";
-import AdminAreas from "./pages/admin/Areas";
-import AdminMensagens from "./pages/admin/Mensagens";
-import AdminSuporte from "./pages/admin/Suporte";
-import AdminRelatorios from "./pages/admin/Relatorios";
-import AdminConfiguracoes from "./pages/admin/Configuracoes";
-import DocumentacaoSistema from "./pages/admin/DocumentacaoSistema";
-import AdminCorrecoes from "./pages/admin/Correcoes";
-import AdminContratos from "./pages/admin/Contratos";
-import ImportarFranqueados from "./pages/admin/ImportarFranqueados";
-import FranqueadoDetalhe from "./pages/admin/FranqueadoDetalhe";
-import GerenciarCobertura from "./pages/admin/GerenciarCobertura";
-import Clientes from "./pages/admin/Clientes";
-import ClienteDetalhe from "./pages/admin/ClienteDetalhe";
-import ImportarProdutos from "./pages/admin/ImportarProdutos";
-import ComprasFranqueados from "./pages/admin/ComprasFranqueados";
-import CompraDetalhe from "./pages/admin/CompraDetalhe";
-import Produtos from "./pages/admin/Produtos";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,103 +85,105 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/docs" element={<DocumentacaoPublica />} />
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/docs" element={<DocumentacaoPublica />} />
 
-            {/* Franqueado Routes */}
-            <Route
-              path="/franqueado"
-              element={
-                <ProtectedRoute allowedRoles={["franqueado"]}>
-                  <FranchiseeLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<FranqueadoHome />} />
-              <Route path="enviar" element={
-                <ErrorBoundary moduleName="Enviar Arquivo">
-                  <EnviarArquivo />
-                </ErrorBoundary>
-              } />
-              <Route path="arquivos" element={<MeusArquivos />} />
-              <Route path="arquivos/:id" element={<ArquivoDetalhes />} />
-              <Route path="atualizacoes" element={<Atualizacoes />} />
-              <Route path="tutoriais" element={<Tutoriais />} />
-              <Route path="materiais" element={<Materiais />} />
-              <Route path="mensagens" element={<Mensagens />} />
-              <Route path="perfil" element={<Perfil />} />
-              <Route path="suporte" element={<Suporte />} />
-              <Route path="relatorios" element={<FranqueadoRelatorios />} />
-              <Route path="cursos" element={<Cursos />} />
-              <Route path="loja" element={
-                <ErrorBoundary moduleName="Loja">
-                  <Loja />
-                </ErrorBoundary>
-              } />
-              <Route path="loja/carrinho" element={<Carrinho />} />
-              <Route path="loja/checkout" element={
-                <ErrorBoundary moduleName="Checkout">
-                  <LojaCheckout />
-                </ErrorBoundary>
-              } />
-              <Route path="loja/pedidos" element={<MeusPedidos />} />
-              <Route path="loja/pedidos/:id" element={<PedidoDetalhe />} />
-            </Route>
+              {/* Franqueado Routes */}
+              <Route
+                path="/franqueado"
+                element={
+                  <ProtectedRoute allowedRoles={["franqueado"]}>
+                    <FranchiseeLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<FranqueadoHome />} />
+                <Route path="enviar" element={
+                  <ErrorBoundary moduleName="Enviar Arquivo">
+                    <EnviarArquivo />
+                  </ErrorBoundary>
+                } />
+                <Route path="arquivos" element={<MeusArquivos />} />
+                <Route path="arquivos/:id" element={<ArquivoDetalhes />} />
+                <Route path="atualizacoes" element={<Atualizacoes />} />
+                <Route path="tutoriais" element={<Tutoriais />} />
+                <Route path="materiais" element={<Materiais />} />
+                <Route path="mensagens" element={<Mensagens />} />
+                <Route path="perfil" element={<Perfil />} />
+                <Route path="suporte" element={<Suporte />} />
+                <Route path="relatorios" element={<FranqueadoRelatorios />} />
+                <Route path="cursos" element={<Cursos />} />
+                <Route path="loja" element={
+                  <ErrorBoundary moduleName="Loja">
+                    <Loja />
+                  </ErrorBoundary>
+                } />
+                <Route path="loja/carrinho" element={<Carrinho />} />
+                <Route path="loja/checkout" element={
+                  <ErrorBoundary moduleName="Checkout">
+                    <LojaCheckout />
+                  </ErrorBoundary>
+                } />
+                <Route path="loja/pedidos" element={<MeusPedidos />} />
+                <Route path="loja/pedidos/:id" element={<PedidoDetalhe />} />
+              </Route>
 
-            {/* Admin Routes */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute allowedRoles={["admin", "suporte"]}>
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<AdminDashboard />} />
-              <Route path="franqueados" element={<AdminFranqueados />} />
-              <Route path="franqueados/:id" element={<FranqueadoDetalhe />} />
-              <Route path="importar" element={
-                <ErrorBoundary moduleName="Importar Franqueados">
-                  <ImportarFranqueados />
-                </ErrorBoundary>
-              } />
-              <Route path="cobertura" element={
-                <ErrorBoundary moduleName="Mapa de Cobertura">
-                  <GerenciarCobertura />
-                </ErrorBoundary>
-              } />
-              <Route path="clientes" element={<Clientes />} />
-              <Route path="clientes/:id" element={<ClienteDetalhe />} />
-              <Route path="arquivos" element={<AdminArquivos />} />
-              <Route path="arquivos/:id" element={<AdminArquivoDetalhes />} />
-              <Route path="banners" element={<AdminBanners />} />
-              <Route path="areas" element={<AdminAreas />} />
-              <Route path="mensagens" element={<AdminMensagens />} />
-              <Route path="suporte" element={<AdminSuporte />} />
-              <Route path="relatorios" element={
-                <ErrorBoundary moduleName="Relatórios">
-                  <AdminRelatorios />
-                </ErrorBoundary>
-              } />
-              <Route path="configuracoes" element={<AdminConfiguracoes />} />
-              <Route path="correcoes" element={<AdminCorrecoes />} />
-              <Route path="contratos" element={<AdminContratos />} />
-              <Route path="documentacao" element={<DocumentacaoSistema />} />
-              <Route path="produtos" element={<Produtos />} />
-              <Route path="importar-produtos" element={
-                <ErrorBoundary moduleName="Importar Produtos">
-                  <ImportarProdutos />
-                </ErrorBoundary>
-              } />
-              <Route path="compras" element={<ComprasFranqueados />} />
-              <Route path="compras/:id" element={<CompraDetalhe />} />
-            </Route>
+              {/* Admin Routes */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "suporte"]}>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<AdminDashboard />} />
+                <Route path="franqueados" element={<AdminFranqueados />} />
+                <Route path="franqueados/:id" element={<FranqueadoDetalhe />} />
+                <Route path="importar" element={
+                  <ErrorBoundary moduleName="Importar Franqueados">
+                    <ImportarFranqueados />
+                  </ErrorBoundary>
+                } />
+                <Route path="cobertura" element={
+                  <ErrorBoundary moduleName="Mapa de Cobertura">
+                    <GerenciarCobertura />
+                  </ErrorBoundary>
+                } />
+                <Route path="clientes" element={<Clientes />} />
+                <Route path="clientes/:id" element={<ClienteDetalhe />} />
+                <Route path="arquivos" element={<AdminArquivos />} />
+                <Route path="arquivos/:id" element={<AdminArquivoDetalhes />} />
+                <Route path="banners" element={<AdminBanners />} />
+                <Route path="areas" element={<AdminAreas />} />
+                <Route path="mensagens" element={<AdminMensagens />} />
+                <Route path="suporte" element={<AdminSuporte />} />
+                <Route path="relatorios" element={
+                  <ErrorBoundary moduleName="Relatórios">
+                    <AdminRelatorios />
+                  </ErrorBoundary>
+                } />
+                <Route path="configuracoes" element={<AdminConfiguracoes />} />
+                <Route path="correcoes" element={<AdminCorrecoes />} />
+                <Route path="contratos" element={<AdminContratos />} />
+                <Route path="documentacao" element={<DocumentacaoSistema />} />
+                <Route path="produtos" element={<Produtos />} />
+                <Route path="importar-produtos" element={
+                  <ErrorBoundary moduleName="Importar Produtos">
+                    <ImportarProdutos />
+                  </ErrorBoundary>
+                } />
+                <Route path="compras" element={<ComprasFranqueados />} />
+                <Route path="compras/:id" element={<CompraDetalhe />} />
+              </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

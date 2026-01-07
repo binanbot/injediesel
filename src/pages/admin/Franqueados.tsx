@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Search, Filter, Eye, Edit, Lock, Unlock, MoreHorizontal, Plus, Loader2, Upload, Calendar, X, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CitySearchBox } from "@/components/admin/CitySearchBox";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface FranchiseeProfile {
   id: string;
@@ -124,37 +125,46 @@ export default function AdminFranqueados() {
 
   const hasActiveFilters = search || statusFilter !== "all" || contractTypeFilter !== "all" || dateFrom || dateTo || cidadeFilter !== "all";
 
+  // Debounce search para evitar re-renders excessivos
+  const debouncedSearch = useDebounce(search, 300);
+
   // Extract unique cities for filter dropdown
-  const uniqueCidades = [...new Set(franqueados.map(f => f.cidade).filter(Boolean))].sort((a, b) => 
-    (a || "").localeCompare(b || "", "pt-BR")
+  const uniqueCidades = useMemo(() => 
+    [...new Set(franqueados.map(f => f.cidade).filter(Boolean))].sort((a, b) => 
+      (a || "").localeCompare(b || "", "pt-BR")
+    ),
+    [franqueados]
   );
 
-  const filteredFranqueados = franqueados
-    .filter((f) => {
-      const name = f.display_name || `${f.first_name || ""} ${f.last_name || ""}`;
-      const matchesSearch = name.toLowerCase().includes(search.toLowerCase()) ||
-        f.email.toLowerCase().includes(search.toLowerCase());
-      
-      const status = getStatusFromDate(f.contract_expiration_date);
-      const matchesStatus = statusFilter === "all" || status === statusFilter;
-      
-      const matchesContractType = contractTypeFilter === "all" || 
-        (contractTypeFilter === "Full" && f.contract_type === "Full") ||
-        (contractTypeFilter === "Leve" && (!f.contract_type || f.contract_type !== "Full"));
+  const filteredFranqueados = useMemo(() => 
+    franqueados
+      .filter((f) => {
+        const name = f.display_name || `${f.first_name || ""} ${f.last_name || ""}`;
+        const matchesSearch = name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          f.email.toLowerCase().includes(debouncedSearch.toLowerCase());
+        
+        const status = getStatusFromDate(f.contract_expiration_date);
+        const matchesStatus = statusFilter === "all" || status === statusFilter;
+        
+        const matchesContractType = contractTypeFilter === "all" || 
+          (contractTypeFilter === "Full" && f.contract_type === "Full") ||
+          (contractTypeFilter === "Leve" && (!f.contract_type || f.contract_type !== "Full"));
 
-      const createdDate = new Date(f.created_at);
-      const matchesDateFrom = !dateFrom || createdDate >= dateFrom;
-      const matchesDateTo = !dateTo || createdDate <= new Date(dateTo.getTime() + 86400000);
+        const createdDate = new Date(f.created_at);
+        const matchesDateFrom = !dateFrom || createdDate >= dateFrom;
+        const matchesDateTo = !dateTo || createdDate <= new Date(dateTo.getTime() + 86400000);
 
-      const matchesCidade = cidadeFilter === "all" || f.cidade === cidadeFilter;
-      
-      return matchesSearch && matchesStatus && matchesContractType && matchesDateFrom && matchesDateTo && matchesCidade;
-    })
-    .sort((a, b) => {
-      const nameA = (a.display_name || `${a.first_name || ""} ${a.last_name || ""}`).toLowerCase();
-      const nameB = (b.display_name || `${b.first_name || ""} ${b.last_name || ""}`).toLowerCase();
-      return nameA.localeCompare(nameB, "pt-BR");
-    });
+        const matchesCidade = cidadeFilter === "all" || f.cidade === cidadeFilter;
+        
+        return matchesSearch && matchesStatus && matchesContractType && matchesDateFrom && matchesDateTo && matchesCidade;
+      })
+      .sort((a, b) => {
+        const nameA = (a.display_name || `${a.first_name || ""} ${a.last_name || ""}`).toLowerCase();
+        const nameB = (b.display_name || `${b.first_name || ""} ${b.last_name || ""}`).toLowerCase();
+        return nameA.localeCompare(nameB, "pt-BR");
+      }),
+    [franqueados, debouncedSearch, statusFilter, contractTypeFilter, dateFrom, dateTo, cidadeFilter]
+  );
 
   if (isLoading) {
     return (

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Download, Search, Filter, Eye, MoreHorizontal, CalendarIcon, Clock, X, Lock, Sparkles } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { calcularTempoDecorrido, getTempoClasses } from "@/utils/tempoDecorrido";
 import { useRecentlyUpdatedFiles } from "@/hooks/useRecentlyUpdatedFiles";
 import { Button } from "@/components/ui/button";
@@ -113,12 +114,15 @@ export default function MeusArquivos() {
     return new Date(ano, mes - 1, dia);
   };
 
+  // Debounce search para evitar re-renders excessivos
+  const debouncedSearch = useDebounce(search, 300);
+
   // Filtro especial para "other" (todos exceto processing e completed)
-  const filteredArquivos = arquivos.filter(arquivo => {
+  const filteredArquivos = useMemo(() => arquivos.filter(arquivo => {
     const matchesSearch = 
-      arquivo.placa.toLowerCase().includes(search.toLowerCase()) ||
-      arquivo.marca.toLowerCase().includes(search.toLowerCase()) ||
-      arquivo.modelo.toLowerCase().includes(search.toLowerCase());
+      arquivo.placa.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      arquivo.marca.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      arquivo.modelo.toLowerCase().includes(debouncedSearch.toLowerCase());
     
     let matchesStatus = false;
     if (statusFilter === "all") {
@@ -135,7 +139,7 @@ export default function MeusArquivos() {
     const matchesDataFim = !dataFim || arquivoData <= dataFim;
     
     return matchesSearch && matchesStatus && matchesDataInicio && matchesDataFim;
-  });
+  }), [debouncedSearch, statusFilter, dataInicio, dataFim]);
 
   const statusCounts = getStatusCounts();
 

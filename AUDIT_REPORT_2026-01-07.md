@@ -14,7 +14,7 @@
 | Robustez | 2 | 1 | 0 | ✅ 2/2 |
 | UX | 0 | 2 | 3 | ✅ Concluído |
 | Visual | 0 | 1 | 2 | ✅ Concluído |
-| Performance | 0 | 1 | 2 | ⏳ Pendente |
+| Performance | 0 | 2 | 3 | ✅ Concluído |
 
 ---
 
@@ -210,16 +210,45 @@
 
 ---
 
-## FASE 5 - PERFORMANCE ⏳
+## FASE 5 - PERFORMANCE ✅
 
-### Status: NÃO INICIADO
+### Status: CONCLUÍDO
 
-**Checklist para avaliar:**
-- [ ] Paginação server-side onde necessário
-- [ ] Debounce em filtros/buscas
-- [ ] Memoização de cálculos pesados
-- [ ] Lazy loading para páginas com mapas/gráficos
-- [ ] Code splitting
+**Melhorias Implementadas:**
+
+#### ✅ Debounce em Buscas (300ms)
+Criado hook `useDebounce` e aplicado em todas as páginas com filtros:
+- `src/pages/admin/Clientes.tsx` - debounce na busca por nome/CPF/CNPJ/email
+- `src/pages/admin/Franqueados.tsx` - debounce na busca por nome/email
+- `src/pages/admin/Arquivos.tsx` - debounce na busca por placa/unidade
+- `src/pages/franqueado/MeusArquivos.tsx` - debounce na busca por placa/marca/modelo
+
+#### ✅ Lazy Loading (React.lazy + Suspense)
+Code splitting implementado no `App.tsx`:
+- **Páginas pesadas lazy-loaded:** Relatórios, Mapa de Cobertura, Loja, Importações, Dashboard Admin
+- **Páginas críticas mantidas síncronas:** Landing, Login, NotFound
+- **Fallback visual:** Spinner centralizado durante carregamento
+
+#### ✅ Correção N+1 Queries
+- `src/pages/admin/Clientes.tsx` - Refatorado para buscar todos os serviços em UMA query
+  - Antes: N queries (uma para cada cliente)
+  - Depois: 2 queries (clientes + todos os serviços) + agregação em memória
+
+#### ✅ Memoização
+- Filtros memoizados com `useMemo` em todas as páginas de listagem
+- Listas derivadas (uniqueCities, uniqueStates, uniqueCidades) memoizadas
+
+#### ⚠️ Observações para Futuro
+- Paginação server-side: Não implementada nesta fase (listas pequenas por enquanto)
+- Recomendação: Implementar quando tabelas ultrapassarem 500 registros
+
+**Arquivos Criados/Modificados:**
+- `src/hooks/useDebounce.ts` - NOVO hook de debounce
+- `src/App.tsx` - Lazy loading + Suspense
+- `src/pages/admin/Clientes.tsx` - Debounce + fix N+1
+- `src/pages/admin/Franqueados.tsx` - Debounce + memoização
+- `src/pages/admin/Arquivos.tsx` - Debounce + memoização
+- `src/pages/franqueado/MeusArquivos.tsx` - Debounce + memoização
 
 ---
 
@@ -266,12 +295,28 @@
 ## 📁 ARQUIVOS MODIFICADOS
 
 ```
-src/components/ui/badge.tsx          # forwardRef fix + variants semânticas
-src/components/ErrorBoundary.tsx     # NOVO - Error Boundary genérico
-src/App.tsx                          # Error Boundaries + QueryClient config
-src/pages/franqueado/Home.tsx        # UX: tempo parado, ações rápidas, dropdown
-supabase/functions/get-mapbox-token/index.ts    # Auth adicionada
-supabase/functions/import-ibge-cities/index.ts  # Auth + role check adicionados
+# Fase 1 - Segurança
+src/components/ui/badge.tsx                     # forwardRef fix
+supabase/functions/get-mapbox-token/index.ts   # Auth adicionada
+supabase/functions/import-ibge-cities/index.ts # Auth + role check adicionados
+
+# Fase 2 - Robustez
+src/components/ErrorBoundary.tsx               # NOVO - Error Boundary genérico
+src/App.tsx                                    # Error Boundaries + QueryClient config + Lazy loading
+
+# Fase 3 - UX
+src/pages/franqueado/Home.tsx                  # Tempo parado, ações rápidas, dropdown
+
+# Fase 4 - Visual
+src/components/ui/badge.tsx                    # Variants semânticas (success/warning/info/status)
+
+# Fase 5 - Performance
+src/hooks/useDebounce.ts                       # NOVO - Hook de debounce (300ms)
+src/App.tsx                                    # Lazy loading + Suspense (React.lazy)
+src/pages/admin/Clientes.tsx                   # Debounce + fix N+1 queries + memoização
+src/pages/admin/Franqueados.tsx                # Debounce + memoização
+src/pages/admin/Arquivos.tsx                   # Debounce + memoização
+src/pages/franqueado/MeusArquivos.tsx          # Debounce + memoização
 ```
 
 ---
@@ -283,24 +328,28 @@ supabase/functions/import-ibge-cities/index.ts  # Auth + role check adicionados
 2. **Leaked password protection:** Habilitar no dashboard Lovable Cloud
 
 ### Média Prioridade (P1)
-3. **Testes de regressão:** Executar checklist completo
-4. **Performance audit:** Verificar listas longas e lazy loading
+3. **Testes de regressão:** Executar checklist completo (FASE 6)
+4. **Paginação server-side:** Implementar quando tabelas ultrapassarem 500 registros
 
 ### Baixa Prioridade (P2)
-5. **Consistência visual:** Verificar tokens de design
-6. **UX mobile:** Testar todos os fluxos em dispositivo móvel
+5. **UX mobile:** Testar todos os fluxos em dispositivo móvel
 
 ---
 
 ## ✅ CONCLUSÃO
 
-A auditoria identificou e corrigiu os principais riscos de segurança nas Edge Functions. O sistema agora possui Error Boundaries em todos os módulos críticos, prevenindo telas brancas. 
+A auditoria identificou e corrigiu:
+- ✅ **Segurança:** Auth em Edge Functions, roles validadas
+- ✅ **Robustez:** Error Boundaries em módulos críticos
+- ✅ **UX:** Melhorias no Dashboard com tempo parado e ações rápidas
+- ✅ **Visual:** Badges semânticos para consistência
+- ✅ **Performance:** Debounce (300ms), lazy loading, fix N+1, memoização
 
-**Próximos passos recomendados:**
-1. Resolver pendência do bucket público
-2. Executar testes de regressão completos
-3. Revisar performance em produção
+**Próximos passos:**
+1. Executar FASE 6 - Testes de Regressão
+2. Resolver pendência do bucket público
+3. Monitorar performance em produção
 
 ---
 
-*Relatório gerado automaticamente pelo Lovable AI*
+*Relatório gerado automaticamente pelo Lovable AI - 2026-01-07*
