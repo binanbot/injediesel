@@ -18,6 +18,9 @@ interface Product {
   name: string;
   brand: string;
   price: number;
+  promo_price: number | null;
+  promo_type: "percent" | "fixed" | null;
+  promo_value: number | null;
   available: boolean;
   category: string | null;
   image_url: string | null;
