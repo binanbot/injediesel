@@ -15,7 +15,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Logo } from "@/components/Logo";
-import { AnimatedLogo } from "@/components/AnimatedLogo";
 
 // Animation variants
 const fadeInUp = {
@@ -244,10 +243,31 @@ export default function LandingLancamento() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,black_40%,transparent_100%)]" />
         
         <div className="relative z-10 max-w-5xl mx-auto text-center">
-          {/* Logo with premium stroke animation */}
-          <div className="mb-8">
-            <AnimatedLogo size="lg" className="h-16 md:h-20 lg:h-24" />
-          </div>
+          {/* Logo with entrance animation */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5, y: -30, filter: "blur(10px)" }}
+            animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ 
+              duration: 0.8, 
+              ease: [0.22, 1, 0.36, 1],
+              scale: { type: "spring", stiffness: 200, damping: 15 }
+            }}
+            className="mb-8"
+          >
+            <motion.div
+              animate={{ 
+                boxShadow: [
+                  "0 0 20px rgba(var(--primary-rgb), 0.2)",
+                  "0 0 40px rgba(var(--primary-rgb), 0.3)",
+                  "0 0 20px rgba(var(--primary-rgb), 0.2)"
+                ]
+              }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="inline-block p-4 rounded-2xl bg-background/50 backdrop-blur-sm border border-primary/20"
+            >
+              <Logo size="lg" className="h-12 md:h-16" />
+            </motion.div>
+          </motion.div>
 
           {/* Animated headline with blur reveal */}
           <motion.h1
