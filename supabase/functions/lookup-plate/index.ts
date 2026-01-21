@@ -53,24 +53,34 @@ function normalizeText(text: string | null | undefined): string {
   return normalized;
 }
 
-// Interface para payload da API
+// Interface para payload da API wdapi2
 interface PlateApiResponse {
   placa?: string;
   MARCA?: string;
   marca?: string;
   MODELO?: string;
   modelo?: string;
+  ano?: string;
   anoModelo?: string;
+  cor?: string;
+  municipio?: string;
+  uf?: string;
   extra?: {
     placa_modelo_novo?: string;
     placa_modelo_antigo?: string;
     modelo?: string;
     ano_modelo?: string;
-    motor?: string;
-    cilindrada?: string;
-    cambio?: string;
-    transmissao?: string;
+    ano_fabricacao?: string;
+    cilindradas?: string;
+    caixa_cambio?: string;
+    combustivel?: string;
+    potencia?: string;
+    tipo_veiculo?: string;
+    especie?: string;
   };
+  // Error response
+  error?: boolean;
+  message?: string;
 }
 
 // Extrai valor do primeiro campo disponível
@@ -152,16 +162,14 @@ serve(async (req) => {
       );
     }
 
-    // 2. Consultar API externa
-    // Normalize URL - ensure it ends without trailing slash
-    const baseUrl = placasApiUrl.replace(/\/+$/, "");
-    const apiUrl = `${baseUrl}/${plate}`;
-    console.log(`Consultando API para placa ${plate} em ${apiUrl}`);
+    // 2. Consultar API externa (wdapi2.com.br)
+    // URL format: https://wdapi2.com.br/consulta/{placa}/{token}
+    const apiUrl = `https://wdapi2.com.br/consulta/${plate.toUpperCase()}/${placasApiToken}`;
+    console.log(`Consultando API para placa ${plate}`);
     
     const apiResponse = await fetch(apiUrl, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${placasApiToken}`,
         "Content-Type": "application/json",
       },
     });
@@ -192,14 +200,35 @@ serve(async (req) => {
 
     const rawData: PlateApiResponse = await apiResponse.json();
 
-    // 3. Mapear e normalizar campos conforme especificação
+    // Check for API error response
+    if (rawData.error) {
+      console.error(`API error: ${rawData.message}`);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: rawData.message || "Erro na consulta", 
+          code: "API_ERROR" 
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 3. Mapear e normalizar campos conforme especificação wdapi2
+    const cilindradas = extractField(rawData, "extra.cilindradas");
+    const combustivel = extractField(rawData, "extra.combustivel");
+    const motorInfo = cilindradas ? `${cilindradas}cc${combustivel ? ` - ${combustivel}` : ""}` : "";
+    
     const mappedData = {
       placa: extractField(rawData, "placa", "extra.placa_modelo_novo", "extra.placa_modelo_antigo") || plate.toUpperCase(),
       marca: normalizeText(extractField(rawData, "MARCA", "marca")),
       modelo: normalizeText(extractField(rawData, "MODELO", "modelo", "extra.modelo")),
-      anoModelo: extractField(rawData, "anoModelo", "extra.ano_modelo"),
-      motor: extractField(rawData, "extra.motor", "extra.cilindrada"),
-      transmissao: normalizeText(extractField(rawData, "extra.cambio", "extra.transmissao")),
+      anoModelo: extractField(rawData, "anoModelo", "ano", "extra.ano_modelo"),
+      motor: motorInfo,
+      transmissao: normalizeText(extractField(rawData, "extra.caixa_cambio")),
+      cor: extractField(rawData, "cor"),
+      municipio: extractField(rawData, "municipio", "extra.municipio"),
+      uf: extractField(rawData, "uf", "extra.uf"),
+      tipoVeiculo: extractField(rawData, "extra.tipo_veiculo", "extra.especie"),
       // Payload bruto para auditoria
       rawPayload: rawData,
     };
