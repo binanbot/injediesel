@@ -82,6 +82,7 @@ export default function Mensagens() {
   const [selectedMessage, setSelectedMessage] = useState<typeof mensagens[0] | null>(null);
   const [likedMessages, setLikedMessages] = useState<Set<number>>(new Set());
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const filteredMensagens = categoryFilter === "all" 
     ? mensagens 
@@ -100,165 +101,179 @@ export default function Mensagens() {
     });
   };
 
-  if (selectedMessage) {
-    const config = categoryConfig[selectedMessage.categoria];
-    return (
-      <div className="space-y-6">
-        <Button variant="ghost" onClick={() => setSelectedMessage(null)}>
-          <ArrowLeft className="h-4 w-4" />
-          Voltar para mensagens
-        </Button>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <Card className={config.borderClass}>
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge className={`${config.badgeClass} flex items-center gap-1`}>
-                      {config.icon}
-                      {config.label}
-                    </Badge>
-                  </div>
-                  <h1 className="text-2xl font-bold mb-2">{selectedMessage.titulo}</h1>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {selectedMessage.data}
-                    </span>
-                  </div>
-                </div>
-                <Button
-                  variant={likedMessages.has(selectedMessage.id) ? "default" : "outline"}
-                  size="sm"
-                  onClick={(e) => handleLike(selectedMessage.id, e)}
-                >
-                  <Heart className={`h-4 w-4 ${likedMessages.has(selectedMessage.id) ? "fill-current" : ""}`} />
-                  {selectedMessage.curtidas + (likedMessages.has(selectedMessage.id) ? 1 : 0)}
-                </Button>
-              </div>
-              <div className="prose prose-invert max-w-none">
-                {selectedMessage.conteudo.split('\n').map((line, i) => (
-                  <p key={i} className={line === '' ? 'mb-4' : 'mb-2'}>{line}</p>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Mensagens</h1>
-          <p className="text-muted-foreground">Acompanhe as últimas novidades e comunicados.</p>
-        </div>
-        
-        {/* Category Filter */}
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar por categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as categorias</SelectItem>
-              <SelectItem value="critico">
-                <span className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  Crítico
-                </span>
-              </SelectItem>
-              <SelectItem value="informativo">
-                <span className="flex items-center gap-2">
-                  <Info className="h-4 w-4 text-info" />
-                  Informativo
-                </span>
-              </SelectItem>
-              <SelectItem value="marketing">
-                <span className="flex items-center gap-2">
-                  <Megaphone className="h-4 w-4 text-success" />
-                  Marketing
-                </span>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {/* Detail View (kept mounted to avoid portal/unmount race conditions) */}
+      <div hidden={!selectedMessage}>
+        {selectedMessage && (() => {
+          const config = categoryConfig[selectedMessage.categoria];
+          return (
+            <>
+              <Button variant="ghost" onClick={() => setSelectedMessage(null)}>
+                <ArrowLeft className="h-4 w-4" />
+                Voltar para mensagens
+              </Button>
 
-      <div className="space-y-4">
-        {filteredMensagens.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              Nenhuma mensagem encontrada nesta categoria.
-            </CardContent>
-          </Card>
-        ) : (
-          filteredMensagens.map((mensagem) => {
-            const config = categoryConfig[mensagem.categoria];
-            return (
-              <motion.div
-                key={mensagem.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <Card
-                  className={`cursor-pointer hover:border-primary/50 transition-all ${config.borderClass} ${
-                    !mensagem.lida ? "bg-primary/5" : ""
-                  }`}
-                  onClick={() => setSelectedMessage(mensagem)}
-                >
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <Card className={config.borderClass}>
                   <CardContent className="pt-6">
-                    <div className="flex items-start gap-4">
-                      <div className={`p-2 rounded-lg ${mensagem.lida ? "bg-secondary" : "bg-primary/20"}`}>
-                        {mensagem.lida ? (
-                          <MailOpen className="h-5 w-5 text-muted-foreground" />
-                        ) : (
-                          <Mail className="h-5 w-5 text-primary" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge className={`${config.badgeClass} flex items-center gap-1 text-xs`}>
-                                {config.icon}
-                                {config.label}
-                              </Badge>
-                              {!mensagem.lida && (
-                                <Badge variant="default" className="text-xs">Nova</Badge>
-                              )}
-                            </div>
-                            <h3 className="font-semibold">{mensagem.titulo}</h3>
-                            <p className="text-sm text-muted-foreground mt-1">{mensagem.resumo}</p>
-                          </div>
-                          <span className="text-sm text-muted-foreground whitespace-nowrap">
-                            {mensagem.data}
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge className={`${config.badgeClass} flex items-center gap-1`}>
+                            {config.icon}
+                            {config.label}
+                          </Badge>
+                        </div>
+                        <h1 className="text-2xl font-bold mb-2">{selectedMessage.titulo}</h1>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {selectedMessage.data}
                           </span>
                         </div>
-                        <div className="flex items-center gap-4 mt-3">
-                          <button
-                            onClick={(e) => handleLike(mensagem.id, e)}
-                            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
-                          >
-                            <Heart className={`h-4 w-4 ${likedMessages.has(mensagem.id) ? "fill-primary text-primary" : ""}`} />
-                            {mensagem.curtidas + (likedMessages.has(mensagem.id) ? 1 : 0)}
-                          </button>
-                        </div>
                       </div>
+                      <Button
+                        variant={likedMessages.has(selectedMessage.id) ? "default" : "outline"}
+                        size="sm"
+                        onClick={(e) => handleLike(selectedMessage.id, e)}
+                      >
+                        <Heart className={`h-4 w-4 ${likedMessages.has(selectedMessage.id) ? "fill-current" : ""}`} />
+                        {selectedMessage.curtidas + (likedMessages.has(selectedMessage.id) ? 1 : 0)}
+                      </Button>
+                    </div>
+                    <div className="prose prose-invert max-w-none">
+                      {selectedMessage.conteudo.split("\n").map((line, i) => (
+                        <p key={i} className={line === "" ? "mb-4" : "mb-2"}>
+                          {line}
+                        </p>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
-            );
-          })
-        )}
+            </>
+          );
+        })()}
+      </div>
+
+      {/* List View */}
+      <div hidden={!!selectedMessage}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">Mensagens</h1>
+            <p className="text-muted-foreground">Acompanhe as últimas novidades e comunicados.</p>
+          </div>
+
+          {/* Category Filter */}
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select
+              value={categoryFilter}
+              onValueChange={setCategoryFilter}
+              open={filterOpen}
+              onOpenChange={setFilterOpen}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias</SelectItem>
+                <SelectItem value="critico">
+                  <span className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    Crítico
+                  </span>
+                </SelectItem>
+                <SelectItem value="informativo">
+                  <span className="flex items-center gap-2">
+                    <Info className="h-4 w-4 text-info" />
+                    Informativo
+                  </span>
+                </SelectItem>
+                <SelectItem value="marketing">
+                  <span className="flex items-center gap-2">
+                    <Megaphone className="h-4 w-4 text-success" />
+                    Marketing
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-4 mt-6">
+          {filteredMensagens.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                Nenhuma mensagem encontrada nesta categoria.
+              </CardContent>
+            </Card>
+          ) : (
+            filteredMensagens.map((mensagem) => {
+              const config = categoryConfig[mensagem.categoria];
+              return (
+                <motion.div key={mensagem.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                  <Card
+                    className={`cursor-pointer hover:border-primary/50 transition-all ${config.borderClass} ${
+                      !mensagem.lida ? "bg-primary/5" : ""
+                    }`}
+                    onClick={() => {
+                      // Ensure Select portal is closed before swapping UI tree
+                      setFilterOpen(false);
+                      setSelectedMessage(mensagem);
+                    }}
+                  >
+                    <CardContent className="pt-6">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-2 rounded-lg ${mensagem.lida ? "bg-secondary" : "bg-primary/20"}`}>
+                          {mensagem.lida ? (
+                            <MailOpen className="h-5 w-5 text-muted-foreground" />
+                          ) : (
+                            <Mail className="h-5 w-5 text-primary" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge className={`${config.badgeClass} flex items-center gap-1 text-xs`}>
+                                  {config.icon}
+                                  {config.label}
+                                </Badge>
+                                {!mensagem.lida && (
+                                  <Badge variant="default" className="text-xs">
+                                    Nova
+                                  </Badge>
+                                )}
+                              </div>
+                              <h3 className="font-semibold">{mensagem.titulo}</h3>
+                              <p className="text-sm text-muted-foreground mt-1">{mensagem.resumo}</p>
+                            </div>
+                            <span className="text-sm text-muted-foreground whitespace-nowrap">{mensagem.data}</span>
+                          </div>
+                          <div className="flex items-center gap-4 mt-3">
+                            <button
+                              onClick={(e) => handleLike(mensagem.id, e)}
+                              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                            >
+                              <Heart
+                                className={`h-4 w-4 ${
+                                  likedMessages.has(mensagem.id) ? "fill-primary text-primary" : ""
+                                }`}
+                              />
+                              {mensagem.curtidas + (likedMessages.has(mensagem.id) ? 1 : 0)}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );
