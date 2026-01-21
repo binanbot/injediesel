@@ -117,10 +117,14 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const placasApiToken = Deno.env.get("PLACAS_API_TOKEN");
+    const placasApiUrl = Deno.env.get("PLACAS_API_URL");
 
-    if (!placasApiToken) {
+    if (!placasApiToken || !placasApiUrl) {
       return new Response(
-        JSON.stringify({ error: "API de placas não configurada", code: "API_NOT_CONFIGURED" }),
+        JSON.stringify({ 
+          error: "API de placas não configurada. Configure PLACAS_API_TOKEN e PLACAS_API_URL.", 
+          code: "API_NOT_CONFIGURED" 
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -149,9 +153,10 @@ serve(async (req) => {
     }
 
     // 2. Consultar API externa
-    console.log(`Consultando API para placa ${plate}`);
-    
-    const apiUrl = `https://api.apiplaca.com.br/consulta/${plate}`;
+    // Normalize URL - ensure it ends without trailing slash
+    const baseUrl = placasApiUrl.replace(/\/+$/, "");
+    const apiUrl = `${baseUrl}/${plate}`;
+    console.log(`Consultando API para placa ${plate} em ${apiUrl}`);
     
     const apiResponse = await fetch(apiUrl, {
       method: "GET",
