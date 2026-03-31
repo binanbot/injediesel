@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { 
+import {
   ArrowLeft, ShoppingCart, Check, Loader2, Package, MessageCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,50 +22,77 @@ interface FranchiseeData {
   cnpj: string;
   phone: string;
   email: string;
-  address: string;
+  street: string;
+  number: string;
+  district: string;
   city: string;
   state: string;
   zipCode: string;
 }
 
-const WHATSAPP_NUMBER = "5511999999999"; // Número da Promax
+const formatMoney = (value: number) => {
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+};
 
-const buildWhatsAppMessage = ({
-  franchisee,
-  items,
-  total,
-}: {
-  franchisee: FranchiseeData;
-  items: CartItem[];
-  total: number;
-}) => {
-  const itemLines = items
-    .map(
-      (item, index) =>
-        `${index + 1}. ${item.name} | Ref: ${item.sku ?? "-"} | Qtd: ${item.quantity} | Unit: R$ ${item.price.toFixed(2)} | Subtotal: R$ ${(item.price * item.quantity).toFixed(2)}`
-    )
-    .join("\n");
+const buildWhatsAppMessage = (
+  franchisee: FranchiseeData,
+  items: CartItem[]
+) => {
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const itemsText = items
+    .map((item, index) => {
+      const subtotal = item.price * item.quantity;
+      return (
+        `${index + 1}. ${item.name}\n` +
+        `Ref: ${item.sku || "-"}\n` +
+        `Qtd: ${item.quantity}\n` +
+        `Valor unitário: ${formatMoney(item.price)}\n` +
+        `Subtotal: ${formatMoney(subtotal)}`
+      );
+    })
+    .join("\n\n");
 
   return `
 *NOVO PEDIDO PROMAX*
 
-*Dados da unidade*
+*DADOS DO FRANQUEADO*
 Unidade: ${franchisee.unitName}
 Razão Social: ${franchisee.companyName}
 CNPJ: ${franchisee.cnpj}
 Telefone: ${franchisee.phone}
 E-mail: ${franchisee.email}
 
-*Endereço de entrega*
-${franchisee.address}
-${franchisee.city} - ${franchisee.state}
+*ENDEREÇO*
+Rua: ${franchisee.street}, ${franchisee.number}
+Bairro: ${franchisee.district}
+Cidade: ${franchisee.city} - ${franchisee.state}
 CEP: ${franchisee.zipCode}
 
-*Itens do pedido*
-${itemLines}
+*ITENS DO PEDIDO*
 
-*Total do pedido:* R$ ${total.toFixed(2)}
+${itemsText}
+
+*TOTAL DO PEDIDO: ${formatMoney(total)}*
 `.trim();
+};
+
+const sendOrderToWhatsApp = (
+  franchisee: FranchiseeData,
+  items: CartItem[]
+) => {
+  const phone = "5545998590384";
+  if (!items.length) {
+    toast.error("O carrinho está vazio.");
+    return;
+  }
+  const message = buildWhatsAppMessage(franchisee, items);
+  const encodedMessage = encodeURIComponent(message);
+  const url = `https://wa.me/${phone}?text=${encodedMessage}`;
+  window.open(url, "_blank");
 };
 
 export default function LojaCheckout() {
@@ -75,7 +102,9 @@ export default function LojaCheckout() {
 
   const [step, setStep] = useState<CheckoutStep>("review");
   const [deliveryData, setDeliveryData] = useState({
-    address: "",
+    street: "",
+    number: "",
+    district: "",
     city: "",
     state: "",
     zipCode: "",
@@ -101,24 +130,20 @@ export default function LojaCheckout() {
           : Promise.resolve({ data: null, error: null }),
       ]);
 
+      const profile = profileRes.data;
+      const unit = unitRes.data;
+
       return {
-        unitName: unitRes.data?.name ?? "",
-        companyName: profileRes.data?.display_name ?? `${profileRes.data?.first_name ?? ""} ${profileRes.data?.last_name ?? ""}`.trim(),
-        cnpj: profileRes.data?.cnpj ?? "",
+        unitName: unit?.name ?? "",
+        companyName: profile?.display_name ?? `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim(),
+        cnpj: profile?.cnpj ?? "",
         phone: "",
-        email: profileRes.data?.email ?? user.email ?? "",
-        city: unitRes.data?.city ?? profileRes.data?.cidade ?? "",
-        state: unitRes.data?.state ?? "",
+        email: profile?.email ?? user.email ?? "",
+        city: unit?.city ?? profile?.cidade ?? "",
+        state: unit?.state ?? "",
       };
     },
   });
-
-  const formatPrice = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
 
   const handleSendWhatsApp = () => {
     if (!franchiseeProfile) {
@@ -127,18 +152,20 @@ export default function LojaCheckout() {
     }
 
     const franchisee: FranchiseeData = {
-      ...franchiseeProfile,
-      address: deliveryData.address,
+      unitName: franchiseeProfile.unitName,
+      companyName: franchiseeProfile.companyName,
+      cnpj: franchiseeProfile.cnpj,
+      phone: franchiseeProfile.phone,
+      email: franchiseeProfile.email,
+      street: deliveryData.street,
+      number: deliveryData.number,
+      district: deliveryData.district,
       city: deliveryData.city || franchiseeProfile.city,
       state: deliveryData.state || franchiseeProfile.state,
       zipCode: deliveryData.zipCode,
     };
 
-    const message = buildWhatsAppMessage({ franchisee, items, total });
-    const encoded = encodeURIComponent(message);
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`;
-
-    window.open(url, "_blank");
+    sendOrderToWhatsApp(franchisee, items);
     clearCart();
     toast.success("Pedido enviado via WhatsApp!");
     navigate("/franqueado/loja");
@@ -176,7 +203,6 @@ export default function LojaCheckout() {
     { key: "delivery", label: "Entrega", icon: Package },
     { key: "confirm", label: "Enviar", icon: MessageCircle },
   ];
-
   const currentStepIndex = steps.findIndex((s) => s.key === step);
 
   return (
@@ -191,7 +217,7 @@ export default function LojaCheckout() {
         </div>
       </div>
 
-      {/* Steps */}
+      {/* Steps indicator */}
       <div className="glass-card p-4">
         <div className="flex items-center justify-between">
           {steps.map((s, index) => (
@@ -237,10 +263,10 @@ export default function LojaCheckout() {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium line-clamp-1">{item.name}</p>
                       <p className="text-xs text-muted-foreground">Ref: {item.sku ?? "-"}</p>
-                      <p className="text-sm text-muted-foreground">{item.quantity}x {formatPrice(item.price)}</p>
+                      <p className="text-sm text-muted-foreground">{item.quantity}x {formatMoney(item.price)}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-semibold">{formatPrice(item.price * item.quantity)}</p>
+                      <p className="font-semibold">{formatMoney(item.price * item.quantity)}</p>
                     </div>
                   </div>
                 ))}
@@ -258,13 +284,33 @@ export default function LojaCheckout() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2 space-y-2">
+                    <Label htmlFor="street">Rua</Label>
+                    <Input
+                      id="street"
+                      placeholder="Nome da rua"
+                      value={deliveryData.street}
+                      onChange={(e) => setDeliveryData((d) => ({ ...d, street: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="number">Número</Label>
+                    <Input
+                      id="number"
+                      placeholder="Nº"
+                      value={deliveryData.number}
+                      onChange={(e) => setDeliveryData((d) => ({ ...d, number: e.target.value }))}
+                    />
+                  </div>
+                </div>
                 <div className="space-y-2">
-                  <Label htmlFor="address">Endereço completo</Label>
+                  <Label htmlFor="district">Bairro</Label>
                   <Input
-                    id="address"
-                    placeholder="Rua, número, complemento"
-                    value={deliveryData.address}
-                    onChange={(e) => setDeliveryData((d) => ({ ...d, address: e.target.value }))}
+                    id="district"
+                    placeholder="Bairro"
+                    value={deliveryData.district}
+                    onChange={(e) => setDeliveryData((d) => ({ ...d, district: e.target.value }))}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -272,7 +318,7 @@ export default function LojaCheckout() {
                     <Label htmlFor="city">Cidade</Label>
                     <Input
                       id="city"
-                      placeholder="Cidade"
+                      placeholder={franchiseeProfile?.city || "Cidade"}
                       value={deliveryData.city}
                       onChange={(e) => setDeliveryData((d) => ({ ...d, city: e.target.value }))}
                     />
@@ -281,7 +327,7 @@ export default function LojaCheckout() {
                     <Label htmlFor="state">Estado</Label>
                     <Input
                       id="state"
-                      placeholder="UF"
+                      placeholder={franchiseeProfile?.state || "UF"}
                       value={deliveryData.state}
                       onChange={(e) => setDeliveryData((d) => ({ ...d, state: e.target.value }))}
                     />
@@ -297,7 +343,6 @@ export default function LojaCheckout() {
                   />
                 </div>
 
-                {/* Pre-filled data info */}
                 {franchiseeProfile && (
                   <div className="p-3 rounded-lg bg-muted/30 text-sm space-y-1">
                     <p className="text-muted-foreground font-medium">Dados da unidade:</p>
@@ -320,12 +365,23 @@ export default function LojaCheckout() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="p-4 rounded-lg bg-muted/30 space-y-2">
-                  <p className="text-sm text-muted-foreground font-medium">Dados do pedido</p>
+                  <p className="text-sm text-muted-foreground font-medium">Dados do franqueado</p>
                   <p className="text-sm">{franchiseeProfile?.unitName} • {franchiseeProfile?.companyName}</p>
-                  {deliveryData.address && (
-                    <p className="text-sm">{deliveryData.address}, {deliveryData.city || franchiseeProfile?.city} - {deliveryData.state || franchiseeProfile?.state} • CEP: {deliveryData.zipCode}</p>
-                  )}
+                  {franchiseeProfile?.cnpj && <p className="text-sm">CNPJ: {franchiseeProfile.cnpj}</p>}
+                  <p className="text-sm">{franchiseeProfile?.email}</p>
                 </div>
+
+                {deliveryData.street && (
+                  <div className="p-4 rounded-lg bg-muted/30 space-y-1">
+                    <p className="text-sm text-muted-foreground font-medium">Endereço de entrega</p>
+                    <p className="text-sm">
+                      {deliveryData.street}, {deliveryData.number} — {deliveryData.district}
+                    </p>
+                    <p className="text-sm">
+                      {deliveryData.city || franchiseeProfile?.city} - {deliveryData.state || franchiseeProfile?.state} • CEP: {deliveryData.zipCode}
+                    </p>
+                  </div>
+                )}
 
                 <Separator />
 
@@ -334,14 +390,14 @@ export default function LojaCheckout() {
                   {items.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
                       <span>{item.quantity}x {item.name}</span>
-                      <span>{formatPrice(item.price * item.quantity)}</span>
+                      <span>{formatMoney(item.price * item.quantity)}</span>
                     </div>
                   ))}
                 </div>
 
                 <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
                   <p className="text-sm text-muted-foreground">
-                    Ao confirmar, o pedido será enviado via <strong>WhatsApp</strong> para a equipe Promax. Você será redirecionado para o WhatsApp com todos os detalhes preenchidos.
+                    Ao confirmar, o pedido será enviado via <strong>WhatsApp</strong> para a equipe Promax com todos os detalhes preenchidos.
                   </p>
                 </div>
               </CardContent>
@@ -349,31 +405,23 @@ export default function LojaCheckout() {
           )}
         </div>
 
-        {/* Order Summary Sidebar */}
+        {/* Sidebar Summary */}
         <div className="lg:col-span-1">
           <Card className="sticky top-4">
             <CardHeader><CardTitle className="text-lg">Resumo</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal ({items.length} {items.length === 1 ? "item" : "itens"})</span>
-                <span>{formatPrice(total)}</span>
+                <span>{formatMoney(total)}</span>
               </div>
               <Separator />
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span className="text-lg text-primary">{formatPrice(total)}</span>
+                <span className="text-lg text-primary">{formatMoney(total)}</span>
               </div>
-
               <div className="flex gap-2">
                 {step !== "review" && (
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => {
-                      const prev = steps[currentStepIndex - 1];
-                      if (prev) setStep(prev.key);
-                    }}
-                  >
+                  <Button variant="outline" className="flex-1" onClick={() => { const prev = steps[currentStepIndex - 1]; if (prev) setStep(prev.key); }}>
                     Voltar
                   </Button>
                 )}
@@ -389,10 +437,7 @@ export default function LojaCheckout() {
                   }}
                 >
                   {step === "confirm" ? (
-                    <>
-                      <MessageCircle className="h-4 w-4" />
-                      Enviar via WhatsApp
-                    </>
+                    <><MessageCircle className="h-4 w-4" />Enviar via WhatsApp</>
                   ) : (
                     "Continuar"
                   )}
