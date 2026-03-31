@@ -432,7 +432,7 @@ export default function ComprasFranqueados() {
                 </TableHeader>
                 <TableBody>
                   {filteredOrders.map((order) => {
-                    const status = statusConfig[order.status] || statusConfig.pending;
+                    const status = getOrderStatus(order.status);
                     const StatusIcon = status.icon;
 
                     return (
