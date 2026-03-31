@@ -36,7 +36,7 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error("ErrorBoundary capturou erro:", error, errorInfo);
     
     // Log para monitoramento (em produção, enviar para serviço de logging)
-    if (process.env.NODE_ENV === "development") {
+    if (import.meta.env.DEV) {
       console.group("🔴 Error Boundary - Detalhes");
       console.error("Error:", error);
       console.error("Component Stack:", errorInfo.componentStack);
@@ -84,7 +84,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {process.env.NODE_ENV === "development" && this.state.error && (
+              {import.meta.env.DEV && this.state.error && (
                 <div className="p-3 rounded-lg bg-muted text-xs font-mono overflow-auto max-h-32">
                   {this.state.error.message}
                 </div>
