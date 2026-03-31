@@ -283,7 +283,7 @@ export default function Perfil() {
               </button>
             </div>
             <h3 className="font-semibold text-lg">{unitData.display_name || "Minha Unidade"}</h3>
-            <p className="text-sm text-muted-foreground">Franqueado {contractStatus.contractType || "Full"}</p>
+            <p className="text-sm text-muted-foreground">Franqueado Full</p>
           </CardContent>
         </Card>
 
