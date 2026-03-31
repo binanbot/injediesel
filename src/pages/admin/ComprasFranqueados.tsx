@@ -464,19 +464,12 @@ export default function ComprasFranqueados() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          {formatPrice(order.total)}
+                          {formatPrice(order.total_amount)}
                         </TableCell>
                         <TableCell>
-                          {order.payment_method ? (
-                            <span className="text-sm">
-                              {paymentMethodLabels[order.payment_method]}
-                              {order.installments && order.installments > 1 && (
-                                <span className="text-muted-foreground"> ({order.installments}x)</span>
-                              )}
-                            </span>
-                          ) : (
-                            "—"
-                          )}
+                          <span className="text-sm">
+                            {paymentStatusLabels[order.payment_status] || order.payment_status}
+                          </span>
                         </TableCell>
                         <TableCell>
                           <Badge className={cn("gap-1", status.className)}>
