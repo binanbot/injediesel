@@ -523,15 +523,18 @@ export type Database = {
       }
       profiles_franchisees: {
         Row: {
+          address_number: string | null
           allow_manual_credits: boolean | null
           cidade: string | null
           cnpj: string | null
+          complement: string | null
           contract_expiration_date: string | null
           contract_type: string | null
           cpf: string | null
           created_at: string | null
           delivery_address: Json | null
           display_name: string | null
+          district: string | null
           email: string
           equipment_type: string | null
           first_name: string | null
@@ -547,23 +550,30 @@ export type Database = {
           legacy_user_login: string | null
           legacy_user_pass_hash: string | null
           legacy_user_registered_at: string | null
+          phone: string | null
           rental_value_brl: number | null
           requires_password_reset: boolean | null
           service_areas: Json | null
           start_date: string | null
+          state: string | null
+          street: string | null
           updated_at: string | null
           user_id: string | null
+          zip_code: string | null
         }
         Insert: {
+          address_number?: string | null
           allow_manual_credits?: boolean | null
           cidade?: string | null
           cnpj?: string | null
+          complement?: string | null
           contract_expiration_date?: string | null
           contract_type?: string | null
           cpf?: string | null
           created_at?: string | null
           delivery_address?: Json | null
           display_name?: string | null
+          district?: string | null
           email: string
           equipment_type?: string | null
           first_name?: string | null
@@ -579,23 +589,30 @@ export type Database = {
           legacy_user_login?: string | null
           legacy_user_pass_hash?: string | null
           legacy_user_registered_at?: string | null
+          phone?: string | null
           rental_value_brl?: number | null
           requires_password_reset?: boolean | null
           service_areas?: Json | null
           start_date?: string | null
+          state?: string | null
+          street?: string | null
           updated_at?: string | null
           user_id?: string | null
+          zip_code?: string | null
         }
         Update: {
+          address_number?: string | null
           allow_manual_credits?: boolean | null
           cidade?: string | null
           cnpj?: string | null
+          complement?: string | null
           contract_expiration_date?: string | null
           contract_type?: string | null
           cpf?: string | null
           created_at?: string | null
           delivery_address?: Json | null
           display_name?: string | null
+          district?: string | null
           email?: string
           equipment_type?: string | null
           first_name?: string | null
@@ -611,12 +628,16 @@ export type Database = {
           legacy_user_login?: string | null
           legacy_user_pass_hash?: string | null
           legacy_user_registered_at?: string | null
+          phone?: string | null
           rental_value_brl?: number | null
           requires_password_reset?: boolean | null
           service_areas?: Json | null
           start_date?: string | null
+          state?: string | null
+          street?: string | null
           updated_at?: string | null
           user_id?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }
