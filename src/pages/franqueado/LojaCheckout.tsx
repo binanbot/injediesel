@@ -76,10 +76,10 @@ export default function LojaCheckout() {
       const orderItems = cart.items.map((item) => ({
         order_id: order.id,
         product_id: item.product_id,
-        name: item.product.name,
+        name: item.name,
         quantity: item.quantity,
-        unit_price: item.product.price,
-        subtotal: item.product.price * item.quantity,
+        unit_price: item.price,
+        subtotal: item.price * item.quantity,
       }));
 
       const { error: itemsError } = await supabase
