@@ -3,18 +3,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface CartItem {
+export interface CartItem {
   id: string;
-  product_id: string;
+  name: string;
+  sku?: string;
+  price: number;
   quantity: number;
-  product: {
-    id: string;
-    name: string;
-    sku: string;
-    price: number;
-    image_url: string | null;
-    available: boolean;
-  };
+  image?: string;
+  category?: string;
+  product_id: string;
+  available: boolean;
 }
 
 interface Cart {
