@@ -311,6 +311,63 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_entries: {
+        Row: {
+          amount_brl: number
+          category: string
+          created_at: string
+          description: string | null
+          direction: string
+          entry_type: string
+          id: string
+          order_id: string | null
+          reference_date: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_brl?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          direction?: string
+          entry_type: string
+          id?: string
+          order_id?: string | null
+          reference_date?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_brl?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          direction?: string
+          entry_type?: string
+          id?: string
+          order_id?: string | null
+          reference_date?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_entries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_entries_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       franchisee_profiles: {
         Row: {
           contract_expiration_date: string
@@ -348,30 +405,36 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          image_url: string | null
           name: string
           order_id: string
           product_id: string
           quantity: number
+          sku: string | null
           subtotal: number
           unit_price: number
         }
         Insert: {
           created_at?: string
           id?: string
+          image_url?: string | null
           name: string
           order_id: string
           product_id: string
           quantity?: number
+          sku?: string | null
           subtotal: number
           unit_price: number
         }
         Update: {
           created_at?: string
           id?: string
+          image_url?: string | null
           name?: string
           order_id?: string
           product_id?: string
           quantity?: number
+          sku?: string | null
           subtotal?: number
           unit_price?: number
         }
@@ -392,38 +455,102 @@ export type Database = {
           },
         ]
       }
+      order_status_history: {
+        Row: {
+          changed_by: string
+          created_at: string
+          id: string
+          new_status: string
+          notes: string | null
+          order_id: string
+          previous_status: string | null
+        }
+        Insert: {
+          changed_by: string
+          created_at?: string
+          id?: string
+          new_status: string
+          notes?: string | null
+          order_id: string
+          previous_status?: string | null
+        }
+        Update: {
+          changed_by?: string
+          created_at?: string
+          id?: string
+          new_status?: string
+          notes?: string | null
+          order_id?: string
+          previous_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string
+          delivery_snapshot: Json | null
+          franchisee_profile_id: string | null
           id: string
           installments: number | null
+          notes: string | null
+          order_number: number
           payment_method: string | null
+          source: string
           status: string
           total: number
           unit_id: string
           updated_at: string
+          whatsapp_sent_at: string | null
         }
         Insert: {
           created_at?: string
+          delivery_snapshot?: Json | null
+          franchisee_profile_id?: string | null
           id?: string
           installments?: number | null
+          notes?: string | null
+          order_number?: number
           payment_method?: string | null
+          source?: string
           status?: string
           total?: number
           unit_id: string
           updated_at?: string
+          whatsapp_sent_at?: string | null
         }
         Update: {
           created_at?: string
+          delivery_snapshot?: Json | null
+          franchisee_profile_id?: string | null
           id?: string
           installments?: number | null
+          notes?: string | null
+          order_number?: number
           payment_method?: string | null
+          source?: string
           status?: string
           total?: number
           unit_id?: string
           updated_at?: string
+          whatsapp_sent_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_franchisee_profile_id_fkey"
+            columns: ["franchisee_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_franchisees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plate_lookup_cache: {
         Row: {
