@@ -114,7 +114,14 @@ export function DeliveryAddressForm({
 
   const handleUseProfileAddress = () => {
     if (!profile) return;
-    onChange(buildDefaultDeliveryAddress(profile));
+    const defaultAddr = buildDefaultDeliveryAddress(profile);
+    const hasData = defaultAddr.recipient_name || defaultAddr.company_name || defaultAddr.street || defaultAddr.city;
+    if (!hasData) {
+      toast.info("Nenhum endereço encontrado no cadastro. Preencha manualmente.");
+      return;
+    }
+    onChange(defaultAddr);
+    toast.success("Endereço do cadastro carregado.");
   };
 
   const handleSave = async () => {
