@@ -180,23 +180,14 @@ export default function LojaCheckout() {
     },
   });
 
-  // Pre-fill delivery from profile on first load
   const prefillDelivery = () => {
     if (!profile) return;
-    setDelivery((prev) => ({
-      recipient_name: prev.recipient_name || profile.company_name,
-      company_name: prev.company_name || profile.company_name,
-      cnpj: prev.cnpj || profile.cnpj,
-      phone: prev.phone || profile.phone,
-      email: prev.email || profile.email,
-      zip_code: prev.zip_code || profile.zip_code,
-      street: prev.street || profile.street,
-      number: prev.number || profile.number,
-      complement: prev.complement || profile.complement,
-      district: prev.district || profile.district,
-      city: prev.city || profile.city,
-      state: prev.state || profile.state,
-    }));
+    setDelivery((prev) => {
+      const defaults = buildDefaultDeliveryAddress(profile);
+      return Object.fromEntries(
+        Object.keys(defaults).map((k) => [k, prev[k as keyof DeliveryAddress] || defaults[k as keyof DeliveryAddress]])
+      ) as DeliveryAddress;
+    });
   };
 
   const handleSendWhatsApp = () => {
