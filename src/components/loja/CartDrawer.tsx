@@ -103,10 +103,10 @@ export function CartDrawer({
                     {/* Product Info */}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm line-clamp-2">
-                        {item.product.name}
+                        {item.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatPrice(item.product.price)} cada
+                        {formatPrice(item.price)} cada
                       </p>
 
                       {/* Quantity Controls */}
