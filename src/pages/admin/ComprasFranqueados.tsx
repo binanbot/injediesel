@@ -9,8 +9,6 @@ import {
   ChevronRight,
   Clock,
   CheckCircle,
-  XCircle,
-  Truck,
   Package,
   Loader2,
   Calendar,
@@ -52,30 +50,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-interface Order {
-  id: string;
-  order_number: string;
-  unit_id: string | null;
-  status: string;
-  total_amount: number;
-  payment_status: string;
-  items_count: number;
-  created_at: string;
-  unit?: {
-    name: string;
-    city: string | null;
-    state: string | null;
-  };
-}
-
-const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  pedido_realizado: { label: "Pedido Realizado", icon: Package, className: "status-pending" },
-  em_separacao: { label: "Em Separação", icon: Clock, className: "status-processing" },
-  enviado: { label: "Enviado", icon: Truck, className: "status-processing" },
-  entregue: { label: "Entregue", icon: CheckCircle, className: "status-completed" },
-  cancelado: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
-};
+import { getOrderStatus, orderStatusList } from "@/utils/orderStatus";
 
 const paymentStatusLabels: Record<string, string> = {
   pendente: "Pendente",

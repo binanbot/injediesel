@@ -1,15 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { 
-  ArrowLeft, 
-  Package, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Truck,
-  Loader2,
-  Building2,
-} from "lucide-react";
+import { ArrowLeft, Package, Loader2, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,14 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getOrderStatus, orderStatusList } from "@/utils/orderStatus";
 
 interface OrderItem {
   id: string;
@@ -63,14 +51,6 @@ interface Unit {
   state: string | null;
 }
 
-const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  pedido_realizado: { label: "Pedido Realizado", icon: Package, className: "status-pending" },
-  em_separacao: { label: "Em Separação", icon: Clock, className: "status-processing" },
-  enviado: { label: "Enviado", icon: Truck, className: "status-processing" },
-  entregue: { label: "Entregue", icon: CheckCircle, className: "status-completed" },
-  cancelado: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
-};
-
 export default function CompraDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -80,13 +60,7 @@ export default function CompraDetalhe() {
     queryKey: ["admin-order", id],
     queryFn: async () => {
       if (!id) throw new Error("ID não fornecido");
-      
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("id", id)
-        .single();
-      
+      const { data, error } = await supabase.from("orders").select("*").eq("id", id).single();
       if (error) throw error;
       return data as Order;
     },
@@ -97,13 +71,7 @@ export default function CompraDetalhe() {
     queryKey: ["unit", order?.unit_id],
     queryFn: async () => {
       if (!order?.unit_id) return null;
-      
-      const { data, error } = await supabase
-        .from("units")
-        .select("*")
-        .eq("id", order.unit_id)
-        .single();
-      
+      const { data, error } = await supabase.from("units").select("*").eq("id", order.unit_id).single();
       if (error) throw error;
       return data as Unit;
     },
@@ -114,12 +82,7 @@ export default function CompraDetalhe() {
     queryKey: ["admin-order-items", id],
     queryFn: async () => {
       if (!id) throw new Error("ID não fornecido");
-      
-      const { data, error } = await supabase
-        .from("order_items")
-        .select("*")
-        .eq("order_id", id);
-      
+      const { data, error } = await supabase.from("order_items").select("*").eq("order_id", id);
       if (error) throw error;
       return data as OrderItem[];
     },
@@ -129,12 +92,7 @@ export default function CompraDetalhe() {
   const updateStatus = useMutation({
     mutationFn: async (newStatus: string) => {
       if (!id) throw new Error("ID não fornecido");
-      
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: newStatus })
-        .eq("id", id);
-      
+      const { error } = await supabase.from("orders").update({ status: newStatus }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -147,16 +105,11 @@ export default function CompraDetalhe() {
     },
   });
 
-  const formatPrice = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
+  const fmt = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-  };
+  const fmtDate = (d: string) =>
+    format(new Date(d), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
 
   if (orderLoading || itemsLoading) {
     return (
@@ -170,8 +123,7 @@ export default function CompraDetalhe() {
     return (
       <div className="space-y-6">
         <Button variant="ghost" onClick={() => navigate("/admin/compras")}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
+          <ArrowLeft className="h-4 w-4 mr-2" />Voltar
         </Button>
         <div className="glass-card p-12 text-center">
           <Package className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
@@ -181,57 +133,47 @@ export default function CompraDetalhe() {
     );
   }
 
-  const status = statusConfig[order.status] || statusConfig.pedido_realizado;
+  const status = getOrderStatus(order.status);
   const StatusIcon = status.icon;
 
   return (
     <div className="space-y-6 max-w-5xl">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate("/admin/compras")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">Pedido #{order.order_number}</h1>
-          <p className="text-muted-foreground">
-            Realizado em {formatDate(order.created_at)}
-          </p>
+          <p className="text-muted-foreground">Realizado em {fmtDate(order.created_at)}</p>
         </div>
-        <Badge className={cn("gap-1 text-sm", status.className)}>
+        <Badge className={cn("gap-1 text-sm border", status.badgeClass)}>
           <StatusIcon className="h-4 w-4" />
           {status.label}
         </Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Unit Info */}
           {unit && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Building2 className="h-5 w-5" />
-                  Franqueado
+                  <Building2 className="h-5 w-5" />Franqueado
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="font-medium">{unit.name}</p>
                 {unit.city && (
-                  <p className="text-sm text-muted-foreground">
-                    {unit.city}, {unit.state}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{unit.city}, {unit.state}</p>
                 )}
               </CardContent>
             </Card>
           )}
 
-          {/* Items */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Package className="h-5 w-5" />
-                Itens do pedido
+                <Package className="h-5 w-5" />Itens do pedido
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -243,12 +185,10 @@ export default function CompraDetalhe() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium line-clamp-1">{item.product_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {item.quantity}x {formatPrice(item.unit_price)}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{item.quantity}x {fmt(item.unit_price)}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-semibold">{formatPrice(item.line_total)}</p>
+                      <p className="font-semibold">{fmt(item.line_total)}</p>
                     </div>
                   </div>
                 ))}
@@ -257,13 +197,9 @@ export default function CompraDetalhe() {
           </Card>
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-6">
-          {/* Status Update */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Atualizar Status</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-lg">Atualizar Status</CardTitle></CardHeader>
             <CardContent>
               <Select
                 value={order.status}
@@ -274,11 +210,11 @@ export default function CompraDetalhe() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(statusConfig).map(([value, config]) => (
-                    <SelectItem key={value} value={value}>
+                  {orderStatusList.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
                       <span className="flex items-center gap-2">
-                        <config.icon className="h-4 w-4" />
-                        {config.label}
+                        <s.icon className="h-4 w-4" />
+                        {s.label}
                       </span>
                     </SelectItem>
                   ))}
@@ -288,36 +224,30 @@ export default function CompraDetalhe() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Resumo</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-lg">Resumo</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
                   Subtotal ({order.items_count} {order.items_count === 1 ? "item" : "itens"})
                 </span>
-                <span>{formatPrice(order.subtotal)}</span>
+                <span>{fmt(order.subtotal)}</span>
               </div>
-
               {order.shipping_amount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Frete</span>
-                  <span>{formatPrice(order.shipping_amount)}</span>
+                  <span>{fmt(order.shipping_amount)}</span>
                 </div>
               )}
-
               {order.discount_amount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Desconto</span>
-                  <span className="text-green-500">-{formatPrice(order.discount_amount)}</span>
+                  <span className="text-green-500">-{fmt(order.discount_amount)}</span>
                 </div>
               )}
-
               <Separator />
-
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span className="text-lg text-primary">{formatPrice(order.total_amount)}</span>
+                <span className="text-lg text-primary">{fmt(order.total_amount)}</span>
               </div>
             </CardContent>
           </Card>
