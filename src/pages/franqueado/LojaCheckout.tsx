@@ -335,7 +335,7 @@ export default function LojaCheckout() {
                   </Button>
                 )}
                 <Button
-                  className={cn("flex-1 gap-2", step === "confirm" && "bg-green-600 hover:bg-green-700")}
+                  className={cn("flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white", step === "confirm" && "bg-green-700 hover:bg-green-800")}
                   onClick={() => {
                     if (step === "confirm") {
                       handleSendWhatsApp();
