@@ -1,11 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { 
-  Package, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Truck,
   ChevronRight,
   Loader2,
   ShoppingBag,
@@ -14,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { getOrderStatus } from "@/utils/orderStatus";
 
 interface Order {
   id: string;
@@ -24,14 +20,6 @@ interface Order {
   items_count: number;
   created_at: string;
 }
-
-const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  pedido_realizado: { label: "Pedido Realizado", icon: Package, className: "status-pending" },
-  em_separacao: { label: "Em Separação", icon: Clock, className: "status-processing" },
-  enviado: { label: "Enviado", icon: Truck, className: "status-processing" },
-  entregue: { label: "Entregue", icon: CheckCircle, className: "status-completed" },
-  cancelado: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
-};
 
 export default function MeusPedidos() {
   const navigate = useNavigate();
@@ -49,22 +37,13 @@ export default function MeusPedidos() {
     },
   });
 
-  const formatPrice = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
+  const formatPrice = (value: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("pt-BR", {
+      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
     });
-  };
 
   if (isLoading) {
     return (
@@ -76,13 +55,10 @@ export default function MeusPedidos() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Meus Pedidos</h1>
-          <p className="text-muted-foreground">
-            Acompanhe seus pedidos realizados
-          </p>
+          <p className="text-muted-foreground">Acompanhe seus pedidos realizados</p>
         </div>
         <Button onClick={() => navigate("/franqueado/loja")}>
           <ShoppingBag className="h-4 w-4 mr-2" />
@@ -90,22 +66,17 @@ export default function MeusPedidos() {
         </Button>
       </div>
 
-      {/* Orders List */}
       {!orders || orders.length === 0 ? (
         <div className="glass-card p-12 text-center">
-          <Package className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+          <ShoppingBag className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
           <h3 className="font-semibold mb-2">Nenhum pedido encontrado</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Você ainda não realizou nenhum pedido
-          </p>
-          <Button onClick={() => navigate("/franqueado/loja")}>
-            Fazer primeiro pedido
-          </Button>
+          <p className="text-sm text-muted-foreground mb-4">Você ainda não realizou nenhum pedido</p>
+          <Button onClick={() => navigate("/franqueado/loja")}>Fazer primeiro pedido</Button>
         </div>
       ) : (
         <div className="space-y-4">
           {orders.map((order) => {
-            const status = statusConfig[order.status] || statusConfig.pending;
+            const status = getOrderStatus(order.status);
             const StatusIcon = status.icon;
 
             return (
@@ -117,15 +88,11 @@ export default function MeusPedidos() {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-lg bg-muted/30 flex items-center justify-center">
-                      <Package className="h-6 w-6 text-muted-foreground" />
+                      <StatusIcon className="h-6 w-6 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="font-medium">
-                        Pedido #{order.order_number}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(order.created_at)}
-                      </p>
+                      <p className="font-medium">Pedido #{order.order_number}</p>
+                      <p className="text-sm text-muted-foreground">{formatDate(order.created_at)}</p>
                     </div>
                   </div>
 
@@ -137,7 +104,7 @@ export default function MeusPedidos() {
                       </p>
                     </div>
 
-                    <Badge className={cn("gap-1", status.className)}>
+                    <Badge className={cn("gap-1 border", status.badgeClass)}>
                       <StatusIcon className="h-3 w-3" />
                       {status.label}
                     </Badge>

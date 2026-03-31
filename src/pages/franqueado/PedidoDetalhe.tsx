@@ -1,20 +1,13 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { 
-  ArrowLeft, 
-  Package, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Truck,
-  Loader2,
-} from "lucide-react";
+import { ArrowLeft, Package, Truck, CheckCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { getOrderStatus } from "@/utils/orderStatus";
 
 interface OrderItem {
   id: string;
@@ -41,14 +34,6 @@ interface Order {
   updated_at: string;
 }
 
-const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  pedido_realizado: { label: "Pedido Realizado", icon: Package, className: "status-pending" },
-  em_separacao: { label: "Em Separação", icon: Clock, className: "status-processing" },
-  enviado: { label: "Enviado", icon: Truck, className: "status-processing" },
-  entregue: { label: "Entregue", icon: CheckCircle, className: "status-completed" },
-  cancelado: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
-};
-
 export default function PedidoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -57,13 +42,7 @@ export default function PedidoDetalhe() {
     queryKey: ["order", id],
     queryFn: async () => {
       if (!id) throw new Error("ID não fornecido");
-      
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("id", id)
-        .single();
-      
+      const { data, error } = await supabase.from("orders").select("*").eq("id", id).single();
       if (error) throw error;
       return data as Order;
     },
@@ -74,34 +53,20 @@ export default function PedidoDetalhe() {
     queryKey: ["order-items", id],
     queryFn: async () => {
       if (!id) throw new Error("ID não fornecido");
-      
-      const { data, error } = await supabase
-        .from("order_items")
-        .select("*")
-        .eq("order_id", id);
-      
+      const { data, error } = await supabase.from("order_items").select("*").eq("order_id", id);
       if (error) throw error;
       return data as OrderItem[];
     },
     enabled: !!id,
   });
 
-  const formatPrice = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
+  const fmt = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+  const fmtDate = (d: string) =>
+    new Date(d).toLocaleDateString("pt-BR", {
+      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
     });
-  };
 
   if (orderLoading || itemsLoading) {
     return (
@@ -115,8 +80,7 @@ export default function PedidoDetalhe() {
     return (
       <div className="space-y-6">
         <Button variant="ghost" onClick={() => navigate("/franqueado/loja/pedidos")}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
+          <ArrowLeft className="h-4 w-4 mr-2" />Voltar
         </Button>
         <div className="glass-card p-12 text-center">
           <Package className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
@@ -126,36 +90,31 @@ export default function PedidoDetalhe() {
     );
   }
 
-  const status = statusConfig[order.status] || statusConfig.pedido_realizado;
+  const status = getOrderStatus(order.status);
   const StatusIcon = status.icon;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate("/franqueado/loja/pedidos")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">Pedido #{order.order_number}</h1>
-          <p className="text-muted-foreground">
-            Realizado em {formatDate(order.created_at)}
-          </p>
+          <p className="text-muted-foreground">Realizado em {fmtDate(order.created_at)}</p>
         </div>
-        <Badge className={cn("gap-1", status.className)}>
+        <Badge className={cn("gap-1 border", status.badgeClass)}>
           <StatusIcon className="h-3 w-3" />
           {status.label}
         </Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Items */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Itens do pedido
+                <Package className="h-5 w-5" />Itens do pedido
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -167,12 +126,10 @@ export default function PedidoDetalhe() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium line-clamp-1">{item.product_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {item.quantity}x {formatPrice(item.unit_price)}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{item.quantity}x {fmt(item.unit_price)}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-semibold">{formatPrice(item.line_total)}</p>
+                      <p className="font-semibold">{fmt(item.line_total)}</p>
                     </div>
                   </div>
                 ))}
@@ -181,51 +138,40 @@ export default function PedidoDetalhe() {
           </Card>
         </div>
 
-        {/* Summary */}
         <div className="lg:col-span-1">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Resumo</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-lg">Resumo</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              {/* Items Count */}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
                   Subtotal ({order.items_count} {order.items_count === 1 ? "item" : "itens"})
                 </span>
-                <span>{formatPrice(order.subtotal)}</span>
+                <span>{fmt(order.subtotal)}</span>
               </div>
-
               {order.shipping_amount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Frete</span>
-                  <span>{formatPrice(order.shipping_amount)}</span>
+                  <span>{fmt(order.shipping_amount)}</span>
                 </div>
               )}
-
               {order.discount_amount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Desconto</span>
-                  <span className="text-green-500">-{formatPrice(order.discount_amount)}</span>
+                  <span className="text-green-500">-{fmt(order.discount_amount)}</span>
                 </div>
               )}
-
               <Separator />
-
-              {/* Total */}
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span className="text-lg text-primary">{formatPrice(order.total_amount)}</span>
+                <span className="text-lg text-primary">{fmt(order.total_amount)}</span>
               </div>
 
-              {/* Status indicator */}
-              {order.status === "enviado" && (
+              {(order.status === "enviado" || order.status === "em_transito") && (
                 <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-center">
                   <Truck className="h-6 w-6 text-warning mx-auto mb-1" />
-                  <p className="text-sm font-medium text-warning">Pedido enviado</p>
+                  <p className="text-sm font-medium text-warning">Pedido a caminho</p>
                 </div>
               )}
-
               {order.status === "entregue" && (
                 <div className="p-3 rounded-lg bg-success/10 border border-success/20 text-center">
                   <CheckCircle className="h-6 w-6 text-success mx-auto mb-1" />

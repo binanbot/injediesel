@@ -9,8 +9,6 @@ import {
   ChevronRight,
   Clock,
   CheckCircle,
-  XCircle,
-  Truck,
   Package,
   Loader2,
   Calendar,
@@ -52,6 +50,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getOrderStatus, orderStatusList } from "@/utils/orderStatus";
 
 interface Order {
   id: string;
@@ -68,14 +67,6 @@ interface Order {
     state: string | null;
   };
 }
-
-const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  pedido_realizado: { label: "Pedido Realizado", icon: Package, className: "status-pending" },
-  em_separacao: { label: "Em Separação", icon: Clock, className: "status-processing" },
-  enviado: { label: "Enviado", icon: Truck, className: "status-processing" },
-  entregue: { label: "Entregue", icon: CheckCircle, className: "status-completed" },
-  cancelado: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
-};
 
 const paymentStatusLabels: Record<string, string> = {
   pendente: "Pendente",
@@ -225,7 +216,7 @@ export default function ComprasFranqueados() {
         order.unit?.name || "",
         order.unit?.city || "",
         order.unit?.state || "",
-        statusConfig[order.status]?.label || order.status,
+        getOrderStatus(order.status).label,
         order.total_amount.toFixed(2).replace(".", ","),
         paymentStatusLabels[order.payment_status] || order.payment_status,
         formatDate(order.created_at),
@@ -356,9 +347,9 @@ export default function ComprasFranqueados() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
-                {Object.entries(statusConfig).map(([value, config]) => (
-                  <SelectItem key={value} value={value}>
-                    {config.label}
+                {orderStatusList.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -441,7 +432,7 @@ export default function ComprasFranqueados() {
                 </TableHeader>
                 <TableBody>
                   {filteredOrders.map((order) => {
-                    const status = statusConfig[order.status] || statusConfig.pending;
+                    const status = getOrderStatus(order.status);
                     const StatusIcon = status.icon;
 
                     return (
@@ -472,7 +463,7 @@ export default function ComprasFranqueados() {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Badge className={cn("gap-1", status.className)}>
+                          <Badge className={cn("gap-1 border", status.badgeClass)}>
                             <StatusIcon className="h-3 w-3" />
                             {status.label}
                           </Badge>
