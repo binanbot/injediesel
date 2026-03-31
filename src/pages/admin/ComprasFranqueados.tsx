@@ -451,7 +451,7 @@ export default function ComprasFranqueados() {
                         onClick={() => navigate(`/admin/compras/${order.id}`)}
                       >
                         <TableCell className="font-mono text-sm">
-                          #{order.id.slice(0, 8)}
+                          #{order.order_number}
                         </TableCell>
                         <TableCell>
                           <div>
