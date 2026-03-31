@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles_franchisees ADD COLUMN IF NOT EXISTS delivery_address jsonb DEFAULT NULL;

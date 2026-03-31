@@ -530,6 +530,7 @@ export type Database = {
           contract_type: string | null
           cpf: string | null
           created_at: string | null
+          delivery_address: Json | null
           display_name: string | null
           email: string
           equipment_type: string | null
@@ -561,6 +562,7 @@ export type Database = {
           contract_type?: string | null
           cpf?: string | null
           created_at?: string | null
+          delivery_address?: Json | null
           display_name?: string | null
           email: string
           equipment_type?: string | null
@@ -592,6 +594,7 @@ export type Database = {
           contract_type?: string | null
           cpf?: string | null
           created_at?: string | null
+          delivery_address?: Json | null
           display_name?: string | null
           email?: string
           equipment_type?: string | null

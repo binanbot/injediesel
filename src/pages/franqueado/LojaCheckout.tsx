@@ -8,55 +8,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useCartStore, CartItem } from "@/stores/useCartStore";
 import { cn } from "@/lib/utils";
+import {
+  DeliveryAddressForm,
+  DeliveryAddress,
+  FranchiseProfile,
+  emptyAddress,
+  buildDefaultDeliveryAddress,
+} from "@/components/franqueado/DeliveryAddressForm";
 
 type CheckoutStep = "review" | "delivery" | "confirm";
-
-type DeliveryAddress = {
-  recipient_name: string;
-  company_name: string;
-  cnpj: string;
-  phone: string;
-  email: string;
-  zip_code: string;
-  street: string;
-  number: string;
-  complement: string;
-  district: string;
-  city: string;
-  state: string;
-};
-
-type FranchiseProfile = {
-  id: string;
-  unit_name: string;
-  company_name: string;
-  cnpj: string;
-  phone: string;
-  email: string;
-  zip_code: string;
-  street: string;
-  number: string;
-  complement: string;
-  district: string;
-  city: string;
-  state: string;
-  delivery_address?: DeliveryAddress | null;
-};
 
 const formatMoney = (value: number) =>
   value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-const buildWhatsAppMessage = (
-  address: DeliveryAddress,
-  items: CartItem[]
-) => {
+const buildWhatsAppMessage = (address: DeliveryAddress, items: CartItem[]) => {
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
   const itemsText = items
     .map((item, index) => {
       const subtotal = item.price * item.quantity;
@@ -94,51 +63,13 @@ ${itemsText}
 `.trim();
 };
 
-const buildDefaultDeliveryAddress = (profile: FranchiseProfile): DeliveryAddress => ({
-  recipient_name: profile.unit_name || "",
-  company_name: profile.company_name || "",
-  cnpj: profile.cnpj || "",
-  phone: profile.phone || "",
-  email: profile.email || "",
-  zip_code: profile.zip_code || "",
-  street: profile.street || "",
-  number: profile.number || "",
-  complement: profile.complement || "",
-  district: profile.district || "",
-  city: profile.city || "",
-  state: profile.state || "",
-});
-
-const sendOrderToWhatsApp = (address: DeliveryAddress, items: CartItem[]) => {
-  const phone = "5545998590384";
-  if (!items.length) {
-    toast.error("O carrinho está vazio.");
-    return;
-  }
-  const message = buildWhatsAppMessage(address, items);
-  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-};
-
 export default function LojaCheckout() {
   const navigate = useNavigate();
   const { items, getTotal, clearCart } = useCartStore();
   const total = getTotal();
 
   const [step, setStep] = useState<CheckoutStep>("review");
-  const [delivery, setDelivery] = useState<DeliveryAddress>({
-    recipient_name: "",
-    company_name: "",
-    cnpj: "",
-    phone: "",
-    email: "",
-    zip_code: "",
-    street: "",
-    number: "",
-    complement: "",
-    district: "",
-    city: "",
-    state: "",
-  });
+  const [delivery, setDelivery] = useState<DeliveryAddress>(emptyAddress);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["checkout-franchise-profile"],
@@ -151,7 +82,7 @@ export default function LojaCheckout() {
       const [profileRes, unitRes] = await Promise.all([
         supabase
           .from("profiles_franchisees")
-          .select("id, display_name, email, cnpj, first_name, last_name, cidade")
+          .select("id, display_name, email, cnpj, first_name, last_name, cidade, delivery_address")
           .eq("user_id", user.id)
           .maybeSingle(),
         unitId
@@ -162,7 +93,7 @@ export default function LojaCheckout() {
       const p = profileRes.data;
       const u = unitRes.data;
 
-      return {
+      const fp: FranchiseProfile = {
         id: p?.id ?? "",
         unit_name: u?.name ?? "",
         company_name: p?.display_name ?? `${p?.first_name ?? ""} ${p?.last_name ?? ""}`.trim(),
@@ -176,22 +107,30 @@ export default function LojaCheckout() {
         district: "",
         city: u?.city ?? p?.cidade ?? "",
         state: u?.state ?? "",
+        delivery_address: p?.delivery_address as DeliveryAddress | null,
       };
+
+      return fp;
     },
   });
 
   const prefillDelivery = () => {
     if (!profile) return;
-    setDelivery((prev) => {
-      const defaults = buildDefaultDeliveryAddress(profile);
-      return Object.fromEntries(
-        Object.keys(defaults).map((k) => [k, prev[k as keyof DeliveryAddress] || defaults[k as keyof DeliveryAddress]])
-      ) as DeliveryAddress;
-    });
+    if (profile.delivery_address) {
+      setDelivery(profile.delivery_address);
+    } else {
+      setDelivery(buildDefaultDeliveryAddress(profile));
+    }
   };
 
   const handleSendWhatsApp = () => {
-    sendOrderToWhatsApp(delivery, items);
+    const phone = "5545998590384";
+    if (!items.length) {
+      toast.error("O carrinho está vazio.");
+      return;
+    }
+    const message = buildWhatsAppMessage(delivery, items);
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
     clearCart();
     toast.success("Pedido enviado via WhatsApp!");
     navigate("/franqueado/loja");
@@ -215,9 +154,7 @@ export default function LojaCheckout() {
         <div className="glass-card p-12 text-center">
           <ShoppingCart className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
           <h3 className="font-semibold mb-2">Carrinho vazio</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Adicione produtos ao carrinho para continuar
-          </p>
+          <p className="text-sm text-muted-foreground mb-4">Adicione produtos ao carrinho para continuar</p>
           <Button onClick={() => navigate("/franqueado/loja")}>Ir para a loja</Button>
         </div>
       </div>
@@ -230,9 +167,6 @@ export default function LojaCheckout() {
     { key: "confirm", label: "Enviar", icon: MessageCircle },
   ];
   const currentStepIndex = steps.findIndex((s) => s.key === step);
-
-  const updateField = (field: keyof DeliveryAddress, value: string) =>
-    setDelivery((prev) => ({ ...prev, [field]: value }));
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -306,80 +240,13 @@ export default function LojaCheckout() {
           {/* Step: Delivery */}
           {step === "delivery" && (
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Endereço de entrega
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Destinatário</Label>
-                    <Input placeholder="Nome do destinatário" value={delivery.recipient_name} onChange={(e) => updateField("recipient_name", e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Razão Social</Label>
-                    <Input placeholder="Razão social" value={delivery.company_name} onChange={(e) => updateField("company_name", e.target.value)} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>CNPJ</Label>
-                    <Input placeholder="00.000.000/0000-00" value={delivery.cnpj} onChange={(e) => updateField("cnpj", e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Telefone</Label>
-                    <Input placeholder="(00) 00000-0000" value={delivery.phone} onChange={(e) => updateField("phone", e.target.value)} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>E-mail</Label>
-                  <Input placeholder="email@exemplo.com" value={delivery.email} onChange={(e) => updateField("email", e.target.value)} />
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  <Label>CEP</Label>
-                  <Input placeholder="00000-000" value={delivery.zip_code} onChange={(e) => updateField("zip_code", e.target.value)} />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="col-span-2 space-y-2">
-                    <Label>Rua</Label>
-                    <Input placeholder="Nome da rua" value={delivery.street} onChange={(e) => updateField("street", e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Número</Label>
-                    <Input placeholder="Nº" value={delivery.number} onChange={(e) => updateField("number", e.target.value)} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Complemento</Label>
-                    <Input placeholder="Apto, bloco, etc." value={delivery.complement} onChange={(e) => updateField("complement", e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Bairro</Label>
-                    <Input placeholder="Bairro" value={delivery.district} onChange={(e) => updateField("district", e.target.value)} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Cidade</Label>
-                    <Input placeholder={profile?.city || "Cidade"} value={delivery.city} onChange={(e) => updateField("city", e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Estado</Label>
-                    <Input placeholder={profile?.state || "UF"} value={delivery.state} onChange={(e) => updateField("state", e.target.value)} />
-                  </div>
-                </div>
-
-                {profile && (
-                  <div className="p-3 rounded-lg bg-muted/30 text-sm space-y-1">
-                    <p className="text-muted-foreground font-medium">Dados da unidade:</p>
-                    <p>{profile.unit_name} • {profile.email}</p>
-                    {profile.cnpj && <p>CNPJ: {profile.cnpj}</p>}
-                  </div>
-                )}
+              <CardContent className="pt-6">
+                <DeliveryAddressForm
+                  address={delivery}
+                  onChange={setDelivery}
+                  profile={profile}
+                  showSaveButton
+                />
               </CardContent>
             </Card>
           )}
@@ -396,9 +263,9 @@ export default function LojaCheckout() {
               <CardContent className="space-y-4">
                 <div className="p-4 rounded-lg bg-muted/30 space-y-2">
                   <p className="text-sm text-muted-foreground font-medium">Dados do franqueado</p>
-                  <p className="text-sm">{delivery.recipient_name || profile?.company_name} • {delivery.company_name || profile?.company_name}</p>
+                  <p className="text-sm">{delivery.recipient_name} • {delivery.company_name}</p>
                   {delivery.cnpj && <p className="text-sm">CNPJ: {delivery.cnpj}</p>}
-                  <p className="text-sm">{delivery.email || profile?.email}</p>
+                  <p className="text-sm">{delivery.email}</p>
                   {delivery.phone && <p className="text-sm">Tel: {delivery.phone}</p>}
                 </div>
 
@@ -409,7 +276,7 @@ export default function LojaCheckout() {
                       {delivery.street}, {delivery.number}{delivery.complement ? ` - ${delivery.complement}` : ""} — {delivery.district}
                     </p>
                     <p className="text-sm">
-                      {delivery.city || profile?.city} - {delivery.state || profile?.state} • CEP: {delivery.zip_code}
+                      {delivery.city} - {delivery.state} • CEP: {delivery.zip_code}
                     </p>
                   </div>
                 )}
@@ -428,7 +295,7 @@ export default function LojaCheckout() {
 
                 <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
                   <p className="text-sm text-muted-foreground">
-                    Ao confirmar, o pedido será enviado via <strong>WhatsApp</strong> para a equipe Promax com todos os detalhes preenchidos.
+                    Ao confirmar, o pedido será enviado via <strong>WhatsApp</strong> para a equipe Promax.
                   </p>
                 </div>
               </CardContent>
