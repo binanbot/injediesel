@@ -136,10 +136,15 @@ export function useCart() {
         id: item.id,
         product_id: item.product_id,
         quantity: item.quantity,
-        product: item.products,
+        name: item.products?.name ?? "",
+        sku: item.products?.sku,
+        price: item.products?.price ?? 0,
+        image: item.products?.image_url ?? undefined,
+        category: item.products?.category ?? undefined,
+        available: item.products?.available ?? true,
       }));
 
-      const total = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+      const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
       return {
         id: existingCart.id,
