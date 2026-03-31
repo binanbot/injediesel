@@ -6,19 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 
-interface CartItem {
-  id: string;
-  product_id: string;
-  quantity: number;
-  product: {
-    id: string;
-    name: string;
-    sku: string;
-    price: number;
-    image_url: string | null;
-    available: boolean;
-  };
-}
+import { CartItem } from "@/hooks/useCart";
 
 interface CartDrawerProps {
   isOpen: boolean;
