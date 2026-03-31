@@ -174,7 +174,18 @@ export function DeliveryAddressForm({
         </div>
         <div className="space-y-2">
           <Label>CEP</Label>
-          <Input placeholder="00000-000" value={address.zip_code} onChange={(e) => handleChange("zip_code", e.target.value)} />
+          <div className="relative">
+            <Input
+              placeholder="00000-000"
+              value={address.zip_code}
+              onChange={(e) => {
+                const value = e.target.value;
+                handleChange("zip_code", value);
+                fetchAddressByCep(value);
+              }}
+            />
+            {fetchingCep && <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />}
+          </div>
         </div>
         <div className="space-y-2">
           <Label>Rua</Label>
