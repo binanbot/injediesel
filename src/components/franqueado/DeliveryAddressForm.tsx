@@ -83,9 +83,33 @@ export function DeliveryAddressForm({
   showSaveButton = false,
 }: DeliveryAddressFormProps) {
   const [saving, setSaving] = useState(false);
+  const [fetchingCep, setFetchingCep] = useState(false);
 
   const handleChange = (field: keyof DeliveryAddress, value: string) => {
     onChange({ ...address, [field]: value });
+  };
+
+  const fetchAddressByCep = async (cep: string) => {
+    const cleanCep = cep.replace(/\D/g, "");
+    if (cleanCep.length !== 8) return;
+    try {
+      setFetchingCep(true);
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await response.json();
+      if (data.erro) return;
+      onChange({
+        ...address,
+        zip_code: cleanCep,
+        street: data.logradouro || address.street,
+        district: data.bairro || address.district,
+        city: data.localidade || address.city,
+        state: data.uf || address.state,
+      });
+    } catch {
+      // silently ignore
+    } finally {
+      setFetchingCep(false);
+    }
   };
 
   const handleUseProfileAddress = () => {
@@ -150,7 +174,18 @@ export function DeliveryAddressForm({
         </div>
         <div className="space-y-2">
           <Label>CEP</Label>
-          <Input placeholder="00000-000" value={address.zip_code} onChange={(e) => handleChange("zip_code", e.target.value)} />
+          <div className="relative">
+            <Input
+              placeholder="00000-000"
+              value={address.zip_code}
+              onChange={(e) => {
+                const value = e.target.value;
+                handleChange("zip_code", value);
+                fetchAddressByCep(value);
+              }}
+            />
+            {fetchingCep && <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />}
+          </div>
         </div>
         <div className="space-y-2">
           <Label>Rua</Label>
