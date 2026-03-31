@@ -59,52 +59,62 @@ export function useCart() {
     enabled: !!isAdmin,
   });
 
-  // Fetch or create cart
-  const { data: cart, isLoading } = useQuery({
-    queryKey: ["cart", selectedUnitId],
-    queryFn: async () => {
-      // Get current user's unit_id
-      const { data: { user } } = await supabase.auth.getUser();
+  const resolveCurrentUnitId = useCallback(
+    async (requireSelection = false): Promise<string | null> => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) throw new Error("Não autenticado");
 
-      let unitId: string | null = null;
-
-      // If admin with selected unit
-      if (isAdmin && selectedUnitId) {
-        unitId = selectedUnitId;
-      } else {
-        // Get unit_id using the database function for franchisees
-        const { data: unitData } = await supabase
-          .rpc("get_user_unit_id", { _user_id: user.id });
-        
-        unitId = unitData;
-      }
-
-      if (!unitId) {
-        // Return null cart if no unit (admin needs to select)
+      if (isAdmin) {
+        if (selectedUnitId) return selectedUnitId;
+        if (requireSelection) {
+          throw new Error("Selecione uma unidade antes de adicionar produtos ao carrinho");
+        }
         return null;
       }
 
-      // Try to get existing cart
-      let { data: existingCart, error: cartError } = await supabase
-        .from("carts")
-        .select("*")
-        .eq("unit_id", unitId)
-        .maybeSingle();
+      const { data: unitId, error: unitError } = await supabase.rpc("get_user_unit_id", {
+        _user_id: user.id,
+      });
 
-      // If no cart exists, create one
-      if (!existingCart) {
-        const { data: newCart, error: createError } = await supabase
-          .from("carts")
-          .insert({ unit_id: unitId })
-          .select()
-          .single();
-        
-        if (createError) throw createError;
-        existingCart = newCart;
+      if (unitError) throw unitError;
+      if (!unitId) {
+        throw new Error("Sua conta não possui unidade vinculada");
       }
 
-      // Get cart items with product details
+      return unitId;
+    },
+    [isAdmin, selectedUnitId]
+  );
+
+  const fetchOrCreateCartByUnit = useCallback(async (unitId: string) => {
+    const { data: existingCart, error: cartError } = await supabase
+      .from("carts")
+      .select("id, unit_id")
+      .eq("unit_id", unitId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (cartError) throw cartError;
+    if (existingCart) return existingCart;
+
+    const { data: newCart, error: createError } = await supabase
+      .from("carts")
+      .insert({ unit_id: unitId })
+      .select("id, unit_id")
+      .single();
+
+    if (createError) throw createError;
+    return newCart;
+  }, []);
+
+  const fetchCartByUnit = useCallback(
+    async (unitId: string): Promise<Cart> => {
+      const existingCart = await fetchOrCreateCartByUnit(unitId);
+
       const { data: items, error: itemsError } = await supabase
         .from("cart_items")
         .select(`
@@ -131,29 +141,40 @@ export function useCart() {
         product: item.products,
       }));
 
-      const total = cartItems.reduce(
-        (sum, item) => sum + item.product.price * item.quantity,
-        0
-      );
+      const total = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
       return {
         id: existingCart.id,
         unit_id: existingCart.unit_id,
         items: cartItems,
         total,
-      } as Cart;
+      };
+    },
+    [fetchOrCreateCartByUnit]
+  );
+
+  // Fetch or create cart
+  const { data: cart, isLoading } = useQuery({
+    queryKey: ["cart", selectedUnitId, isAdmin],
+    queryFn: async () => {
+      const unitId = await resolveCurrentUnitId(false);
+      if (!unitId) return null;
+      return fetchCartByUnit(unitId);
     },
     staleTime: 1000 * 60, // 1 minute
-    enabled: !isAdmin || !!selectedUnitId,
+    enabled: isAdmin !== undefined && (!isAdmin || !!selectedUnitId),
   });
 
   // Add item to cart
   const addItem = useMutation({
     mutationFn: async ({ productId, quantity = 1, productName }: { productId: string; quantity?: number; productName?: string }) => {
-      if (!cart) throw new Error("Carrinho não disponível");
+      const unitId = await resolveCurrentUnitId(true);
+      if (!unitId) throw new Error("Selecione uma unidade antes de adicionar produtos ao carrinho");
+
+      const cartData = cart?.unit_id === unitId ? cart : await fetchCartByUnit(unitId);
 
       // Check if item already exists
-      const existingItem = cart.items.find((item) => item.product_id === productId);
+      const existingItem = cartData.items.find((item) => item.product_id === productId);
 
       if (existingItem) {
         // Update quantity
@@ -168,7 +189,7 @@ export function useCart() {
         const { error } = await supabase
           .from("cart_items")
           .insert({
-            cart_id: cart.id,
+            cart_id: cartData.id,
             product_id: productId,
             quantity,
           });
