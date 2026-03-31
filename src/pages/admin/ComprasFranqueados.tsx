@@ -176,8 +176,8 @@ export default function ComprasFranqueados() {
       pending: filteredOrders.filter((o) => o.status === "pending").length,
       paid: filteredOrders.filter((o) => o.status === "paid").length,
       revenue: filteredOrders
-        .filter((o) => o.status === "paid")
-        .reduce((sum, o) => sum + o.total, 0),
+        .filter((o) => o.payment_status === "pago")
+        .reduce((sum, o) => sum + o.total_amount, 0),
     };
   }, [filteredOrders]);
 
