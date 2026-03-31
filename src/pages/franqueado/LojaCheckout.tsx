@@ -83,7 +83,7 @@ export default function LojaCheckout() {
       const [profileRes, unitRes] = await Promise.all([
         supabase
           .from("profiles_franchisees")
-          .select("id, display_name, email, cnpj, first_name, last_name, cidade, delivery_address")
+          .select("id, display_name, email, cnpj, first_name, last_name, cidade, delivery_address, phone, zip_code, street, address_number, complement, district, state")
           .eq("user_id", user.id)
           .maybeSingle(),
         unitId
@@ -99,15 +99,15 @@ export default function LojaCheckout() {
         unit_name: u?.name ?? "",
         company_name: p?.display_name ?? `${p?.first_name ?? ""} ${p?.last_name ?? ""}`.trim(),
         cnpj: p?.cnpj ?? "",
-        phone: "",
+        phone: (p as any)?.phone ?? "",
         email: p?.email ?? user.email ?? "",
-        zip_code: "",
-        street: "",
-        number: "",
-        complement: "",
-        district: "",
+        zip_code: (p as any)?.zip_code ?? "",
+        street: (p as any)?.street ?? "",
+        number: (p as any)?.address_number ?? "",
+        complement: (p as any)?.complement ?? "",
+        district: (p as any)?.district ?? "",
         city: u?.city ?? p?.cidade ?? "",
-        state: u?.state ?? "",
+        state: u?.state ?? (p as any)?.state ?? "",
         delivery_address: p?.delivery_address as DeliveryAddress | null,
       };
 
