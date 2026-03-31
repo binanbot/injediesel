@@ -83,7 +83,7 @@ export default function LojaCheckout() {
       const [profileRes, unitRes] = await Promise.all([
         supabase
           .from("profiles_franchisees")
-          .select("id, display_name, email, cnpj, first_name, last_name, cidade, delivery_address")
+          .select("id, display_name, email, cnpj, first_name, last_name, cidade, delivery_address, phone, zip_code, street, address_number, complement, district, state")
           .eq("user_id", user.id)
           .maybeSingle(),
         unitId
