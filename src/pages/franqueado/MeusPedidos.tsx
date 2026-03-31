@@ -121,7 +121,7 @@ export default function MeusPedidos() {
                     </div>
                     <div>
                       <p className="font-medium">
-                        Pedido #{order.id.slice(0, 8)}
+                        Pedido #{order.order_number}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {formatDate(order.created_at)}
