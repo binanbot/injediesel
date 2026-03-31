@@ -195,7 +195,7 @@ export default function CompraDetalhe() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Pedido #{order.id.slice(0, 8)}</h1>
+          <h1 className="text-2xl font-bold">Pedido #{order.order_number}</h1>
           <p className="text-muted-foreground">
             Realizado em {formatDate(order.created_at)}
           </p>
