@@ -16,29 +16,43 @@ import { cn } from "@/lib/utils";
 
 type CheckoutStep = "review" | "delivery" | "confirm";
 
-interface FranchiseeData {
-  unitName: string;
-  companyName: string;
+type DeliveryAddress = {
+  recipient_name: string;
+  company_name: string;
   cnpj: string;
   phone: string;
   email: string;
+  zip_code: string;
   street: string;
   number: string;
+  complement: string;
   district: string;
   city: string;
   state: string;
-  zipCode: string;
-}
-
-const formatMoney = (value: number) => {
-  return value.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
 };
 
+type FranchiseProfile = {
+  id: string;
+  unit_name: string;
+  company_name: string;
+  cnpj: string;
+  phone: string;
+  email: string;
+  zip_code: string;
+  street: string;
+  number: string;
+  complement: string;
+  district: string;
+  city: string;
+  state: string;
+  delivery_address?: DeliveryAddress | null;
+};
+
+const formatMoney = (value: number) =>
+  value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
 const buildWhatsAppMessage = (
-  franchisee: FranchiseeData,
+  address: DeliveryAddress,
   items: CartItem[]
 ) => {
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -60,17 +74,17 @@ const buildWhatsAppMessage = (
 *NOVO PEDIDO PROMAX*
 
 *DADOS DO FRANQUEADO*
-Unidade: ${franchisee.unitName}
-Razão Social: ${franchisee.companyName}
-CNPJ: ${franchisee.cnpj}
-Telefone: ${franchisee.phone}
-E-mail: ${franchisee.email}
+Destinatário: ${address.recipient_name}
+Razão Social: ${address.company_name}
+CNPJ: ${address.cnpj}
+Telefone: ${address.phone}
+E-mail: ${address.email}
 
-*ENDEREÇO*
-Rua: ${franchisee.street}, ${franchisee.number}
-Bairro: ${franchisee.district}
-Cidade: ${franchisee.city} - ${franchisee.state}
-CEP: ${franchisee.zipCode}
+*ENDEREÇO DE ENTREGA*
+Rua: ${address.street}, ${address.number}${address.complement ? ` - ${address.complement}` : ""}
+Bairro: ${address.district}
+Cidade: ${address.city} - ${address.state}
+CEP: ${address.zip_code}
 
 *ITENS DO PEDIDO*
 
@@ -80,19 +94,14 @@ ${itemsText}
 `.trim();
 };
 
-const sendOrderToWhatsApp = (
-  franchisee: FranchiseeData,
-  items: CartItem[]
-) => {
+const sendOrderToWhatsApp = (address: DeliveryAddress, items: CartItem[]) => {
   const phone = "5545998590384";
   if (!items.length) {
     toast.error("O carrinho está vazio.");
     return;
   }
-  const message = buildWhatsAppMessage(franchisee, items);
-  const encodedMessage = encodeURIComponent(message);
-  const url = `https://wa.me/${phone}?text=${encodedMessage}`;
-  window.open(url, "_blank");
+  const message = buildWhatsAppMessage(address, items);
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 };
 
 export default function LojaCheckout() {
@@ -101,19 +110,24 @@ export default function LojaCheckout() {
   const total = getTotal();
 
   const [step, setStep] = useState<CheckoutStep>("review");
-  const [deliveryData, setDeliveryData] = useState({
+  const [delivery, setDelivery] = useState<DeliveryAddress>({
+    recipient_name: "",
+    company_name: "",
+    cnpj: "",
+    phone: "",
+    email: "",
+    zip_code: "",
     street: "",
     number: "",
+    complement: "",
     district: "",
     city: "",
     state: "",
-    zipCode: "",
   });
 
-  // Fetch franchisee profile data
-  const { data: franchiseeProfile, isLoading: profileLoading } = useQuery({
-    queryKey: ["checkout-franchisee-profile"],
-    queryFn: async () => {
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["checkout-franchise-profile"],
+    queryFn: async (): Promise<FranchiseProfile> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
@@ -122,7 +136,7 @@ export default function LojaCheckout() {
       const [profileRes, unitRes] = await Promise.all([
         supabase
           .from("profiles_franchisees")
-          .select("display_name, email, cnpj, first_name, last_name, cidade")
+          .select("id, display_name, email, cnpj, first_name, last_name, cidade")
           .eq("user_id", user.id)
           .maybeSingle(),
         unitId
@@ -130,48 +144,54 @@ export default function LojaCheckout() {
           : Promise.resolve({ data: null, error: null }),
       ]);
 
-      const profile = profileRes.data;
-      const unit = unitRes.data;
+      const p = profileRes.data;
+      const u = unitRes.data;
 
       return {
-        unitName: unit?.name ?? "",
-        companyName: profile?.display_name ?? `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim(),
-        cnpj: profile?.cnpj ?? "",
+        id: p?.id ?? "",
+        unit_name: u?.name ?? "",
+        company_name: p?.display_name ?? `${p?.first_name ?? ""} ${p?.last_name ?? ""}`.trim(),
+        cnpj: p?.cnpj ?? "",
         phone: "",
-        email: profile?.email ?? user.email ?? "",
-        city: unit?.city ?? profile?.cidade ?? "",
-        state: unit?.state ?? "",
+        email: p?.email ?? user.email ?? "",
+        zip_code: "",
+        street: "",
+        number: "",
+        complement: "",
+        district: "",
+        city: u?.city ?? p?.cidade ?? "",
+        state: u?.state ?? "",
       };
     },
   });
 
+  // Pre-fill delivery from profile on first load
+  const prefillDelivery = () => {
+    if (!profile) return;
+    setDelivery((prev) => ({
+      recipient_name: prev.recipient_name || profile.company_name,
+      company_name: prev.company_name || profile.company_name,
+      cnpj: prev.cnpj || profile.cnpj,
+      phone: prev.phone || profile.phone,
+      email: prev.email || profile.email,
+      zip_code: prev.zip_code || profile.zip_code,
+      street: prev.street || profile.street,
+      number: prev.number || profile.number,
+      complement: prev.complement || profile.complement,
+      district: prev.district || profile.district,
+      city: prev.city || profile.city,
+      state: prev.state || profile.state,
+    }));
+  };
+
   const handleSendWhatsApp = () => {
-    if (!franchiseeProfile) {
-      toast.error("Dados do perfil não carregados");
-      return;
-    }
-
-    const franchisee: FranchiseeData = {
-      unitName: franchiseeProfile.unitName,
-      companyName: franchiseeProfile.companyName,
-      cnpj: franchiseeProfile.cnpj,
-      phone: franchiseeProfile.phone,
-      email: franchiseeProfile.email,
-      street: deliveryData.street,
-      number: deliveryData.number,
-      district: deliveryData.district,
-      city: deliveryData.city || franchiseeProfile.city,
-      state: deliveryData.state || franchiseeProfile.state,
-      zipCode: deliveryData.zipCode,
-    };
-
-    sendOrderToWhatsApp(franchisee, items);
+    sendOrderToWhatsApp(delivery, items);
     clearCart();
     toast.success("Pedido enviado via WhatsApp!");
     navigate("/franqueado/loja");
   };
 
-  if (profileLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -204,6 +224,9 @@ export default function LojaCheckout() {
     { key: "confirm", label: "Enviar", icon: MessageCircle },
   ];
   const currentStepIndex = steps.findIndex((s) => s.key === step);
+
+  const updateField = (field: keyof DeliveryAddress, value: string) =>
+    setDelivery((prev) => ({ ...prev, [field]: value }));
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -284,70 +307,71 @@ export default function LojaCheckout() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="col-span-2 space-y-2">
-                    <Label htmlFor="street">Rua</Label>
-                    <Input
-                      id="street"
-                      placeholder="Nome da rua"
-                      value={deliveryData.street}
-                      onChange={(e) => setDeliveryData((d) => ({ ...d, street: e.target.value }))}
-                    />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Destinatário</Label>
+                    <Input placeholder="Nome do destinatário" value={delivery.recipient_name} onChange={(e) => updateField("recipient_name", e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="number">Número</Label>
-                    <Input
-                      id="number"
-                      placeholder="Nº"
-                      value={deliveryData.number}
-                      onChange={(e) => setDeliveryData((d) => ({ ...d, number: e.target.value }))}
-                    />
+                    <Label>Razão Social</Label>
+                    <Input placeholder="Razão social" value={delivery.company_name} onChange={(e) => updateField("company_name", e.target.value)} />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="district">Bairro</Label>
-                  <Input
-                    id="district"
-                    placeholder="Bairro"
-                    value={deliveryData.district}
-                    onChange={(e) => setDeliveryData((d) => ({ ...d, district: e.target.value }))}
-                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="city">Cidade</Label>
-                    <Input
-                      id="city"
-                      placeholder={franchiseeProfile?.city || "Cidade"}
-                      value={deliveryData.city}
-                      onChange={(e) => setDeliveryData((d) => ({ ...d, city: e.target.value }))}
-                    />
+                    <Label>CNPJ</Label>
+                    <Input placeholder="00.000.000/0000-00" value={delivery.cnpj} onChange={(e) => updateField("cnpj", e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="state">Estado</Label>
-                    <Input
-                      id="state"
-                      placeholder={franchiseeProfile?.state || "UF"}
-                      value={deliveryData.state}
-                      onChange={(e) => setDeliveryData((d) => ({ ...d, state: e.target.value }))}
-                    />
+                    <Label>Telefone</Label>
+                    <Input placeholder="(00) 00000-0000" value={delivery.phone} onChange={(e) => updateField("phone", e.target.value)} />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="zipCode">CEP</Label>
-                  <Input
-                    id="zipCode"
-                    placeholder="00000-000"
-                    value={deliveryData.zipCode}
-                    onChange={(e) => setDeliveryData((d) => ({ ...d, zipCode: e.target.value }))}
-                  />
+                  <Label>E-mail</Label>
+                  <Input placeholder="email@exemplo.com" value={delivery.email} onChange={(e) => updateField("email", e.target.value)} />
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <Label>CEP</Label>
+                  <Input placeholder="00000-000" value={delivery.zip_code} onChange={(e) => updateField("zip_code", e.target.value)} />
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2 space-y-2">
+                    <Label>Rua</Label>
+                    <Input placeholder="Nome da rua" value={delivery.street} onChange={(e) => updateField("street", e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Número</Label>
+                    <Input placeholder="Nº" value={delivery.number} onChange={(e) => updateField("number", e.target.value)} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Complemento</Label>
+                    <Input placeholder="Apto, bloco, etc." value={delivery.complement} onChange={(e) => updateField("complement", e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Bairro</Label>
+                    <Input placeholder="Bairro" value={delivery.district} onChange={(e) => updateField("district", e.target.value)} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Cidade</Label>
+                    <Input placeholder={profile?.city || "Cidade"} value={delivery.city} onChange={(e) => updateField("city", e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Estado</Label>
+                    <Input placeholder={profile?.state || "UF"} value={delivery.state} onChange={(e) => updateField("state", e.target.value)} />
+                  </div>
                 </div>
 
-                {franchiseeProfile && (
+                {profile && (
                   <div className="p-3 rounded-lg bg-muted/30 text-sm space-y-1">
                     <p className="text-muted-foreground font-medium">Dados da unidade:</p>
-                    <p>{franchiseeProfile.unitName} • {franchiseeProfile.email}</p>
-                    {franchiseeProfile.cnpj && <p>CNPJ: {franchiseeProfile.cnpj}</p>}
+                    <p>{profile.unit_name} • {profile.email}</p>
+                    {profile.cnpj && <p>CNPJ: {profile.cnpj}</p>}
                   </div>
                 )}
               </CardContent>
@@ -366,19 +390,20 @@ export default function LojaCheckout() {
               <CardContent className="space-y-4">
                 <div className="p-4 rounded-lg bg-muted/30 space-y-2">
                   <p className="text-sm text-muted-foreground font-medium">Dados do franqueado</p>
-                  <p className="text-sm">{franchiseeProfile?.unitName} • {franchiseeProfile?.companyName}</p>
-                  {franchiseeProfile?.cnpj && <p className="text-sm">CNPJ: {franchiseeProfile.cnpj}</p>}
-                  <p className="text-sm">{franchiseeProfile?.email}</p>
+                  <p className="text-sm">{delivery.recipient_name || profile?.company_name} • {delivery.company_name || profile?.company_name}</p>
+                  {delivery.cnpj && <p className="text-sm">CNPJ: {delivery.cnpj}</p>}
+                  <p className="text-sm">{delivery.email || profile?.email}</p>
+                  {delivery.phone && <p className="text-sm">Tel: {delivery.phone}</p>}
                 </div>
 
-                {deliveryData.street && (
+                {delivery.street && (
                   <div className="p-4 rounded-lg bg-muted/30 space-y-1">
                     <p className="text-sm text-muted-foreground font-medium">Endereço de entrega</p>
                     <p className="text-sm">
-                      {deliveryData.street}, {deliveryData.number} — {deliveryData.district}
+                      {delivery.street}, {delivery.number}{delivery.complement ? ` - ${delivery.complement}` : ""} — {delivery.district}
                     </p>
                     <p className="text-sm">
-                      {deliveryData.city || franchiseeProfile?.city} - {deliveryData.state || franchiseeProfile?.state} • CEP: {deliveryData.zipCode}
+                      {delivery.city || profile?.city} - {delivery.state || profile?.state} • CEP: {delivery.zip_code}
                     </p>
                   </div>
                 )}
@@ -421,7 +446,10 @@ export default function LojaCheckout() {
               </div>
               <div className="flex gap-2">
                 {step !== "review" && (
-                  <Button variant="outline" className="flex-1" onClick={() => { const prev = steps[currentStepIndex - 1]; if (prev) setStep(prev.key); }}>
+                  <Button variant="outline" className="flex-1" onClick={() => {
+                    const prev = steps[currentStepIndex - 1];
+                    if (prev) setStep(prev.key);
+                  }}>
                     Voltar
                   </Button>
                 )}
@@ -431,6 +459,7 @@ export default function LojaCheckout() {
                     if (step === "confirm") {
                       handleSendWhatsApp();
                     } else {
+                      if (step === "review") prefillDelivery();
                       const next = steps[currentStepIndex + 1];
                       if (next) setStep(next.key);
                     }
