@@ -89,10 +89,10 @@ export function CartDrawer({
                   <div key={item.id} className="flex gap-3">
                     {/* Product Image */}
                     <div className="h-16 w-16 rounded-lg bg-muted/30 flex items-center justify-center shrink-0 overflow-hidden">
-                      {item.product.image_url ? (
+                      {item.image ? (
                         <img
-                          src={item.product.image_url}
-                          alt={item.product.name}
+                          src={item.image}
+                          alt={item.name}
                           className="w-full h-full object-cover"
                         />
                       ) : (
