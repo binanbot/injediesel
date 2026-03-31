@@ -17,10 +17,11 @@ import { cn } from "@/lib/utils";
 
 interface Order {
   id: string;
+  order_number: string;
   status: string;
-  total: number;
-  payment_method: string | null;
-  installments: number | null;
+  total_amount: number;
+  payment_status: string;
+  items_count: number;
   created_at: string;
 }
 
