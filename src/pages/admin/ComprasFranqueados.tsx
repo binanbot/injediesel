@@ -55,11 +55,12 @@ import { cn } from "@/lib/utils";
 
 interface Order {
   id: string;
-  unit_id: string;
+  order_number: string;
+  unit_id: string | null;
   status: string;
-  total: number;
-  payment_method: string | null;
-  installments: number | null;
+  total_amount: number;
+  payment_status: string;
+  items_count: number;
   created_at: string;
   unit?: {
     name: string;
@@ -68,26 +69,18 @@ interface Order {
   };
 }
 
-interface OrderWithItems extends Order {
-  items?: {
-    name: string;
-    quantity: number;
-    unit_price: number;
-    subtotal: number;
-  }[];
-}
-
 const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  pending: { label: "Pendente", icon: Clock, className: "status-pending" },
-  paid: { label: "Pago", icon: CheckCircle, className: "status-completed" },
-  canceled: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
-  shipped: { label: "Enviado", icon: Truck, className: "status-processing" },
+  pedido_realizado: { label: "Pedido Realizado", icon: Package, className: "status-pending" },
+  em_separacao: { label: "Em Separação", icon: Clock, className: "status-processing" },
+  enviado: { label: "Enviado", icon: Truck, className: "status-processing" },
+  entregue: { label: "Entregue", icon: CheckCircle, className: "status-completed" },
+  cancelado: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
 };
 
-const paymentMethodLabels: Record<string, string> = {
-  pix: "Pix",
-  card: "Cartão",
-  boleto: "Boleto",
+const paymentStatusLabels: Record<string, string> = {
+  pendente: "Pendente",
+  pago: "Pago",
+  cancelado: "Cancelado",
 };
 
 export default function ComprasFranqueados() {
