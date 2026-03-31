@@ -213,22 +213,21 @@ export default function ComprasFranqueados() {
     }, {});
 
     const csvRows = [
-      ["Pedido", "Unidade", "Cidade", "UF", "Status", "Total", "Pagamento", "Parcelas", "Data", "Itens"].join(";"),
+      ["Pedido", "Unidade", "Cidade", "UF", "Status", "Total", "Pgto", "Data", "Itens"].join(";"),
     ];
 
     filteredOrders.forEach((order) => {
       const orderItems = itemsByOrder?.[order.id] || [];
-      const itemsStr = orderItems.map((i: any) => `${i.quantity}x ${i.name}`).join(" | ");
+      const itemsStr = orderItems.map((i: any) => `${i.quantity}x ${i.product_name}`).join(" | ");
       
       csvRows.push([
-        order.id.slice(0, 8),
+        order.order_number,
         order.unit?.name || "",
         order.unit?.city || "",
         order.unit?.state || "",
         statusConfig[order.status]?.label || order.status,
-        order.total.toFixed(2).replace(".", ","),
-        paymentMethodLabels[order.payment_method || ""] || "",
-        order.installments || 1,
+        order.total_amount.toFixed(2).replace(".", ","),
+        paymentStatusLabels[order.payment_status] || order.payment_status,
         formatDate(order.created_at),
         itemsStr,
       ].join(";"));
