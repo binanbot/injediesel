@@ -7,9 +7,6 @@ import {
   CheckCircle, 
   XCircle, 
   Truck,
-  QrCode,
-  CreditCard,
-  FileText,
   Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,40 +18,35 @@ import { cn } from "@/lib/utils";
 
 interface OrderItem {
   id: string;
-  name: string;
+  product_name: string;
+  product_sku: string | null;
   quantity: number;
   unit_price: number;
-  subtotal: number;
-  product_id: string;
+  line_total: number;
+  product_id: string | null;
 }
 
 interface Order {
   id: string;
+  order_number: string;
   status: string;
-  total: number;
-  payment_method: string | null;
-  installments: number | null;
+  payment_status: string;
+  total_amount: number;
+  subtotal: number;
+  shipping_amount: number;
+  discount_amount: number;
+  items_count: number;
+  delivery_address: any;
   created_at: string;
   updated_at: string;
 }
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  pending: { label: "Pendente", icon: Clock, className: "status-pending" },
-  paid: { label: "Pago", icon: CheckCircle, className: "status-completed" },
-  canceled: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
-  shipped: { label: "Enviado", icon: Truck, className: "status-processing" },
-};
-
-const paymentIcons: Record<string, React.ElementType> = {
-  pix: QrCode,
-  card: CreditCard,
-  boleto: FileText,
-};
-
-const paymentLabels: Record<string, string> = {
-  pix: "Pix",
-  card: "Cartão de Crédito",
-  boleto: "Boleto Bancário",
+  pedido_realizado: { label: "Pedido Realizado", icon: Package, className: "status-pending" },
+  em_separacao: { label: "Em Separação", icon: Clock, className: "status-processing" },
+  enviado: { label: "Enviado", icon: Truck, className: "status-processing" },
+  entregue: { label: "Entregue", icon: CheckCircle, className: "status-completed" },
+  cancelado: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
 };
 
 export default function PedidoDetalhe() {
@@ -134,9 +126,8 @@ export default function PedidoDetalhe() {
     );
   }
 
-  const status = statusConfig[order.status] || statusConfig.pending;
+  const status = statusConfig[order.status] || statusConfig.pedido_realizado;
   const StatusIcon = status.icon;
-  const PaymentIcon = order.payment_method ? paymentIcons[order.payment_method] : null;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -146,7 +137,7 @@ export default function PedidoDetalhe() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Pedido #{order.id.slice(0, 8)}</h1>
+          <h1 className="text-2xl font-bold">Pedido #{order.order_number}</h1>
           <p className="text-muted-foreground">
             Realizado em {formatDate(order.created_at)}
           </p>
@@ -175,13 +166,13 @@ export default function PedidoDetalhe() {
                       <Package className="h-5 w-5 text-muted-foreground/50" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium line-clamp-1">{item.name}</p>
+                      <p className="font-medium line-clamp-1">{item.product_name}</p>
                       <p className="text-sm text-muted-foreground">
                         {item.quantity}x {formatPrice(item.unit_price)}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-semibold">{formatPrice(item.subtotal)}</p>
+                      <p className="font-semibold">{formatPrice(item.line_total)}</p>
                     </div>
                   </div>
                 ))}
@@ -197,63 +188,48 @@ export default function PedidoDetalhe() {
               <CardTitle className="text-lg">Resumo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Payment Method */}
-              {order.payment_method && PaymentIcon && (
-                <div className="p-3 rounded-lg bg-muted/30">
-                  <p className="text-xs text-muted-foreground mb-1">Forma de pagamento</p>
-                  <p className="font-medium flex items-center gap-2">
-                    <PaymentIcon className="h-4 w-4" />
-                    {paymentLabels[order.payment_method] || order.payment_method}
-                  </p>
-                  {order.installments && order.installments > 1 && (
-                    <p className="text-sm text-muted-foreground">
-                      {order.installments}x de {formatPrice(order.total / order.installments)}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <Separator />
-
               {/* Items Count */}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                  Itens ({items?.length || 0})
+                  Subtotal ({order.items_count} {order.items_count === 1 ? "item" : "itens"})
                 </span>
-                <span>{formatPrice(order.total)}</span>
+                <span>{formatPrice(order.subtotal)}</span>
               </div>
+
+              {order.shipping_amount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Frete</span>
+                  <span>{formatPrice(order.shipping_amount)}</span>
+                </div>
+              )}
+
+              {order.discount_amount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Desconto</span>
+                  <span className="text-green-500">-{formatPrice(order.discount_amount)}</span>
+                </div>
+              )}
 
               <Separator />
 
               {/* Total */}
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span className="text-lg text-primary">{formatPrice(order.total)}</span>
+                <span className="text-lg text-primary">{formatPrice(order.total_amount)}</span>
               </div>
 
-              {/* Actions based on status */}
-              {order.status === "pending" && (
-                <div className="space-y-2 pt-4">
-                  <p className="text-sm text-muted-foreground text-center">
-                    Aguardando pagamento
-                  </p>
-                  <Button className="w-full">
-                    Ver instruções de pagamento
-                  </Button>
-                </div>
-              )}
-
-              {order.status === "paid" && (
-                <div className="p-3 rounded-lg bg-success/10 border border-success/20 text-center">
-                  <CheckCircle className="h-6 w-6 text-success mx-auto mb-1" />
-                  <p className="text-sm font-medium text-success">Pagamento confirmado</p>
-                </div>
-              )}
-
-              {order.status === "shipped" && (
+              {/* Status indicator */}
+              {order.status === "enviado" && (
                 <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-center">
                   <Truck className="h-6 w-6 text-warning mx-auto mb-1" />
                   <p className="text-sm font-medium text-warning">Pedido enviado</p>
+                </div>
+              )}
+
+              {order.status === "entregue" && (
+                <div className="p-3 rounded-lg bg-success/10 border border-success/20 text-center">
+                  <CheckCircle className="h-6 w-6 text-success mx-auto mb-1" />
+                  <p className="text-sm font-medium text-success">Pedido entregue</p>
                 </div>
               )}
             </CardContent>

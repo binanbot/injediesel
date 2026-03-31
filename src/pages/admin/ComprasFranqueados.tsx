@@ -55,11 +55,12 @@ import { cn } from "@/lib/utils";
 
 interface Order {
   id: string;
-  unit_id: string;
+  order_number: string;
+  unit_id: string | null;
   status: string;
-  total: number;
-  payment_method: string | null;
-  installments: number | null;
+  total_amount: number;
+  payment_status: string;
+  items_count: number;
   created_at: string;
   unit?: {
     name: string;
@@ -68,26 +69,18 @@ interface Order {
   };
 }
 
-interface OrderWithItems extends Order {
-  items?: {
-    name: string;
-    quantity: number;
-    unit_price: number;
-    subtotal: number;
-  }[];
-}
-
 const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  pending: { label: "Pendente", icon: Clock, className: "status-pending" },
-  paid: { label: "Pago", icon: CheckCircle, className: "status-completed" },
-  canceled: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
-  shipped: { label: "Enviado", icon: Truck, className: "status-processing" },
+  pedido_realizado: { label: "Pedido Realizado", icon: Package, className: "status-pending" },
+  em_separacao: { label: "Em Separação", icon: Clock, className: "status-processing" },
+  enviado: { label: "Enviado", icon: Truck, className: "status-processing" },
+  entregue: { label: "Entregue", icon: CheckCircle, className: "status-completed" },
+  cancelado: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
 };
 
-const paymentMethodLabels: Record<string, string> = {
-  pix: "Pix",
-  card: "Cartão",
-  boleto: "Boleto",
+const paymentStatusLabels: Record<string, string> = {
+  pendente: "Pendente",
+  pago: "Pago",
+  cancelado: "Cancelado",
 };
 
 export default function ComprasFranqueados() {
@@ -183,8 +176,8 @@ export default function ComprasFranqueados() {
       pending: filteredOrders.filter((o) => o.status === "pending").length,
       paid: filteredOrders.filter((o) => o.status === "paid").length,
       revenue: filteredOrders
-        .filter((o) => o.status === "paid")
-        .reduce((sum, o) => sum + o.total, 0),
+        .filter((o) => o.payment_status === "pago")
+        .reduce((sum, o) => sum + o.total_amount, 0),
     };
   }, [filteredOrders]);
 
@@ -220,22 +213,21 @@ export default function ComprasFranqueados() {
     }, {});
 
     const csvRows = [
-      ["Pedido", "Unidade", "Cidade", "UF", "Status", "Total", "Pagamento", "Parcelas", "Data", "Itens"].join(";"),
+      ["Pedido", "Unidade", "Cidade", "UF", "Status", "Total", "Pgto", "Data", "Itens"].join(";"),
     ];
 
     filteredOrders.forEach((order) => {
       const orderItems = itemsByOrder?.[order.id] || [];
-      const itemsStr = orderItems.map((i: any) => `${i.quantity}x ${i.name}`).join(" | ");
+      const itemsStr = orderItems.map((i: any) => `${i.quantity}x ${i.product_name}`).join(" | ");
       
       csvRows.push([
-        order.id.slice(0, 8),
+        order.order_number,
         order.unit?.name || "",
         order.unit?.city || "",
         order.unit?.state || "",
         statusConfig[order.status]?.label || order.status,
-        order.total.toFixed(2).replace(".", ","),
-        paymentMethodLabels[order.payment_method || ""] || "",
-        order.installments || 1,
+        order.total_amount.toFixed(2).replace(".", ","),
+        paymentStatusLabels[order.payment_status] || order.payment_status,
         formatDate(order.created_at),
         itemsStr,
       ].join(";"));
@@ -459,7 +451,7 @@ export default function ComprasFranqueados() {
                         onClick={() => navigate(`/admin/compras/${order.id}`)}
                       >
                         <TableCell className="font-mono text-sm">
-                          #{order.id.slice(0, 8)}
+                          #{order.order_number}
                         </TableCell>
                         <TableCell>
                           <div>
@@ -472,19 +464,12 @@ export default function ComprasFranqueados() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          {formatPrice(order.total)}
+                          {formatPrice(order.total_amount)}
                         </TableCell>
                         <TableCell>
-                          {order.payment_method ? (
-                            <span className="text-sm">
-                              {paymentMethodLabels[order.payment_method]}
-                              {order.installments && order.installments > 1 && (
-                                <span className="text-muted-foreground"> ({order.installments}x)</span>
-                              )}
-                            </span>
-                          ) : (
-                            "—"
-                          )}
+                          <span className="text-sm">
+                            {paymentStatusLabels[order.payment_status] || order.payment_status}
+                          </span>
                         </TableCell>
                         <TableCell>
                           <Badge className={cn("gap-1", status.className)}>

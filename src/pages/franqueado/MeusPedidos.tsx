@@ -17,24 +17,20 @@ import { cn } from "@/lib/utils";
 
 interface Order {
   id: string;
+  order_number: string;
   status: string;
-  total: number;
-  payment_method: string | null;
-  installments: number | null;
+  total_amount: number;
+  payment_status: string;
+  items_count: number;
   created_at: string;
 }
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  pending: { label: "Pendente", icon: Clock, className: "status-pending" },
-  paid: { label: "Pago", icon: CheckCircle, className: "status-completed" },
-  canceled: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
-  shipped: { label: "Enviado", icon: Truck, className: "status-processing" },
-};
-
-const paymentMethodLabels: Record<string, string> = {
-  pix: "Pix",
-  card: "Cartão",
-  boleto: "Boleto",
+  pedido_realizado: { label: "Pedido Realizado", icon: Package, className: "status-pending" },
+  em_separacao: { label: "Em Separação", icon: Clock, className: "status-processing" },
+  enviado: { label: "Enviado", icon: Truck, className: "status-processing" },
+  entregue: { label: "Entregue", icon: CheckCircle, className: "status-completed" },
+  cancelado: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
 };
 
 export default function MeusPedidos() {
@@ -125,7 +121,7 @@ export default function MeusPedidos() {
                     </div>
                     <div>
                       <p className="font-medium">
-                        Pedido #{order.id.slice(0, 8)}
+                        Pedido #{order.order_number}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {formatDate(order.created_at)}
@@ -135,13 +131,10 @@ export default function MeusPedidos() {
 
                   <div className="flex items-center gap-4">
                     <div className="text-right hidden sm:block">
-                      <p className="font-semibold">{formatPrice(order.total)}</p>
-                      {order.payment_method && (
-                        <p className="text-sm text-muted-foreground">
-                          {paymentMethodLabels[order.payment_method] || order.payment_method}
-                          {order.installments && order.installments > 1 && ` (${order.installments}x)`}
-                        </p>
-                      )}
+                      <p className="font-semibold">{formatPrice(order.total_amount)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {order.items_count} {order.items_count === 1 ? "item" : "itens"}
+                      </p>
                     </div>
 
                     <Badge className={cn("gap-1", status.className)}>

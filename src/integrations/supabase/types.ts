@@ -313,57 +313,54 @@ export type Database = {
       }
       financial_entries: {
         Row: {
-          amount_brl: number
+          amount: number
           category: string
+          competency_date: string
           created_at: string
           description: string | null
-          direction: string
           entry_type: string
+          franchise_profile_id: string | null
           id: string
           order_id: string | null
-          reference_date: string
-          unit_id: string | null
-          updated_at: string
+          scope: string
         }
         Insert: {
-          amount_brl?: number
-          category?: string
+          amount?: number
+          category: string
+          competency_date?: string
           created_at?: string
           description?: string | null
-          direction?: string
           entry_type: string
+          franchise_profile_id?: string | null
           id?: string
           order_id?: string | null
-          reference_date?: string
-          unit_id?: string | null
-          updated_at?: string
+          scope: string
         }
         Update: {
-          amount_brl?: number
+          amount?: number
           category?: string
+          competency_date?: string
           created_at?: string
           description?: string | null
-          direction?: string
           entry_type?: string
+          franchise_profile_id?: string | null
           id?: string
           order_id?: string | null
-          reference_date?: string
-          unit_id?: string | null
-          updated_at?: string
+          scope?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "financial_entries_franchise_profile_id_fkey"
+            columns: ["franchise_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_franchisees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "financial_entries_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "financial_entries_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: false
-            referencedRelation: "units"
             referencedColumns: ["id"]
           },
         ]
@@ -405,37 +402,37 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          image_url: string | null
-          name: string
+          line_total: number
           order_id: string
-          product_id: string
+          product_id: string | null
+          product_name: string
+          product_sku: string | null
+          product_snapshot: Json | null
           quantity: number
-          sku: string | null
-          subtotal: number
           unit_price: number
         }
         Insert: {
           created_at?: string
           id?: string
-          image_url?: string | null
-          name: string
+          line_total?: number
           order_id: string
-          product_id: string
+          product_id?: string | null
+          product_name: string
+          product_sku?: string | null
+          product_snapshot?: Json | null
           quantity?: number
-          sku?: string | null
-          subtotal: number
-          unit_price: number
+          unit_price?: number
         }
         Update: {
           created_at?: string
           id?: string
-          image_url?: string | null
-          name?: string
+          line_total?: number
           order_id?: string
-          product_id?: string
+          product_id?: string | null
+          product_name?: string
+          product_sku?: string | null
+          product_snapshot?: Json | null
           quantity?: number
-          sku?: string | null
-          subtotal?: number
           unit_price?: number
         }
         Relationships: [
@@ -457,29 +454,29 @@ export type Database = {
       }
       order_status_history: {
         Row: {
-          changed_by: string
+          changed_by: string | null
           created_at: string
           id: string
+          internal_note: string | null
           new_status: string
-          notes: string | null
           order_id: string
           previous_status: string | null
         }
         Insert: {
-          changed_by: string
+          changed_by?: string | null
           created_at?: string
           id?: string
+          internal_note?: string | null
           new_status: string
-          notes?: string | null
           order_id: string
           previous_status?: string | null
         }
         Update: {
-          changed_by?: string
+          changed_by?: string | null
           created_at?: string
           id?: string
+          internal_note?: string | null
           new_status?: string
-          notes?: string | null
           order_id?: string
           previous_status?: string | null
         }
@@ -496,58 +493,71 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
-          delivery_snapshot: Json | null
-          franchisee_profile_id: string | null
+          delivery_address: Json | null
+          discount_amount: number
+          franchise_profile_id: string
+          fulfillment_status: string
           id: string
-          installments: number | null
+          items_count: number
           notes: string | null
-          order_number: number
-          payment_method: string | null
-          source: string
+          order_number: string
+          payment_status: string
+          shipping_amount: number
           status: string
-          total: number
-          unit_id: string
+          subtotal: number
+          total_amount: number
+          unit_id: string | null
           updated_at: string
-          whatsapp_sent_at: string | null
         }
         Insert: {
           created_at?: string
-          delivery_snapshot?: Json | null
-          franchisee_profile_id?: string | null
+          delivery_address?: Json | null
+          discount_amount?: number
+          franchise_profile_id: string
+          fulfillment_status?: string
           id?: string
-          installments?: number | null
+          items_count?: number
           notes?: string | null
-          order_number?: number
-          payment_method?: string | null
-          source?: string
+          order_number: string
+          payment_status?: string
+          shipping_amount?: number
           status?: string
-          total?: number
-          unit_id: string
+          subtotal?: number
+          total_amount?: number
+          unit_id?: string | null
           updated_at?: string
-          whatsapp_sent_at?: string | null
         }
         Update: {
           created_at?: string
-          delivery_snapshot?: Json | null
-          franchisee_profile_id?: string | null
+          delivery_address?: Json | null
+          discount_amount?: number
+          franchise_profile_id?: string
+          fulfillment_status?: string
           id?: string
-          installments?: number | null
+          items_count?: number
           notes?: string | null
-          order_number?: number
-          payment_method?: string | null
-          source?: string
+          order_number?: string
+          payment_status?: string
+          shipping_amount?: number
           status?: string
-          total?: number
-          unit_id?: string
+          subtotal?: number
+          total_amount?: number
+          unit_id?: string | null
           updated_at?: string
-          whatsapp_sent_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "orders_franchisee_profile_id_fkey"
-            columns: ["franchisee_profile_id"]
+            foreignKeyName: "orders_franchise_profile_id_fkey"
+            columns: ["franchise_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles_franchisees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
             referencedColumns: ["id"]
           },
         ]
