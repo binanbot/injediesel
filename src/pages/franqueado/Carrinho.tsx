@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ShoppingCart, ShoppingBag, Plus, Minus, Trash2, CreditCard, Landmark, QrCode, ArrowLeft, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCart } from "@/hooks/useCart";
+import { useCartStore } from "@/stores/useCartStore";
 import { useState } from "react";
 
 const paymentMethods = [
@@ -21,13 +21,9 @@ export default function Carrinho() {
   const [paymentMethod, setPaymentMethod] = useState("pix");
   const [installments, setInstallments] = useState("1");
 
-  const {
-    cart,
-    isLoading,
-    updateQuantity,
-    removeItem,
-    itemCount,
-  } = useCart();
+  const { items, updateQuantity, removeItem, getTotal, getItemCount } = useCartStore();
+  const total = getTotal();
+  const itemCount = getItemCount();
 
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -41,17 +37,6 @@ export default function Carrinho() {
       state: { paymentMethod, installments: parseInt(installments) },
     });
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  const items = cart?.items || [];
-  const total = cart?.total || 0;
 
   return (
     <div className="space-y-6">
@@ -99,35 +84,25 @@ export default function Carrinho() {
               <CardContent className="space-y-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex gap-4 p-4 rounded-lg bg-muted/20">
-                    {/* Product Image */}
                     <div className="h-20 w-20 rounded-lg bg-muted/30 flex items-center justify-center shrink-0 overflow-hidden">
                       {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                       ) : (
                         <Package className="h-8 w-8 text-muted-foreground/50" />
                       )}
                     </div>
-
-                    {/* Product Info */}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium line-clamp-2">{item.name}</p>
-                      <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>
+                      {item.sku && <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>}
                       <p className="text-sm font-semibold text-primary mt-1">
                         {formatPrice(item.price)} cada
                       </p>
-
-                      {/* Quantity Controls */}
                       <div className="flex items-center gap-2 mt-3">
                         <Button
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => updateQuantity.mutate({ itemId: item.id, quantity: item.quantity - 1 })}
-                          disabled={updateQuantity.isPending}
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
                         >
                           <Minus className="h-4 w-4" />
                         </Button>
@@ -136,8 +111,7 @@ export default function Carrinho() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => updateQuantity.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
-                          disabled={updateQuantity.isPending}
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -145,15 +119,12 @@ export default function Carrinho() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 ml-2 text-destructive hover:text-destructive"
-                          onClick={() => removeItem.mutate(item.id)}
-                          disabled={removeItem.isPending}
+                          onClick={() => removeItem(item.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-
-                    {/* Subtotal */}
                     <div className="text-right shrink-0">
                       <p className="font-bold text-lg">{formatPrice(item.price * item.quantity)}</p>
                     </div>
@@ -165,7 +136,6 @@ export default function Carrinho() {
 
           {/* Payment & Summary */}
           <div className="space-y-4">
-            {/* Payment Methods */}
             <Card className="glass-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -178,10 +148,7 @@ export default function Carrinho() {
                   {paymentMethods.map((method) => (
                     <div key={method.id} className="flex items-center space-x-3">
                       <RadioGroupItem value={method.id} id={method.id} />
-                      <Label
-                        htmlFor={method.id}
-                        className="flex items-center gap-3 cursor-pointer flex-1"
-                      >
+                      <Label htmlFor={method.id} className="flex items-center gap-3 cursor-pointer flex-1">
                         <method.icon className="h-5 w-5 text-muted-foreground" />
                         <div>
                           <p className="font-medium">{method.label}</p>
@@ -191,8 +158,6 @@ export default function Carrinho() {
                     </div>
                   ))}
                 </RadioGroup>
-
-                {/* Installments for Credit Card */}
                 {paymentMethod === "credit" && (
                   <div className="mt-4 pt-4 border-t border-border/30">
                     <Label htmlFor="installments" className="text-sm">Parcelas</Label>
@@ -213,7 +178,6 @@ export default function Carrinho() {
               </CardContent>
             </Card>
 
-            {/* Order Summary */}
             <Card className="glass-card">
               <CardHeader>
                 <CardTitle>Resumo do Pedido</CardTitle>
@@ -228,22 +192,15 @@ export default function Carrinho() {
                   <span className="font-medium">Total</span>
                   <span className="text-2xl font-bold text-primary">{formatPrice(total)}</span>
                 </div>
-
                 {paymentMethod === "credit" && parseInt(installments) > 1 && (
                   <p className="text-sm text-muted-foreground text-center">
                     {installments}x de {formatPrice(total / parseInt(installments))}
                   </p>
                 )}
-
                 <Button className="w-full" size="lg" onClick={handleCheckout}>
                   Finalizar Compra
                 </Button>
-                
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => navigate("/franqueado/loja")}
-                >
+                <Button variant="outline" className="w-full" onClick={() => navigate("/franqueado/loja")}>
                   Continuar Comprando
                 </Button>
               </CardContent>

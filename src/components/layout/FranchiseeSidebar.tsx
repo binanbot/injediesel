@@ -66,7 +66,7 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { socialLinks, loading: loadingSocial } = useSocialLinks();
-  const { itemCount } = useCart();
+  const itemCount = useCartStore((s) => s.getItemCount());
 
   const handleLogout = async () => {
     await signOut();

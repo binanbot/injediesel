@@ -23,7 +23,7 @@ interface TopbarProps {
 export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuButton = false }: TopbarProps) {
   const contractStatus = useContractStatus();
   const showContractAlert = contractStatus.isNearExpiration || contractStatus.isExpired;
-  const { itemCount, setIsOpen } = useCart();
+  const itemCount = useCartStore((s) => s.getItemCount());
   const navigate = useNavigate();
   return (
     <header className="h-16 glass-topbar sticky top-0 z-40">

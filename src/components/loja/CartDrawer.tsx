@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 
-import { CartItem } from "@/hooks/useCart";
+import { CartItem } from "@/stores/useCartStore";
 
 interface CartDrawerProps {
   isOpen: boolean;
