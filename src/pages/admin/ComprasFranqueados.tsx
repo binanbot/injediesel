@@ -347,9 +347,9 @@ export default function ComprasFranqueados() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
-                {Object.entries(statusConfig).map(([value, config]) => (
-                  <SelectItem key={value} value={value}>
-                    {config.label}
+                {orderStatusList.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
                   </SelectItem>
                 ))}
               </SelectContent>
