@@ -129,9 +129,8 @@ export default function PedidoDetalhe() {
     );
   }
 
-  const status = statusConfig[order.status] || statusConfig.pending;
+  const status = statusConfig[order.status] || statusConfig.pedido_realizado;
   const StatusIcon = status.icon;
-  const PaymentIcon = order.payment_method ? paymentIcons[order.payment_method] : null;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
