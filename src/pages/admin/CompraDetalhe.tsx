@@ -290,44 +290,37 @@ export default function CompraDetalhe() {
             </CardContent>
           </Card>
 
-          {/* Summary */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Resumo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Payment Method */}
-              {order.payment_method && PaymentIcon && (
-                <div className="p-3 rounded-lg bg-muted/30">
-                  <p className="text-xs text-muted-foreground mb-1">Forma de pagamento</p>
-                  <p className="font-medium flex items-center gap-2">
-                    <PaymentIcon className="h-4 w-4" />
-                    {paymentLabels[order.payment_method] || order.payment_method}
-                  </p>
-                  {order.installments && order.installments > 1 && (
-                    <p className="text-sm text-muted-foreground">
-                      {order.installments}x de {formatPrice(order.total / order.installments)}
-                    </p>
-                  )}
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">
+                  Subtotal ({order.items_count} {order.items_count === 1 ? "item" : "itens"})
+                </span>
+                <span>{formatPrice(order.subtotal)}</span>
+              </div>
+
+              {order.shipping_amount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Frete</span>
+                  <span>{formatPrice(order.shipping_amount)}</span>
+                </div>
+              )}
+
+              {order.discount_amount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Desconto</span>
+                  <span className="text-green-500">-{formatPrice(order.discount_amount)}</span>
                 </div>
               )}
 
               <Separator />
 
-              {/* Items Count */}
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">
-                  Itens ({items?.length || 0})
-                </span>
-                <span>{formatPrice(order.total)}</span>
-              </div>
-
-              <Separator />
-
-              {/* Total */}
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span className="text-lg text-primary">{formatPrice(order.total)}</span>
+                <span className="text-lg text-primary">{formatPrice(order.total_amount)}</span>
               </div>
             </CardContent>
           </Card>
