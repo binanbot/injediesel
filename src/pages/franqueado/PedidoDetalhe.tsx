@@ -21,40 +21,35 @@ import { cn } from "@/lib/utils";
 
 interface OrderItem {
   id: string;
-  name: string;
+  product_name: string;
+  product_sku: string | null;
   quantity: number;
   unit_price: number;
-  subtotal: number;
-  product_id: string;
+  line_total: number;
+  product_id: string | null;
 }
 
 interface Order {
   id: string;
+  order_number: string;
   status: string;
-  total: number;
-  payment_method: string | null;
-  installments: number | null;
+  payment_status: string;
+  total_amount: number;
+  subtotal: number;
+  shipping_amount: number;
+  discount_amount: number;
+  items_count: number;
+  delivery_address: any;
   created_at: string;
   updated_at: string;
 }
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-  pending: { label: "Pendente", icon: Clock, className: "status-pending" },
-  paid: { label: "Pago", icon: CheckCircle, className: "status-completed" },
-  canceled: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
-  shipped: { label: "Enviado", icon: Truck, className: "status-processing" },
-};
-
-const paymentIcons: Record<string, React.ElementType> = {
-  pix: QrCode,
-  card: CreditCard,
-  boleto: FileText,
-};
-
-const paymentLabels: Record<string, string> = {
-  pix: "Pix",
-  card: "Cartão de Crédito",
-  boleto: "Boleto Bancário",
+  pedido_realizado: { label: "Pedido Realizado", icon: Package, className: "status-pending" },
+  em_separacao: { label: "Em Separação", icon: Clock, className: "status-processing" },
+  enviado: { label: "Enviado", icon: Truck, className: "status-processing" },
+  entregue: { label: "Entregue", icon: CheckCircle, className: "status-completed" },
+  cancelado: { label: "Cancelado", icon: XCircle, className: "status-cancelled" },
 };
 
 export default function PedidoDetalhe() {
