@@ -1,31 +1,117 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { 
-  ArrowLeft, ShoppingCart, CreditCard, QrCode, FileText, Check, Loader2, Package,
+  ArrowLeft, ShoppingCart, Check, Loader2, Package, MessageCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useCartStore } from "@/stores/useCartStore";
+import { useCartStore, CartItem } from "@/stores/useCartStore";
 import { cn } from "@/lib/utils";
 
-type PaymentMethod = "pix" | "card" | "boleto";
-type CheckoutStep = "review" | "payment" | "confirm";
+type CheckoutStep = "review" | "delivery" | "confirm";
+
+interface FranchiseeData {
+  unitName: string;
+  companyName: string;
+  cnpj: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+}
+
+const WHATSAPP_NUMBER = "5511999999999"; // Número da Promax
+
+const buildWhatsAppMessage = ({
+  franchisee,
+  items,
+  total,
+}: {
+  franchisee: FranchiseeData;
+  items: CartItem[];
+  total: number;
+}) => {
+  const itemLines = items
+    .map(
+      (item, index) =>
+        `${index + 1}. ${item.name} | Ref: ${item.sku ?? "-"} | Qtd: ${item.quantity} | Unit: R$ ${item.price.toFixed(2)} | Subtotal: R$ ${(item.price * item.quantity).toFixed(2)}`
+    )
+    .join("\n");
+
+  return `
+*NOVO PEDIDO PROMAX*
+
+*Dados da unidade*
+Unidade: ${franchisee.unitName}
+Razão Social: ${franchisee.companyName}
+CNPJ: ${franchisee.cnpj}
+Telefone: ${franchisee.phone}
+E-mail: ${franchisee.email}
+
+*Endereço de entrega*
+${franchisee.address}
+${franchisee.city} - ${franchisee.state}
+CEP: ${franchisee.zipCode}
+
+*Itens do pedido*
+${itemLines}
+
+*Total do pedido:* R$ ${total.toFixed(2)}
+`.trim();
+};
 
 export default function LojaCheckout() {
   const navigate = useNavigate();
   const { items, getTotal, clearCart } = useCartStore();
   const total = getTotal();
-  
+
   const [step, setStep] = useState<CheckoutStep>("review");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
-  const [installments, setInstallments] = useState<number>(1);
+  const [deliveryData, setDeliveryData] = useState({
+    address: "",
+    city: "",
+    state: "",
+    zipCode: "",
+  });
+
+  // Fetch franchisee profile data
+  const { data: franchiseeProfile, isLoading: profileLoading } = useQuery({
+    queryKey: ["checkout-franchisee-profile"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Não autenticado");
+
+      const { data: unitId } = await supabase.rpc("get_user_unit_id", { _user_id: user.id });
+
+      const [profileRes, unitRes] = await Promise.all([
+        supabase
+          .from("profiles_franchisees")
+          .select("display_name, email, cnpj, first_name, last_name, cidade")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        unitId
+          ? supabase.from("units").select("name, city, state").eq("id", unitId).maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ]);
+
+      return {
+        unitName: unitRes.data?.name ?? "",
+        companyName: profileRes.data?.display_name ?? `${profileRes.data?.first_name ?? ""} ${profileRes.data?.last_name ?? ""}`.trim(),
+        cnpj: profileRes.data?.cnpj ?? "",
+        phone: "",
+        email: profileRes.data?.email ?? user.email ?? "",
+        city: unitRes.data?.city ?? profileRes.data?.cidade ?? "",
+        state: unitRes.data?.state ?? "",
+      };
+    },
+  });
 
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -34,55 +120,37 @@ export default function LojaCheckout() {
     }).format(value);
   };
 
-  const createOrder = useMutation({
-    mutationFn: async () => {
-      if (items.length === 0) throw new Error("Carrinho vazio");
+  const handleSendWhatsApp = () => {
+    if (!franchiseeProfile) {
+      toast.error("Dados do perfil não carregados");
+      return;
+    }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Não autenticado");
+    const franchisee: FranchiseeData = {
+      ...franchiseeProfile,
+      address: deliveryData.address,
+      city: deliveryData.city || franchiseeProfile.city,
+      state: deliveryData.state || franchiseeProfile.state,
+      zipCode: deliveryData.zipCode,
+    };
 
-      const { data: unitId } = await supabase
-        .rpc("get_user_unit_id", { _user_id: user.id });
-      if (!unitId) throw new Error("Unidade não encontrada");
+    const message = buildWhatsAppMessage({ franchisee, items, total });
+    const encoded = encodeURIComponent(message);
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`;
 
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          unit_id: unitId,
-          total,
-          payment_method: paymentMethod,
-          installments: paymentMethod === "pix" ? 1 : installments,
-          status: "pending",
-        })
-        .select()
-        .single();
-      if (orderError) throw orderError;
+    window.open(url, "_blank");
+    clearCart();
+    toast.success("Pedido enviado via WhatsApp!");
+    navigate("/franqueado/loja");
+  };
 
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        product_id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        unit_price: item.price,
-        subtotal: item.price * item.quantity,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems);
-      if (itemsError) throw itemsError;
-
-      clearCart();
-      return order;
-    },
-    onSuccess: (order) => {
-      toast.success("Pedido realizado com sucesso!");
-      navigate("/franqueado/loja/pedidos/" + order.id);
-    },
-    onError: (error) => {
-      toast.error("Erro ao finalizar pedido: " + error.message);
-    },
-  });
+  if (profileLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -105,8 +173,8 @@ export default function LojaCheckout() {
 
   const steps: { key: CheckoutStep; label: string; icon: React.ElementType }[] = [
     { key: "review", label: "Revisar", icon: ShoppingCart },
-    { key: "payment", label: "Pagamento", icon: CreditCard },
-    { key: "confirm", label: "Confirmar", icon: Check },
+    { key: "delivery", label: "Entrega", icon: Package },
+    { key: "confirm", label: "Enviar", icon: MessageCircle },
   ];
 
   const currentStepIndex = steps.findIndex((s) => s.key === step);
@@ -118,8 +186,8 @@ export default function LojaCheckout() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">Finalizar Compra</h1>
-          <p className="text-muted-foreground">Complete seu pedido em poucos passos</p>
+          <h1 className="text-2xl font-bold">Finalizar Pedido</h1>
+          <p className="text-muted-foreground">Revise e envie seu pedido via WhatsApp</p>
         </div>
       </div>
 
@@ -147,19 +215,28 @@ export default function LojaCheckout() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
+          {/* Step: Review */}
           {step === "review" && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><ShoppingCart className="h-5 w-5" />Revise seu pedido</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  Revise seu pedido
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex gap-4 py-3 border-b border-border/30 last:border-0">
-                    <div className="h-16 w-16 rounded-lg bg-muted/30 flex items-center justify-center shrink-0">
-                      {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-lg" /> : <Package className="h-6 w-6 text-muted-foreground/50" />}
+                    <div className="h-16 w-16 rounded-lg bg-muted/30 flex items-center justify-center shrink-0 overflow-hidden">
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-lg" />
+                      ) : (
+                        <Package className="h-6 w-6 text-muted-foreground/50" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium line-clamp-1">{item.name}</p>
+                      <p className="text-xs text-muted-foreground">Ref: {item.sku ?? "-"}</p>
                       <p className="text-sm text-muted-foreground">{item.quantity}x {formatPrice(item.price)}</p>
                     </div>
                     <div className="text-right shrink-0">
@@ -171,65 +248,89 @@ export default function LojaCheckout() {
             </Card>
           )}
 
-          {step === "payment" && (
+          {/* Step: Delivery */}
+          {step === "delivery" && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" />Forma de pagamento</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Endereço de entrega
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <RadioGroup value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v as PaymentMethod); if (v === "pix") setInstallments(1); }} className="space-y-3">
-                  {[
-                    { value: "pix", icon: QrCode, label: "Pix", desc: "Pagamento à vista via Pix" },
-                    { value: "card", icon: CreditCard, label: "Cartão de Crédito", desc: "Parcele em até 4x" },
-                    { value: "boleto", icon: FileText, label: "Boleto Bancário", desc: "Parcele em até 4x" },
-                  ].map((m) => (
-                    <div key={m.value} className={cn("flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-colors", paymentMethod === m.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/50")}>
-                      <RadioGroupItem value={m.value} id={m.value} />
-                      <Label htmlFor={m.value} className="flex-1 cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <m.icon className="h-6 w-6 text-primary" />
-                          <div><p className="font-medium">{m.label}</p><p className="text-sm text-muted-foreground">{m.desc}</p></div>
-                        </div>
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-                {(paymentMethod === "card" || paymentMethod === "boleto") && (
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="address">Endereço completo</Label>
+                  <Input
+                    id="address"
+                    placeholder="Rua, número, complemento"
+                    value={deliveryData.address}
+                    onChange={(e) => setDeliveryData((d) => ({ ...d, address: e.target.value }))}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Parcelas</Label>
-                    <Select value={String(installments)} onValueChange={(v) => setInstallments(Number(v))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {[1, 2, 3, 4].map((n) => (
-                          <SelectItem key={n} value={String(n)}>{n}x de {formatPrice(total / n)}{n === 1 ? " à vista" : ""}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="city">Cidade</Label>
+                    <Input
+                      id="city"
+                      placeholder="Cidade"
+                      value={deliveryData.city}
+                      onChange={(e) => setDeliveryData((d) => ({ ...d, city: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="state">Estado</Label>
+                    <Input
+                      id="state"
+                      placeholder="UF"
+                      value={deliveryData.state}
+                      onChange={(e) => setDeliveryData((d) => ({ ...d, state: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="zipCode">CEP</Label>
+                  <Input
+                    id="zipCode"
+                    placeholder="00000-000"
+                    value={deliveryData.zipCode}
+                    onChange={(e) => setDeliveryData((d) => ({ ...d, zipCode: e.target.value }))}
+                  />
+                </div>
+
+                {/* Pre-filled data info */}
+                {franchiseeProfile && (
+                  <div className="p-3 rounded-lg bg-muted/30 text-sm space-y-1">
+                    <p className="text-muted-foreground font-medium">Dados da unidade:</p>
+                    <p>{franchiseeProfile.unitName} • {franchiseeProfile.email}</p>
+                    {franchiseeProfile.cnpj && <p>CNPJ: {franchiseeProfile.cnpj}</p>}
                   </div>
                 )}
               </CardContent>
             </Card>
           )}
 
+          {/* Step: Confirm */}
           {step === "confirm" && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Check className="h-5 w-5" />Confirme seu pedido</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5" />
+                  Confirme e envie via WhatsApp
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="p-4 rounded-lg bg-muted/30">
-                  <p className="text-sm text-muted-foreground mb-1">Forma de pagamento</p>
-                  <p className="font-medium flex items-center gap-2">
-                    {paymentMethod === "pix" && <QrCode className="h-4 w-4" />}
-                    {paymentMethod === "card" && <CreditCard className="h-4 w-4" />}
-                    {paymentMethod === "boleto" && <FileText className="h-4 w-4" />}
-                    {paymentMethod === "pix" ? "Pix" : paymentMethod === "card" ? "Cartão de Crédito" : "Boleto"}
-                    {paymentMethod !== "pix" && ` - ${installments}x de ${formatPrice(total / installments)}`}
-                  </p>
+                <div className="p-4 rounded-lg bg-muted/30 space-y-2">
+                  <p className="text-sm text-muted-foreground font-medium">Dados do pedido</p>
+                  <p className="text-sm">{franchiseeProfile?.unitName} • {franchiseeProfile?.companyName}</p>
+                  {deliveryData.address && (
+                    <p className="text-sm">{deliveryData.address}, {deliveryData.city || franchiseeProfile?.city} - {deliveryData.state || franchiseeProfile?.state} • CEP: {deliveryData.zipCode}</p>
+                  )}
                 </div>
+
                 <Separator />
+
                 <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Itens do pedido</p>
+                  <p className="text-sm text-muted-foreground font-medium">Itens do pedido</p>
                   {items.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
                       <span>{item.quantity}x {item.name}</span>
@@ -237,9 +338,10 @@ export default function LojaCheckout() {
                     </div>
                   ))}
                 </div>
-                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+
+                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
                   <p className="text-sm text-muted-foreground">
-                    Ao confirmar, você concorda com os termos de compra e será gerado um pedido que deverá ser pago conforme a forma de pagamento selecionada.
+                    Ao confirmar, o pedido será enviado via <strong>WhatsApp</strong> para a equipe Promax. Você será redirecionado para o WhatsApp com todos os detalhes preenchidos.
                   </p>
                 </div>
               </CardContent>
@@ -247,6 +349,7 @@ export default function LojaCheckout() {
           )}
         </div>
 
+        {/* Order Summary Sidebar */}
         <div className="lg:col-span-1">
           <Card className="sticky top-4">
             <CardHeader><CardTitle className="text-lg">Resumo</CardTitle></CardHeader>
@@ -260,19 +363,39 @@ export default function LojaCheckout() {
                 <span>Total</span>
                 <span className="text-lg text-primary">{formatPrice(total)}</span>
               </div>
-              {paymentMethod !== "pix" && installments > 1 && step !== "review" && (
-                <p className="text-sm text-muted-foreground text-center">ou {installments}x de {formatPrice(total / installments)}</p>
-              )}
+
               <div className="flex gap-2">
                 {step !== "review" && (
-                  <Button variant="outline" className="flex-1" onClick={() => { const prev = steps[currentStepIndex - 1]; if (prev) setStep(prev.key); }}>Voltar</Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      const prev = steps[currentStepIndex - 1];
+                      if (prev) setStep(prev.key);
+                    }}
+                  >
+                    Voltar
+                  </Button>
                 )}
                 <Button
-                  className="flex-1"
-                  onClick={() => { if (step === "confirm") { createOrder.mutate(); } else { const next = steps[currentStepIndex + 1]; if (next) setStep(next.key); } }}
-                  disabled={createOrder.isPending}
+                  className={cn("flex-1 gap-2", step === "confirm" && "bg-green-600 hover:bg-green-700")}
+                  onClick={() => {
+                    if (step === "confirm") {
+                      handleSendWhatsApp();
+                    } else {
+                      const next = steps[currentStepIndex + 1];
+                      if (next) setStep(next.key);
+                    }
+                  }}
                 >
-                  {createOrder.isPending ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processando...</>) : step === "confirm" ? "Confirmar Pedido" : "Continuar"}
+                  {step === "confirm" ? (
+                    <>
+                      <MessageCircle className="h-4 w-4" />
+                      Enviar via WhatsApp
+                    </>
+                  ) : (
+                    "Continuar"
+                  )}
                 </Button>
               </div>
             </CardContent>
