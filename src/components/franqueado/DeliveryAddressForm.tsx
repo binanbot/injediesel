@@ -144,7 +144,7 @@ export function DeliveryAddressForm({
           <span className="text-sm font-medium text-foreground">Endereço de entrega</span>
         </div>
         {profile && (
-          <Button variant="ghost" size="sm" onClick={handleUseProfileAddress} className="text-xs gap-1">
+          <Button variant="default" size="sm" onClick={handleUseProfileAddress} className="text-xs gap-1 bg-primary text-primary-foreground shadow-md">
             <RotateCcw className="h-3 w-3" />
             Usar endereço do cadastro
           </Button>

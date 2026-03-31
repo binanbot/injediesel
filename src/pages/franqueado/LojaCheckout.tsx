@@ -172,7 +172,14 @@ export default function LojaCheckout() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/franqueado/loja")}>
+        <Button variant="ghost" size="icon" onClick={() => {
+          if (step === "review") {
+            navigate("/franqueado/loja");
+          } else {
+            const prev = steps[currentStepIndex - 1];
+            if (prev) setStep(prev.key);
+          }
+        }}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
@@ -328,7 +335,7 @@ export default function LojaCheckout() {
                   </Button>
                 )}
                 <Button
-                  className={cn("flex-1 gap-2", step === "confirm" && "bg-green-600 hover:bg-green-700")}
+                  className={cn("flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white", step === "confirm" && "bg-green-700 hover:bg-green-800")}
                   onClick={() => {
                     if (step === "confirm") {
                       handleSendWhatsApp();
