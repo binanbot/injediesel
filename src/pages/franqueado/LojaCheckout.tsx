@@ -43,14 +43,15 @@ const buildWhatsAppMessage = (address: DeliveryAddress, items: CartItem[]) => {
 *NOVO PEDIDO PROMAX*
 
 *DADOS DO FRANQUEADO*
-Destinatário: ${address.recipient_name}
+Responsável: ${address.recipient_name}
 Razão Social: ${address.company_name}
 CNPJ: ${address.cnpj}
 Telefone: ${address.phone}
 E-mail: ${address.email}
 
 *ENDEREÇO DE ENTREGA*
-Rua: ${address.street}, ${address.number}${address.complement ? ` - ${address.complement}` : ""}
+${address.street}, ${address.number}
+${address.complement ? `Complemento: ${address.complement}` : ""}
 Bairro: ${address.district}
 Cidade: ${address.city} - ${address.state}
 CEP: ${address.zip_code}
