@@ -147,7 +147,7 @@ export function CartDrawer({
                     {/* Subtotal */}
                     <div className="text-right shrink-0">
                       <p className="font-semibold text-sm">
-                        {formatPrice(item.product.price * item.quantity)}
+                        {formatPrice(item.price * item.quantity)}
                       </p>
                     </div>
                   </div>

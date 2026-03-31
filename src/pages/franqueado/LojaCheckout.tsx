@@ -359,8 +359,8 @@ export default function LojaCheckout() {
                   <p className="text-sm text-muted-foreground">Itens do pedido</p>
                   {cart.items.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
-                      <span>{item.quantity}x {item.product.name}</span>
-                      <span>{formatPrice(item.product.price * item.quantity)}</span>
+                      <span>{item.quantity}x {item.name}</span>
+                      <span>{formatPrice(item.price * item.quantity)}</span>
                     </div>
                   ))}
                 </div>

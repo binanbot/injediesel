@@ -155,7 +155,7 @@ export default function Carrinho() {
 
                     {/* Subtotal */}
                     <div className="text-right shrink-0">
-                      <p className="font-bold text-lg">{formatPrice(item.product.price * item.quantity)}</p>
+                      <p className="font-bold text-lg">{formatPrice(item.price * item.quantity)}</p>
                     </div>
                   </div>
                 ))}

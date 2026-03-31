@@ -149,10 +149,10 @@ export default function Loja() {
           items={cart?.items || []}
           total={cart?.total || 0}
           itemCount={itemCount}
-          onUpdateQuantity={(itemId, quantity) => 
+          onUpdateQuantity={(itemId: string, quantity: number) => 
             updateQuantity.mutate({ itemId, quantity })
           }
-          onRemoveItem={(itemId) => removeItem.mutate(itemId)}
+          onRemoveItem={(itemId: string) => removeItem.mutate(itemId)}
           isUpdating={updateQuantity.isPending || removeItem.isPending}
         />
       </div>
