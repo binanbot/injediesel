@@ -76,10 +76,10 @@ export default function LojaCheckout() {
       const orderItems = cart.items.map((item) => ({
         order_id: order.id,
         product_id: item.product_id,
-        name: item.product.name,
+        name: item.name,
         quantity: item.quantity,
-        unit_price: item.product.price,
-        subtotal: item.product.price * item.quantity,
+        unit_price: item.price,
+        subtotal: item.price * item.quantity,
       }));
 
       const { error: itemsError } = await supabase
@@ -208,10 +208,10 @@ export default function LojaCheckout() {
                 {cart.items.map((item) => (
                   <div key={item.id} className="flex gap-4 py-3 border-b border-border/30 last:border-0">
                     <div className="h-16 w-16 rounded-lg bg-muted/30 flex items-center justify-center shrink-0">
-                      {item.product.image_url ? (
+                      {item.image ? (
                         <img
-                          src={item.product.image_url}
-                          alt={item.product.name}
+                          src={item.image}
+                          alt={item.name}
                           className="w-full h-full object-cover rounded-lg"
                         />
                       ) : (
@@ -219,14 +219,14 @@ export default function LojaCheckout() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium line-clamp-1">{item.product.name}</p>
+                      <p className="font-medium line-clamp-1">{item.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {item.quantity}x {formatPrice(item.product.price)}
+                        {item.quantity}x {formatPrice(item.price)}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="font-semibold">
-                        {formatPrice(item.product.price * item.quantity)}
+                        {formatPrice(item.price * item.quantity)}
                       </p>
                     </div>
                   </div>
@@ -359,8 +359,8 @@ export default function LojaCheckout() {
                   <p className="text-sm text-muted-foreground">Itens do pedido</p>
                   {cart.items.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
-                      <span>{item.quantity}x {item.product.name}</span>
-                      <span>{formatPrice(item.product.price * item.quantity)}</span>
+                      <span>{item.quantity}x {item.name}</span>
+                      <span>{formatPrice(item.price * item.quantity)}</span>
                     </div>
                   ))}
                 </div>

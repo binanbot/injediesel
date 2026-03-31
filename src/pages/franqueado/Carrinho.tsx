@@ -101,10 +101,10 @@ export default function Carrinho() {
                   <div key={item.id} className="flex gap-4 p-4 rounded-lg bg-muted/20">
                     {/* Product Image */}
                     <div className="h-20 w-20 rounded-lg bg-muted/30 flex items-center justify-center shrink-0 overflow-hidden">
-                      {item.product.image_url ? (
+                      {item.image ? (
                         <img
-                          src={item.product.image_url}
-                          alt={item.product.name}
+                          src={item.image}
+                          alt={item.name}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -114,10 +114,10 @@ export default function Carrinho() {
 
                     {/* Product Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium line-clamp-2">{item.product.name}</p>
-                      <p className="text-sm text-muted-foreground">SKU: {item.product.sku}</p>
+                      <p className="font-medium line-clamp-2">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>
                       <p className="text-sm font-semibold text-primary mt-1">
-                        {formatPrice(item.product.price)} cada
+                        {formatPrice(item.price)} cada
                       </p>
 
                       {/* Quantity Controls */}
@@ -155,7 +155,7 @@ export default function Carrinho() {
 
                     {/* Subtotal */}
                     <div className="text-right shrink-0">
-                      <p className="font-bold text-lg">{formatPrice(item.product.price * item.quantity)}</p>
+                      <p className="font-bold text-lg">{formatPrice(item.price * item.quantity)}</p>
                     </div>
                   </div>
                 ))}

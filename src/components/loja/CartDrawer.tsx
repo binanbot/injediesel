@@ -6,19 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 
-interface CartItem {
-  id: string;
-  product_id: string;
-  quantity: number;
-  product: {
-    id: string;
-    name: string;
-    sku: string;
-    price: number;
-    image_url: string | null;
-    available: boolean;
-  };
-}
+import { CartItem } from "@/hooks/useCart";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -101,10 +89,10 @@ export function CartDrawer({
                   <div key={item.id} className="flex gap-3">
                     {/* Product Image */}
                     <div className="h-16 w-16 rounded-lg bg-muted/30 flex items-center justify-center shrink-0 overflow-hidden">
-                      {item.product.image_url ? (
+                      {item.image ? (
                         <img
-                          src={item.product.image_url}
-                          alt={item.product.name}
+                          src={item.image}
+                          alt={item.name}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -115,10 +103,10 @@ export function CartDrawer({
                     {/* Product Info */}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm line-clamp-2">
-                        {item.product.name}
+                        {item.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatPrice(item.product.price)} cada
+                        {formatPrice(item.price)} cada
                       </p>
 
                       {/* Quantity Controls */}
@@ -159,7 +147,7 @@ export function CartDrawer({
                     {/* Subtotal */}
                     <div className="text-right shrink-0">
                       <p className="font-semibold text-sm">
-                        {formatPrice(item.product.price * item.quantity)}
+                        {formatPrice(item.price * item.quantity)}
                       </p>
                     </div>
                   </div>
