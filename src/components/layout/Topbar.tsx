@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useContractStatus } from "@/hooks/useContractStatus";
-import { useCart } from "@/hooks/useCart";
+import { useCartStore } from "@/stores/useCartStore";
 interface TopbarProps {
   unitName?: string;
   onMenuClick?: () => void;
