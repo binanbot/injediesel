@@ -1,15 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { 
-  ArrowLeft, 
-  ShoppingCart, 
-  CreditCard, 
-  QrCode, 
-  FileText,
-  Check,
-  Loader2,
-  Package,
+  ArrowLeft, ShoppingCart, CreditCard, QrCode, FileText, Check, Loader2, Package,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -19,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { useCart } from "@/hooks/useCart";
+import { useCartStore } from "@/stores/useCartStore";
 import { cn } from "@/lib/utils";
 
 type PaymentMethod = "pix" | "card" | "boleto";
@@ -27,8 +20,8 @@ type CheckoutStep = "review" | "payment" | "confirm";
 
 export default function LojaCheckout() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { cart, clearCart, isLoading: cartLoading } = useCart();
+  const { items, getTotal, clearCart } = useCartStore();
+  const total = getTotal();
   
   const [step, setStep] = useState<CheckoutStep>("review");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
@@ -41,41 +34,33 @@ export default function LojaCheckout() {
     }).format(value);
   };
 
-  // Create order mutation
   const createOrder = useMutation({
     mutationFn: async () => {
-      if (!cart || cart.items.length === 0) {
-        throw new Error("Carrinho vazio");
-      }
+      if (items.length === 0) throw new Error("Carrinho vazio");
 
-      // Get user's unit_id
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
       const { data: unitId } = await supabase
         .rpc("get_user_unit_id", { _user_id: user.id });
-
       if (!unitId) throw new Error("Unidade não encontrada");
 
-      // Create order
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
           unit_id: unitId,
-          total: cart.total,
+          total,
           payment_method: paymentMethod,
           installments: paymentMethod === "pix" ? 1 : installments,
           status: "pending",
         })
         .select()
         .single();
-
       if (orderError) throw orderError;
 
-      // Create order items
-      const orderItems = cart.items.map((item) => ({
+      const orderItems = items.map((item) => ({
         order_id: order.id,
-        product_id: item.product_id,
+        product_id: item.id,
         name: item.name,
         quantity: item.quantity,
         unit_price: item.price,
@@ -85,12 +70,9 @@ export default function LojaCheckout() {
       const { error: itemsError } = await supabase
         .from("order_items")
         .insert(orderItems);
-
       if (itemsError) throw itemsError;
 
-      // Clear cart after successful order
-      await clearCart.mutateAsync();
-
+      clearCart();
       return order;
     },
     onSuccess: (order) => {
@@ -102,31 +84,20 @@ export default function LojaCheckout() {
     },
   });
 
-  if (cartLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!cart || cart.items.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="space-y-6">
         <Button variant="ghost" onClick={() => navigate("/franqueado/loja")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar para a loja
         </Button>
-        
         <div className="glass-card p-12 text-center">
           <ShoppingCart className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
           <h3 className="font-semibold mb-2">Carrinho vazio</h3>
           <p className="text-sm text-muted-foreground mb-4">
             Adicione produtos ao carrinho para continuar
           </p>
-          <Button onClick={() => navigate("/franqueado/loja")}>
-            Ir para a loja
-          </Button>
+          <Button onClick={() => navigate("/franqueado/loja")}>Ir para a loja</Button>
         </div>
       </div>
     );
@@ -142,16 +113,13 @@ export default function LojaCheckout() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate("/franqueado/loja")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
           <h1 className="text-2xl font-bold">Finalizar Compra</h1>
-          <p className="text-muted-foreground">
-            Complete seu pedido em poucos passos
-          </p>
+          <p className="text-muted-foreground">Complete seu pedido em poucos passos</p>
         </div>
       </div>
 
@@ -160,74 +128,42 @@ export default function LojaCheckout() {
         <div className="flex items-center justify-between">
           {steps.map((s, index) => (
             <div key={s.key} className="flex items-center gap-2 flex-1">
-              <div
-                className={cn(
-                  "flex items-center justify-center h-10 w-10 rounded-full border-2 transition-colors",
-                  index < currentStepIndex
-                    ? "bg-primary border-primary text-primary-foreground"
-                    : index === currentStepIndex
-                    ? "border-primary text-primary"
-                    : "border-muted text-muted-foreground"
-                )}
-              >
-                {index < currentStepIndex ? (
-                  <Check className="h-5 w-5" />
-                ) : (
-                  <s.icon className="h-5 w-5" />
-                )}
+              <div className={cn(
+                "flex items-center justify-center h-10 w-10 rounded-full border-2 transition-colors",
+                index < currentStepIndex ? "bg-primary border-primary text-primary-foreground"
+                  : index === currentStepIndex ? "border-primary text-primary"
+                  : "border-muted text-muted-foreground"
+              )}>
+                {index < currentStepIndex ? <Check className="h-5 w-5" /> : <s.icon className="h-5 w-5" />}
               </div>
-              <span
-                className={cn(
-                  "text-sm font-medium hidden sm:block",
-                  index === currentStepIndex ? "text-foreground" : "text-muted-foreground"
-                )}
-              >
+              <span className={cn("text-sm font-medium hidden sm:block", index === currentStepIndex ? "text-foreground" : "text-muted-foreground")}>
                 {s.label}
               </span>
-              {index < steps.length - 1 && (
-                <div className="flex-1 h-px bg-border mx-2" />
-              )}
+              {index < steps.length - 1 && <div className="flex-1 h-px bg-border mx-2" />}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Step Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
         <div className="lg:col-span-2">
           {step === "review" && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5" />
-                  Revise seu pedido
-                </CardTitle>
+                <CardTitle className="flex items-center gap-2"><ShoppingCart className="h-5 w-5" />Revise seu pedido</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {cart.items.map((item) => (
+                {items.map((item) => (
                   <div key={item.id} className="flex gap-4 py-3 border-b border-border/30 last:border-0">
                     <div className="h-16 w-16 rounded-lg bg-muted/30 flex items-center justify-center shrink-0">
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      ) : (
-                        <Package className="h-6 w-6 text-muted-foreground/50" />
-                      )}
+                      {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-lg" /> : <Package className="h-6 w-6 text-muted-foreground/50" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium line-clamp-1">{item.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {item.quantity}x {formatPrice(item.price)}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{item.quantity}x {formatPrice(item.price)}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-semibold">
-                        {formatPrice(item.price * item.quantity)}
-                      </p>
+                      <p className="font-semibold">{formatPrice(item.price * item.quantity)}</p>
                     </div>
                   </div>
                 ))}
@@ -238,92 +174,34 @@ export default function LojaCheckout() {
           {step === "payment" && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Forma de pagamento
-                </CardTitle>
+                <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" />Forma de pagamento</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <RadioGroup
-                  value={paymentMethod}
-                  onValueChange={(v) => {
-                    setPaymentMethod(v as PaymentMethod);
-                    if (v === "pix") setInstallments(1);
-                  }}
-                  className="space-y-3"
-                >
-                  <div className={cn(
-                    "flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-colors",
-                    paymentMethod === "pix" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                  )}>
-                    <RadioGroupItem value="pix" id="pix" />
-                    <Label htmlFor="pix" className="flex-1 cursor-pointer">
-                      <div className="flex items-center gap-3">
-                        <QrCode className="h-6 w-6 text-primary" />
-                        <div>
-                          <p className="font-medium">Pix</p>
-                          <p className="text-sm text-muted-foreground">
-                            Pagamento à vista via Pix
-                          </p>
+                <RadioGroup value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v as PaymentMethod); if (v === "pix") setInstallments(1); }} className="space-y-3">
+                  {[
+                    { value: "pix", icon: QrCode, label: "Pix", desc: "Pagamento à vista via Pix" },
+                    { value: "card", icon: CreditCard, label: "Cartão de Crédito", desc: "Parcele em até 4x" },
+                    { value: "boleto", icon: FileText, label: "Boleto Bancário", desc: "Parcele em até 4x" },
+                  ].map((m) => (
+                    <div key={m.value} className={cn("flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-colors", paymentMethod === m.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/50")}>
+                      <RadioGroupItem value={m.value} id={m.value} />
+                      <Label htmlFor={m.value} className="flex-1 cursor-pointer">
+                        <div className="flex items-center gap-3">
+                          <m.icon className="h-6 w-6 text-primary" />
+                          <div><p className="font-medium">{m.label}</p><p className="text-sm text-muted-foreground">{m.desc}</p></div>
                         </div>
-                      </div>
-                    </Label>
-                  </div>
-
-                  <div className={cn(
-                    "flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-colors",
-                    paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                  )}>
-                    <RadioGroupItem value="card" id="card" />
-                    <Label htmlFor="card" className="flex-1 cursor-pointer">
-                      <div className="flex items-center gap-3">
-                        <CreditCard className="h-6 w-6 text-primary" />
-                        <div>
-                          <p className="font-medium">Cartão de Crédito</p>
-                          <p className="text-sm text-muted-foreground">
-                            Parcele em até 4x
-                          </p>
-                        </div>
-                      </div>
-                    </Label>
-                  </div>
-
-                  <div className={cn(
-                    "flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-colors",
-                    paymentMethod === "boleto" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                  )}>
-                    <RadioGroupItem value="boleto" id="boleto" />
-                    <Label htmlFor="boleto" className="flex-1 cursor-pointer">
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-6 w-6 text-primary" />
-                        <div>
-                          <p className="font-medium">Boleto Bancário</p>
-                          <p className="text-sm text-muted-foreground">
-                            Parcele em até 4x
-                          </p>
-                        </div>
-                      </div>
-                    </Label>
-                  </div>
+                      </Label>
+                    </div>
+                  ))}
                 </RadioGroup>
-
-                {/* Installments */}
                 {(paymentMethod === "card" || paymentMethod === "boleto") && (
                   <div className="space-y-2">
                     <Label>Parcelas</Label>
-                    <Select 
-                      value={String(installments)} 
-                      onValueChange={(v) => setInstallments(Number(v))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
+                    <Select value={String(installments)} onValueChange={(v) => setInstallments(Number(v))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {[1, 2, 3, 4].map((n) => (
-                          <SelectItem key={n} value={String(n)}>
-                            {n}x de {formatPrice(cart.total / n)}
-                            {n === 1 ? " à vista" : ""}
-                          </SelectItem>
+                          <SelectItem key={n} value={String(n)}>{n}x de {formatPrice(total / n)}{n === 1 ? " à vista" : ""}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -336,10 +214,7 @@ export default function LojaCheckout() {
           {step === "confirm" && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Check className="h-5 w-5" />
-                  Confirme seu pedido
-                </CardTitle>
+                <CardTitle className="flex items-center gap-2"><Check className="h-5 w-5" />Confirme seu pedido</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="p-4 rounded-lg bg-muted/30">
@@ -349,22 +224,19 @@ export default function LojaCheckout() {
                     {paymentMethod === "card" && <CreditCard className="h-4 w-4" />}
                     {paymentMethod === "boleto" && <FileText className="h-4 w-4" />}
                     {paymentMethod === "pix" ? "Pix" : paymentMethod === "card" ? "Cartão de Crédito" : "Boleto"}
-                    {paymentMethod !== "pix" && ` - ${installments}x de ${formatPrice(cart.total / installments)}`}
+                    {paymentMethod !== "pix" && ` - ${installments}x de ${formatPrice(total / installments)}`}
                   </p>
                 </div>
-
                 <Separator />
-
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Itens do pedido</p>
-                  {cart.items.map((item) => (
+                  {items.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
                       <span>{item.quantity}x {item.name}</span>
                       <span>{formatPrice(item.price * item.quantity)}</span>
                     </div>
                   ))}
                 </div>
-
                 <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
                   <p className="text-sm text-muted-foreground">
                     Ao confirmar, você concorda com os termos de compra e será gerado um pedido que deverá ser pago conforme a forma de pagamento selecionada.
@@ -375,70 +247,32 @@ export default function LojaCheckout() {
           )}
         </div>
 
-        {/* Order Summary */}
         <div className="lg:col-span-1">
           <Card className="sticky top-4">
-            <CardHeader>
-              <CardTitle className="text-lg">Resumo</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-lg">Resumo</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Subtotal ({cart.items.length} {cart.items.length === 1 ? "item" : "itens"})
-                  </span>
-                  <span>{formatPrice(cart.total)}</span>
-                </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal ({items.length} {items.length === 1 ? "item" : "itens"})</span>
+                <span>{formatPrice(total)}</span>
               </div>
-
               <Separator />
-
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span className="text-lg text-primary">{formatPrice(cart.total)}</span>
+                <span className="text-lg text-primary">{formatPrice(total)}</span>
               </div>
-
               {paymentMethod !== "pix" && installments > 1 && step !== "review" && (
-                <p className="text-sm text-muted-foreground text-center">
-                  ou {installments}x de {formatPrice(cart.total / installments)}
-                </p>
+                <p className="text-sm text-muted-foreground text-center">ou {installments}x de {formatPrice(total / installments)}</p>
               )}
-
               <div className="flex gap-2">
                 {step !== "review" && (
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => {
-                      const prevStep = steps[currentStepIndex - 1];
-                      if (prevStep) setStep(prevStep.key);
-                    }}
-                  >
-                    Voltar
-                  </Button>
+                  <Button variant="outline" className="flex-1" onClick={() => { const prev = steps[currentStepIndex - 1]; if (prev) setStep(prev.key); }}>Voltar</Button>
                 )}
                 <Button
                   className="flex-1"
-                  onClick={() => {
-                    if (step === "confirm") {
-                      createOrder.mutate();
-                    } else {
-                      const nextStep = steps[currentStepIndex + 1];
-                      if (nextStep) setStep(nextStep.key);
-                    }
-                  }}
+                  onClick={() => { if (step === "confirm") { createOrder.mutate(); } else { const next = steps[currentStepIndex + 1]; if (next) setStep(next.key); } }}
                   disabled={createOrder.isPending}
                 >
-                  {createOrder.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processando...
-                    </>
-                  ) : step === "confirm" ? (
-                    "Confirmar Pedido"
-                  ) : (
-                    "Continuar"
-                  )}
+                  {createOrder.isPending ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processando...</>) : step === "confirm" ? "Confirmar Pedido" : "Continuar"}
                 </Button>
               </div>
             </CardContent>

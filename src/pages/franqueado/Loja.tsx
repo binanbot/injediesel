@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Filter, Package, Loader2, Building2 } from "lucide-react";
+import { Search, Filter, Package, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProductCard } from "@/components/loja/ProductCard";
 import { CartDrawer } from "@/components/loja/CartDrawer";
-import { useCart } from "@/hooks/useCart";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useCartStore } from "@/stores/useCartStore";
+import { toast } from "sonner";
 
 interface Product {
   id: string;
@@ -31,23 +31,9 @@ interface Product {
 export default function Loja() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [addingProductId, setAddingProductId] = useState<string | null>(null);
-  
-  const {
-    cart,
-    isLoading: cartLoading,
-    isOpen,
-    setIsOpen,
-    addItem,
-    updateQuantity,
-    removeItem,
-    itemCount,
-    isAdmin,
-    units,
-    selectedUnitId,
-    setSelectedUnitId,
-    needsUnitSelection,
-  } = useCart();
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const { items, addItem, updateQuantity, removeItem, getTotal, getItemCount } = useCartStore();
 
   // Fetch products
   const { data: products, isLoading: productsLoading } = useQuery({
@@ -77,12 +63,9 @@ export default function Loja() {
     if (!products) return [];
     
     return products.filter((product) => {
-      // Category filter
       if (selectedCategory !== "all" && product.category !== selectedCategory) {
         return false;
       }
-
-      // Search filter
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
         const matchesName = product.name.toLowerCase().includes(search);
@@ -91,50 +74,36 @@ export default function Loja() {
         const matchesModels = product.models?.some((m) => 
           m.toLowerCase().includes(search)
         );
-        
         return matchesName || matchesRef || matchesSku || matchesModels;
       }
-
       return true;
     });
   }, [products, searchTerm, selectedCategory]);
 
   const handleAddToCart = (productId: string, quantity: number) => {
     const product = products?.find(p => p.id === productId);
-    setAddingProductId(productId);
-    addItem.mutate(
-      { productId, quantity, productName: product?.name },
-      { onSettled: () => setAddingProductId(null) }
+    if (!product) return;
+
+    const hasPromo = product.promo_price && product.promo_type && product.promo_value;
+    const displayPrice = hasPromo ? product.promo_price! : product.price;
+
+    addItem(
+      {
+        id: product.id,
+        name: product.name,
+        sku: product.sku,
+        price: displayPrice,
+        image: product.image_url ?? undefined,
+      },
+      quantity
     );
+    toast.success(`${quantity}x ${product.name} adicionado ao carrinho`);
   };
+
+  const itemCount = getItemCount();
 
   return (
     <div className="space-y-6">
-      {/* Admin Unit Selector */}
-      {isAdmin && (
-        <Alert className="bg-primary/10 border-primary/30">
-          <Building2 className="h-4 w-4" />
-          <AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <span>Você está logado como Admin. Selecione uma unidade para gerenciar o carrinho:</span>
-            <Select 
-              value={selectedUnitId || ""} 
-              onValueChange={setSelectedUnitId}
-            >
-              <SelectTrigger className="w-full sm:w-64 bg-background">
-                <SelectValue placeholder="Selecione uma unidade" />
-              </SelectTrigger>
-              <SelectContent>
-                {units?.map((unit) => (
-                  <SelectItem key={unit.id} value={unit.id}>
-                    {unit.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -144,23 +113,20 @@ export default function Loja() {
           </p>
         </div>
         <CartDrawer
-          isOpen={isOpen}
-          onOpenChange={setIsOpen}
-          items={cart?.items || []}
-          total={cart?.total || 0}
+          isOpen={isCartOpen}
+          onOpenChange={setIsCartOpen}
+          items={items}
+          total={getTotal()}
           itemCount={itemCount}
-          onUpdateQuantity={(itemId: string, quantity: number) => 
-            updateQuantity.mutate({ itemId, quantity })
-          }
-          onRemoveItem={(itemId: string) => removeItem.mutate(itemId)}
-          isUpdating={updateQuantity.isPending || removeItem.isPending}
+          onUpdateQuantity={(itemId, quantity) => updateQuantity(itemId, quantity)}
+          onRemoveItem={(itemId) => removeItem(itemId)}
+          isUpdating={false}
         />
       </div>
 
       {/* Filters */}
       <div className="glass-card p-4">
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -170,8 +136,6 @@ export default function Loja() {
               className="pl-10"
             />
           </div>
-
-          {/* Category Filter */}
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-full sm:w-48">
               <Filter className="h-4 w-4 mr-2" />
@@ -188,40 +152,26 @@ export default function Loja() {
           </Select>
         </div>
 
-        {/* Active Filters */}
         {(searchTerm || selectedCategory !== "all") && (
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/30">
             <span className="text-xs text-muted-foreground">Filtros:</span>
             {searchTerm && (
               <Badge variant="secondary" className="gap-1">
                 Busca: {searchTerm}
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="ml-1 hover:text-destructive"
-                >
-                  ×
-                </button>
+                <button onClick={() => setSearchTerm("")} className="ml-1 hover:text-destructive">×</button>
               </Badge>
             )}
             {selectedCategory !== "all" && (
               <Badge variant="secondary" className="gap-1">
                 {selectedCategory}
-                <button
-                  onClick={() => setSelectedCategory("all")}
-                  className="ml-1 hover:text-destructive"
-                >
-                  ×
-                </button>
+                <button onClick={() => setSelectedCategory("all")} className="ml-1 hover:text-destructive">×</button>
               </Badge>
             )}
             <Button
               variant="ghost"
               size="sm"
               className="text-xs h-6"
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedCategory("all");
-              }}
+              onClick={() => { setSearchTerm(""); setSelectedCategory("all"); }}
             >
               Limpar filtros
             </Button>
@@ -229,14 +179,12 @@ export default function Loja() {
         )}
       </div>
 
-      {/* Results Count */}
       {!productsLoading && (
         <p className="text-sm text-muted-foreground">
           {filteredProducts.length} {filteredProducts.length === 1 ? "produto encontrado" : "produtos encontrados"}
         </p>
       )}
 
-      {/* Products Grid */}
       {productsLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -256,7 +204,7 @@ export default function Loja() {
               key={product.id}
               product={product}
               onAddToCart={handleAddToCart}
-              isAdding={addingProductId === product.id}
+              isAdding={false}
             />
           ))}
         </div>
