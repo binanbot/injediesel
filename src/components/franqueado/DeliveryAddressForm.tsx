@@ -83,9 +83,33 @@ export function DeliveryAddressForm({
   showSaveButton = false,
 }: DeliveryAddressFormProps) {
   const [saving, setSaving] = useState(false);
+  const [fetchingCep, setFetchingCep] = useState(false);
 
   const handleChange = (field: keyof DeliveryAddress, value: string) => {
     onChange({ ...address, [field]: value });
+  };
+
+  const fetchAddressByCep = async (cep: string) => {
+    const cleanCep = cep.replace(/\D/g, "");
+    if (cleanCep.length !== 8) return;
+    try {
+      setFetchingCep(true);
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await response.json();
+      if (data.erro) return;
+      onChange({
+        ...address,
+        zip_code: cleanCep,
+        street: data.logradouro || address.street,
+        district: data.bairro || address.district,
+        city: data.localidade || address.city,
+        state: data.uf || address.state,
+      });
+    } catch {
+      // silently ignore
+    } finally {
+      setFetchingCep(false);
+    }
   };
 
   const handleUseProfileAddress = () => {
