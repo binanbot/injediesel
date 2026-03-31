@@ -112,6 +112,16 @@ export default function Perfil() {
             state: (data as any).state ?? "",
           });
         } else {
+          // Auto-create profile if missing
+          const { data: newProfile, error: insertError } = await supabase
+            .from("profiles_franchisees")
+            .insert({ user_id: user.id, email: user.email ?? "" } as any)
+            .select("id")
+            .single();
+
+          if (!insertError && newProfile) {
+            setProfileId(newProfile.id);
+          }
           setUnitData((prev) => ({ ...prev, email: user.email ?? "" }));
         }
       } catch (error) {
