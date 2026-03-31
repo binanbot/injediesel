@@ -463,7 +463,7 @@ export default function ComprasFranqueados() {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Badge className={cn("gap-1", status.className)}>
+                          <Badge className={cn("gap-1 border", status.badgeClass)}>
                             <StatusIcon className="h-3 w-3" />
                             {status.label}
                           </Badge>
