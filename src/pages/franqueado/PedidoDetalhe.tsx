@@ -191,63 +191,48 @@ export default function PedidoDetalhe() {
               <CardTitle className="text-lg">Resumo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Payment Method */}
-              {order.payment_method && PaymentIcon && (
-                <div className="p-3 rounded-lg bg-muted/30">
-                  <p className="text-xs text-muted-foreground mb-1">Forma de pagamento</p>
-                  <p className="font-medium flex items-center gap-2">
-                    <PaymentIcon className="h-4 w-4" />
-                    {paymentLabels[order.payment_method] || order.payment_method}
-                  </p>
-                  {order.installments && order.installments > 1 && (
-                    <p className="text-sm text-muted-foreground">
-                      {order.installments}x de {formatPrice(order.total / order.installments)}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <Separator />
-
               {/* Items Count */}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                  Itens ({items?.length || 0})
+                  Subtotal ({order.items_count} {order.items_count === 1 ? "item" : "itens"})
                 </span>
-                <span>{formatPrice(order.total)}</span>
+                <span>{formatPrice(order.subtotal)}</span>
               </div>
+
+              {order.shipping_amount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Frete</span>
+                  <span>{formatPrice(order.shipping_amount)}</span>
+                </div>
+              )}
+
+              {order.discount_amount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Desconto</span>
+                  <span className="text-green-500">-{formatPrice(order.discount_amount)}</span>
+                </div>
+              )}
 
               <Separator />
 
               {/* Total */}
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span className="text-lg text-primary">{formatPrice(order.total)}</span>
+                <span className="text-lg text-primary">{formatPrice(order.total_amount)}</span>
               </div>
 
-              {/* Actions based on status */}
-              {order.status === "pending" && (
-                <div className="space-y-2 pt-4">
-                  <p className="text-sm text-muted-foreground text-center">
-                    Aguardando pagamento
-                  </p>
-                  <Button className="w-full">
-                    Ver instruções de pagamento
-                  </Button>
-                </div>
-              )}
-
-              {order.status === "paid" && (
-                <div className="p-3 rounded-lg bg-success/10 border border-success/20 text-center">
-                  <CheckCircle className="h-6 w-6 text-success mx-auto mb-1" />
-                  <p className="text-sm font-medium text-success">Pagamento confirmado</p>
-                </div>
-              )}
-
-              {order.status === "shipped" && (
+              {/* Status indicator */}
+              {order.status === "enviado" && (
                 <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-center">
                   <Truck className="h-6 w-6 text-warning mx-auto mb-1" />
                   <p className="text-sm font-medium text-warning">Pedido enviado</p>
+                </div>
+              )}
+
+              {order.status === "entregue" && (
+                <div className="p-3 rounded-lg bg-success/10 border border-success/20 text-center">
+                  <CheckCircle className="h-6 w-6 text-success mx-auto mb-1" />
+                  <p className="text-sm font-medium text-success">Pedido entregue</p>
                 </div>
               )}
             </CardContent>

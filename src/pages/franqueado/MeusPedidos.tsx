@@ -131,13 +131,10 @@ export default function MeusPedidos() {
 
                   <div className="flex items-center gap-4">
                     <div className="text-right hidden sm:block">
-                      <p className="font-semibold">{formatPrice(order.total)}</p>
-                      {order.payment_method && (
-                        <p className="text-sm text-muted-foreground">
-                          {paymentMethodLabels[order.payment_method] || order.payment_method}
-                          {order.installments && order.installments > 1 && ` (${order.installments}x)`}
-                        </p>
-                      )}
+                      <p className="font-semibold">{formatPrice(order.total_amount)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {order.items_count} {order.items_count === 1 ? "item" : "itens"}
+                      </p>
                     </div>
 
                     <Badge className={cn("gap-1", status.className)}>
