@@ -52,6 +52,22 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getOrderStatus, orderStatusList } from "@/utils/orderStatus";
 
+interface Order {
+  id: string;
+  order_number: string;
+  unit_id: string | null;
+  status: string;
+  total_amount: number;
+  payment_status: string;
+  items_count: number;
+  created_at: string;
+  unit?: {
+    name: string;
+    city: string | null;
+    state: string | null;
+  };
+}
+
 const paymentStatusLabels: Record<string, string> = {
   pendente: "Pendente",
   pago: "Pago",
