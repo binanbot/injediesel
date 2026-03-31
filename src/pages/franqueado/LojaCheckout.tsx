@@ -94,6 +94,21 @@ ${itemsText}
 `.trim();
 };
 
+const buildDefaultDeliveryAddress = (profile: FranchiseProfile): DeliveryAddress => ({
+  recipient_name: profile.unit_name || "",
+  company_name: profile.company_name || "",
+  cnpj: profile.cnpj || "",
+  phone: profile.phone || "",
+  email: profile.email || "",
+  zip_code: profile.zip_code || "",
+  street: profile.street || "",
+  number: profile.number || "",
+  complement: profile.complement || "",
+  district: profile.district || "",
+  city: profile.city || "",
+  state: profile.state || "",
+});
+
 const sendOrderToWhatsApp = (address: DeliveryAddress, items: CartItem[]) => {
   const phone = "5545998590384";
   if (!items.length) {
