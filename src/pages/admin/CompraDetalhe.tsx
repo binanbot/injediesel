@@ -245,13 +245,13 @@ export default function CompraDetalhe() {
                       <Package className="h-5 w-5 text-muted-foreground/50" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium line-clamp-1">{item.name}</p>
+                      <p className="font-medium line-clamp-1">{item.product_name}</p>
                       <p className="text-sm text-muted-foreground">
                         {item.quantity}x {formatPrice(item.unit_price)}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-semibold">{formatPrice(item.subtotal)}</p>
+                      <p className="font-semibold">{formatPrice(item.line_total)}</p>
                     </div>
                   </div>
                 ))}
