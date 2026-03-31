@@ -87,16 +87,15 @@ export default function Loja() {
     const hasPromo = product.promo_price && product.promo_type && product.promo_value;
     const displayPrice = hasPromo ? product.promo_price! : product.price;
 
-    addItem(
-      {
+    for (let i = 0; i < quantity; i++) {
+      addItem({
         id: product.id,
         name: product.name,
         sku: product.sku,
         price: displayPrice,
         image: product.image_url ?? undefined,
-      },
-      quantity
-    );
+      });
+    }
     toast.success(`${quantity}x ${product.name} adicionado ao carrinho`);
   };
 
