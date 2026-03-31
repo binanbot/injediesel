@@ -216,7 +216,7 @@ export default function ComprasFranqueados() {
         order.unit?.name || "",
         order.unit?.city || "",
         order.unit?.state || "",
-        statusConfig[order.status]?.label || order.status,
+        getOrderStatus(order.status).label,
         order.total_amount.toFixed(2).replace(".", ","),
         paymentStatusLabels[order.payment_status] || order.payment_status,
         formatDate(order.created_at),
