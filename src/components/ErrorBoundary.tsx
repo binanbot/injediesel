@@ -36,7 +36,7 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error("ErrorBoundary capturou erro:", error, errorInfo);
     
     // Log para monitoramento (em produção, enviar para serviço de logging)
-    if (process.env.NODE_ENV === "development") {
+    if (import.meta.env.DEV) {
       console.group("🔴 Error Boundary - Detalhes");
       console.error("Error:", error);
       console.error("Component Stack:", errorInfo.componentStack);
