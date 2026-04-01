@@ -15,7 +15,9 @@ const generateOrderNumber = () => {
 export async function createOrderFromCart(
   franchiseProfileId: string,
   address: DeliveryAddress,
-  items: CartItem[]
+  items: CartItem[],
+  paymentMethod?: PaymentMethod,
+  paymentNote?: string,
 ) {
   if (!items.length) {
     throw new Error("Carrinho vazio");
@@ -41,6 +43,8 @@ export async function createOrderFromCart(
       discount_amount: 0,
       total_amount: totalAmount,
       delivery_address: address as any,
+      payment_method: paymentMethod || null,
+      payment_note: paymentNote || null,
     })
     .select()
     .single();

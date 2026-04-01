@@ -106,7 +106,7 @@ export default function LojaCheckout() {
 
     setSubmitting(true);
     try {
-      const order = await createOrderFromCart(profile.id, delivery, items);
+      const order = await createOrderFromCart(profile.id, delivery, items, selectedPayment, paymentNote);
 
       openOrderOnWhatsApp(delivery, items, selectedPayment, paymentNote);
       clearCart();
