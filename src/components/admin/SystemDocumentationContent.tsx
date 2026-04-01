@@ -283,10 +283,10 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         </header>
 
         {/* ═══ DOCUMENTAÇÃO EXECUTIVA ═══ */}
-        <div className={`flex items-center gap-3 mb-6 mt-2 ${cx(printMode, "", "")}`}>
+        <div className={`flex items-center gap-3 mb-6 mt-2`}>
           <div className={cx(printMode, "h-px flex-1 bg-primary/30", "h-px flex-1 bg-blue-200")} />
-          <h2 className={cx(printMode, "text-sm font-bold uppercase tracking-widest text-primary", "text-sm font-bold uppercase tracking-widest text-blue-600")}>
-            Documentação Executiva
+          <h2 className={cx(printMode, "text-sm font-bold uppercase tracking-widest text-primary whitespace-nowrap", "text-sm font-bold uppercase tracking-widest text-blue-600 whitespace-nowrap")}>
+            📊 Documentação Executiva
           </h2>
           <div className={cx(printMode, "h-px flex-1 bg-primary/30", "h-px flex-1 bg-blue-200")} />
         </div>
