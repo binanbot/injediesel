@@ -187,50 +187,26 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
         </nav>
 
         {/* Social Links */}
-        {hasSocialLinks && (
+        {hasSocialLinks && !collapsed && (
           <div className="px-3 pb-2">
             <div className="flex items-center justify-center gap-3">
               {socialLinks.facebook && (
-                <a
-                  href={socialLinks.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg text-muted-foreground hover:text-blue-600 hover:bg-blue-600/10 transition-all duration-200"
-                  title="Facebook"
-                >
+                <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg text-muted-foreground hover:text-blue-600 hover:bg-blue-600/10 transition-all duration-200" title="Facebook">
                   <Facebook className="h-5 w-5" />
                 </a>
               )}
               {socialLinks.instagram && (
-                <a
-                  href={socialLinks.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg text-muted-foreground hover:text-pink-500 hover:bg-pink-500/10 transition-all duration-200"
-                  title="Instagram"
-                >
+                <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg text-muted-foreground hover:text-pink-500 hover:bg-pink-500/10 transition-all duration-200" title="Instagram">
                   <Instagram className="h-5 w-5" />
                 </a>
               )}
               {socialLinks.tiktok && (
-                <a
-                  href={socialLinks.tiktok}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
-                  title="TikTok"
-                >
+                <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200" title="TikTok">
                   <TikTokIcon className="h-5 w-5" />
                 </a>
               )}
               {socialLinks.shop && (
-                <a
-                  href={socialLinks.shop}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg text-muted-foreground hover:text-green-600 hover:bg-green-600/10 transition-all duration-200"
-                  title="Loja"
-                >
+                <a href={socialLinks.shop} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg text-muted-foreground hover:text-green-600 hover:bg-green-600/10 transition-all duration-200" title="Loja">
                   <ShoppingBag className="h-5 w-5" />
                 </a>
               )}
@@ -242,10 +218,14 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
         <div className="p-3 border-t border-border/20">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-200"
+            className={cn(
+              "w-full flex items-center gap-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-200",
+              collapsed ? "px-2 py-2.5 justify-center" : "px-3 py-2.5"
+            )}
+            title="Sair"
           >
             <LogOut className="h-5 w-5" />
-            Sair
+            {!collapsed && "Sair"}
           </button>
         </div>
       </aside>
