@@ -1705,7 +1705,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <div className={`mt-8 pt-6 border-t text-center text-sm ${cx(printMode, "border-border text-muted-foreground", "border-slate-200 text-slate-500")}`}>
           <p>© {new Date().getFullYear()} Injediesel - Todos os direitos reservados</p>
           <p className="mt-1">Documento gerado automaticamente pelo sistema</p>
-          <p className="mt-2 text-xs">Versão 3.3 - Atualizado em {currentDate}</p>
+          <p className="mt-2 text-xs">Versão 4.0 - Atualizado em {currentDate}</p>
         </div>
       </div>
     </div>
