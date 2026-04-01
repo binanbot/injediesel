@@ -52,6 +52,8 @@ interface Order {
   discount_amount: number;
   items_count: number;
   delivery_address: any;
+  payment_method: string | null;
+  payment_note: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
