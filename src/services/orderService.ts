@@ -106,8 +106,13 @@ export async function createOrderFromCart(
   return order;
 }
 
-export function openOrderOnWhatsApp(address: DeliveryAddress, items: CartItem[]) {
+export function openOrderOnWhatsApp(
+  address: DeliveryAddress,
+  items: CartItem[],
+  paymentMethod: PaymentMethod = "nao_definido",
+  paymentNote?: string,
+) {
   const phone = "5545998590384";
-  const message = buildWhatsAppMessage(address, items);
+  const message = buildWhatsAppMessage(address, items, paymentMethod, paymentNote);
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 }
