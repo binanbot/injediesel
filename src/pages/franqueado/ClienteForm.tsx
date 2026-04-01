@@ -95,6 +95,7 @@ export default function ClienteForm() {
     setIsSaving(true);
     try {
       const payload: any = {
+        type: tipo === "pj" ? "PJ" : "PF",
         full_name: form.full_name.trim(),
         cpf: tipo === "pf" ? form.cpf.trim() || null : null,
         cnpj: tipo === "pj" ? form.cnpj.trim() || null : null,
@@ -102,6 +103,9 @@ export default function ClienteForm() {
         phone: form.phone.trim() || null,
         whatsapp: form.whatsapp.trim() || null,
         address_line: form.address_line.trim() || null,
+        address_number: form.address_number.trim() || null,
+        address_complement: form.address_complement.trim() || null,
+        address_district: form.address_district.trim() || null,
         address_city: form.address_city.trim() || null,
         address_state: form.address_state.trim() || null,
         zip_code: form.zip_code.trim() || null,
