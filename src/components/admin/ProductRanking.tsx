@@ -61,7 +61,7 @@ export default function ProductRanking({ dateRange, franchiseProfileId }: Produc
     );
   }
 
-  const renderList = (items: RankedProduct[], highlight: "qty" | "revenue") => {
+  const renderList = (items: TopProductResult[], highlight: "qty" | "revenue") => {
     if (items.length === 0) {
       return (
         <p className="text-center text-muted-foreground py-8">
