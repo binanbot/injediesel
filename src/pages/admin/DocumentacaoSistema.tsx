@@ -1005,7 +1005,7 @@ export default function DocumentacaoSistema() {
                 <p className="mt-2 text-xs">Versão 3.0 - Atualizado em {currentDate}</p>
               </div>
             </div>
-          </ScrollArea>
+          </div>
         </CardContent>
       </Card>
     </div>
