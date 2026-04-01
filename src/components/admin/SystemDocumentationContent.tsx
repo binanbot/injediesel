@@ -1255,6 +1255,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         </SectionBlock>
 
         {/* ── MODELO CANÔNICO DE DOMÍNIO ───────────────────────── */}
+        <div id="modelo-canonico" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Database className="h-5 w-5" /> MODELO CANÔNICO DE DOMÍNIO
