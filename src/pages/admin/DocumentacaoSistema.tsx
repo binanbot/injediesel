@@ -230,7 +230,6 @@ erDiagram
 export default function DocumentacaoSistema() {
   const { toast } = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
-  const [isExporting, setIsExporting] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     diagramas: true,
     mapa: false,
@@ -260,63 +259,114 @@ export default function DocumentacaoSistema() {
     setTimeout(() => window.print(), 300);
   };
 
-  const handleExportPDF = async () => {
-    setIsExporting(true);
-    // Expand all sections first
-    const allOpen: Record<string, boolean> = {};
-    Object.keys(openSections).forEach((k) => (allOpen[k] = true));
-    setOpenSections(allOpen);
+  const handleExportPDF = () => {
+    const node = contentRef.current;
+    if (!node) return;
 
-    // Wait for DOM to render expanded content
-    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-    await new Promise((r) => setTimeout(r, 800));
+    // Expand all before capturing
+    expandAll();
 
-    try {
-      const node = contentRef.current;
-      if (!node) throw new Error("Conteúdo não encontrado");
-
-      const canvas = await html2canvas(node, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#0f172a",
-        logging: false,
-        windowWidth: node.scrollWidth,
-        windowHeight: node.scrollHeight,
-      });
-
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pageW = 210;
-      const pageH = 297;
-      const margin = 5;
-      const contentW = pageW - margin * 2;
-      const imgH = (canvas.height * contentW) / canvas.width;
-
-      let position = 0;
-      let firstPage = true;
-
-      while (position < imgH) {
-        if (!firstPage) pdf.addPage();
-        firstPage = false;
-
-        pdf.addImage(
-          canvas.toDataURL("image/png"),
-          "PNG",
-          margin,
-          margin - position,
-          contentW,
-          imgH
-        );
-        position += pageH - margin * 2;
+    setTimeout(() => {
+      const printWindow = window.open("", "_blank", "width=1400,height=900");
+      if (!printWindow) {
+        toast({ title: "Erro", description: "Não foi possível abrir a janela de impressão. Verifique se popups estão permitidos.", variant: "destructive" });
+        return;
       }
 
-      pdf.save(`documentacao-injediesel-${new Date().toISOString().slice(0, 10)}.pdf`);
-      toast({ title: "PDF exportado!", description: "Todas as seções foram incluídas no arquivo." });
-    } catch (err: any) {
-      console.error("Export error:", err);
-      toast({ title: "Erro ao exportar", description: err.message, variant: "destructive" });
-    } finally {
-      setIsExporting(false);
-    }
+      const htmlContent = node.innerHTML;
+
+      printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"/>
+<title>Documentação do Sistema - Injediesel</title>
+<style>
+  @page { size: A4; margin: 14mm 12mm; }
+  html, body { background: #fff !important; color: #1a1a1a !important; margin: 0; padding: 0; width: 100%; font-family: Inter, system-ui, sans-serif; font-size: 13px; line-height: 1.6; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Remove all screen constraints */
+  .print-root, .print-root * { max-width: none !important; }
+  .print-root { width: 100% !important; padding: 0 !important; margin: 0 !important; transform: none !important; scale: 1 !important; overflow: visible !important; height: auto !important; }
+  [class*="max-w-"], .container { max-width: none !important; width: 100% !important; }
+  [class*="overflow-"] { overflow: visible !important; }
+  [class*="h-screen"], [class*="min-h-screen"], [style*="height"], [style*="overflow"] { height: auto !important; max-height: none !important; overflow: visible !important; }
+
+  /* Page break control */
+  img, svg, canvas, table, pre, blockquote, section, article { break-inside: avoid; page-break-inside: avoid; }
+  thead { display: table-header-group; }
+  tr, td, th { page-break-inside: avoid; break-inside: avoid; }
+  .print-section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 16px; }
+
+  /* Typography */
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; color: #111; }
+  h2 { font-size: 18px; font-weight: 700; margin: 20px 0 8px; color: #1e3a5f; border-bottom: 2px solid #3b82f6; padding-bottom: 4px; }
+  h3, h4 { font-size: 15px; font-weight: 600; margin: 12px 0 6px; color: #222; }
+  p { margin: 4px 0; }
+  ul { padding-left: 20px; }
+  li { margin: 2px 0; }
+  code { background: #f1f5f9; padding: 1px 4px; border-radius: 3px; font-size: 12px; }
+
+  /* Tables */
+  table { width: 100% !important; border-collapse: collapse; margin: 8px 0; font-size: 12px; }
+  th { background: #f1f5f9 !important; color: #1a1a1a !important; font-weight: 600; text-align: left; padding: 6px 8px; border: 1px solid #d1d5db; }
+  td { padding: 6px 8px; border: 1px solid #d1d5db; color: #333 !important; }
+
+  /* Badges */
+  [class*="badge"], [class*="Badge"] { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; border: 1px solid #d1d5db; background: #f8fafc; color: #334155; margin: 2px; }
+
+  /* Cards and sections */
+  [class*="glass-card"], [class*="card"], [class*="Card"] { background: #fff !important; border: 1px solid #e2e8f0 !important; border-radius: 8px; padding: 12px; margin: 8px 0; box-shadow: none !important; }
+  [class*="backdrop-blur"] { backdrop-filter: none !important; }
+
+  /* Override dark theme colors */
+  [class*="text-muted"], [class*="text-slate"], [class*="text-gray"] { color: #555 !important; }
+  [class*="text-white"], [class*="text-foreground"] { color: #1a1a1a !important; }
+  [class*="text-blue"] { color: #1e40af !important; }
+  [class*="text-orange"] { color: #c2410c !important; }
+  [class*="text-primary"] { color: #1d4ed8 !important; }
+
+  /* Backgrounds */
+  [class*="bg-muted"], [class*="bg-secondary"], [class*="bg-background"], [class*="bg-card"] { background: #f8fafc !important; }
+  [class*="bg-blue-500"] { background: #3b82f6 !important; }
+  [class*="bg-orange-500"] { background: #f97316 !important; }
+  [class*="bg-primary"] { background: #3b82f6 !important; }
+  [class*="bg-amber"] { background: #f59e0b !important; }
+
+  /* Borders */
+  [class*="border-blue"] { border-color: #93c5fd !important; }
+  [class*="border-orange"] { border-color: #fdba74 !important; }
+  [class*="border-border"], [class*="border-b"], [class*="border"] { border-color: #e2e8f0 !important; }
+
+  /* Separators */
+  [role="separator"], hr { border: none; border-top: 1px solid #e2e8f0; margin: 16px 0; }
+
+  /* Hide interactive elements */
+  button, [class*="no-print"] { display: none !important; }
+
+  /* Collapsible - force open */
+  [data-state="closed"] { display: block !important; height: auto !important; overflow: visible !important; }
+
+  /* Mermaid diagrams */
+  .mermaid-container { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; padding: 12px; border-radius: 8px; }
+  .mermaid-container svg { max-width: 100%; height: auto; }
+
+  /* Grid layouts */
+  .grid { display: grid; }
+
+  /* Dot indicators */
+  [class*="rounded-full"][class*="w-2"] { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+
+  /* Grain pseudo-element */
+  .grain::before { display: none !important; }
+
+  /* ScrollArea - remove viewport constraints */
+  [data-radix-scroll-area-viewport] { height: auto !important; max-height: none !important; overflow: visible !important; }
+</style>
+</head><body><div class="print-root">${htmlContent}</div>
+<script>window.onload=function(){setTimeout(function(){window.print();window.close();},400)}<\/script>
+</body></html>`);
+
+      printWindow.document.close();
+      toast({ title: "PDF pronto!", description: "A janela de impressão foi aberta. Escolha 'Salvar como PDF' na impressora." });
+    }, 500);
   };
 
   const currentDate = new Date().toLocaleDateString("pt-BR", {
@@ -328,7 +378,7 @@ export default function DocumentacaoSistema() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <FileText className="h-6 w-6 text-primary" />
@@ -343,23 +393,12 @@ export default function DocumentacaoSistema() {
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="h-4 w-4 mr-2" />Imprimir
           </Button>
-          <Button onClick={handleExportPDF} disabled={isExporting}>
-            {isExporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-            {isExporting ? "Gerando PDF..." : "Exportar PDF"}
+          <Button onClick={handleExportPDF}>
+            <Download className="h-4 w-4 mr-2" />
+            Exportar PDF
           </Button>
         </div>
       </div>
-
-      {/* Print Styles */}
-      <style>{`
-        @media print {
-          body * { visibility: hidden; }
-          .print-content, .print-content * { visibility: visible; }
-          .print-content { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
-          .no-print { display: none !important; }
-          .print-break { page-break-before: always; }
-        }
-      `}</style>
 
       {/* Document Content */}
       <Card className="print-content" ref={contentRef}>
