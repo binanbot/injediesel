@@ -62,12 +62,15 @@ export default function ClienteForm() {
         phone: data.phone || "",
         whatsapp: (data as any).whatsapp || "",
         address_line: data.address_line || "",
+        address_number: (data as any).address_number || "",
+        address_complement: (data as any).address_complement || "",
+        address_district: (data as any).address_district || "",
         address_city: data.address_city || "",
         address_state: data.address_state || "",
         zip_code: (data as any).zip_code || "",
         notes: (data as any).notes || "",
       });
-      setTipo(data.cnpj ? "pj" : "pf");
+      setTipo((data as any).type === "PJ" ? "pj" : "pf");
     } catch {
       toast.error("Erro ao carregar cliente");
       navigate("/franqueado/clientes");
