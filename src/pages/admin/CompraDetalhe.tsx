@@ -261,6 +261,29 @@ export default function CompraDetalhe() {
             </Card>
           )}
 
+          {/* Payment Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                💳 Forma de Pagamento
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Método</span>
+                <span className="font-medium">
+                  {order.payment_method ? getPaymentMethodLabel(order.payment_method as PaymentMethod) : "Não informado"}
+                </span>
+              </div>
+              {order.payment_note && (
+                <div>
+                  <span className="text-muted-foreground">Observação: </span>
+                  <span>{order.payment_note}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Items */}
           <Card>
             <CardHeader>
