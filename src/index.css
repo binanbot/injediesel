@@ -331,3 +331,53 @@
   background: hsl(217 91% 55% / 0.3);
   color: hsl(0 0% 100%);
 }
+
+/* Print Styles */
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+    width: 100%;
+    height: auto;
+    overflow: visible !important;
+  }
+
+  body * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .page-break {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  [data-print-root='true'],
+  .print-root {
+    width: 100% !important;
+    max-width: none !important;
+    overflow: visible !important;
+    transform: none !important;
+    scale: 1 !important;
+  }
+
+  .rounded-2xl,
+  .rounded-xl {
+    overflow: visible !important;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 16mm;
+}
