@@ -682,7 +682,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
 
           <h4 className={`font-semibold mb-2 ${headingColor}`}>Rotas Disponíveis:</h4>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-            {["/admin", "/admin/arquivos", "/admin/arquivos/:id", "/admin/correcoes", "/admin/franqueados", "/admin/franqueados/:id", "/admin/importar", "/admin/cobertura", "/admin/clientes", "/admin/clientes/:id", "/admin/produtos", "/admin/importar-produtos", "/admin/compras", "/admin/compras/:id", "/admin/loja-dashboard", "/admin/areas", "/admin/banners", "/admin/mensagens", "/admin/suporte", "/admin/relatorios", "/admin/contratos", "/admin/configuracoes", "/admin/documentacao"].map((r) => (
+            {["/admin", "/admin/arquivos", "/admin/arquivos/:id", "/admin/correcoes", "/admin/franqueados", "/admin/franqueados/:id", "/admin/importar", "/admin/cobertura", "/admin/clientes", "/admin/clientes/:id", "/admin/produtos", "/admin/compras", "/admin/compras/:id", "/admin/loja-dashboard", "/admin/areas", "/admin/banners", "/admin/mensagens", "/admin/suporte", "/admin/relatorios", "/admin/contratos", "/admin/configuracoes", "/admin/documentacao"].map((r) => (
               <BadgeItem key={r} printMode={printMode} variant="secondary">{r}</BadgeItem>
             ))}
           </div>
