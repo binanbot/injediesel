@@ -312,7 +312,7 @@ export default function ClienteDetalhe() {
         {/* ── Veículos ── */}
         <TabsContent value="veiculos" className="space-y-4">
           <div className="flex justify-end">
-            <Button variant="hero" size="sm" onClick={() => navigate(`/franqueado/enviar?customer_id=${id}`)}>
+            <Button variant="hero" size="sm" onClick={() => navigate(`/franqueado/clientes/${id}/veiculos/novo`)}>
               <Plus className="h-4 w-4" /> Adicionar Veículo
             </Button>
           </div>
@@ -336,6 +336,7 @@ export default function ClienteDetalhe() {
                       <TableHead>Ano</TableHead>
                       <TableHead>Motor</TableHead>
                       <TableHead>Categoria</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -347,6 +348,15 @@ export default function ClienteDetalhe() {
                         <TableCell>{v.year || "—"}</TableCell>
                         <TableCell>{v.engine || "—"}</TableCell>
                         <TableCell>{v.category || "—"}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => navigate(`/franqueado/clientes/${id}/veiculos/${v.id}/editar`)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

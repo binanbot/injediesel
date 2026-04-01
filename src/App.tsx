@@ -42,6 +42,7 @@ const PedidoDetalhe = lazy(() => import("./pages/franqueado/PedidoDetalhe"));
 const FranqueadoClientes = lazy(() => import("./pages/franqueado/Clientes"));
 const FranqueadoClienteForm = lazy(() => import("./pages/franqueado/ClienteForm"));
 const FranqueadoClienteDetalhe = lazy(() => import("./pages/franqueado/ClienteDetalhe"));
+const FranqueadoVeiculoForm = lazy(() => import("./pages/franqueado/VeiculoForm"));
 import LandingLancamento from "./pages/franqueado/LandingLancamento";
 const DocumentacaoPublica = lazy(() => import("./pages/DocumentacaoPublica"));
 
@@ -143,6 +144,8 @@ const App = () => (
                 <Route path="clientes/novo" element={<FranqueadoClienteForm />} />
                 <Route path="clientes/:id" element={<FranqueadoClienteDetalhe />} />
                 <Route path="clientes/:id/editar" element={<FranqueadoClienteForm />} />
+                <Route path="clientes/:id/veiculos/novo" element={<FranqueadoVeiculoForm />} />
+                <Route path="clientes/:id/veiculos/:vehicleId/editar" element={<FranqueadoVeiculoForm />} />
               </Route>
 
               {/* Admin Routes */}
