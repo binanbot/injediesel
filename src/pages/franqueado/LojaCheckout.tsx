@@ -341,6 +341,10 @@ export default function LojaCheckout() {
                     if (step === "confirm") {
                       handleSendWhatsApp();
                     } else {
+                      if (step === "payment" && selectedPayment === "nao_definido") {
+                        toast.error("Selecione a forma de pagamento.");
+                        return;
+                      }
                       if (step === "review") prefillDelivery();
                       const next = steps[currentStepIndex + 1];
                       if (next) setStep(next.key);
