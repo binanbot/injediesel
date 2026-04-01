@@ -23,7 +23,7 @@ import {
   buildDefaultDeliveryAddress,
 } from "@/components/franqueado/DeliveryAddressForm";
 
-type CheckoutStep = "review" | "delivery" | "confirm";
+type CheckoutStep = "review" | "delivery" | "payment" | "confirm";
 
 const formatMoney = (value: number) =>
   value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
