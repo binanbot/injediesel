@@ -1,4 +1,4 @@
-import { FileText, Map, Users, Shield, Database, Palette, GitBranch, Workflow, Network, Store } from "lucide-react";
+import { FileText, Map, Users, Shield, Database, Palette, GitBranch, Workflow, Network, Store, BookOpen } from "lucide-react";
 import { MermaidDiagram } from "@/components/MermaidDiagram";
 
 // ── Mermaid Diagrams ──────────────────────────────────────────────
@@ -276,7 +276,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
             Sistema de Gestão de Arquivos ECU e Loja Promax para Franqueados
           </p>
           <div className={`flex items-center justify-center gap-4 mt-4 text-sm ${subtextColor}`}>
-            <span>Versão: 3.0</span>
+            <span>Versão: 3.1</span>
             <span>•</span>
             <span>Data: {currentDate}</span>
           </div>
@@ -906,6 +906,322 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
             { label: "5. Franqueado Recebe (Realtime)" },
             { label: "6. Fecha Conversa", secondary: true },
           ]} />
+        </SectionBlock>
+
+        <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
+
+        {/* ── REGRAS DE NEGÓCIO OFICIAIS ─── */}
+        <SectionBlock printMode={printMode}>
+          <SectionTitle printMode={printMode}>
+            <BookOpen className="h-5 w-5" />
+            REGRAS DE NEGÓCIO OFICIAIS
+          </SectionTitle>
+          <p className={`mb-6 ${subtextColor}`}>
+            Esta seção é a fonte oficial de verdade sobre o comportamento do sistema. Cada módulo documenta criação, status, permissões, efeitos colaterais e visibilidade.
+          </p>
+
+          {/* ─── 1. Arquivos ECU ─── */}
+          <div className="mb-8 break-inside-avoid">
+            <h3 className={`text-base font-bold mb-3 ${headingColor}`}>1. Arquivos ECU (received_files)</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <strong className={headingColor}>Evento de criação:</strong>
+                  <span className={` ${subtextColor}`}> Franqueado envia arquivo via /franqueado/enviar-arquivo. INSERT em received_files com status = "pending".</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Responsável:</strong>
+                  <span className={` ${subtextColor}`}> Franqueado autenticado (unit_id vinculado via get_user_unit_id).</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Status oficiais:</strong>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {["pending", "em_analise", "processando", "concluido", "rejeitado", "correcao_solicitada"].map(s => (
+                      <BadgeItem key={s} printMode={printMode}>{s}</BadgeItem>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <strong className={headingColor}>Quem altera status:</strong>
+                  <span className={` ${subtextColor}`}> Admin e Suporte (has_role admin/suporte). Franqueado NÃO altera status diretamente.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Efeitos colaterais:</strong>
+                  <ul className={`list-disc pl-5 space-y-1 ${listColor}`}>
+                    <li><strong>pending → em_analise:</strong> INSERT file_status_history. Notificação browser para admin.</li>
+                    <li><strong>processando → concluido:</strong> INSERT file_status_history. Upload arquivo modificado. Notificação franqueado.</li>
+                    <li><strong>qualquer → rejeitado:</strong> INSERT file_status_history com observação obrigatória.</li>
+                    <li><strong>correcao_solicitada:</strong> Gerado via correction_ticket. Cria ticket + conversa de suporte vinculada.</li>
+                  </ul>
+                </div>
+                <div>
+                  <strong className={headingColor}>Histórico:</strong>
+                  <span className={` ${subtextColor}`}> Toda alteração → INSERT file_status_history (arquivo_id, status_anterior, status_novo, alterado_por, observacao).</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Notificações:</strong>
+                  <span className={` ${subtextColor}`}> Browser push quando arquivo concluído/rejeitado (franqueado). Novo pendente (admin).</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Dashboard:</strong>
+                  <span className={` ${subtextColor}`}> KPI pendentes (admin). Recentes (home franqueado).</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Financeiro:</strong>
+                  <span className={` ${subtextColor}`}> valor_brl registrado no arquivo, NÃO gera lançamento automático em financial_entries.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Visibilidade franqueado:</strong>
+                  <span className={` ${subtextColor}`}> Apenas arquivos da sua unidade (RLS: unit_id = get_user_unit_id).</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Visibilidade admin:</strong>
+                  <span className={` ${subtextColor}`}> Todos os arquivos (RLS: is_franchisor_admin). Pode processar, aprovar, rejeitar.</span>
+                </div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* ─── 2. Pedidos da Loja Promax ─── */}
+          <div className="mb-8 break-inside-avoid">
+            <h3 className={`text-base font-bold mb-3 ${headingColor}`}>2. Pedidos da Loja Promax (orders)</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <strong className={headingColor}>Evento de criação:</strong>
+                  <span className={` ${subtextColor}`}> Franqueado finaliza checkout → INSERT orders + order_items + order_status_history + financial_entries (2 lançamentos). WhatsApp aberto automaticamente.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Responsável:</strong>
+                  <span className={` ${subtextColor}`}> Franqueado autenticado (franchise_profile_id via profiles_franchisees).</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Status de pagamento (payment_status):</strong>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {["pendente", "aguardando_comprovante", "aprovado", "recusado", "estornado"].map(s => (
+                      <BadgeItem key={s} printMode={printMode}>{s}</BadgeItem>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <strong className={headingColor}>Status de logística (fulfillment_status):</strong>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {["pedido_realizado", "em_separacao", "em_preparacao", "enviado", "em_transito", "entregue", "cancelado"].map(s => (
+                      <BadgeItem key={s} printMode={printMode}>{s}</BadgeItem>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <strong className={headingColor}>Sincronização:</strong>
+                  <span className={` ${subtextColor}`}> orders.status é sempre sincronizado com fulfillment_status pela camada de aplicação.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Quem altera status:</strong>
+                  <span className={` ${subtextColor}`}> Somente Admin (is_franchisor_admin). Franqueado apenas visualiza.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Efeitos colaterais:</strong>
+                  <ul className={`list-disc pl-5 space-y-1 ${listColor}`}>
+                    <li><strong>Alteração payment_status:</strong> INSERT order_status_history com new_status = "pagamento:&#123;status&#125;".</li>
+                    <li><strong>Alteração fulfillment_status:</strong> INSERT order_status_history + UPDATE orders.status.</li>
+                    <li><strong>Ambos alterados:</strong> 2 registros distintos em order_status_history.</li>
+                  </ul>
+                </div>
+                <div>
+                  <strong className={headingColor}>Histórico:</strong>
+                  <span className={` ${subtextColor}`}> INSERT order_status_history (order_id, previous_status, new_status, changed_by, internal_note). Formato: "pagamento:X" (pagamento) ou "X" (logística).</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Dashboard:</strong>
+                  <span className={` ${subtextColor}`}> Dashboard Promax: ranking categorias, top produtos, top unidades, vendas mensais, resumo financeiro.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Financeiro:</strong>
+                  <span className={` ${subtextColor}`}> Criação: 2× financial_entries (franqueado/custo + matriz/receita). Cancelamento NÃO gera estorno automático.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Visibilidade franqueado:</strong>
+                  <span className={` ${subtextColor}`}> Seus pedidos (RLS: franchise_profile_id). Timeline visual, itens, endereço, pagamento.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Visibilidade admin:</strong>
+                  <span className={` ${subtextColor}`}> Todos os pedidos. Altera payment_status e fulfillment_status. Timeline + histórico + observações internas.</span>
+                </div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* ─── 3. Financeiro ─── */}
+          <div className="mb-8 break-inside-avoid">
+            <h3 className={`text-base font-bold mb-3 ${headingColor}`}>3. Financeiro (financial_entries)</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <strong className={headingColor}>Evento de criação:</strong>
+                  <span className={` ${subtextColor}`}> Automático na criação de pedido Loja Promax. 2 registros: custo franqueado + receita matriz.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Responsável:</strong>
+                  <span className={` ${subtextColor}`}> Sistema (orderService.ts), vinculado a franchise_profile_id e order_id.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Campos-chave:</strong>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {["scope (franqueado|matriz)", "entry_type (custo|receita)", "category", "competency_date", "amount"].map(s => (
+                      <BadgeItem key={s} printMode={printMode}>{s}</BadgeItem>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <strong className={headingColor}>Quem altera:</strong>
+                  <span className={` ${subtextColor}`}> Admin (is_franchisor_admin). Franqueado apenas visualiza. Registros tratados como imutáveis.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Efeitos colaterais:</strong>
+                  <ul className={`list-disc pl-5 space-y-1 ${listColor}`}>
+                    <li>Sem triggers ou cascatas. Cancelamento de pedido NÃO gera estorno automático.</li>
+                    <li>allow_manual_credits no perfil permite créditos manuais (futuro).</li>
+                  </ul>
+                </div>
+                <div>
+                  <strong className={headingColor}>Dashboard:</strong>
+                  <span className={` ${subtextColor}`}> Dashboard Promax (vendas mensais, resumo). Relatórios franqueado (faturamento por período).</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Visibilidade franqueado:</strong>
+                  <span className={` ${subtextColor}`}> Lançamentos do seu franchise_profile_id. Escopo visível: "franqueado".</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Visibilidade admin:</strong>
+                  <span className={` ${subtextColor}`}> Todos os lançamentos. Filtro por franqueado, período e categoria.</span>
+                </div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* ─── 4. Suporte e Correções ─── */}
+          <div className="mb-8 break-inside-avoid">
+            <h3 className={`text-base font-bold mb-3 ${headingColor}`}>4. Suporte e Correções</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-3 text-sm">
+                <h4 className={`font-semibold ${headingColor}`}>4a. Conversas de Suporte (support_conversations)</h4>
+                <div>
+                  <strong className={headingColor}>Criação:</strong>
+                  <span className={` ${subtextColor}`}> Franqueado abre conversa em /franqueado/suporte. INSERT support_conversations (status = "open").</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Status:</strong>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {["open", "closed"].map(s => (
+                      <BadgeItem key={s} printMode={printMode}>{s}</BadgeItem>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <strong className={headingColor}>Permissões:</strong>
+                  <span className={` ${subtextColor}`}> Admin/Suporte fecham. Franqueado reabre enviando mensagem.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Efeitos:</strong>
+                  <span className={` ${subtextColor}`}> Mensagens em tempo real (Supabase Realtime). Notificação browser + som (admin). updated_at atualizado a cada mensagem.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Visibilidade:</strong>
+                  <span className={` ${subtextColor}`}> Franqueado: suas conversas (franqueado_id = auth.uid). Admin: todas (has_role admin/suporte).</span>
+                </div>
+
+                <hr className={cx(printMode, "border-border my-3", "border-slate-200 my-3")} />
+
+                <h4 className={`font-semibold ${headingColor}`}>4b. Tickets de Correção (correction_tickets)</h4>
+                <div>
+                  <strong className={headingColor}>Criação:</strong>
+                  <span className={` ${subtextColor}`}> Franqueado solicita correção de arquivo ECU. INSERT correction_tickets (status = "aberto"). Opcionalmente cria support_conversation vinculada.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Status:</strong>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {["aberto", "em_analise", "resolvido", "recusado"].map(s => (
+                      <BadgeItem key={s} printMode={printMode}>{s}</BadgeItem>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <strong className={headingColor}>Permissões:</strong>
+                  <span className={` ${subtextColor}`}> Admin/Suporte alteram status. Franqueado apenas cria e visualiza.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Efeitos:</strong>
+                  <span className={` ${subtextColor}`}> Pode anexar arquivo (arquivo_anexo_url). Vínculo opcional com support_conversation. Sem lançamento financeiro.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Dashboard:</strong>
+                  <span className={` ${subtextColor}`}> Contagem de tickets abertos no painel admin.</span>
+                </div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* ─── 5. Contratos ─── */}
+          <div className="mb-8 break-inside-avoid">
+            <h3 className={`text-base font-bold mb-3 ${headingColor}`}>5. Contratos (profiles_franchisees + contract_history)</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <strong className={headingColor}>Criação:</strong>
+                  <span className={` ${subtextColor}`}> Franqueado cadastrado com contract_expiration_date padrão (CURRENT_DATE + 1 ano). Renovação → INSERT contract_history.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Responsável:</strong>
+                  <span className={` ${subtextColor}`}> Admin cria franqueado e define data. Renovação exclusivamente pelo Admin via /admin/contratos.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Status derivados:</strong>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {["Ativo (> 30 dias)", "Expirando (≤ 30 dias)", "Expirado"].map(s => (
+                      <BadgeItem key={s} printMode={printMode}>{s}</BadgeItem>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <strong className={headingColor}>Quem altera:</strong>
+                  <span className={` ${subtextColor}`}> Admin (has_role admin/suporte). Franqueado NÃO renova.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Efeitos da expiração:</strong>
+                  <ul className={`list-disc pl-5 space-y-1 ${listColor}`}>
+                    <li><strong>Expirado:</strong> ContractBlockOverlay bloqueia envio/download de arquivos ECU.</li>
+                    <li><strong>≤ 30 dias:</strong> ContractAlert "Faltam X dias" com urgência progressiva.</li>
+                    <li><strong>≤ 15 dias:</strong> Barra de progresso com animação pulse vermelha.</li>
+                    <li><strong>Renovação:</strong> UPDATE contract_expiration_date + INSERT contract_history.</li>
+                  </ul>
+                </div>
+                <div>
+                  <strong className={headingColor}>Histórico:</strong>
+                  <span className={` ${subtextColor}`}> Cada renovação → contract_history (franqueado_id, start_date, end_date, contract_type, status, notes).</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Notificações:</strong>
+                  <span className={` ${subtextColor}`}> ContractAlert visual (sem push). Exibido a cada acesso do franqueado.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Dashboard:</strong>
+                  <span className={` ${subtextColor}`}> /admin/contratos: lista com filtro Ativo/Expirando/Expirado.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Financeiro:</strong>
+                  <span className={` ${subtextColor}`}> Nenhum lançamento automático. rental_value_brl é informativo.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Visibilidade franqueado:</strong>
+                  <span className={` ${subtextColor}`}> Perfil: barra de progresso, botão renovação, histórico. Expirado bloqueia funcionalidades.</span>
+                </div>
+                <div>
+                  <strong className={headingColor}>Visibilidade admin:</strong>
+                  <span className={` ${subtextColor}`}> /admin/contratos: gestão centralizada, renovação, histórico, filtros por unidade/status.</span>
+                </div>
+              </div>
+            </InfoCard>
+          </div>
         </SectionBlock>
 
         {/* ── FOOTER ───────────────────────── */}
