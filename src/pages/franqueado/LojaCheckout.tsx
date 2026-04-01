@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft, ShoppingCart, Check, Loader2, Package, MessageCircle,
+  ArrowLeft, ShoppingCart, Check, Loader2, Package, MessageCircle, CreditCard,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { createOrderFromCart, openOrderOnWhatsApp } from "@/services/orderService";
 import type { PaymentMethod } from "@/utils/whatsappOrder";
 import { getPaymentMethodLabel } from "@/utils/whatsappOrder";
+import { PaymentMethodForm } from "@/components/franqueado/PaymentMethodForm";
 import {
   DeliveryAddressForm,
   DeliveryAddress,
@@ -22,7 +23,7 @@ import {
   buildDefaultDeliveryAddress,
 } from "@/components/franqueado/DeliveryAddressForm";
 
-type CheckoutStep = "review" | "delivery" | "confirm";
+type CheckoutStep = "review" | "delivery" | "payment" | "confirm";
 
 const formatMoney = (value: number) =>
   value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -33,8 +34,8 @@ export default function LojaCheckout() {
   const { items, getTotal, clearCart } = useCartStore();
   const total = getTotal();
 
-  const locState = location.state as { paymentMethod?: string } | null;
-  const paymentMethod: PaymentMethod = (locState?.paymentMethod as PaymentMethod) || "nao_definido";
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>("nao_definido");
+  const [paymentNote, setPaymentNote] = useState("");
 
   const [step, setStep] = useState<CheckoutStep>("review");
   const [delivery, setDelivery] = useState<DeliveryAddress>(emptyAddress);
@@ -107,7 +108,7 @@ export default function LojaCheckout() {
     try {
       const order = await createOrderFromCart(profile.id, delivery, items);
 
-      openOrderOnWhatsApp(delivery, items, paymentMethod);
+      openOrderOnWhatsApp(delivery, items, selectedPayment, paymentNote);
       clearCart();
       toast.success(`Pedido ${order.order_number} criado e enviado via WhatsApp!`);
       navigate("/franqueado/meus-pedidos");
@@ -147,6 +148,7 @@ export default function LojaCheckout() {
   const steps: { key: CheckoutStep; label: string; icon: React.ElementType }[] = [
     { key: "review", label: "Revisar", icon: ShoppingCart },
     { key: "delivery", label: "Entrega", icon: Package },
+    { key: "payment", label: "Pagamento", icon: CreditCard },
     { key: "confirm", label: "Enviar", icon: MessageCircle },
   ];
   const currentStepIndex = steps.findIndex((s) => s.key === step);
@@ -241,6 +243,16 @@ export default function LojaCheckout() {
             </Card>
           )}
 
+          {/* Step: Payment */}
+          {step === "payment" && (
+            <PaymentMethodForm
+              value={selectedPayment}
+              note={paymentNote}
+              onChange={setSelectedPayment}
+              onNoteChange={setPaymentNote}
+            />
+          )}
+
           {/* Step: Confirm */}
           {step === "confirm" && (
             <Card>
@@ -273,7 +285,8 @@ export default function LojaCheckout() {
 
                 <div className="p-4 rounded-lg bg-muted/30 space-y-1">
                   <p className="text-sm text-muted-foreground font-medium">Forma de pagamento</p>
-                  <p className="text-sm font-semibold">{getPaymentMethodLabel(paymentMethod)}</p>
+                  <p className="text-sm font-semibold">{getPaymentMethodLabel(selectedPayment)}</p>
+                  {paymentNote && <p className="text-xs text-muted-foreground">Obs: {paymentNote}</p>}
                 </div>
 
                 <Separator />
@@ -328,6 +341,10 @@ export default function LojaCheckout() {
                     if (step === "confirm") {
                       handleSendWhatsApp();
                     } else {
+                      if (step === "payment" && selectedPayment === "nao_definido") {
+                        toast.error("Selecione a forma de pagamento.");
+                        return;
+                      }
                       if (step === "review") prefillDelivery();
                       const next = steps[currentStepIndex + 1];
                       if (next) setStep(next.key);
