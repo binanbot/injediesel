@@ -1,4 +1,4 @@
-import { FileText, Download, Printer, ChevronDown, ChevronRight, Map, Users, Shield, Database, Palette, GitBranch, Workflow, Network, ShoppingCart, Store } from "lucide-react";
+import { FileText, Download, Printer, ChevronDown, ChevronRight, Map, Users, Shield, Database, Palette, GitBranch, Workflow, Network, ShoppingCart, Store, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,8 @@ import {
 import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { MermaidDiagram } from "@/components/MermaidDiagram";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 // Mermaid diagram definitions
 const ARCHITECTURE_DIAGRAM = `
