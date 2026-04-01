@@ -485,31 +485,37 @@ export default function Clientes() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {customer.cpf || customer.cnpj || "-"}
-                    </TableCell>
-                    <TableCell>
-                      {customer.active_city && customer.address_state ? (
-                        <span>
-                          {customer.active_city}/{customer.address_state}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    {isFranchisor && (
-                      <TableCell>
-                        <Badge variant="outline">{customer.unit?.name || "-"}</Badge>
-                      </TableCell>
-                    )}
-                    <TableCell>
-                      <Badge variant="secondary">{customer.total_services}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {customer.last_service_date
-                        ? new Date(customer.last_service_date).toLocaleDateString("pt-BR")
-                        : "-"}
-                    </TableCell>
+                     <TableCell className="text-xs">
+                       <Badge variant="outline">{customer.type === "PJ" ? "PJ" : "PF"}</Badge>
+                     </TableCell>
+                     <TableCell className="text-muted-foreground font-mono text-sm">
+                       {customer.cpf || customer.cnpj || "-"}
+                     </TableCell>
+                     <TableCell className="text-muted-foreground text-sm">
+                       {customer.phone ? (
+                         <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{customer.phone}</span>
+                       ) : "-"}
+                     </TableCell>
+                     <TableCell>
+                       {(customer.address_city || customer.active_city) && customer.address_state ? (
+                         <span>{customer.address_city || customer.active_city}/{customer.address_state}</span>
+                       ) : (
+                         <span className="text-muted-foreground">-</span>
+                       )}
+                     </TableCell>
+                     {isFranchisor && (
+                       <TableCell>
+                         <Badge variant="outline">{customer.unit?.name || "-"}</Badge>
+                       </TableCell>
+                     )}
+                     <TableCell>
+                       <Badge variant={customer.is_active ? "default" : "secondary"}>
+                         {customer.is_active ? "Ativo" : "Inativo"}
+                       </Badge>
+                     </TableCell>
+                     <TableCell>
+                       <Badge variant="secondary">{customer.total_services}</Badge>
+                     </TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
