@@ -21,6 +21,9 @@ const CATEGORIES = [
   "Outros",
 ];
 
+const FUEL_TYPES = ["Gasolina", "Etanol", "Flex", "Diesel", "GNV", "Elétrico", "Híbrido"];
+const TRANSMISSION_TYPES = ["Manual", "Automático", "CVT", "Automatizado"];
+
 export default function VeiculoForm() {
   const navigate = useNavigate();
   const { id: customerId, vehicleId } = useParams<{ id: string; vehicleId: string }>();
@@ -37,6 +40,12 @@ export default function VeiculoForm() {
     year: "",
     category: "",
     engine: "",
+    model_year: "",
+    transmission: "",
+    fuel: "",
+    color: "",
+    chassis: "",
+    notes: "",
   });
 
   useEffect(() => {
@@ -74,6 +83,12 @@ export default function VeiculoForm() {
       year: data.year || "",
       category: data.category || "",
       engine: data.engine || "",
+      model_year: data.model_year?.toString() || "",
+      transmission: data.transmission || "",
+      fuel: data.fuel || "",
+      color: data.color || "",
+      chassis: data.chassis || "",
+      notes: data.notes || "",
     });
     setIsLoading(false);
   };
@@ -119,9 +134,15 @@ export default function VeiculoForm() {
         year: form.year || null,
         category: form.category || null,
         engine: form.engine || null,
+        model_year: form.model_year ? parseInt(form.model_year) : null,
+        transmission: form.transmission || null,
+        fuel: form.fuel || null,
+        color: form.color || null,
+        chassis: form.chassis || null,
+        notes: form.notes || null,
         customer_id: customerId!,
         unit_id: unitId,
-      };
+      } as any;
 
       if (isEditing) {
         const { error } = await supabase
@@ -230,6 +251,16 @@ export default function VeiculoForm() {
               </div>
 
               <div className="space-y-2">
+                <Label>Ano Modelo</Label>
+                <Input
+                  placeholder="Ex: 2024"
+                  value={form.model_year}
+                  onChange={(e) => handleChange("model_year", e.target.value.replace(/\D/g, ""))}
+                  maxLength={4}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label>Motor / Cilindrada</Label>
                 <Input
                   placeholder="Ex: 1.0 TSI 116cv"
@@ -237,6 +268,62 @@ export default function VeiculoForm() {
                   onChange={(e) => handleChange("engine", e.target.value)}
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label>Combustível</Label>
+                <Select value={form.fuel} onValueChange={(v) => handleChange("fuel", v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FUEL_TYPES.map((f) => (
+                      <SelectItem key={f} value={f}>{f}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Transmissão</Label>
+                <Select value={form.transmission} onValueChange={(v) => handleChange("transmission", v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TRANSMISSION_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Cor</Label>
+                <Input
+                  placeholder="Ex: Prata"
+                  value={form.color}
+                  onChange={(e) => handleChange("color", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Chassi</Label>
+                <Input
+                  placeholder="Ex: 9BWZZZ377VT004251"
+                  value={form.chassis}
+                  onChange={(e) => handleChange("chassis", e.target.value.toUpperCase())}
+                  maxLength={17}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Observações</Label>
+              <Input
+                placeholder="Anotações sobre o veículo..."
+                value={form.notes}
+                onChange={(e) => handleChange("notes", e.target.value)}
+              />
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
