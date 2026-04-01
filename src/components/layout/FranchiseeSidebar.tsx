@@ -140,7 +140,8 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
                     to={item.path}
                     onClick={onClose}
                     className={cn(
-                      "relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 group overflow-hidden",
+                      "relative flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-300 group overflow-hidden",
+                      collapsed ? "px-2 py-2.5 justify-center" : "px-3 py-2.5",
                       isActive
                         ? "text-primary"
                         : "text-sidebar-foreground hover:text-foreground"
