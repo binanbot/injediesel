@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { getOrderStatus } from "@/utils/orderStatus";
 import ProductRanking from "@/components/admin/ProductRanking";
 import TopBuyingUnitsCard from "@/components/admin/TopBuyingUnitsCard";
+import MonthlySalesChart from "@/components/admin/MonthlySalesChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
