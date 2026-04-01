@@ -345,8 +345,9 @@ export default function DocumentacaoSistema() {
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="h-4 w-4 mr-2" />Imprimir
           </Button>
-          <Button onClick={handleExportPDF}>
-            <Download className="h-4 w-4 mr-2" />Exportar PDF
+          <Button onClick={handleExportPDF} disabled={isExporting}>
+            {isExporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+            {isExporting ? "Gerando PDF..." : "Exportar PDF"}
           </Button>
         </div>
       </div>
