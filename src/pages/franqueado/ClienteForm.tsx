@@ -28,6 +28,9 @@ export default function ClienteForm() {
     phone: "",
     whatsapp: "",
     address_line: "",
+    address_number: "",
+    address_complement: "",
+    address_district: "",
     address_city: "",
     address_state: "",
     zip_code: "",
@@ -55,12 +58,15 @@ export default function ClienteForm() {
         phone: data.phone || "",
         whatsapp: (data as any).whatsapp || "",
         address_line: data.address_line || "",
+        address_number: (data as any).address_number || "",
+        address_complement: (data as any).address_complement || "",
+        address_district: (data as any).address_district || "",
         address_city: data.address_city || "",
         address_state: data.address_state || "",
         zip_code: (data as any).zip_code || "",
         notes: (data as any).notes || "",
       });
-      setTipo(data.cnpj ? "pj" : "pf");
+      setTipo((data as any).type === "PJ" ? "pj" : "pf");
     } catch {
       toast.error("Erro ao carregar cliente");
       navigate("/franqueado/clientes");
@@ -85,6 +91,7 @@ export default function ClienteForm() {
     setIsSaving(true);
     try {
       const payload: any = {
+        type: tipo === "pj" ? "PJ" : "PF",
         full_name: form.full_name.trim(),
         cpf: tipo === "pf" ? form.cpf.trim() || null : null,
         cnpj: tipo === "pj" ? form.cnpj.trim() || null : null,
@@ -92,6 +99,9 @@ export default function ClienteForm() {
         phone: form.phone.trim() || null,
         whatsapp: form.whatsapp.trim() || null,
         address_line: form.address_line.trim() || null,
+        address_number: form.address_number.trim() || null,
+        address_complement: form.address_complement.trim() || null,
+        address_district: form.address_district.trim() || null,
         address_city: form.address_city.trim() || null,
         address_state: form.address_state.trim() || null,
         zip_code: form.zip_code.trim() || null,
@@ -201,9 +211,26 @@ export default function ClienteForm() {
             </div>
 
             {/* Endereço */}
-            <div className="space-y-2">
-              <Label htmlFor="address_line">Endereço</Label>
-              <Input id="address_line" value={form.address_line} onChange={(e) => update("address_line", e.target.value)} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="address_line">Rua / Logradouro</Label>
+                <Input id="address_line" value={form.address_line} onChange={(e) => update("address_line", e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address_number">Número</Label>
+                <Input id="address_number" value={form.address_number} onChange={(e) => update("address_number", e.target.value)} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="address_complement">Complemento</Label>
+                <Input id="address_complement" value={form.address_complement} onChange={(e) => update("address_complement", e.target.value)} placeholder="Apto, sala, bloco..." />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address_district">Bairro</Label>
+                <Input id="address_district" value={form.address_district} onChange={(e) => update("address_district", e.target.value)} />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

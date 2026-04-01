@@ -185,8 +185,11 @@ export type Database = {
         Row: {
           active_city: string | null
           address_city: string | null
+          address_complement: string | null
           address_country: string | null
+          address_district: string | null
           address_line: string | null
+          address_number: string | null
           address_state: string | null
           cnpj: string | null
           cpf: string | null
@@ -197,6 +200,7 @@ export type Database = {
           is_active: boolean
           notes: string | null
           phone: string | null
+          type: string
           unit_id: string
           updated_at: string | null
           whatsapp: string | null
@@ -205,8 +209,11 @@ export type Database = {
         Insert: {
           active_city?: string | null
           address_city?: string | null
+          address_complement?: string | null
           address_country?: string | null
+          address_district?: string | null
           address_line?: string | null
+          address_number?: string | null
           address_state?: string | null
           cnpj?: string | null
           cpf?: string | null
@@ -217,6 +224,7 @@ export type Database = {
           is_active?: boolean
           notes?: string | null
           phone?: string | null
+          type?: string
           unit_id: string
           updated_at?: string | null
           whatsapp?: string | null
@@ -225,8 +233,11 @@ export type Database = {
         Update: {
           active_city?: string | null
           address_city?: string | null
+          address_complement?: string | null
           address_country?: string | null
+          address_district?: string | null
           address_line?: string | null
+          address_number?: string | null
           address_state?: string | null
           cnpj?: string | null
           cpf?: string | null
@@ -237,6 +248,7 @@ export type Database = {
           is_active?: boolean
           notes?: string | null
           phone?: string | null
+          type?: string
           unit_id?: string
           updated_at?: string | null
           whatsapp?: string | null
