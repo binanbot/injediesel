@@ -607,6 +607,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
         {/* ── LOJA PROMAX ──────────────────── */}
+        <div id="loja-promax" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Store className="h-5 w-5" />
