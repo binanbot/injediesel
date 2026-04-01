@@ -50,6 +50,7 @@ import { MetricTooltip, metricDefinitions } from "@/components/MetricTooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getOrderStatus } from "@/utils/orderStatus";
+import ProductRanking from "@/components/admin/ProductRanking";
 
 // Dados mockados de faturamento por categoria de veículo
 const faturamentoMock = [
@@ -691,6 +692,9 @@ export default function Relatorios() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Ranking de Produtos — Inteligência Comercial */}
+      {profileId && <ProductRanking dateRange={effectiveRange} franchiseProfileId={profileId} />}
     </div>
   );
 }

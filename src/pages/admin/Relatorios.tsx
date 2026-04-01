@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { getOrderStatus } from "@/utils/orderStatus";
+import ProductRanking from "@/components/admin/ProductRanking";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -516,6 +517,9 @@ export default function AdminRelatorios() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Ranking de Produtos — Inteligência Comercial */}
+      <ProductRanking dateRange={effectiveRange} />
 
       {/* Desempenho por Categoria/Nicho */}
       <motion.div
