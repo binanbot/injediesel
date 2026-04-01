@@ -128,7 +128,6 @@ export default function LojaCheckout() {
   const [submitting, setSubmitting] = useState(false);
 
   const handleSendWhatsApp = async () => {
-    const phone = "5545998590384";
     if (!items.length) {
       toast.error("O carrinho está vazio.");
       return;
@@ -140,20 +139,9 @@ export default function LojaCheckout() {
 
     setSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Não autenticado");
+      const order = await createOrderFromCart(profile.id, delivery, items);
 
-      const { data: unitId } = await supabase.rpc("get_user_unit_id", { _user_id: user.id });
-
-      const order = await createOrderFromCart({
-        items,
-        delivery,
-        franchiseProfileId: profile.id,
-        unitId: unitId ?? null,
-      });
-
-      const message = buildWhatsAppMessage(delivery, items);
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+      openOrderOnWhatsApp(delivery, items);
       clearCart();
       toast.success(`Pedido ${order.order_number} criado e enviado via WhatsApp!`);
       navigate("/franqueado/meus-pedidos");
