@@ -355,20 +355,21 @@ export default function CompraDetalhe() {
               <CardContent>
                 <div className="relative pl-4 border-l-2 border-border/30 space-y-4">
                   {statusHistory.map((h) => {
-                    const sMeta = getOrderStatus(h.new_status);
-                    const SIcon = sMeta.icon;
+                    const histMeta = getHistoryStatusLabel(h.new_status);
+                    const typeLabel = histMeta.type === "payment" ? "Pagamento" : "Logística";
                     return (
                       <div key={h.id} className="relative">
                         <div
                           className={cn(
-                            "absolute -left-[calc(0.5rem+1px)] top-0.5 h-4 w-4 rounded-full flex items-center justify-center",
-                            sMeta.color
+                            "absolute -left-[calc(0.5rem+1px)] top-0.5 h-4 w-4 rounded-full",
+                            histMeta.color
                           )}
-                        >
-                          <SIcon className="h-2.5 w-2.5 text-white" />
-                        </div>
+                        />
                         <div className="ml-3">
-                          <p className="text-sm font-medium">{sMeta.label}</p>
+                          <p className="text-sm font-medium">
+                            <span className="text-xs text-muted-foreground mr-1">[{typeLabel}]</span>
+                            {histMeta.label}
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             {fmtDate(h.created_at)}
                           </p>
