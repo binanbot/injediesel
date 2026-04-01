@@ -243,6 +243,16 @@ export default function LojaCheckout() {
             </Card>
           )}
 
+          {/* Step: Payment */}
+          {step === "payment" && (
+            <PaymentMethodForm
+              value={selectedPayment}
+              note={paymentNote}
+              onChange={setSelectedPayment}
+              onNoteChange={setPaymentNote}
+            />
+          )}
+
           {/* Step: Confirm */}
           {step === "confirm" && (
             <Card>
