@@ -331,6 +331,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
         {/* ── MAPA MENTAL ──────────────────── */}
+        <div id="mapa-mental" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Map className="h-5 w-5" />
