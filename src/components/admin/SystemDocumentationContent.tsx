@@ -724,7 +724,17 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
 
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
+        {/* ═══ DOCUMENTAÇÃO TÉCNICA ═══ */}
+        <div className="flex items-center gap-3 mb-6 mt-4">
+          <div className={cx(printMode, "h-px flex-1 bg-orange-500/30", "h-px flex-1 bg-orange-200")} />
+          <h2 className={cx(printMode, "text-sm font-bold uppercase tracking-widest text-orange-400 whitespace-nowrap", "text-sm font-bold uppercase tracking-widest text-orange-600 whitespace-nowrap")}>
+            🔧 Documentação Técnica
+          </h2>
+          <div className={cx(printMode, "h-px flex-1 bg-orange-500/30", "h-px flex-1 bg-orange-200")} />
+        </div>
+
         {/* ── BANCO DE DADOS ───────────────── */}
+        <div id="banco-dados" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Database className="h-5 w-5" />
