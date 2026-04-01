@@ -138,7 +138,7 @@ export default function Loja() {
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-full sm:w-52">
               <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Categorias" />
+              <span>{selectedCategory === "all" ? "CATEGORIAS" : selectedCategory}</span>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as categorias</SelectItem>
