@@ -13,7 +13,7 @@ import { useState } from "react";
 const paymentMethods = [
   { id: "pix", label: "PIX", icon: QrCode, description: "Pagamento instantâneo" },
   { id: "boleto", label: "Boleto Bancário", icon: Landmark, description: "Vencimento em 3 dias úteis" },
-  { id: "credit", label: "Cartão de Crédito", icon: CreditCard, description: "Até 12x sem juros" },
+  { id: "cartao_credito", label: "Cartão de Crédito", icon: CreditCard, description: "Até 12x sem juros" },
 ];
 
 export default function Carrinho() {
