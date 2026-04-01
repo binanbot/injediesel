@@ -6,22 +6,12 @@ import { Package, TrendingUp, Crown, Medal, Award } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { getTopSellingProducts, type TopProductResult } from "@/services/topProductsService";
 
 type ProductRankingProps = {
   dateRange: { from: Date; to: Date };
-  /** When set, filters to orders belonging to this franchise profile */
   franchiseProfileId?: string;
-};
-
-type RankedProduct = {
-  product_id: string | null;
-  product_name: string;
-  product_sku: string | null;
-  total_qty: number;
-  total_revenue: number;
-  order_count: number;
 };
 
 const getMedalIcon = (index: number) => {
@@ -45,69 +35,18 @@ const formatCurrency = (value: number) =>
   value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export default function ProductRanking({ dateRange, franchiseProfileId }: ProductRankingProps) {
-  const { data: rawItems, isLoading } = useQuery({
-    queryKey: ["product-ranking", dateRange, franchiseProfileId],
-    queryFn: async () => {
-      let query = supabase
-        .from("order_items")
-        .select(`
-          product_id,
-          product_name,
-          product_sku,
-          quantity,
-          line_total,
-          order_id,
-          orders!inner (
-            id,
-            status,
-            created_at,
-            franchise_profile_id
-          )
-        `)
-        .not("orders.status", "in", '("cancelado","reembolsado")')
-        .gte("orders.created_at", dateRange.from.toISOString())
-        .lte("orders.created_at", dateRange.to.toISOString());
-
-      if (franchiseProfileId) {
-        query = query.eq("orders.franchise_profile_id", franchiseProfileId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
+  const { data, isLoading } = useQuery({
+    queryKey: ["product-ranking", dateRange.from.toISOString(), dateRange.to.toISOString(), franchiseProfileId],
+    queryFn: () =>
+      getTopSellingProducts({
+        franchiseProfileId,
+        startDate: format(dateRange.from, "yyyy-MM-dd"),
+        endDate: format(dateRange.to, "yyyy-MM-dd"),
+      }),
   });
 
-  const { byQuantity, byRevenue } = useMemo(() => {
-    if (!rawItems) return { byQuantity: [], byRevenue: [] };
-
-    const map = new Map<string, RankedProduct>();
-
-    rawItems.forEach((item: any) => {
-      const key = item.product_id || item.product_name;
-      const existing = map.get(key);
-      if (existing) {
-        existing.total_qty += item.quantity;
-        existing.total_revenue += Number(item.line_total);
-        existing.order_count += 1;
-      } else {
-        map.set(key, {
-          product_id: item.product_id,
-          product_name: item.product_name,
-          product_sku: item.product_sku,
-          total_qty: item.quantity,
-          total_revenue: Number(item.line_total),
-          order_count: 1,
-        });
-      }
-    });
-
-    const all = Array.from(map.values());
-    const byQuantity = [...all].sort((a, b) => b.total_qty - a.total_qty).slice(0, 10);
-    const byRevenue = [...all].sort((a, b) => b.total_revenue - a.total_revenue).slice(0, 10);
-
-    return { byQuantity, byRevenue };
-  }, [rawItems]);
+  const byQuantity = data?.topByQuantity ?? [];
+  const byRevenue = data?.topByRevenue ?? [];
 
   if (isLoading) {
     return (
