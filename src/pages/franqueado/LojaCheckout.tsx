@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useCartStore, CartItem } from "@/stores/useCartStore";
 import { cn } from "@/lib/utils";
+import { createOrderFromCart } from "@/services/orderService";
 import {
   DeliveryAddressForm,
   DeliveryAddress,
@@ -124,17 +125,44 @@ export default function LojaCheckout() {
     }
   };
 
-  const handleSendWhatsApp = () => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSendWhatsApp = async () => {
     const phone = "5545998590384";
     if (!items.length) {
       toast.error("O carrinho está vazio.");
       return;
     }
-    const message = buildWhatsAppMessage(delivery, items);
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-    clearCart();
-    toast.success("Pedido enviado via WhatsApp!");
-    navigate("/franqueado/loja");
+    if (!profile?.id) {
+      toast.error("Perfil não encontrado.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Não autenticado");
+
+      const { data: unitId } = await supabase.rpc("get_user_unit_id", { _user_id: user.id });
+
+      const order = await createOrderFromCart({
+        items,
+        delivery,
+        franchiseProfileId: profile.id,
+        unitId: unitId ?? null,
+      });
+
+      const message = buildWhatsAppMessage(delivery, items);
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+      clearCart();
+      toast.success(`Pedido ${order.order_number} criado e enviado via WhatsApp!`);
+      navigate("/franqueado/meus-pedidos");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Erro ao criar pedido.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (isLoading) {
@@ -336,6 +364,7 @@ export default function LojaCheckout() {
                 )}
                 <Button
                   className={cn("flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white", step === "confirm" && "bg-green-700 hover:bg-green-800")}
+                  disabled={submitting}
                   onClick={() => {
                     if (step === "confirm") {
                       handleSendWhatsApp();
@@ -346,7 +375,9 @@ export default function LojaCheckout() {
                     }
                   }}
                 >
-                  {step === "confirm" ? (
+                  {submitting ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" />Criando pedido...</>
+                  ) : step === "confirm" ? (
                     <><MessageCircle className="h-4 w-4" />Enviar via WhatsApp</>
                   ) : (
                     "Continuar"
