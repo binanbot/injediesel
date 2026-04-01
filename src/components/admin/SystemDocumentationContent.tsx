@@ -1930,11 +1930,246 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
           </div>
         </SectionBlock>
 
+        <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
+
+        {/* ── GLOSSÁRIO E PADRONIZAÇÃO ────────────── */}
+        <div id="glossario" className="scroll-mt-20" />
+        <SectionBlock printMode={printMode}>
+          <SectionTitle printMode={printMode}>
+            <BookOpen className="h-5 w-5" />
+            GLOSSÁRIO E PADRONIZAÇÃO DE NOMENCLATURA
+          </SectionTitle>
+
+          <p className={`mb-4 ${subtextColor}`}>
+            Referência oficial de nomenclatura do sistema. Define a correspondência entre nomes técnicos (banco, código) e termos de interface, eliminando ambiguidades.
+          </p>
+
+          {/* Tabelas */}
+          <h4 className={`font-semibold mb-2 ${headingColor}`}>1. Tabelas do Banco de Dados:</h4>
+          <div className="overflow-x-auto mb-6">
+            <table className={`w-full text-sm ${printMode ? "border-collapse" : ""}`}>
+              <thead>
+                <tr className={printMode ? "bg-slate-100 text-slate-900 border border-slate-300" : "bg-slate-800/50 text-slate-200 border border-slate-700"}>
+                  <th className="p-2 text-left">Tabela</th>
+                  <th className="p-2 text-left">Entidade</th>
+                  <th className="p-2 text-left">Termo na Interface</th>
+                  <th className="p-2 text-left">Observação</th>
+                </tr>
+              </thead>
+              <tbody className={subtextColor}>
+                {[
+                  ["profiles_franchisees", "Perfil do Franqueado", "Franqueado / Perfil", "✅ Tabela canônica. 30+ colunas."],
+                  ["franchisee_profiles", "Perfil de Contrato", "—", "⚠️ Auxiliar de contratos (8 colunas). Nome similar à canônica."],
+                  ["units", "Unidade", "Unidade", "✅ Coerente."],
+                  ["customers", "Cliente", "Cliente", "✅ Coerente."],
+                  ["vehicles", "Veículo", "Veículo", "✅ Coerente."],
+                  ["received_files", "Arquivo ECU", "Arquivo / Arquivo ECU", "✅ Coerente. Colunas em PT/EN misto."],
+                  ["orders", "Pedido", "Pedido", "✅ Coerente."],
+                  ["order_items", "Item do Pedido", "Item", "✅ Coerente."],
+                  ["order_status_history", "Histórico de Status", "Timeline do Pedido", "✅ Coerente."],
+                  ["financial_entries", "Lançamento Financeiro", "Financeiro", "✅ Coerente."],
+                  ["correction_tickets", "Ticket de Correção", "Correção", "✅ Coerente."],
+                  ["support_conversations", "Conversa de Suporte", "Suporte / Ticket", "⚠️ Interface usa 'Ticket' mas tabela é 'conversation'."],
+                  ["support_messages", "Mensagem de Suporte", "Mensagem", "✅ Coerente."],
+                  ["contract_history", "Histórico de Contrato", "Renovações", "✅ Coerente."],
+                  ["products", "Produto", "Produto", "✅ Coerente."],
+                  ["carts / cart_items", "Carrinho", "Carrinho", "✅ Coerente."],
+                  ["user_roles", "Papel do Usuário", "Papel / Role", "✅ Coerente."],
+                  ["file_status_history", "Histórico de Arquivo", "Timeline do Arquivo", "⚠️ Colunas em PT (alterado_por, observacao)."],
+                  ["system_settings", "Configuração do Sistema", "Configurações", "✅ Coerente."],
+                  ["exports_log", "Log de Exportação", "Exportações", "✅ Coerente."],
+                  ["cities_reference", "Referência de Cidades", "Cidades (IBGE)", "✅ Coerente."],
+                  ["plate_lookup_cache", "Cache de Placas", "—", "✅ Interno, sem exposição na UI."],
+                  ["services", "Serviço", "Serviço", "✅ Coerente."],
+                ].map(([tabela, entidade, ui, obs]) => (
+                  <tr key={tabela} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                    <td className={`p-2 font-mono text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{tabela}</td>
+                    <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{entidade}</td>
+                    <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{ui}</td>
+                    <td className={`p-2 text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{obs}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Status */}
+          <h4 className={`font-semibold mb-2 ${headingColor}`}>2. Convenção de Status por Módulo:</h4>
+          <div className="overflow-x-auto mb-6">
+            <table className={`w-full text-sm ${printMode ? "border-collapse" : ""}`}>
+              <thead>
+                <tr className={printMode ? "bg-slate-100 text-slate-900 border border-slate-300" : "bg-slate-800/50 text-slate-200 border border-slate-700"}>
+                  <th className="p-2 text-left">Módulo</th>
+                  <th className="p-2 text-left">Idioma</th>
+                  <th className="p-2 text-left">Status Técnicos</th>
+                  <th className="p-2 text-left">Labels na UI</th>
+                </tr>
+              </thead>
+              <tbody className={subtextColor}>
+                {[
+                  ["Arquivos ECU", "EN", "pending, in_progress, completed, rejected", "Pendente, Em Processamento, Concluído, Rejeitado"],
+                  ["Pedidos — Pagamento", "PT", "pendente, aguardando_comprovante, aprovado, recusado, estornado", "Pendente, Aguardando Comprovante, Aprovado, Recusado, Estornado"],
+                  ["Pedidos — Logística", "PT", "pedido_realizado, em_separacao, em_preparacao, enviado, em_transito, entregue, cancelado", "Pedido Realizado, Em Separação, Em Preparação, Enviado, Em Trânsito, Entregue, Cancelado"],
+                  ["Tickets de Correção", "PT", "aberto, em_andamento, resolvido", "Aberto, Em Andamento, Resolvido"],
+                  ["Suporte", "EN", "open, closed", "Aberto, Fechado"],
+                  ["Contratos", "EN", "active, expired", "Ativo, Expirado"],
+                  ["Serviços", "EN", "pending, processing, completed", "Pendente, Processando, Concluído"],
+                ].map(([modulo, idioma, tecnico, labels]) => (
+                  <tr key={modulo} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                    <td className={`p-2 font-semibold ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{modulo}</td>
+                    <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{idioma}</td>
+                    <td className={`p-2 font-mono text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{tecnico}</td>
+                    <td className={`p-2 text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{labels}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <InfoCard printMode={printMode}>
+            <div className="space-y-1 text-sm">
+              <div><strong className={headingColor}>Convenção de idioma:</strong><span className={` ${subtextColor}`}> Módulos mais antigos (Arquivos, Suporte, Contratos) usam status em inglês. Módulos mais novos (Pedidos, Tickets) usam português. Não migrar — risco de breaking change.</span></div>
+            </div>
+          </InfoCard>
+
+          {/* Campos redundantes */}
+          <h4 className={`font-semibold mt-6 mb-2 ${headingColor}`}>3. Campos Redundantes e Legados:</h4>
+          <div className="overflow-x-auto mb-6">
+            <table className={`w-full text-sm ${printMode ? "border-collapse" : ""}`}>
+              <thead>
+                <tr className={printMode ? "bg-slate-100 text-slate-900 border border-slate-300" : "bg-slate-800/50 text-slate-200 border border-slate-700"}>
+                  <th className="p-2 text-left">Campo</th>
+                  <th className="p-2 text-left">Tabela</th>
+                  <th className="p-2 text-left">Status</th>
+                  <th className="p-2 text-left">Observação</th>
+                </tr>
+              </thead>
+              <tbody className={subtextColor}>
+                {[
+                  ["orders.status", "orders", "⚠️ Legado", "Espelho de fulfillment_status. Sincronizado pela camada de aplicação. Não usar diretamente — preferir fulfillment_status."],
+                  ["profiles_franchisees.cidade", "profiles_franchisees", "⚠️ PT misto", "Mesmo conceito que units.city, mas em português. Manter por compatibilidade."],
+                  ["received_files.placa/marca/modelo", "received_files", "⚠️ PT misto", "Colunas em português na tabela de arquivos. Demais colunas em inglês. Manter."],
+                  ["file_status_history.alterado_por", "file_status_history", "⚠️ PT misto", "Coluna em português. Equivalente a changed_by em order_status_history."],
+                  ["financial_entries.category: pecas_acessorios", "financial_entries", "✅ OK", "Sem acento — aceitável como chave técnica."],
+                ].map(([campo, tabela, status, obs]) => (
+                  <tr key={campo} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                    <td className={`p-2 font-mono text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{campo}</td>
+                    <td className={`p-2 font-mono text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{tabela}</td>
+                    <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{status}</td>
+                    <td className={`p-2 text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{obs}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Termos da Loja */}
+          <h4 className={`font-semibold mt-6 mb-2 ${headingColor}`}>4. Termos Oficiais — Loja Promax:</h4>
+          <div className="overflow-x-auto mb-6">
+            <table className={`w-full text-sm ${printMode ? "border-collapse" : ""}`}>
+              <thead>
+                <tr className={printMode ? "bg-slate-100 text-slate-900 border border-slate-300" : "bg-slate-800/50 text-slate-200 border border-slate-700"}>
+                  <th className="p-2 text-left">Código</th>
+                  <th className="p-2 text-left">Termo Oficial (UI)</th>
+                  <th className="p-2 text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody className={subtextColor}>
+                {[
+                  ["order", "Pedido", "✅"],
+                  ["order_items", "Itens do Pedido", "✅"],
+                  ["cart / cart_items", "Carrinho", "✅"],
+                  ["payment_method", "Forma de Pagamento", "✅"],
+                  ["payment_status", "Status do Pagamento", "✅"],
+                  ["fulfillment_status", "Status da Logística", "✅ (código EN, UI PT)"],
+                  ["delivery_address", "Endereço de Entrega", "✅"],
+                  ["order_number", "Nº do Pedido", "✅"],
+                  ["pix / boleto / cartao_credito / cartao_debito / transferencia / a_prazo / na_entrega", "PIX, Boleto, Cartão de Crédito, Cartão de Débito, Transferência, A Prazo, Na Entrega", "✅"],
+                ].map(([codigo, termo, status]) => (
+                  <tr key={codigo} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                    <td className={`p-2 font-mono text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{codigo}</td>
+                    <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{termo}</td>
+                    <td className={`p-2 text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Termos Financeiros */}
+          <h4 className={`font-semibold mt-6 mb-2 ${headingColor}`}>5. Termos Oficiais — Financeiro:</h4>
+          <div className="overflow-x-auto mb-6">
+            <table className={`w-full text-sm ${printMode ? "border-collapse" : ""}`}>
+              <thead>
+                <tr className={printMode ? "bg-slate-100 text-slate-900 border border-slate-300" : "bg-slate-800/50 text-slate-200 border border-slate-700"}>
+                  <th className="p-2 text-left">Código</th>
+                  <th className="p-2 text-left">Termo Oficial</th>
+                  <th className="p-2 text-left">Descrição</th>
+                </tr>
+              </thead>
+              <tbody className={subtextColor}>
+                {[
+                  ["entry_type: custo", "Custo", "Saída financeira para o franqueado"],
+                  ["entry_type: receita", "Receita", "Entrada financeira para a matriz"],
+                  ["scope: franqueado", "Escopo Franqueado", "Lançamento vinculado à unidade"],
+                  ["scope: matriz", "Escopo Matriz", "Lançamento vinculado à franqueadora"],
+                  ["category: pecas_acessorios", "Peças e Acessórios", "Categoria de pedidos da Loja Promax"],
+                  ["competency_date", "Data de Competência", "Data contábil do lançamento"],
+                ].map(([codigo, termo, desc]) => (
+                  <tr key={codigo} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                    <td className={`p-2 font-mono text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{codigo}</td>
+                    <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{termo}</td>
+                    <td className={`p-2 text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{desc}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Rotas */}
+          <h4 className={`font-semibold mt-6 mb-2 ${headingColor}`}>6. Convenção de Rotas:</h4>
+          <div className="overflow-x-auto mb-4">
+            <table className={`w-full text-sm ${printMode ? "border-collapse" : ""}`}>
+              <thead>
+                <tr className={printMode ? "bg-slate-100 text-slate-900 border border-slate-300" : "bg-slate-800/50 text-slate-200 border border-slate-700"}>
+                  <th className="p-2 text-left">Padrão</th>
+                  <th className="p-2 text-left">Idioma</th>
+                  <th className="p-2 text-left">Exemplos</th>
+                  <th className="p-2 text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody className={subtextColor}>
+                {[
+                  ["/admin/*", "PT", "/admin/franqueados, /admin/compras, /admin/produtos, /admin/documentacao", "✅"],
+                  ["/franqueado/*", "PT", "/franqueado/loja, /franqueado/perfil, /franqueado/suporte", "✅"],
+                  ["/franqueado/loja/checkout", "EN", "Único termo inglês em rotas PT", "⚠️ Aceitável (universal)"],
+                  ["Públicas", "PT/EN", "/login, /docs", "✅"],
+                ].map(([padrao, idioma, ex, status]) => (
+                  <tr key={padrao} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                    <td className={`p-2 font-mono text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{padrao}</td>
+                    <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{idioma}</td>
+                    <td className={`p-2 text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{ex}</td>
+                    <td className={`p-2 text-xs ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <InfoCard printMode={printMode}>
+            <div className="space-y-2 text-sm">
+              <div><strong className={headingColor}>Regra geral:</strong><span className={` ${subtextColor}`}> Rotas em português. Termos universais (checkout, login) aceitos em inglês.</span></div>
+              <div><strong className={headingColor}>Código vs Interface:</strong><span className={` ${subtextColor}`}> Código-fonte em inglês (variáveis, funções, imports). Interface em português (labels, mensagens, toasts).</span></div>
+              <div><strong className={headingColor}>Decisão sobre migração:</strong><span className={` ${subtextColor}`}> Inconsistências de idioma em colunas e status NÃO devem ser migradas — risco de breaking change. Documentar e manter.</span></div>
+            </div>
+          </InfoCard>
+        </SectionBlock>
+
         {/* ── FOOTER ───────────────────────── */}
         <div className={`mt-8 pt-6 border-t text-center text-sm ${cx(printMode, "border-border text-muted-foreground", "border-slate-200 text-slate-500")}`}>
           <p>© {new Date().getFullYear()} Injediesel - Todos os direitos reservados</p>
           <p className="mt-1">Documento gerado automaticamente pelo sistema</p>
-          <p className="mt-2 text-xs">Versão 4.0 - Atualizado em {currentDate}</p>
+          <p className="mt-2 text-xs">Versão 4.1 - Atualizado em {currentDate}</p>
         </div>
       </div>
     </div>
