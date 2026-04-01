@@ -13,8 +13,10 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getOrderStatus } from "@/utils/orderStatus";
 import { getPaymentMethodLabel, type PaymentMethod } from "@/utils/whatsappOrder";
-import { getHistoryStatusLabel, type PaymentStatus, type FulfillmentStatus } from "@/utils/orderAdminStatus";
+import { type PaymentStatus, type FulfillmentStatus } from "@/utils/orderAdminStatus";
 import { AdminOrderStatusPanel } from "@/components/admin/AdminOrderStatusPanel";
+import { OrderTimeline } from "@/components/admin/OrderTimeline";
+import { OrderTimelineFromHistory } from "@/components/admin/OrderTimelineFromHistory";
 
 interface OrderItem {
   id: string;
@@ -303,6 +305,12 @@ export default function CompraDetalhe() {
 
         {/* Right column */}
         <div className="space-y-6">
+          {/* Visual timeline */}
+          <OrderTimeline
+            paymentStatus={(order.payment_status || "pendente") as PaymentStatus}
+            fulfillmentStatus={(order.fulfillment_status || "pedido_realizado") as FulfillmentStatus}
+          />
+
           {/* Admin Status Panel */}
           <AdminOrderStatusPanel
             orderId={order.id}
@@ -344,47 +352,9 @@ export default function CompraDetalhe() {
             </CardContent>
           </Card>
 
-          {/* Status history */}
+          {/* History from real data */}
           {statusHistory && statusHistory.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Clock className="h-5 w-5" /> Histórico
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="relative pl-4 border-l-2 border-border/30 space-y-4">
-                  {statusHistory.map((h) => {
-                    const histMeta = getHistoryStatusLabel(h.new_status);
-                    const typeLabel = histMeta.type === "payment" ? "Pagamento" : "Logística";
-                    return (
-                      <div key={h.id} className="relative">
-                        <div
-                          className={cn(
-                            "absolute -left-[calc(0.5rem+1px)] top-0.5 h-4 w-4 rounded-full",
-                            histMeta.color
-                          )}
-                        />
-                        <div className="ml-3">
-                          <p className="text-sm font-medium">
-                            <span className="text-xs text-muted-foreground mr-1">[{typeLabel}]</span>
-                            {histMeta.label}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {fmtDate(h.created_at)}
-                          </p>
-                          {h.internal_note && (
-                            <p className="text-xs text-muted-foreground mt-0.5 italic">
-                              {h.internal_note}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+            <OrderTimelineFromHistory history={statusHistory} />
           )}
         </div>
       </div>
