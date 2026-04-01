@@ -42,6 +42,7 @@ const PedidoDetalhe = lazy(() => import("./pages/franqueado/PedidoDetalhe"));
 const FranqueadoClientes = lazy(() => import("./pages/franqueado/Clientes"));
 const FranqueadoClienteForm = lazy(() => import("./pages/franqueado/ClienteForm"));
 const FranqueadoClienteDetalhe = lazy(() => import("./pages/franqueado/ClienteDetalhe"));
+const FranqueadoVeiculoForm = lazy(() => import("./pages/franqueado/VeiculoForm"));
 import LandingLancamento from "./pages/franqueado/LandingLancamento";
 const DocumentacaoPublica = lazy(() => import("./pages/DocumentacaoPublica"));
 
