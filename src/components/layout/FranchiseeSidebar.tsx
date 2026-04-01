@@ -166,7 +166,7 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
                       "relative z-10 h-5 w-5 transition-all duration-300",
                       isActive ? "text-primary drop-shadow-[0_0_6px_hsl(var(--primary))]" : "text-muted-foreground group-hover:text-foreground"
                     )} />
-                    <span className="relative z-10 flex-1">{item.label}</span>
+                    {!collapsed && <span className="relative z-10 flex-1">{item.label}</span>}
                     
                     {notificationCount > 0 && (
                       <span className="relative z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs font-semibold border border-primary/30">
