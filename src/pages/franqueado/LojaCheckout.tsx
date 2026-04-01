@@ -29,8 +29,12 @@ const formatMoney = (value: number) =>
 
 export default function LojaCheckout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { items, getTotal, clearCart } = useCartStore();
   const total = getTotal();
+
+  const locState = location.state as { paymentMethod?: string } | null;
+  const paymentMethod: PaymentMethod = (locState?.paymentMethod as PaymentMethod) || "nao_definido";
 
   const [step, setStep] = useState<CheckoutStep>("review");
   const [delivery, setDelivery] = useState<DeliveryAddress>(emptyAddress);
