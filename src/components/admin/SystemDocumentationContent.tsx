@@ -276,13 +276,14 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
             Sistema de Gestão de Arquivos ECU e Loja Promax para Franqueados
           </p>
           <div className={`flex items-center justify-center gap-4 mt-4 text-sm ${subtextColor}`}>
-            <span>Versão: 3.1</span>
+            <span>Versão: 4.0</span>
             <span>•</span>
             <span>Data: {currentDate}</span>
           </div>
         </header>
 
         {/* ── DIAGRAMAS ────────────────────── */}
+        <div id="diagramas" className="scroll-mt-20" />
         {!printMode && (
           <SectionBlock printMode={printMode}>
             <SectionTitle printMode={printMode}>
@@ -330,6 +331,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
         {/* ── MAPA MENTAL ──────────────────── */}
+        <div id="mapa-mental" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Map className="h-5 w-5" />
@@ -416,6 +418,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
         {/* ── JORNADAS ─────────────────────── */}
+        <div id="jornadas" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Workflow className="h-5 w-5" />
@@ -471,7 +474,9 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
 
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
+
         {/* ── VISÃO GERAL ──────────────────── */}
+        <div id="visao-geral" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <GitBranch className="h-5 w-5" />
@@ -506,6 +511,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
         {/* ── AUTENTICAÇÃO ─────────────────── */}
+        <div id="autenticacao" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Shield className="h-5 w-5" />
@@ -561,6 +567,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
         {/* ── PAINEL FRANQUEADO ─────────────── */}
+        <div id="painel-franqueado" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Users className="h-5 w-5" />
@@ -593,6 +600,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
         {/* ── LOJA PROMAX ──────────────────── */}
+        <div id="loja-promax" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Store className="h-5 w-5" />
@@ -674,6 +682,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
         {/* ── PAINEL ADMIN ─────────────────── */}
+        <div id="painel-admin" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Shield className="h-5 w-5" />
@@ -707,7 +716,9 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
 
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
+
         {/* ── BANCO DE DADOS ───────────────── */}
+        <div id="banco-dados" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Database className="h-5 w-5" />
@@ -783,6 +794,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
         {/* ── DESIGN SYSTEM ────────────────── */}
+        <div id="design-system" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Palette className="h-5 w-5" />
@@ -840,6 +852,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
         {/* ── FLUXOS DE TRABALHO ───────────── */}
+        <div id="fluxos" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <GitBranch className="h-5 w-5" />
@@ -911,6 +924,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
         {/* ── REGRAS DE NEGÓCIO OFICIAIS ─── */}
+        <div id="regras-negocio" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <BookOpen className="h-5 w-5" />
@@ -1225,6 +1239,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         </SectionBlock>
 
         {/* ── MODELO CANÔNICO DE DOMÍNIO ───────────────────────── */}
+        <div id="modelo-canonico" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Database className="h-5 w-5" /> MODELO CANÔNICO DE DOMÍNIO
@@ -1430,6 +1445,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         </SectionBlock>
 
         {/* ── ESTADOS E TRANSIÇÕES ───────────────────────── */}
+        <div id="estados-transicoes" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <GitBranch className="h-5 w-5" /> ESTADOS E TRANSIÇÕES
@@ -1689,7 +1705,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <div className={`mt-8 pt-6 border-t text-center text-sm ${cx(printMode, "border-border text-muted-foreground", "border-slate-200 text-slate-500")}`}>
           <p>© {new Date().getFullYear()} Injediesel - Todos os direitos reservados</p>
           <p className="mt-1">Documento gerado automaticamente pelo sistema</p>
-          <p className="mt-2 text-xs">Versão 3.3 - Atualizado em {currentDate}</p>
+          <p className="mt-2 text-xs">Versão 4.0 - Atualizado em {currentDate}</p>
         </div>
       </div>
     </div>
