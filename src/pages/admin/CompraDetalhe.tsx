@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getOrderStatus, orderStatusList } from "@/utils/orderStatus";
 import { updateOrderStatus } from "@/services/orderStatusService";
+import { getPaymentMethodLabel, type PaymentMethod } from "@/utils/whatsappOrder";
 
 interface OrderItem {
   id: string;
