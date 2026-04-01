@@ -526,6 +526,9 @@ export default function AdminRelatorios() {
       {/* Ranking de Unidades — Compras */}
       <TopBuyingUnitsCard dateRange={effectiveRange} />
 
+      {/* Gráfico Mensal de Vendas */}
+      <MonthlySalesChart dateRange={effectiveRange} />
+
       {/* Desempenho por Categoria/Nicho */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
