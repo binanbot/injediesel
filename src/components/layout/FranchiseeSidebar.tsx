@@ -168,9 +168,14 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
                     )} />
                     {!collapsed && <span className="relative z-10 flex-1">{item.label}</span>}
                     
-                    {notificationCount > 0 && (
+                    {notificationCount > 0 && !collapsed && (
                       <span className="relative z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs font-semibold border border-primary/30">
                         <Bell className="h-3 w-3" />
+                        {notificationCount}
+                      </span>
+                    )}
+                    {notificationCount > 0 && collapsed && (
+                      <span className="absolute -top-1 -right-1 z-20 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">
                         {notificationCount}
                       </span>
                     )}
