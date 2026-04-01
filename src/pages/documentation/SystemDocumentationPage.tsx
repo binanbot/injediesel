@@ -30,6 +30,7 @@ const NAV_SECTIONS = [
       { id: "regras-negocio", label: "Regras de Negócio" },
       { id: "modelo-canonico", label: "Modelo Canônico" },
       { id: "estados-transicoes", label: "Estados e Transições" },
+      { id: "glossario", label: "Glossário e Nomenclatura" },
     ],
   },
 ];
