@@ -136,7 +136,7 @@ export default function Carrinho() {
 
           {/* Payment & Summary */}
           <div className="space-y-4">
-            <Card className="glass-card">
+            <Card className="glass-card border border-amber-600/40 bg-amber-950/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5" />
@@ -197,7 +197,7 @@ export default function Carrinho() {
                     {installments}x de {formatPrice(total / parseInt(installments))}
                   </p>
                 )}
-                <Button className="w-full" size="lg" onClick={handleCheckout}>
+                <Button className="w-full bg-green-600 hover:bg-green-700 text-white" size="lg" onClick={handleCheckout}>
                   Finalizar Compra
                 </Button>
                 <Button variant="outline" className="w-full" onClick={() => navigate("/franqueado/loja")}>
