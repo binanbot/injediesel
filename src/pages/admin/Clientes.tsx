@@ -46,7 +46,10 @@ interface Customer {
   email: string | null;
   phone: string | null;
   active_city: string | null;
+  address_city: string | null;
   address_state: string | null;
+  is_active: boolean;
+  type: string;
   unit_id: string;
   created_at: string;
   unit?: {
