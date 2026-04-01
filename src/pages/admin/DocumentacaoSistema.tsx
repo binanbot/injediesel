@@ -232,6 +232,7 @@ erDiagram
 export default function DocumentacaoSistema() {
   const { toast } = useToast();
   const contentRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     diagramas: true,
     mapa: false,
@@ -261,15 +262,63 @@ export default function DocumentacaoSistema() {
     setTimeout(() => window.print(), 300);
   };
 
-  const handleExportPDF = () => {
-    expandAll();
-    setTimeout(() => {
-      window.print();
-      toast({
-        title: "Exportar PDF",
-        description: "Na janela de impressão, selecione 'Salvar como PDF' como destino.",
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    // Expand all sections first
+    const allOpen: Record<string, boolean> = {};
+    Object.keys(openSections).forEach((k) => (allOpen[k] = true));
+    setOpenSections(allOpen);
+
+    // Wait for DOM to render expanded content
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise((r) => setTimeout(r, 800));
+
+    try {
+      const node = contentRef.current;
+      if (!node) throw new Error("Conteúdo não encontrado");
+
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#0f172a",
+        logging: false,
+        windowWidth: node.scrollWidth,
+        windowHeight: node.scrollHeight,
       });
-    }, 300);
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageW = 210;
+      const pageH = 297;
+      const margin = 5;
+      const contentW = pageW - margin * 2;
+      const imgH = (canvas.height * contentW) / canvas.width;
+
+      let position = 0;
+      let firstPage = true;
+
+      while (position < imgH) {
+        if (!firstPage) pdf.addPage();
+        firstPage = false;
+
+        pdf.addImage(
+          canvas.toDataURL("image/png"),
+          "PNG",
+          margin,
+          margin - position,
+          contentW,
+          imgH
+        );
+        position += pageH - margin * 2;
+      }
+
+      pdf.save(`documentacao-injediesel-${new Date().toISOString().slice(0, 10)}.pdf`);
+      toast({ title: "PDF exportado!", description: "Todas as seções foram incluídas no arquivo." });
+    } catch (err: any) {
+      console.error("Export error:", err);
+      toast({ title: "Erro ao exportar", description: err.message, variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const currentDate = new Date().toLocaleDateString("pt-BR", {
