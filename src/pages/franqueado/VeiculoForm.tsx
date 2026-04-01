@@ -83,6 +83,12 @@ export default function VeiculoForm() {
       year: data.year || "",
       category: data.category || "",
       engine: data.engine || "",
+      model_year: data.model_year?.toString() || "",
+      transmission: data.transmission || "",
+      fuel: data.fuel || "",
+      color: data.color || "",
+      chassis: data.chassis || "",
+      notes: data.notes || "",
     });
     setIsLoading(false);
   };
