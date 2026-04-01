@@ -370,14 +370,9 @@ export default function EnviarArquivo() {
     setDadosManuais(false);
   };
 
-  const handleClienteCriado = (novoCliente: { id: string; nome: string; telefone: string; email?: string; cidade?: string }) => {
-    // Em produção, adicionaria ao banco. Aqui apenas seleciona
+  const handleClienteCriado = (novoCliente: { id: string; full_name: string }) => {
     setClienteId(novoCliente.id);
-  };
-
-  const handleViewCliente = (cliente: Cliente) => {
-    setClienteSelecionadoParaPerfil(cliente);
-    setClientePerfilOpen(true);
+    setClienteRefreshSignal((s) => s + 1);
   };
 
   const formatValor = (val: string) => {
