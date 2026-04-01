@@ -15,8 +15,10 @@ import {
   Eye,
   EyeOff,
   Upload,
+  Download,
   Loader2,
   Link as LinkIcon,
+  FileSpreadsheet,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -123,6 +125,11 @@ export default function Produtos() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState("");
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const importFileRef = useRef<HTMLInputElement>(null);
+
   // Fetch products
   const { data: products, isLoading } = useQuery({
     queryKey: ["admin-products"],
@@ -335,6 +342,85 @@ export default function Produtos() {
     });
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("Sessão expirada"); return; }
+
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/export-products`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Erro desconhecido' }));
+        throw new Error(err.error || 'Erro ao exportar');
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `produtos_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Arquivo exportado com sucesso!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao exportar produtos");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImport = async (file: File) => {
+    setIsImporting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("Sessão expirada"); return; }
+
+      const fd = new FormData();
+      fd.append("file", file);
+
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/import-products`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: fd,
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Erro desconhecido' }));
+        throw new Error(err.error || 'Erro ao importar');
+      }
+
+      const result = await res.json();
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      setImportDialogOpen(false);
+
+      if (result.errors?.length > 0) {
+        toast.warning(`${result.updated} atualizados, ${result.errors.length} erros`);
+      } else {
+        toast.success(`${result.updated} produtos atualizados com sucesso!`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao importar produtos");
+    } finally {
+      setIsImporting(false);
+    }
+  };
   const formatPrice = (value: number) =>
     new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -368,10 +454,20 @@ export default function Produtos() {
             Gerencie os produtos da loja
           </p>
         </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Produto
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={handleExport} disabled={isExporting}>
+            {isExporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+            Exportar
+          </Button>
+          <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Importar
+          </Button>
+          <Button onClick={openCreateDialog}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Produto
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
@@ -1048,6 +1144,55 @@ export default function Produtos() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Import Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5" />
+              Importar Produtos
+            </DialogTitle>
+            <DialogDescription>
+              Envie o arquivo Excel (.xlsx) exportado com as alterações desejadas.
+              O sistema atualizará os produtos com base no ID de cada linha.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="rounded-lg border border-border/40 bg-muted/30 p-4 text-sm text-muted-foreground space-y-2">
+              <p className="font-medium text-foreground">Como usar:</p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>Clique em <strong>Exportar</strong> para baixar a planilha atual</li>
+                <li>Edite os campos desejados (preço, nome, SKU, descrição, etc.)</li>
+                <li>Não altere a coluna <strong>id</strong></li>
+                <li>Salve e envie o arquivo aqui</li>
+              </ol>
+            </div>
+            <input
+              ref={importFileRef}
+              type="file"
+              accept=".xlsx"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImport(file);
+                e.target.value = "";
+              }}
+            />
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={() => importFileRef.current?.click()}
+              disabled={isImporting}
+            >
+              {isImporting ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Importando...</>
+              ) : (
+                <><Upload className="h-4 w-4 mr-2" /> Selecionar arquivo .xlsx</>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
