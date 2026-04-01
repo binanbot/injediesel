@@ -276,7 +276,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
             Sistema de Gestão de Arquivos ECU e Loja Promax para Franqueados
           </p>
           <div className={`flex items-center justify-center gap-4 mt-4 text-sm ${subtextColor}`}>
-            <span>Versão: 3.1</span>
+            <span>Versão: 4.0</span>
             <span>•</span>
             <span>Data: {currentDate}</span>
           </div>
