@@ -331,6 +331,18 @@ export default function Clientes() {
                 </Select>
               )}
 
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-36">
+                  <ToggleLeft className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="active">Ativos</SelectItem>
+                  <SelectItem value="inactive">Inativos</SelectItem>
+                </SelectContent>
+              </Select>
+
               <Select value={cityFilter} onValueChange={setCityFilter}>
                 <SelectTrigger className="w-full sm:w-40">
                   <MapPin className="h-4 w-4 mr-2" />
