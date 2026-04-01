@@ -421,7 +421,7 @@ export default function Produtos() {
       setIsImporting(false);
     }
   };
-
+  const formatPrice = (value: number) =>
     new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
