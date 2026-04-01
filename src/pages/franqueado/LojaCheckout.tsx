@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft, ShoppingCart, Check, Loader2, Package, MessageCircle,
+  ArrowLeft, ShoppingCart, Check, Loader2, Package, MessageCircle, CreditCard,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
