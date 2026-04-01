@@ -21,6 +21,9 @@ const CATEGORIES = [
   "Outros",
 ];
 
+const FUEL_TYPES = ["Gasolina", "Etanol", "Flex", "Diesel", "GNV", "Elétrico", "Híbrido"];
+const TRANSMISSION_TYPES = ["Manual", "Automático", "CVT", "Automatizado"];
+
 export default function VeiculoForm() {
   const navigate = useNavigate();
   const { id: customerId, vehicleId } = useParams<{ id: string; vehicleId: string }>();
