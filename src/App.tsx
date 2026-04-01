@@ -179,11 +179,6 @@ const App = () => (
                 <Route path="contratos" element={<AdminContratos />} />
                 <Route path="documentacao" element={<SystemDocumentationPage />} />
                 <Route path="produtos" element={<Produtos />} />
-                <Route path="importar-produtos" element={
-                  <ErrorBoundary moduleName="Importar Produtos">
-                    <ImportarProdutos />
-                  </ErrorBoundary>
-                } />
                 <Route path="compras" element={<ComprasFranqueados />} />
                 <Route path="compras/:id" element={<CompraDetalhe />} />
                 <Route path="loja-dashboard" element={<PromaxDashboard />} />
