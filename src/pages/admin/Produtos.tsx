@@ -342,7 +342,86 @@ export default function Produtos() {
     });
   };
 
-  const formatPrice = (value: number) =>
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("Sessão expirada"); return; }
+
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/export-products`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Erro desconhecido' }));
+        throw new Error(err.error || 'Erro ao exportar');
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `produtos_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Arquivo exportado com sucesso!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao exportar produtos");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImport = async (file: File) => {
+    setIsImporting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("Sessão expirada"); return; }
+
+      const fd = new FormData();
+      fd.append("file", file);
+
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/import-products`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: fd,
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Erro desconhecido' }));
+        throw new Error(err.error || 'Erro ao importar');
+      }
+
+      const result = await res.json();
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      setImportDialogOpen(false);
+
+      if (result.errors?.length > 0) {
+        toast.warning(`${result.updated} atualizados, ${result.errors.length} erros`);
+      } else {
+        toast.success(`${result.updated} produtos atualizados com sucesso!`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao importar produtos");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
     new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
