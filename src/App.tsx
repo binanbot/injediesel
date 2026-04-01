@@ -177,7 +177,7 @@ const App = () => (
                 <Route path="configuracoes" element={<AdminConfiguracoes />} />
                 <Route path="correcoes" element={<AdminCorrecoes />} />
                 <Route path="contratos" element={<AdminContratos />} />
-                <Route path="documentacao" element={<DocumentacaoSistema />} />
+                <Route path="documentacao" element={<SystemDocumentationPage />} />
                 <Route path="produtos" element={<Produtos />} />
                 <Route path="importar-produtos" element={
                   <ErrorBoundary moduleName="Importar Produtos">
