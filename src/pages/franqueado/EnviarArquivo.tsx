@@ -465,6 +465,7 @@ export default function EnviarArquivo() {
       const insertData: Record<string, unknown> = {
         id: arquivoId,
         unit_id: unitData.id,
+        customer_id: clienteId || null,
         placa: placa || "SEM PLACA",
         marca: marca,
         modelo: modelo,
