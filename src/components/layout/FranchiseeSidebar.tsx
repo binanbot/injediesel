@@ -65,9 +65,11 @@ const menuItems = [
 interface FranchiseeSidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarProps) {
+export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, onToggleCollapse }: FranchiseeSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
