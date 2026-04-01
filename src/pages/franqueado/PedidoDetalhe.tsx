@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { getOrderStatus } from "@/utils/orderStatus";
+import { getPaymentMethodLabel, type PaymentMethod } from "@/utils/whatsappOrder";
 
 interface OrderItem {
   id: string;
@@ -30,6 +31,8 @@ interface Order {
   discount_amount: number;
   items_count: number;
   delivery_address: any;
+  payment_method: string | null;
+  payment_note: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -159,6 +162,14 @@ export default function PedidoDetalhe() {
                   <span className="text-muted-foreground">Desconto</span>
                   <span className="text-green-500">-{fmt(order.discount_amount)}</span>
                 </div>
+              )}
+              <Separator />
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Pagamento</span>
+                <span>{order.payment_method ? getPaymentMethodLabel(order.payment_method as PaymentMethod) : "Não informado"}</span>
+              </div>
+              {order.payment_note && (
+                <p className="text-xs text-muted-foreground">Obs: {order.payment_note}</p>
               )}
               <Separator />
               <div className="flex justify-between font-semibold">

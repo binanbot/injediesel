@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getOrderStatus, orderStatusList } from "@/utils/orderStatus";
 import { updateOrderStatus } from "@/services/orderStatusService";
+import { getPaymentMethodLabel, type PaymentMethod } from "@/utils/whatsappOrder";
 
 interface OrderItem {
   id: string;
@@ -52,6 +53,8 @@ interface Order {
   discount_amount: number;
   items_count: number;
   delivery_address: any;
+  payment_method: string | null;
+  payment_note: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -257,6 +260,29 @@ export default function CompraDetalhe() {
               </CardContent>
             </Card>
           )}
+
+          {/* Payment Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                💳 Forma de Pagamento
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Método</span>
+                <span className="font-medium">
+                  {order.payment_method ? getPaymentMethodLabel(order.payment_method as PaymentMethod) : "Não informado"}
+                </span>
+              </div>
+              {order.payment_note && (
+                <div>
+                  <span className="text-muted-foreground">Observação: </span>
+                  <span>{order.payment_note}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Items */}
           <Card>
