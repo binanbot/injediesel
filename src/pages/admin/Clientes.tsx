@@ -395,6 +395,15 @@ export default function Clientes() {
                     />
                   </Badge>
                 )}
+                {statusFilter !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Status: {statusFilter === "active" ? "Ativos" : "Inativos"}
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => setStatusFilter("all")}
+                    />
+                  </Badge>
+                )}
                 {cityFilter !== "all" && (
                   <Badge variant="secondary" className="gap-1">
                     Cidade: {cityFilter}
