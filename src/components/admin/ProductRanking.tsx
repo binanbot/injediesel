@@ -70,7 +70,7 @@ export default function ProductRanking({ dateRange, franchiseProfileId }: Produc
       );
     }
 
-    const maxVal = highlight === "qty" ? items[0]?.total_qty : items[0]?.total_revenue;
+    const maxVal = highlight === "qty" ? items[0]?.total_quantity : items[0]?.total_revenue;
 
     return (
       <div className="space-y-2">
