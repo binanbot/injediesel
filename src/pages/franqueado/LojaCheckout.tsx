@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { createOrderFromCart, openOrderOnWhatsApp } from "@/services/orderService";
 import type { PaymentMethod } from "@/utils/whatsappOrder";
 import { getPaymentMethodLabel } from "@/utils/whatsappOrder";
+import { PaymentMethodForm } from "@/components/franqueado/PaymentMethodForm";
 import {
   DeliveryAddressForm,
   DeliveryAddress,
