@@ -20,6 +20,8 @@ import {
   ShoppingBag,
   ShoppingCart,
   Package,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -63,9 +65,11 @@ const menuItems = [
 interface FranchiseeSidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarProps) {
+export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, onToggleCollapse }: FranchiseeSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
@@ -93,15 +97,29 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
       
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-screen w-64 glass-sidebar flex flex-col transition-transform duration-300 lg:translate-x-0",
+          "fixed left-0 top-0 z-50 h-screen glass-sidebar flex flex-col transition-all duration-300 lg:translate-x-0",
+          collapsed ? "lg:w-16 w-64" : "w-64",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Logo Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-border/20">
-          <Link to="/franqueado" className="flex items-center gap-2">
-            <Logo size="md" />
-          </Link>
+          {!collapsed && (
+            <Link to="/franqueado" className="flex items-center gap-2">
+              <Logo size="md" />
+            </Link>
+          )}
+          {/* Collapse toggle (desktop) */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleCollapse}
+            className="hidden lg:flex hover:bg-secondary/50"
+            title={collapsed ? "Expandir menu" : "Recolher menu"}
+          >
+            {collapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+          </Button>
+          {/* Close button (mobile) */}
           <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden hover:bg-secondary/50">
             <X className="h-5 w-5" />
           </Button>
@@ -122,7 +140,8 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
                     to={item.path}
                     onClick={onClose}
                     className={cn(
-                      "relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 group overflow-hidden",
+                      "relative flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-300 group overflow-hidden",
+                      collapsed ? "px-2 py-2.5 justify-center" : "px-3 py-2.5",
                       isActive
                         ? "text-primary"
                         : "text-sidebar-foreground hover:text-foreground"
@@ -147,11 +166,16 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
                       "relative z-10 h-5 w-5 transition-all duration-300",
                       isActive ? "text-primary drop-shadow-[0_0_6px_hsl(var(--primary))]" : "text-muted-foreground group-hover:text-foreground"
                     )} />
-                    <span className="relative z-10 flex-1">{item.label}</span>
+                    {!collapsed && <span className="relative z-10 flex-1">{item.label}</span>}
                     
-                    {notificationCount > 0 && (
+                    {notificationCount > 0 && !collapsed && (
                       <span className="relative z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs font-semibold border border-primary/30">
                         <Bell className="h-3 w-3" />
+                        {notificationCount}
+                      </span>
+                    )}
+                    {notificationCount > 0 && collapsed && (
+                      <span className="absolute -top-1 -right-1 z-20 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">
                         {notificationCount}
                       </span>
                     )}
@@ -163,50 +187,26 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
         </nav>
 
         {/* Social Links */}
-        {hasSocialLinks && (
+        {hasSocialLinks && !collapsed && (
           <div className="px-3 pb-2">
             <div className="flex items-center justify-center gap-3">
               {socialLinks.facebook && (
-                <a
-                  href={socialLinks.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg text-muted-foreground hover:text-blue-600 hover:bg-blue-600/10 transition-all duration-200"
-                  title="Facebook"
-                >
+                <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg text-muted-foreground hover:text-blue-600 hover:bg-blue-600/10 transition-all duration-200" title="Facebook">
                   <Facebook className="h-5 w-5" />
                 </a>
               )}
               {socialLinks.instagram && (
-                <a
-                  href={socialLinks.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg text-muted-foreground hover:text-pink-500 hover:bg-pink-500/10 transition-all duration-200"
-                  title="Instagram"
-                >
+                <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg text-muted-foreground hover:text-pink-500 hover:bg-pink-500/10 transition-all duration-200" title="Instagram">
                   <Instagram className="h-5 w-5" />
                 </a>
               )}
               {socialLinks.tiktok && (
-                <a
-                  href={socialLinks.tiktok}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
-                  title="TikTok"
-                >
+                <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200" title="TikTok">
                   <TikTokIcon className="h-5 w-5" />
                 </a>
               )}
               {socialLinks.shop && (
-                <a
-                  href={socialLinks.shop}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg text-muted-foreground hover:text-green-600 hover:bg-green-600/10 transition-all duration-200"
-                  title="Loja"
-                >
+                <a href={socialLinks.shop} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg text-muted-foreground hover:text-green-600 hover:bg-green-600/10 transition-all duration-200" title="Loja">
                   <ShoppingBag className="h-5 w-5" />
                 </a>
               )}
@@ -218,10 +218,14 @@ export function FranchiseeSidebar({ isOpen = true, onClose }: FranchiseeSidebarP
         <div className="p-3 border-t border-border/20">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-200"
+            className={cn(
+              "w-full flex items-center gap-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-200",
+              collapsed ? "px-2 py-2.5 justify-center" : "px-3 py-2.5"
+            )}
+            title="Sair"
           >
             <LogOut className="h-5 w-5" />
-            Sair
+            {!collapsed && "Sair"}
           </button>
         </div>
       </aside>
