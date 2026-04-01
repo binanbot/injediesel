@@ -123,8 +123,7 @@ export default function EnviarArquivo() {
   // Cliente
   const [clienteId, setClienteId] = useState<string>("");
   const [novoClienteDrawerOpen, setNovoClienteDrawerOpen] = useState(false);
-  const [clientePerfilOpen, setClientePerfilOpen] = useState(false);
-  const [clienteSelecionadoParaPerfil, setClienteSelecionadoParaPerfil] = useState<Cliente | null>(null);
+  const [clienteRefreshSignal, setClienteRefreshSignal] = useState(0);
 
   // Valor
   const [valor, setValor] = useState<string>("");
