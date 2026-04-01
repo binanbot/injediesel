@@ -164,6 +164,14 @@ export default function PedidoDetalhe() {
                 </div>
               )}
               <Separator />
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Pagamento</span>
+                <span>{order.payment_method ? getPaymentMethodLabel(order.payment_method as PaymentMethod) : "Não informado"}</span>
+              </div>
+              {order.payment_note && (
+                <p className="text-xs text-muted-foreground">Obs: {order.payment_note}</p>
+              )}
+              <Separator />
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
                 <span className="text-lg text-primary">{fmt(order.total_amount)}</span>
