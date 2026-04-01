@@ -501,6 +501,8 @@ export type Database = {
           items_count: number
           notes: string | null
           order_number: string
+          payment_method: string | null
+          payment_note: string | null
           payment_status: string
           shipping_amount: number
           status: string
@@ -519,6 +521,8 @@ export type Database = {
           items_count?: number
           notes?: string | null
           order_number: string
+          payment_method?: string | null
+          payment_note?: string | null
           payment_status?: string
           shipping_amount?: number
           status?: string
@@ -537,6 +541,8 @@ export type Database = {
           items_count?: number
           notes?: string | null
           order_number?: string
+          payment_method?: string | null
+          payment_note?: string | null
           payment_status?: string
           shipping_amount?: number
           status?: string
