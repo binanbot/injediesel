@@ -97,15 +97,29 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
       
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-screen w-64 glass-sidebar flex flex-col transition-transform duration-300 lg:translate-x-0",
+          "fixed left-0 top-0 z-50 h-screen glass-sidebar flex flex-col transition-all duration-300 lg:translate-x-0",
+          collapsed ? "lg:w-16 w-64" : "w-64",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Logo Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-border/20">
-          <Link to="/franqueado" className="flex items-center gap-2">
-            <Logo size="md" />
-          </Link>
+          {!collapsed && (
+            <Link to="/franqueado" className="flex items-center gap-2">
+              <Logo size="md" />
+            </Link>
+          )}
+          {/* Collapse toggle (desktop) */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleCollapse}
+            className="hidden lg:flex hover:bg-secondary/50"
+            title={collapsed ? "Expandir menu" : "Recolher menu"}
+          >
+            {collapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+          </Button>
+          {/* Close button (mobile) */}
           <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden hover:bg-secondary/50">
             <X className="h-5 w-5" />
           </Button>

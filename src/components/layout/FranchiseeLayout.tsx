@@ -6,14 +6,19 @@ import { useFileStatusNotifications } from "@/hooks/useFileStatusNotifications";
 
 export function FranchiseeLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
-  // Escuta notificações de mudança de status de arquivos
   useFileStatusNotifications();
 
   return (
     <div className="min-h-screen bg-background">
-      <FranchiseeSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="lg:ml-64">
+      <FranchiseeSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+      />
+      <div className={sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"} style={{ transition: "margin-left 300ms" }}>
         <Topbar 
           unitName="Unidade São Paulo" 
           onMenuClick={() => setSidebarOpen(true)}
