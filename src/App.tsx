@@ -183,6 +183,7 @@ const App = () => (
                 } />
                 <Route path="compras" element={<ComprasFranqueados />} />
                 <Route path="compras/:id" element={<CompraDetalhe />} />
+                <Route path="loja-dashboard" element={<PromaxDashboard />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
