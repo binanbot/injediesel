@@ -454,10 +454,20 @@ export default function Produtos() {
             Gerencie os produtos da loja
           </p>
         </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Produto
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={handleExport} disabled={isExporting}>
+            {isExporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+            Exportar
+          </Button>
+          <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Importar
+          </Button>
+          <Button onClick={openCreateDialog}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Produto
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
