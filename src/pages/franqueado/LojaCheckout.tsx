@@ -111,7 +111,7 @@ export default function LojaCheckout() {
       openOrderOnWhatsApp(delivery, items, selectedPayment, paymentNote);
       clearCart();
       toast.success(`Pedido ${order.order_number} criado e enviado via WhatsApp!`);
-      navigate("/franqueado/meus-pedidos");
+      navigate(`/franqueado/loja/pedidos/${order.id}`);
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Erro ao criar pedido.");
