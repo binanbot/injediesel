@@ -98,10 +98,30 @@ export default function ClienteDetalhe() {
   };
 
   const handleDelete = async () => {
-    if (hasBindings) { toast.error("Cliente possui vínculos e não pode ser excluído"); return; }
-    const { error } = await supabase.from("customers").delete().eq("id", id!);
-    if (error) { toast.error("Erro ao excluir cliente"); return; }
-    toast.success("Cliente excluído");
+    const { data, error } = await supabase.rpc("safe_delete_customer", {
+      _customer_id: id!,
+    });
+
+    if (error) {
+      toast.error("Erro ao excluir cliente");
+      return;
+    }
+
+    const result = data as any;
+    if (!result.success) {
+      const parts: string[] = [];
+      if (result.vehicles > 0) parts.push(`${result.vehicles} veículo(s)`);
+      if (result.files > 0) parts.push(`${result.files} arquivo(s)`);
+      if (result.services > 0) parts.push(`${result.services} serviço(s)`);
+      toast.error(
+        parts.length > 0
+          ? `Não é possível excluir: possui ${parts.join(", ")}. Inative o cliente.`
+          : result.reason
+      );
+      return;
+    }
+
+    toast.success("Cliente excluído permanentemente");
     navigate("/franqueado/clientes");
   };
 
@@ -164,29 +184,41 @@ export default function ClienteDetalhe() {
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" disabled={hasBindings}>
+              <Button variant="destructive">
                 <Trash2 className="h-4 w-4" /> Excluir
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Esta ação é irreversível. O cliente será removido permanentemente.
+                <AlertDialogTitle>Excluir cliente permanentemente?</AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                  <div className="space-y-3">
+                    <p>Esta ação é irreversível. O cliente será removido permanentemente do sistema.</p>
+                    {hasBindings && (
+                      <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm space-y-1">
+                        <p className="font-medium text-destructive">Exclusão bloqueada — vínculos encontrados:</p>
+                        {vehicles.length > 0 && <p>• {vehicles.length} veículo(s) cadastrado(s)</p>}
+                        {files.length > 0 && <p>• {files.length} arquivo(s) enviado(s)</p>}
+                        {services.length > 0 && <p>• {services.length} serviço(s) registrado(s)</p>}
+                        <p className="text-muted-foreground mt-2">Prefira inativar o cliente para preservar o histórico.</p>
+                      </div>
+                    )}
+                  </div>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+                <AlertDialogAction onClick={handleDelete} disabled={hasBindings}>Excluir</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </div>
       </div>
 
-      {hasBindings && (
-        <div className="text-sm text-muted-foreground bg-muted/30 border border-border/30 px-4 py-2.5 rounded-xl">
-          Este cliente possui {vehicles.length} veículo(s), {files.length} arquivo(s) e {services.length} serviço(s). Para excluí-lo, remova os vínculos primeiro.
+      {hasBindings && !isActive && (
+        <div className="text-sm text-muted-foreground bg-muted/30 border border-border/30 px-4 py-2.5 rounded-xl flex items-center gap-2">
+          <ToggleLeft className="h-4 w-4 shrink-0" />
+          Cliente inativado. Possui {vehicles.length} veículo(s), {files.length} arquivo(s) e {services.length} serviço(s) — o histórico permanece acessível.
         </div>
       )}
 
