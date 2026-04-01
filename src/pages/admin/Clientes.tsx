@@ -187,12 +187,13 @@ export default function Clientes() {
   const clearFilters = () => {
     setSearch("");
     setUnitFilter("all");
+    setStatusFilter("all");
     setCityFilter("all");
     setStateFilter("all");
   };
 
   const hasActiveFilters =
-    search || unitFilter !== "all" || cityFilter !== "all" || stateFilter !== "all";
+    search || unitFilter !== "all" || statusFilter !== "all" || cityFilter !== "all" || stateFilter !== "all";
 
   const handleExport = async () => {
     setIsExporting(true);
