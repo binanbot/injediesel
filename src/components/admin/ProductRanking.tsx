@@ -104,7 +104,7 @@ export default function ProductRanking({ dateRange, franchiseProfileId }: Produc
                       {product.product_sku}
                     </Badge>
                   )}
-                  <span>{product.order_count} pedido{product.order_count !== 1 ? "s" : ""}</span>
+                  <span>{product.orders_count} pedido{product.orders_count !== 1 ? "s" : ""}</span>
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
