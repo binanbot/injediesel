@@ -1,5 +1,6 @@
 import { Bell, Search, Menu, Clock, AlertTriangle, ShoppingCart } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,6 +26,7 @@ export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuB
   const showContractAlert = contractStatus.isNearExpiration || contractStatus.isExpired;
   const itemCount = useCartStore((s) => s.getItemCount());
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   return (
     <header className="h-16 glass-topbar sticky top-0 z-40">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
@@ -127,10 +129,10 @@ export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuB
               <DropdownMenuContent align="end" className="glass-card border-border/40">
                 <DropdownMenuLabel className="text-foreground">Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-border/30" />
-                <DropdownMenuItem className="focus:bg-secondary/50 text-foreground">Perfil</DropdownMenuItem>
-                <DropdownMenuItem className="focus:bg-secondary/50 text-foreground">Configurações</DropdownMenuItem>
+                <DropdownMenuItem className="focus:bg-secondary/50 text-foreground cursor-pointer" onClick={() => navigate("/franqueado/perfil")}>Perfil</DropdownMenuItem>
+                <DropdownMenuItem className="focus:bg-secondary/50 text-foreground cursor-pointer" onClick={() => navigate("/franqueado/perfil")}>Configurações</DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-border/30" />
-                <DropdownMenuItem className="text-destructive focus:bg-destructive/10">Sair</DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive focus:bg-destructive/10 cursor-pointer" onClick={async () => { await signOut(); navigate("/login"); }}>Sair</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
