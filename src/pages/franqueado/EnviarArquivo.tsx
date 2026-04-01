@@ -1083,13 +1083,6 @@ export default function EnviarArquivo() {
         onClienteCriado={handleClienteCriado}
       />
 
-      {/* Dialog perfil do cliente */}
-      <ClientePerfilDialog
-        cliente={clienteSelecionadoParaPerfil}
-        open={clientePerfilOpen}
-        onOpenChange={setClientePerfilOpen}
-      />
-
       {/* Modal de Responsabilidade - Placa não encontrada */}
       <Dialog open={modalResponsabilidadeOpen} onOpenChange={() => {}}>
         <DialogContent className="max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
