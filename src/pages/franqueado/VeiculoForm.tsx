@@ -134,9 +134,15 @@ export default function VeiculoForm() {
         year: form.year || null,
         category: form.category || null,
         engine: form.engine || null,
+        model_year: form.model_year ? parseInt(form.model_year) : null,
+        transmission: form.transmission || null,
+        fuel: form.fuel || null,
+        color: form.color || null,
+        chassis: form.chassis || null,
+        notes: form.notes || null,
         customer_id: customerId!,
         unit_id: unitId,
-      };
+      } as any;
 
       if (isEditing) {
         const { error } = await supabase
