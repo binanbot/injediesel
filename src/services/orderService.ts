@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { CartItem } from "@/stores/useCartStore";
 import type { DeliveryAddress } from "@/components/franqueado/DeliveryAddressForm";
-import { buildWhatsAppMessage } from "@/utils/whatsappOrder";
+import { buildWhatsAppMessage, type PaymentMethod } from "@/utils/whatsappOrder";
 
 const generateOrderNumber = () => {
   const now = new Date();
@@ -106,8 +106,13 @@ export async function createOrderFromCart(
   return order;
 }
 
-export function openOrderOnWhatsApp(address: DeliveryAddress, items: CartItem[]) {
+export function openOrderOnWhatsApp(
+  address: DeliveryAddress,
+  items: CartItem[],
+  paymentMethod: PaymentMethod = "nao_definido",
+  paymentNote?: string,
+) {
   const phone = "5545998590384";
-  const message = buildWhatsAppMessage(address, items);
+  const message = buildWhatsAppMessage(address, items, paymentMethod, paymentNote);
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
 }

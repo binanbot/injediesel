@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft, ShoppingCart, Check, Loader2, Package, MessageCircle,
@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { useCartStore, CartItem } from "@/stores/useCartStore";
 import { cn } from "@/lib/utils";
 import { createOrderFromCart, openOrderOnWhatsApp } from "@/services/orderService";
+import type { PaymentMethod } from "@/utils/whatsappOrder";
+import { getPaymentMethodLabel } from "@/utils/whatsappOrder";
 import {
   DeliveryAddressForm,
   DeliveryAddress,
@@ -27,8 +29,12 @@ const formatMoney = (value: number) =>
 
 export default function LojaCheckout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { items, getTotal, clearCart } = useCartStore();
   const total = getTotal();
+
+  const locState = location.state as { paymentMethod?: string } | null;
+  const paymentMethod: PaymentMethod = (locState?.paymentMethod as PaymentMethod) || "nao_definido";
 
   const [step, setStep] = useState<CheckoutStep>("review");
   const [delivery, setDelivery] = useState<DeliveryAddress>(emptyAddress);
@@ -101,7 +107,7 @@ export default function LojaCheckout() {
     try {
       const order = await createOrderFromCart(profile.id, delivery, items);
 
-      openOrderOnWhatsApp(delivery, items);
+      openOrderOnWhatsApp(delivery, items, paymentMethod);
       clearCart();
       toast.success(`Pedido ${order.order_number} criado e enviado via WhatsApp!`);
       navigate("/franqueado/meus-pedidos");
@@ -264,6 +270,11 @@ export default function LojaCheckout() {
                     </p>
                   </div>
                 )}
+
+                <div className="p-4 rounded-lg bg-muted/30 space-y-1">
+                  <p className="text-sm text-muted-foreground font-medium">Forma de pagamento</p>
+                  <p className="text-sm font-semibold">{getPaymentMethodLabel(paymentMethod)}</p>
+                </div>
 
                 <Separator />
 

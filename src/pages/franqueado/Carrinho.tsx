@@ -13,7 +13,7 @@ import { useState } from "react";
 const paymentMethods = [
   { id: "pix", label: "PIX", icon: QrCode, description: "Pagamento instantâneo" },
   { id: "boleto", label: "Boleto Bancário", icon: Landmark, description: "Vencimento em 3 dias úteis" },
-  { id: "credit", label: "Cartão de Crédito", icon: CreditCard, description: "Até 12x sem juros" },
+  { id: "cartao_credito", label: "Cartão de Crédito", icon: CreditCard, description: "Até 12x sem juros" },
 ];
 
 export default function Carrinho() {
@@ -158,7 +158,7 @@ export default function Carrinho() {
                     </div>
                   ))}
                 </RadioGroup>
-                {paymentMethod === "credit" && (
+                {paymentMethod === "cartao_credito" && (
                   <div className="mt-4 pt-4 border-t border-border/30">
                     <Label htmlFor="installments" className="text-sm">Parcelas</Label>
                     <Select value={installments} onValueChange={setInstallments}>
@@ -192,7 +192,7 @@ export default function Carrinho() {
                   <span className="font-medium">Total</span>
                   <span className="text-2xl font-bold text-primary">{formatPrice(total)}</span>
                 </div>
-                {paymentMethod === "credit" && parseInt(installments) > 1 && (
+                {paymentMethod === "cartao_credito" && parseInt(installments) > 1 && (
                   <p className="text-sm text-muted-foreground text-center">
                     {installments}x de {formatPrice(total / parseInt(installments))}
                   </p>
