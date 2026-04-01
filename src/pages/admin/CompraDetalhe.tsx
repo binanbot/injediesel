@@ -303,33 +303,14 @@ export default function CompraDetalhe() {
 
         {/* Right column */}
         <div className="space-y-6">
-          {/* Status update */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Atualizar Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select
-                value={order.status}
-                onValueChange={(value) => statusMutation.mutate(value)}
-                disabled={statusMutation.isPending}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {orderStatusList.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      <span className="flex items-center gap-2">
-                        <s.icon className="h-4 w-4" />
-                        {s.label}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
+          {/* Admin Status Panel */}
+          <AdminOrderStatusPanel
+            orderId={order.id}
+            currentPaymentStatus={(order.payment_status || "pendente") as PaymentStatus}
+            currentFulfillmentStatus={(order.fulfillment_status || "pedido_realizado") as FulfillmentStatus}
+            changedBy={user?.id}
+            onUpdated={invalidateOrder}
+          />
 
           {/* Summary */}
           <Card>
