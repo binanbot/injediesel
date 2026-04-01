@@ -45,20 +45,6 @@ import {
   Zap,
   Medal,
   Crown,
-  Award
-import { 
-  CalendarIcon, 
-  Trophy, 
-  TrendingUp, 
-  Truck, 
-  Car, 
-  Bike, 
-  Tractor,
-  HardHat,
-  Ship,
-  Zap,
-  Medal,
-  Crown,
   Award,
   ShoppingCart,
 } from "lucide-react";
