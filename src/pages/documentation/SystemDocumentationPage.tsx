@@ -4,7 +4,7 @@ import { SystemDocumentationContent } from "@/components/admin/SystemDocumentati
 
 export default function DocumentacaoSistema() {
   const handleExportPDF = () => {
-    window.open("/admin/documentacao/print", "_blank");
+    window.open("/documentacao/impressao", "_blank");
   };
 
   return (

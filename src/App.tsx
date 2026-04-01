@@ -53,8 +53,8 @@ const AdminMensagens = lazy(() => import("./pages/admin/Mensagens"));
 const AdminSuporte = lazy(() => import("./pages/admin/Suporte"));
 const AdminRelatorios = lazy(() => import("./pages/admin/Relatorios"));
 const AdminConfiguracoes = lazy(() => import("./pages/admin/Configuracoes"));
-const DocumentacaoSistema = lazy(() => import("./pages/documentation/SystemDocumentationPage"));
-const DocumentacaoPrint = lazy(() => import("./pages/documentation/SystemDocumentationPrintPage"));
+const SystemDocumentationPage = lazy(() => import("./pages/documentation/SystemDocumentationPage"));
+const SystemDocumentationPrintPage = lazy(() => import("./pages/documentation/SystemDocumentationPrintPage"));
 const AdminCorrecoes = lazy(() => import("./pages/admin/Correcoes"));
 const AdminContratos = lazy(() => import("./pages/admin/Contratos"));
 const ImportarFranqueados = lazy(() => import("./pages/admin/ImportarFranqueados"));
@@ -95,7 +95,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               
               <Route path="/docs" element={<DocumentacaoPublica />} />
-              <Route path="/admin/documentacao/print" element={<DocumentacaoPrint />} />
+              <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
 
               {/* Franqueado Routes */}
               <Route
@@ -177,7 +177,7 @@ const App = () => (
                 <Route path="configuracoes" element={<AdminConfiguracoes />} />
                 <Route path="correcoes" element={<AdminCorrecoes />} />
                 <Route path="contratos" element={<AdminContratos />} />
-                <Route path="documentacao" element={<DocumentacaoSistema />} />
+                <Route path="documentacao" element={<SystemDocumentationPage />} />
                 <Route path="produtos" element={<Produtos />} />
                 <Route path="importar-produtos" element={
                   <ErrorBoundary moduleName="Importar Produtos">
