@@ -1144,6 +1144,55 @@ export default function Produtos() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Import Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5" />
+              Importar Produtos
+            </DialogTitle>
+            <DialogDescription>
+              Envie o arquivo Excel (.xlsx) exportado com as alterações desejadas.
+              O sistema atualizará os produtos com base no ID de cada linha.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="rounded-lg border border-border/40 bg-muted/30 p-4 text-sm text-muted-foreground space-y-2">
+              <p className="font-medium text-foreground">Como usar:</p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>Clique em <strong>Exportar</strong> para baixar a planilha atual</li>
+                <li>Edite os campos desejados (preço, nome, SKU, descrição, etc.)</li>
+                <li>Não altere a coluna <strong>id</strong></li>
+                <li>Salve e envie o arquivo aqui</li>
+              </ol>
+            </div>
+            <input
+              ref={importFileRef}
+              type="file"
+              accept=".xlsx"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImport(file);
+                e.target.value = "";
+              }}
+            />
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={() => importFileRef.current?.click()}
+              disabled={isImporting}
+            >
+              {isImporting ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Importando...</>
+              ) : (
+                <><Upload className="h-4 w-4 mr-2" /> Selecionar arquivo .xlsx</>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
