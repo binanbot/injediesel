@@ -144,6 +144,8 @@ const App = () => (
                 <Route path="clientes/novo" element={<FranqueadoClienteForm />} />
                 <Route path="clientes/:id" element={<FranqueadoClienteDetalhe />} />
                 <Route path="clientes/:id/editar" element={<FranqueadoClienteForm />} />
+                <Route path="clientes/:id/veiculos/novo" element={<FranqueadoVeiculoForm />} />
+                <Route path="clientes/:id/veiculos/:vehicleId/editar" element={<FranqueadoVeiculoForm />} />
               </Route>
 
               {/* Admin Routes */}
