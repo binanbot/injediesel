@@ -194,9 +194,13 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          is_active: boolean
+          notes: string | null
           phone: string | null
           unit_id: string
           updated_at: string | null
+          whatsapp: string | null
+          zip_code: string | null
         }
         Insert: {
           active_city?: string | null
@@ -210,9 +214,13 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          is_active?: boolean
+          notes?: string | null
           phone?: string | null
           unit_id: string
           updated_at?: string | null
+          whatsapp?: string | null
+          zip_code?: string | null
         }
         Update: {
           active_city?: string | null
@@ -226,9 +234,13 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          is_active?: boolean
+          notes?: string | null
           phone?: string | null
           unit_id?: string
           updated_at?: string | null
+          whatsapp?: string | null
+          zip_code?: string | null
         }
         Relationships: [
           {
