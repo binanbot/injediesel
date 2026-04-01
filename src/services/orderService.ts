@@ -43,6 +43,8 @@ export async function createOrderFromCart(
       discount_amount: 0,
       total_amount: totalAmount,
       delivery_address: address as any,
+      payment_method: paymentMethod || null,
+      payment_note: paymentNote || null,
     })
     .select()
     .single();
