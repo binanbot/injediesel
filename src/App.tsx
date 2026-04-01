@@ -95,7 +95,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               
               <Route path="/docs" element={<DocumentacaoPublica />} />
-              <Route path="/admin/documentacao/print" element={<DocumentacaoPrint />} />
+              <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
 
               {/* Franqueado Routes */}
               <Route
