@@ -233,6 +233,72 @@ export default function AdminRelatorios() {
   const [dataFim, setDataFim] = useState<Date>();
   const [categoriaFiltro, setCategoriaFiltro] = useState("all");
 
+  const effectiveRange = useMemo(() => ({
+    from: dataInicio || startOfMonth(new Date()),
+    to: dataFim || endOfMonth(new Date()),
+  }), [dataInicio, dataFim]);
+
+  // Fetch financial entries for matriz revenue (peças e acessórios)
+  const { data: matrizFinancial } = useQuery({
+    queryKey: ["matriz-revenue", effectiveRange],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financial_entries")
+        .select(`
+          *,
+          orders (
+            id, order_number, status, total_amount, items_count, created_at,
+            franchise_profile_id,
+            unit_id
+          )
+        `)
+        .eq("scope", "matriz")
+        .eq("entry_type", "receita")
+        .eq("category", "pecas_acessorios")
+        .gte("competency_date", format(effectiveRange.from, "yyyy-MM-dd"))
+        .lte("competency_date", format(effectiveRange.to, "yyyy-MM-dd"))
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch units for ranking
+  const { data: allUnits } = useQuery({
+    queryKey: ["units-list"],
+    queryFn: async () => {
+      const { data } = await supabase.from("units").select("id, name, city, state");
+      return data || [];
+    },
+  });
+
+  const matrizStats = useMemo(() => {
+    if (!matrizFinancial) return { total: 0, count: 0, avg: 0, byUnit: [] as { name: string; total: number; count: number }[] };
+    const total = matrizFinancial.reduce((s, e) => s + Number(e.amount), 0);
+    const count = matrizFinancial.length;
+    const avg = count > 0 ? total / count : 0;
+
+    // Group by unit
+    const unitMap = new Map<string, { total: number; count: number }>();
+    matrizFinancial.forEach((entry) => {
+      const unitId = (entry.orders as any)?.unit_id;
+      if (!unitId) return;
+      const existing = unitMap.get(unitId) || { total: 0, count: 0 };
+      existing.total += Number(entry.amount);
+      existing.count += 1;
+      unitMap.set(unitId, existing);
+    });
+
+    const byUnit = Array.from(unitMap.entries())
+      .map(([id, val]) => {
+        const unit = allUnits?.find((u) => u.id === id);
+        return { name: unit ? `${unit.name}${unit.city ? ` - ${unit.city}` : ""}` : id, ...val };
+      })
+      .sort((a, b) => b.total - a.total);
+
+    return { total, count, avg, byUnit };
+  }, [matrizFinancial, allUnits]);
+
   const revendasFiltradas = useMemo(() => {
     return revendasPorCategoria[categoriaFiltro] || revendasPorCategoria.all;
   }, [categoriaFiltro]);
