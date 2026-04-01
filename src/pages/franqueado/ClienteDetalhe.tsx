@@ -98,10 +98,30 @@ export default function ClienteDetalhe() {
   };
 
   const handleDelete = async () => {
-    if (hasBindings) { toast.error("Cliente possui vínculos e não pode ser excluído"); return; }
-    const { error } = await supabase.from("customers").delete().eq("id", id!);
-    if (error) { toast.error("Erro ao excluir cliente"); return; }
-    toast.success("Cliente excluído");
+    const { data, error } = await supabase.rpc("safe_delete_customer", {
+      _customer_id: id!,
+    });
+
+    if (error) {
+      toast.error("Erro ao excluir cliente");
+      return;
+    }
+
+    const result = data as any;
+    if (!result.success) {
+      const parts: string[] = [];
+      if (result.vehicles > 0) parts.push(`${result.vehicles} veículo(s)`);
+      if (result.files > 0) parts.push(`${result.files} arquivo(s)`);
+      if (result.services > 0) parts.push(`${result.services} serviço(s)`);
+      toast.error(
+        parts.length > 0
+          ? `Não é possível excluir: possui ${parts.join(", ")}. Inative o cliente.`
+          : result.reason
+      );
+      return;
+    }
+
+    toast.success("Cliente excluído permanentemente");
     navigate("/franqueado/clientes");
   };
 
