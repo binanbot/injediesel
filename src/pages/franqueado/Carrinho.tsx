@@ -197,7 +197,7 @@ export default function Carrinho() {
                     {installments}x de {formatPrice(total / parseInt(installments))}
                   </p>
                 )}
-                <Button className="w-full" size="lg" onClick={handleCheckout}>
+                <Button className="w-full bg-green-600 hover:bg-green-700 text-white" size="lg" onClick={handleCheckout}>
                   Finalizar Compra
                 </Button>
                 <Button variant="outline" className="w-full" onClick={() => navigate("/franqueado/loja")}>
