@@ -49,6 +49,7 @@ const menuItems: MenuItem[] = [
   { icon: MessageSquare, label: "Mensagens", path: "/admin/mensagens" },
   { icon: BarChart3, label: "Relatórios", path: "/admin/relatorios" },
   { icon: ShoppingBag, label: "Compras Franqueados", path: "/admin/compras" },
+  { icon: BarChart3, label: "Dashboard Loja", path: "/admin/loja-dashboard" },
   { icon: Package, label: "Produtos", path: "/admin/produtos" },
   { icon: Upload, label: "Importar Produtos", path: "/admin/importar-produtos" },
   { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },

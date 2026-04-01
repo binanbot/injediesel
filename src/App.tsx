@@ -65,6 +65,7 @@ const ImportarProdutos = lazy(() => import("./pages/admin/ImportarProdutos"));
 const ComprasFranqueados = lazy(() => import("./pages/admin/ComprasFranqueados"));
 const CompraDetalhe = lazy(() => import("./pages/admin/CompraDetalhe"));
 const Produtos = lazy(() => import("./pages/admin/Produtos"));
+const PromaxDashboard = lazy(() => import("./pages/admin/PromaxDashboard"));
 
 // Layouts (keep non-lazy for instant routing)
 import { FranchiseeLayout } from "./components/layout/FranchiseeLayout";
@@ -182,6 +183,7 @@ const App = () => (
                 } />
                 <Route path="compras" element={<ComprasFranqueados />} />
                 <Route path="compras/:id" element={<CompraDetalhe />} />
+                <Route path="loja-dashboard" element={<PromaxDashboard />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
