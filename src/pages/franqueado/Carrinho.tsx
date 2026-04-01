@@ -192,7 +192,7 @@ export default function Carrinho() {
                   <span className="font-medium">Total</span>
                   <span className="text-2xl font-bold text-primary">{formatPrice(total)}</span>
                 </div>
-                {paymentMethod === "credit" && parseInt(installments) > 1 && (
+                {paymentMethod === "cartao_credito" && parseInt(installments) > 1 && (
                   <p className="text-sm text-muted-foreground text-center">
                     {installments}x de {formatPrice(total / parseInt(installments))}
                   </p>
