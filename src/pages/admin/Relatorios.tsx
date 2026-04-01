@@ -1,6 +1,10 @@
 import { useState, useMemo } from "react";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
+import { getOrderStatus } from "@/utils/orderStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -41,7 +45,8 @@ import {
   Zap,
   Medal,
   Crown,
-  Award
+  Award,
+  ShoppingCart,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { MetricTooltip, metricDefinitions } from "@/components/MetricTooltip";
@@ -229,6 +234,72 @@ export default function AdminRelatorios() {
   const [dataFim, setDataFim] = useState<Date>();
   const [categoriaFiltro, setCategoriaFiltro] = useState("all");
 
+  const effectiveRange = useMemo(() => ({
+    from: dataInicio || startOfMonth(new Date()),
+    to: dataFim || endOfMonth(new Date()),
+  }), [dataInicio, dataFim]);
+
+  // Fetch financial entries for matriz revenue (peças e acessórios)
+  const { data: matrizFinancial } = useQuery({
+    queryKey: ["matriz-revenue", effectiveRange],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financial_entries")
+        .select(`
+          *,
+          orders (
+            id, order_number, status, total_amount, items_count, created_at,
+            franchise_profile_id,
+            unit_id
+          )
+        `)
+        .eq("scope", "matriz")
+        .eq("entry_type", "receita")
+        .eq("category", "pecas_acessorios")
+        .gte("competency_date", format(effectiveRange.from, "yyyy-MM-dd"))
+        .lte("competency_date", format(effectiveRange.to, "yyyy-MM-dd"))
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch units for ranking
+  const { data: allUnits } = useQuery({
+    queryKey: ["units-list"],
+    queryFn: async () => {
+      const { data } = await supabase.from("units").select("id, name, city, state");
+      return data || [];
+    },
+  });
+
+  const matrizStats = useMemo(() => {
+    if (!matrizFinancial) return { total: 0, count: 0, avg: 0, byUnit: [] as { name: string; total: number; count: number }[] };
+    const total = matrizFinancial.reduce((s, e) => s + Number(e.amount), 0);
+    const count = matrizFinancial.length;
+    const avg = count > 0 ? total / count : 0;
+
+    // Group by unit
+    const unitMap = new Map<string, { total: number; count: number }>();
+    matrizFinancial.forEach((entry) => {
+      const unitId = (entry.orders as any)?.unit_id;
+      if (!unitId) return;
+      const existing = unitMap.get(unitId) || { total: 0, count: 0 };
+      existing.total += Number(entry.amount);
+      existing.count += 1;
+      unitMap.set(unitId, existing);
+    });
+
+    const byUnit = Array.from(unitMap.entries())
+      .map(([id, val]) => {
+        const unit = allUnits?.find((u) => u.id === id);
+        return { name: unit ? `${unit.name}${unit.city ? ` - ${unit.city}` : ""}` : id, ...val };
+      })
+      .sort((a, b) => b.total - a.total);
+
+    return { total, count, avg, byUnit };
+  }, [matrizFinancial, allUnits]);
+
   const revendasFiltradas = useMemo(() => {
     return revendasPorCategoria[categoriaFiltro] || revendasPorCategoria.all;
   }, [categoriaFiltro]);
@@ -336,6 +407,115 @@ export default function AdminRelatorios() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Faturamento Loja Promax */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-primary" />
+                Faturamento Loja Promax — Peças e Acessórios
+              </CardTitle>
+              <Link to="/admin/compras">
+                <Button variant="outline" size="sm">Ver todos os pedidos →</Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* KPIs */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl border border-border/50 bg-secondary/20">
+                <p className="text-sm text-muted-foreground">Faturamento Total</p>
+                <p className="text-2xl font-bold text-success mt-1">{formatCurrency(matrizStats.total)}</p>
+              </div>
+              <div className="p-4 rounded-xl border border-border/50 bg-secondary/20">
+                <p className="text-sm text-muted-foreground">Pedidos no Período</p>
+                <p className="text-2xl font-bold mt-1">{matrizStats.count}</p>
+              </div>
+              <div className="p-4 rounded-xl border border-border/50 bg-secondary/20">
+                <p className="text-sm text-muted-foreground">Ticket Médio</p>
+                <p className="text-2xl font-bold text-primary mt-1">{formatCurrency(matrizStats.avg)}</p>
+              </div>
+            </div>
+
+            {/* Ranking por Unidade */}
+            {matrizStats.byUnit.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">Ranking de Unidades — Compras</h3>
+                <div className="space-y-2">
+                  {matrizStats.byUnit.slice(0, 10).map((unit, index) => (
+                    <motion.div
+                      key={unit.name}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.04 }}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-xl border transition-colors",
+                        index === 0 ? "border-yellow-500/50 bg-yellow-500/10"
+                          : index === 1 ? "border-gray-400/50 bg-gray-400/10"
+                          : index === 2 ? "border-amber-600/50 bg-amber-600/10"
+                          : "border-border/50 bg-secondary/20"
+                      )}
+                    >
+                      <div className="flex-shrink-0">{getMedalIcon(index)}</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{unit.name}</p>
+                        <p className="text-xs text-muted-foreground">{unit.count} pedido{unit.count !== 1 ? "s" : ""}</p>
+                      </div>
+                      <p className="font-bold text-success">{formatCurrency(unit.total)}</p>
+                      <div className="hidden sm:block flex-shrink-0 w-24">
+                        <div className="h-2 rounded-full bg-secondary/50 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${matrizStats.byUnit[0]?.total ? (unit.total / matrizStats.byUnit[0].total) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recent orders list */}
+            {matrizFinancial && matrizFinancial.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">Pedidos Recentes</h3>
+                <div className="space-y-2">
+                  {matrizFinancial.slice(0, 8).map((entry) => {
+                    const order = entry.orders as any;
+                    if (!order) return null;
+                    const status = getOrderStatus(order.status);
+                    return (
+                      <Link key={entry.id} to={`/admin/compras/${order.id}`} className="block">
+                        <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-secondary/10 hover:bg-secondary/30 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <Badge className={cn(status.color, "text-white text-xs")}>{status.label}</Badge>
+                            <span className="font-mono text-sm">{order.order_number}</span>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm">
+                            <span className="text-muted-foreground">{order.items_count} ite{order.items_count !== 1 ? "ns" : "m"}</span>
+                            <span className="font-bold text-success">{formatCurrency(Number(order.total_amount))}</span>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {matrizFinancial && matrizFinancial.length === 0 && (
+              <p className="text-center text-muted-foreground py-8">Nenhum pedido encontrado no período selecionado.</p>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Desempenho por Categoria/Nicho */}
       <motion.div
