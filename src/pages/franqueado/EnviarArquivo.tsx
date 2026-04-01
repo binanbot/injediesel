@@ -647,7 +647,7 @@ export default function EnviarArquivo() {
               value={clienteId}
               onChange={setClienteId}
               onAddNew={() => setNovoClienteDrawerOpen(true)}
-              onViewCliente={handleViewCliente}
+              refreshSignal={clienteRefreshSignal}
             />
           </CardContent>
         </Card>
