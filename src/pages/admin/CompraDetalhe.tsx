@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Package, Loader2, Building2, MapPin, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -9,18 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { getOrderStatus, orderStatusList } from "@/utils/orderStatus";
-import { updateOrderStatus } from "@/services/orderStatusService";
+import { getOrderStatus } from "@/utils/orderStatus";
 import { getPaymentMethodLabel, type PaymentMethod } from "@/utils/whatsappOrder";
+import { getHistoryStatusLabel, type PaymentStatus, type FulfillmentStatus } from "@/utils/orderAdminStatus";
+import { AdminOrderStatusPanel } from "@/components/admin/AdminOrderStatusPanel";
 
 interface OrderItem {
   id: string;
@@ -135,21 +129,11 @@ export default function CompraDetalhe() {
     enabled: !!id,
   });
 
-  const statusMutation = useMutation({
-    mutationFn: async (newStatus: string) => {
-      if (!id) throw new Error("ID não fornecido");
-      await updateOrderStatus(id, newStatus as any, user?.id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-order", id] });
-      queryClient.invalidateQueries({ queryKey: ["admin-order-history", id] });
-      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
-      toast.success("Status atualizado com sucesso!");
-    },
-    onError: (error) => {
-      toast.error("Erro ao atualizar status: " + error.message);
-    },
-  });
+  const invalidateOrder = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["admin-order", id] });
+    await queryClient.invalidateQueries({ queryKey: ["admin-order-history", id] });
+    await queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+  };
 
   const fmt = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
@@ -319,33 +303,14 @@ export default function CompraDetalhe() {
 
         {/* Right column */}
         <div className="space-y-6">
-          {/* Status update */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Atualizar Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select
-                value={order.status}
-                onValueChange={(value) => statusMutation.mutate(value)}
-                disabled={statusMutation.isPending}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {orderStatusList.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      <span className="flex items-center gap-2">
-                        <s.icon className="h-4 w-4" />
-                        {s.label}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
+          {/* Admin Status Panel */}
+          <AdminOrderStatusPanel
+            orderId={order.id}
+            currentPaymentStatus={(order.payment_status || "pendente") as PaymentStatus}
+            currentFulfillmentStatus={(order.fulfillment_status || "pedido_realizado") as FulfillmentStatus}
+            changedBy={user?.id}
+            onUpdated={invalidateOrder}
+          />
 
           {/* Summary */}
           <Card>
@@ -390,20 +355,21 @@ export default function CompraDetalhe() {
               <CardContent>
                 <div className="relative pl-4 border-l-2 border-border/30 space-y-4">
                   {statusHistory.map((h) => {
-                    const sMeta = getOrderStatus(h.new_status);
-                    const SIcon = sMeta.icon;
+                    const histMeta = getHistoryStatusLabel(h.new_status);
+                    const typeLabel = histMeta.type === "payment" ? "Pagamento" : "Logística";
                     return (
                       <div key={h.id} className="relative">
                         <div
                           className={cn(
-                            "absolute -left-[calc(0.5rem+1px)] top-0.5 h-4 w-4 rounded-full flex items-center justify-center",
-                            sMeta.color
+                            "absolute -left-[calc(0.5rem+1px)] top-0.5 h-4 w-4 rounded-full",
+                            histMeta.color
                           )}
-                        >
-                          <SIcon className="h-2.5 w-2.5 text-white" />
-                        </div>
+                        />
                         <div className="ml-3">
-                          <p className="text-sm font-medium">{sMeta.label}</p>
+                          <p className="text-sm font-medium">
+                            <span className="text-xs text-muted-foreground mr-1">[{typeLabel}]</span>
+                            {histMeta.label}
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             {fmtDate(h.created_at)}
                           </p>
