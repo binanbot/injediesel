@@ -1,14 +1,18 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Package, Truck, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Package, Truck, CheckCircle, Loader2, MapPin } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { getOrderStatus } from "@/utils/orderStatus";
 import { getPaymentMethodLabel, type PaymentMethod } from "@/utils/whatsappOrder";
+import { OrderStatusBadges } from "@/components/admin/OrderStatusBadges";
+import { OrderTimeline } from "@/components/admin/OrderTimeline";
+import { OrderTimelineFromHistory } from "@/components/admin/OrderTimelineFromHistory";
+import type { PaymentStatus, FulfillmentStatus } from "@/utils/orderAdminStatus";
 
 interface OrderItem {
   id: string;
@@ -17,7 +21,13 @@ interface OrderItem {
   quantity: number;
   unit_price: number;
   line_total: number;
-  product_id: string | null;
+}
+
+interface StatusHistory {
+  id: string;
+  new_status: string;
+  internal_note: string | null;
+  created_at: string;
 }
 
 interface Order {
@@ -25,6 +35,7 @@ interface Order {
   order_number: string;
   status: string;
   payment_status: string;
+  fulfillment_status: string;
   total_amount: number;
   subtotal: number;
   shipping_amount: number;
@@ -34,7 +45,6 @@ interface Order {
   payment_method: string | null;
   payment_note: string | null;
   created_at: string;
-  updated_at: string;
 }
 
 export default function PedidoDetalhe() {
@@ -63,13 +73,26 @@ export default function PedidoDetalhe() {
     enabled: !!id,
   });
 
+  const { data: statusHistory } = useQuery({
+    queryKey: ["order-history", id],
+    queryFn: async () => {
+      if (!id) throw new Error("ID não fornecido");
+      const { data, error } = await supabase
+        .from("order_status_history")
+        .select("*")
+        .eq("order_id", id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as StatusHistory[];
+    },
+    enabled: !!id,
+  });
+
   const fmt = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
   const fmtDate = (d: string) =>
-    new Date(d).toLocaleDateString("pt-BR", {
-      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
-    });
+    format(new Date(d), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
 
   if (orderLoading || itemsLoading) {
     return (
@@ -93,11 +116,13 @@ export default function PedidoDetalhe() {
     );
   }
 
-  const status = getOrderStatus(order.status);
-  const StatusIcon = status.icon;
+  const addr = order.delivery_address as Record<string, string> | null;
+  const paymentStatus = (order.payment_status || "pendente") as PaymentStatus;
+  const fulfillmentStatus = (order.fulfillment_status || "pedido_realizado") as FulfillmentStatus;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate("/franqueado/loja/pedidos")}>
           <ArrowLeft className="h-5 w-5" />
@@ -106,14 +131,15 @@ export default function PedidoDetalhe() {
           <h1 className="text-2xl font-bold">Pedido #{order.order_number}</h1>
           <p className="text-muted-foreground">Realizado em {fmtDate(order.created_at)}</p>
         </div>
-        <Badge className={cn("gap-1 border", status.badgeClass)}>
-          <StatusIcon className="h-3 w-3" />
-          {status.label}
-        </Badge>
+        <OrderStatusBadges paymentStatus={paymentStatus} fulfillmentStatus={fulfillmentStatus} />
       </div>
 
+      {/* Timeline visual */}
+      <OrderTimeline paymentStatus={paymentStatus} fulfillmentStatus={fulfillmentStatus} />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
+          {/* Items */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -129,6 +155,9 @@ export default function PedidoDetalhe() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium line-clamp-1">{item.product_name}</p>
+                      {item.product_sku && (
+                        <p className="text-xs text-muted-foreground">SKU: {item.product_sku}</p>
+                      )}
                       <p className="text-sm text-muted-foreground">{item.quantity}x {fmt(item.unit_price)}</p>
                     </div>
                     <div className="text-right shrink-0">
@@ -139,9 +168,57 @@ export default function PedidoDetalhe() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Delivery address */}
+          {addr && addr.street && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <MapPin className="h-5 w-5" /> Endereço de entrega
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm space-y-1">
+                {addr.recipient_name && <p className="font-medium">{addr.recipient_name}</p>}
+                {addr.company_name && <p>{addr.company_name}</p>}
+                {addr.cnpj && <p className="text-muted-foreground">CNPJ: {addr.cnpj}</p>}
+                <p>{addr.street}{addr.number ? `, ${addr.number}` : ""}</p>
+                {addr.complement && <p>{addr.complement}</p>}
+                <p>
+                  {addr.district && `${addr.district} – `}
+                  {addr.city}{addr.state ? ` / ${addr.state}` : ""}
+                </p>
+                {addr.zip_code && <p>CEP: {addr.zip_code}</p>}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Payment */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                💳 Forma de Pagamento
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Método</span>
+                <span className="font-medium">
+                  {order.payment_method ? getPaymentMethodLabel(order.payment_method as PaymentMethod) : "Não informado"}
+                </span>
+              </div>
+              {order.payment_note && (
+                <div>
+                  <span className="text-muted-foreground">Observação: </span>
+                  <span>{order.payment_note}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="lg:col-span-1">
+        {/* Right column */}
+        <div className="space-y-6">
+          {/* Summary */}
           <Card>
             <CardHeader><CardTitle className="text-lg">Resumo</CardTitle></CardHeader>
             <CardContent className="space-y-4">
@@ -160,16 +237,8 @@ export default function PedidoDetalhe() {
               {order.discount_amount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Desconto</span>
-                  <span className="text-green-500">-{fmt(order.discount_amount)}</span>
+                  <span className="text-emerald-500">-{fmt(order.discount_amount)}</span>
                 </div>
-              )}
-              <Separator />
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Pagamento</span>
-                <span>{order.payment_method ? getPaymentMethodLabel(order.payment_method as PaymentMethod) : "Não informado"}</span>
-              </div>
-              {order.payment_note && (
-                <p className="text-xs text-muted-foreground">Obs: {order.payment_note}</p>
               )}
               <Separator />
               <div className="flex justify-between font-semibold">
@@ -177,13 +246,13 @@ export default function PedidoDetalhe() {
                 <span className="text-lg text-primary">{fmt(order.total_amount)}</span>
               </div>
 
-              {(order.status === "enviado" || order.status === "em_transito") && (
+              {(order.fulfillment_status === "enviado" || order.fulfillment_status === "em_transito") && (
                 <div className="p-3 rounded-lg bg-warning/10 border border-warning/20 text-center">
                   <Truck className="h-6 w-6 text-warning mx-auto mb-1" />
                   <p className="text-sm font-medium text-warning">Pedido a caminho</p>
                 </div>
               )}
-              {order.status === "entregue" && (
+              {order.fulfillment_status === "entregue" && (
                 <div className="p-3 rounded-lg bg-success/10 border border-success/20 text-center">
                   <CheckCircle className="h-6 w-6 text-success mx-auto mb-1" />
                   <p className="text-sm font-medium text-success">Pedido entregue</p>
@@ -191,6 +260,11 @@ export default function PedidoDetalhe() {
               )}
             </CardContent>
           </Card>
+
+          {/* History */}
+          {statusHistory && statusHistory.length > 0 && (
+            <OrderTimelineFromHistory history={statusHistory} />
+          )}
         </div>
       </div>
     </div>
