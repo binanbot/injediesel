@@ -285,7 +285,8 @@ export default function LojaCheckout() {
 
                 <div className="p-4 rounded-lg bg-muted/30 space-y-1">
                   <p className="text-sm text-muted-foreground font-medium">Forma de pagamento</p>
-                  <p className="text-sm font-semibold">{getPaymentMethodLabel(paymentMethod)}</p>
+                  <p className="text-sm font-semibold">{getPaymentMethodLabel(selectedPayment)}</p>
+                  {paymentNote && <p className="text-xs text-muted-foreground">Obs: {paymentNote}</p>}
                 </div>
 
                 <Separator />
