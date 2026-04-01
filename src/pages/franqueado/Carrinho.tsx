@@ -136,7 +136,7 @@ export default function Carrinho() {
 
           {/* Payment & Summary */}
           <div className="space-y-4">
-            <Card className="glass-card">
+            <Card className="glass-card border border-amber-600/40 bg-amber-950/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5" />
