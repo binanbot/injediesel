@@ -282,17 +282,8 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
           </div>
         </header>
 
-        {/* ═══ DOCUMENTAÇÃO EXECUTIVA ═══ */}
-        <div className={`flex items-center gap-3 mb-6 mt-2`}>
-          <div className={cx(printMode, "h-px flex-1 bg-primary/30", "h-px flex-1 bg-blue-200")} />
-          <h2 className={cx(printMode, "text-sm font-bold uppercase tracking-widest text-primary whitespace-nowrap", "text-sm font-bold uppercase tracking-widest text-blue-600 whitespace-nowrap")}>
-            📊 Documentação Executiva
-          </h2>
-          <div className={cx(printMode, "h-px flex-1 bg-primary/30", "h-px flex-1 bg-blue-200")} />
-        </div>
-
-        {/* ── VISÃO GERAL ──────────────────── */}
-        <div id="visao-geral" className="scroll-mt-20" />
+        {/* ── DIAGRAMAS ────────────────────── */}
+        <div id="diagramas" className="scroll-mt-20" />
         {!printMode && (
           <SectionBlock printMode={printMode}>
             <SectionTitle printMode={printMode}>
