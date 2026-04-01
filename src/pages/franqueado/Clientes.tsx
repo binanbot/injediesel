@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Users, Search, Plus, Eye, Phone, Mail, ToggleLeft, ToggleRight, Loader2 } from "lucide-react";
+import {
+  Users, Search, Plus, Eye, Pencil, Phone, Car,
+  ToggleLeft, ToggleRight, Loader2, Calendar,
+} from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,14 +12,18 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Customer {
   id: string;
   full_name: string;
-  email: string | null;
   phone: string | null;
   cpf: string | null;
   cnpj: string | null;
@@ -24,8 +31,7 @@ interface Customer {
   address_state: string | null;
   is_active: boolean;
   created_at: string | null;
-  vehicles_count?: number;
-  services_count?: number;
+  vehicles_count: number;
 }
 
 export default function Clientes() {
@@ -38,31 +44,26 @@ export default function Clientes() {
   const statusFilter = searchParams.get("status") || "todos";
 
   useEffect(() => {
-    loadCustomers();
+    if (user) loadCustomers();
   }, [user]);
 
   const loadCustomers = async () => {
-    if (!user) return;
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from("customers")
-        .select(`
-          *,
-          vehicles:vehicles(count),
-          services:services(count)
-        `)
+        .select(`*, vehicles:vehicles(count)`)
         .order("full_name", { ascending: true });
 
       if (error) throw error;
 
-      const mapped = (data || []).map((c: any) => ({
-        ...c,
-        is_active: c.is_active ?? true,
-        vehicles_count: c.vehicles?.[0]?.count || 0,
-        services_count: c.services?.[0]?.count || 0,
-      }));
-      setCustomers(mapped);
+      setCustomers(
+        (data || []).map((c: any) => ({
+          ...c,
+          is_active: c.is_active ?? true,
+          vehicles_count: c.vehicles?.[0]?.count || 0,
+        }))
+      );
     } catch (error) {
       console.error("Erro ao carregar clientes:", error);
       toast.error("Erro ao carregar clientes");
@@ -71,19 +72,39 @@ export default function Clientes() {
     }
   };
 
+  const toggleActive = async (customer: Customer, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newStatus = !customer.is_active;
+    const { error } = await supabase
+      .from("customers")
+      .update({ is_active: newStatus } as any)
+      .eq("id", customer.id);
+    if (error) {
+      toast.error("Erro ao alterar status");
+      return;
+    }
+    setCustomers((prev) =>
+      prev.map((c) => (c.id === customer.id ? { ...c, is_active: newStatus } : c))
+    );
+    toast.success(newStatus ? "Cliente reativado" : "Cliente inativado");
+  };
+
   const filtered = customers
     .filter((c) => {
       if (statusFilter === "ativos") return c.is_active;
       if (statusFilter === "inativos") return !c.is_active;
       return true;
     })
-    .filter((c) =>
-      c.full_name.toLowerCase().includes(search.toLowerCase()) ||
-      c.email?.toLowerCase().includes(search.toLowerCase()) ||
-      c.phone?.includes(search) ||
-      c.cpf?.includes(search) ||
-      c.cnpj?.includes(search)
-    );
+    .filter((c) => {
+      if (!search) return true;
+      const s = search.toLowerCase();
+      return (
+        c.full_name.toLowerCase().includes(s) ||
+        c.phone?.includes(search) ||
+        c.cpf?.includes(search) ||
+        c.cnpj?.includes(search)
+      );
+    });
 
   const counts = {
     todos: customers.length,
@@ -114,8 +135,8 @@ export default function Clientes() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+      <div className="grid gap-4 grid-cols-3">
+        <Card className="glass-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-full bg-primary/10">
@@ -128,11 +149,11 @@ export default function Clientes() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="glass-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-emerald-500/10">
-                <ToggleRight className="h-6 w-6 text-emerald-500" />
+              <div className="p-3 rounded-full bg-success/10">
+                <ToggleRight className="h-6 w-6 text-success" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Ativos</p>
@@ -141,7 +162,7 @@ export default function Clientes() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="glass-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-full bg-destructive/10">
@@ -157,7 +178,7 @@ export default function Clientes() {
       </div>
 
       {/* Table */}
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
@@ -167,7 +188,7 @@ export default function Clientes() {
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar cliente..."
+                placeholder="Buscar nome, CPF, CNPJ, telefone..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -191,10 +212,13 @@ export default function Clientes() {
             <div className="text-center py-12">
               <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">
-                {customers.length === 0
-                  ? "Nenhum cliente cadastrado"
-                  : "Nenhum cliente encontrado"}
+                {customers.length === 0 ? "Nenhum cliente cadastrado" : "Nenhum cliente encontrado"}
               </p>
+              {customers.length === 0 && (
+                <Button variant="outline" className="mt-4" onClick={() => navigate("/franqueado/clientes/novo")}>
+                  <Plus className="h-4 w-4" /> Cadastrar primeiro cliente
+                </Button>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -202,34 +226,52 @@ export default function Clientes() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Contato</TableHead>
                     <TableHead>Documento</TableHead>
-                    <TableHead>Cidade</TableHead>
+                    <TableHead>Telefone</TableHead>
+                    <TableHead>Cidade/UF</TableHead>
+                    <TableHead className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <Car className="h-3.5 w-3.5" /> Veículos
+                      </div>
+                    </TableHead>
+                    <TableHead>Cadastro</TableHead>
                     <TableHead className="text-center">Status</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((c) => (
-                    <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/franqueado/clientes/${c.id}`)}>
+                    <TableRow
+                      key={c.id}
+                      className="cursor-pointer hover:bg-muted/30 transition-colors"
+                      onClick={() => navigate(`/franqueado/clientes/${c.id}`)}
+                    >
                       <TableCell className="font-medium">{c.full_name}</TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          {c.email && (
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Mail className="h-3 w-3" /> {c.email}
-                            </div>
-                          )}
-                          {c.phone && (
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Phone className="h-3 w-3" /> {c.phone}
-                            </div>
-                          )}
-                        </div>
+                      <TableCell className="text-sm font-mono">
+                        {c.cpf || c.cnpj || "—"}
                       </TableCell>
-                      <TableCell className="text-sm">{c.cpf || c.cnpj || "—"}</TableCell>
+                      <TableCell>
+                        {c.phone ? (
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Phone className="h-3 w-3" /> {c.phone}
+                          </div>
+                        ) : "—"}
+                      </TableCell>
                       <TableCell className="text-sm">
-                        {c.address_city && c.address_state ? `${c.address_city}/${c.address_state}` : "—"}
+                        {c.address_city && c.address_state
+                          ? `${c.address_city}/${c.address_state}`
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary">{c.vehicles_count}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {c.created_at
+                            ? format(new Date(c.created_at), "dd/MM/yyyy", { locale: ptBR })
+                            : "—"}
+                        </div>
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant={c.is_active ? "default" : "secondary"}>
@@ -237,9 +279,25 @@ export default function Clientes() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/franqueado/clientes/${c.id}`); }}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="sm">•••</Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/franqueado/clientes/${c.id}`); }}>
+                              <Eye className="h-4 w-4 mr-2" /> Visualizar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/franqueado/clientes/${c.id}/editar`); }}>
+                              <Pencil className="h-4 w-4 mr-2" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => toggleActive(c, e)}>
+                              {c.is_active
+                                ? <><ToggleLeft className="h-4 w-4 mr-2" /> Inativar</>
+                                : <><ToggleRight className="h-4 w-4 mr-2" /> Reativar</>
+                              }
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
