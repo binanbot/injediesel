@@ -215,9 +215,10 @@ export default function ClienteDetalhe() {
         </div>
       </div>
 
-      {hasBindings && (
-        <div className="text-sm text-muted-foreground bg-muted/30 border border-border/30 px-4 py-2.5 rounded-xl">
-          Este cliente possui {vehicles.length} veículo(s), {files.length} arquivo(s) e {services.length} serviço(s). Para excluí-lo, remova os vínculos primeiro.
+      {hasBindings && !isActive && (
+        <div className="text-sm text-muted-foreground bg-muted/30 border border-border/30 px-4 py-2.5 rounded-xl flex items-center gap-2">
+          <ToggleLeft className="h-4 w-4 shrink-0" />
+          Cliente inativado. Possui {vehicles.length} veículo(s), {files.length} arquivo(s) e {services.length} serviço(s) — o histórico permanece acessível.
         </div>
       )}
 
