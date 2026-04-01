@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { CartItem } from "@/stores/useCartStore";
 import type { DeliveryAddress } from "@/components/franqueado/DeliveryAddressForm";
-import { buildWhatsAppMessage } from "@/utils/whatsappOrder";
+import { buildWhatsAppMessage, type PaymentMethod } from "@/utils/whatsappOrder";
 
 const generateOrderNumber = () => {
   const now = new Date();
