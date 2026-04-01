@@ -1,4 +1,4 @@
-import { FileText, Map, Users, Shield, Database, Palette, GitBranch, Workflow, Network, Store, BookOpen } from "lucide-react";
+import { FileText, Map, Users, Shield, Database, Palette, GitBranch, Workflow, Network, Store, BookOpen, FolderTree } from "lucide-react";
 import { MermaidDiagram } from "@/components/MermaidDiagram";
 
 // ── Mermaid Diagrams ──────────────────────────────────────────────
@@ -847,6 +847,235 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
             <li>LGPDExportModal — Modal de exportação com conformidade LGPD</li>
             <li>MermaidDiagram — Diagramas interativos (Mermaid.js)</li>
           </ul>
+        </SectionBlock>
+
+        <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
+
+        {/* ── ARQUITETURA DO FRONT-END ────────────── */}
+        <div id="arquitetura-frontend" className="scroll-mt-20" />
+        <SectionBlock printMode={printMode}>
+          <SectionTitle printMode={printMode}>
+            <FolderTree className="h-5 w-5" />
+            ARQUITETURA DO FRONT-END
+          </SectionTitle>
+
+          <h4 className={`font-semibold mb-2 ${headingColor}`}>Organização de Pastas:</h4>
+          <div className={`rounded-lg p-4 mb-4 font-mono text-sm ${printMode ? "bg-slate-100 text-slate-800" : "bg-slate-900/80 text-slate-300"}`}>
+            <pre className="whitespace-pre-wrap">{`src/
+├── assets/          → Imagens, SVGs, logos
+├── components/
+│   ├── ui/          → Shadcn/UI base (Button, Card, Dialog...)
+│   ├── layout/      → AdminLayout, FranchiseeLayout, Sidebar, Topbar
+│   ├── admin/       → Componentes exclusivos do painel admin
+│   ├── franqueado/  → Componentes exclusivos do painel franqueado
+│   ├── loja/        → Componentes da Loja Promax (ProductCard, CartDrawer)
+│   ├── auth/        → ProtectedRoute, login guards
+│   └── skeletons/   → Skeletons de carregamento
+├── pages/
+│   ├── admin/       → Páginas do painel administrativo
+│   ├── franqueado/  → Páginas do painel franqueado
+│   └── documentation/ → Documentação do sistema
+├── hooks/           → Custom hooks (useAuth, useContractStatus, useSupportChat...)
+├── services/        → Funções de acesso a dados (orderService, topProductsService...)
+├── stores/          → Stores globais Zustand (useCartStore)
+├── utils/           → Funções utilitárias puras (formatação, status, WhatsApp)
+├── data/            → Dados estáticos e mock (categorias, clientes mock)
+├── integrations/
+│   └── supabase/    → Client e types (auto-gerados, NÃO editar)
+└── lib/             → Utilitários genéricos (cn/utils)`}</pre>
+          </div>
+
+          <InfoCard printMode={printMode}>
+            <div className="space-y-1 text-sm">
+              <div><strong className={headingColor}>Convenção:</strong><span className={` ${subtextColor}`}> Componentes específicos de um painel ficam em <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>components/admin/</code> ou <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>components/franqueado/</code>. Componentes reutilizáveis ficam em <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>components/ui/</code>.</span></div>
+              <div><strong className={headingColor}>Regra:</strong><span className={` ${subtextColor}`}> <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>src/integrations/supabase/client.ts</code> e <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>types.ts</code> são auto-gerados. Nunca editar manualmente.</span></div>
+            </div>
+          </InfoCard>
+
+          <h4 className={`font-semibold mt-6 mb-2 ${headingColor}`}>Camada de Pages:</h4>
+          <p className={`mb-3 ${subtextColor}`}>Cada página é um componente React que representa uma rota. Páginas são responsáveis por orquestrar hooks, queries e componentes — não devem conter lógica de acesso a dados diretamente.</p>
+          <div className="overflow-x-auto mb-4">
+            <table className={`w-full text-sm ${printMode ? "border-collapse" : ""}`}>
+              <thead>
+                <tr className={printMode ? "bg-slate-100 text-slate-900 border border-slate-300" : "bg-slate-800/50 text-slate-200 border border-slate-700"}>
+                  <th className="p-2 text-left">Pasta</th>
+                  <th className="p-2 text-left">Responsabilidade</th>
+                  <th className="p-2 text-left">Exemplos</th>
+                </tr>
+              </thead>
+              <tbody className={subtextColor}>
+                {[
+                  ["pages/admin/", "Páginas do painel administrativo", "Dashboard, Franqueados, CompraDetalhe, Produtos"],
+                  ["pages/franqueado/", "Páginas do painel franqueado", "Home, Loja, LojaCheckout, MeusPedidos, Perfil"],
+                  ["pages/documentation/", "Documentação interna do sistema", "SystemDocumentationPage, PrintPage"],
+                ].map(([pasta, resp, ex]) => (
+                  <tr key={pasta} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                    <td className="p-2 font-mono text-xs">{pasta}</td>
+                    <td className="p-2">{resp}</td>
+                    <td className="p-2 text-xs">{ex}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <h4 className={`font-semibold mt-6 mb-2 ${headingColor}`}>Camada de Services:</h4>
+          <p className={`mb-3 ${subtextColor}`}>Services encapsulam toda a lógica de acesso a dados via Supabase. Cada service é uma função async que executa queries e retorna dados tipados.</p>
+          <div className="overflow-x-auto mb-4">
+            <table className={`w-full text-sm ${printMode ? "border-collapse" : ""}`}>
+              <thead>
+                <tr className={printMode ? "bg-slate-100 text-slate-900 border border-slate-300" : "bg-slate-800/50 text-slate-200 border border-slate-700"}>
+                  <th className="p-2 text-left">Service</th>
+                  <th className="p-2 text-left">Responsabilidade</th>
+                </tr>
+              </thead>
+              <tbody className={subtextColor}>
+                {[
+                  ["orderService", "Criação de pedidos, order_items e financial_entries"],
+                  ["orderAdminStatusService", "Atualização de payment_status e fulfillment_status"],
+                  ["orderStatusService", "Atualização legacy de status (compatibilidade)"],
+                  ["topProductsService", "Ranking de produtos mais vendidos"],
+                  ["topBuyingUnitsService", "Ranking de unidades que mais compram"],
+                  ["monthlySalesService", "Vendas mensais para gráficos"],
+                  ["categoryRankingService", "Ranking por categoria de produto"],
+                  ["storeSummaryService", "Resumo geral da loja (cards KPI)"],
+                ].map(([name, resp]) => (
+                  <tr key={name} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                    <td className="p-2 font-mono text-xs">{name}</td>
+                    <td className="p-2">{resp}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <h4 className={`font-semibold mt-6 mb-2 ${headingColor}`}>Camada de Hooks:</h4>
+          <p className={`mb-3 ${subtextColor}`}>Hooks encapsulam lógica reutilizável de estado, side-effects e integração com APIs.</p>
+          <div className="overflow-x-auto mb-4">
+            <table className={`w-full text-sm ${printMode ? "border-collapse" : ""}`}>
+              <thead>
+                <tr className={printMode ? "bg-slate-100 text-slate-900 border border-slate-300" : "bg-slate-800/50 text-slate-200 border border-slate-700"}>
+                  <th className="p-2 text-left">Hook</th>
+                  <th className="p-2 text-left">Responsabilidade</th>
+                  <th className="p-2 text-left">Tipo de Estado</th>
+                </tr>
+              </thead>
+              <tbody className={subtextColor}>
+                {[
+                  ["useAuth", "Sessão, login, logout, papel do usuário", "Context (global)"],
+                  ["useContractStatus", "Validade do contrato do franqueado", "Server state (Supabase)"],
+                  ["useSupportChat", "Chat de suporte em tempo real", "Server state + Realtime"],
+                  ["useAdminSupportChat", "Chat de suporte no painel admin", "Server state + Realtime"],
+                  ["useSignedUrl", "URLs assinadas para downloads seguros", "Server state"],
+                  ["useDebounce", "Debounce genérico para inputs", "Local state"],
+                  ["useSocialLinks", "Links de redes sociais do sistema", "Server state"],
+                  ["useFileStatusNotifications", "Notificações de mudança de status", "Realtime"],
+                  ["useRecentlyUpdatedFiles", "Arquivos atualizados recentemente", "Server state"],
+                  ["use-mobile", "Detecção de viewport mobile", "Local state"],
+                ].map(([name, resp, tipo]) => (
+                  <tr key={name} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                    <td className="p-2 font-mono text-xs">{name}</td>
+                    <td className="p-2">{resp}</td>
+                    <td className="p-2 text-xs">{tipo}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <h4 className={`font-semibold mt-6 mb-2 ${headingColor}`}>Gerenciamento de Estado:</h4>
+          <p className={`mb-3 ${subtextColor}`}>O sistema utiliza três camadas de estado com responsabilidades bem definidas:</p>
+          <div className="overflow-x-auto mb-4">
+            <table className={`w-full text-sm ${printMode ? "border-collapse" : ""}`}>
+              <thead>
+                <tr className={printMode ? "bg-slate-100 text-slate-900 border border-slate-300" : "bg-slate-800/50 text-slate-200 border border-slate-700"}>
+                  <th className="p-2 text-left">Tecnologia</th>
+                  <th className="p-2 text-left">Uso</th>
+                  <th className="p-2 text-left">Quando Usar</th>
+                  <th className="p-2 text-left">Exemplos</th>
+                </tr>
+              </thead>
+              <tbody className={subtextColor}>
+                {[
+                  ["React Query", "Server state (cache, refetch, stale)", "Dados que vêm do banco de dados", "Listagem de pedidos, produtos, franqueados"],
+                  ["Zustand", "Client state global (persistente)", "Estado compartilhado entre páginas sem servidor", "useCartStore (carrinho de compras)"],
+                  ["useState / useReducer", "Estado local de componente", "Formulários, modais, toggles, filtros", "Filtros de tabela, estado de loading"],
+                  ["Context API", "Estado global leve", "Dados que permeiam toda a árvore", "useAuth (sessão e papel do usuário)"],
+                ].map(([tech, uso, quando, ex]) => (
+                  <tr key={tech} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                    <td className="p-2 font-semibold text-xs">{tech}</td>
+                    <td className="p-2">{uso}</td>
+                    <td className="p-2 text-xs">{quando}</td>
+                    <td className="p-2 text-xs">{ex}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <InfoCard printMode={printMode}>
+            <div className="space-y-1 text-sm">
+              <div><strong className={headingColor}>Regra de ouro:</strong><span className={` ${subtextColor}`}> Se o dado vem do banco → React Query. Se é estado do cliente entre rotas → Zustand. Se é estado de um formulário → useState. Se permeia toda a app → Context.</span></div>
+            </div>
+          </InfoCard>
+
+          <h4 className={`font-semibold mt-6 mb-2 ${headingColor}`}>Integração com Supabase:</h4>
+          <p className={`mb-3 ${subtextColor}`}>Toda comunicação com o backend passa pelo client Supabase importado de <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>@/integrations/supabase/client</code>.</p>
+          <ul className={`list-disc list-inside space-y-1 mb-4 ${listColor}`}>
+            <li><strong>Queries:</strong> <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>supabase.from("tabela").select()</code> — encapsuladas em services ou diretamente em React Query</li>
+            <li><strong>Mutations:</strong> <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>supabase.from("tabela").insert/update/delete()</code> — encapsuladas em services</li>
+            <li><strong>Storage:</strong> <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>supabase.storage.from("bucket").upload/download/createSignedUrl()</code></li>
+            <li><strong>Realtime:</strong> <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>supabase.channel().on("postgres_changes")</code> — usado em suporte e notificações</li>
+            <li><strong>Auth:</strong> <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>supabase.auth.signInWithPassword/signOut/getSession()</code> — centralizado em useAuth</li>
+            <li><strong>Edge Functions:</strong> <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>supabase.functions.invoke("nome-funcao")</code></li>
+          </ul>
+
+          <h4 className={`font-semibold mt-6 mb-2 ${headingColor}`}>Roteamento e Lazy Loading:</h4>
+          <p className={`mb-3 ${subtextColor}`}>O sistema utiliza React Router v7 com code splitting via <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>React.lazy()</code> e <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>Suspense</code>.</p>
+          <ul className={`list-disc list-inside space-y-1 mb-4 ${listColor}`}>
+            <li><strong>Layouts não-lazy:</strong> AdminLayout, FranchiseeLayout — carregados imediatamente para navegação instantânea</li>
+            <li><strong>Páginas lazy:</strong> 30+ rotas carregadas sob demanda para otimizar bundle inicial</li>
+            <li><strong>Páginas críticas (não-lazy):</strong> Login, NotFound, LandingLancamento — renderização imediata</li>
+            <li><strong>Fallback:</strong> <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>PageLoader</code> com spinner animado durante carregamento</li>
+            <li><strong>Error Boundaries:</strong> Módulos sensíveis (Checkout, Upload, Mapa) envolvidos em ErrorBoundary para isolamento de falhas</li>
+          </ul>
+
+          <h4 className={`font-semibold mt-6 mb-2 ${headingColor}`}>Padrão Visual — Admin vs Franqueado:</h4>
+          <div className="overflow-x-auto mb-4">
+            <table className={`w-full text-sm ${printMode ? "border-collapse" : ""}`}>
+              <thead>
+                <tr className={printMode ? "bg-slate-100 text-slate-900 border border-slate-300" : "bg-slate-800/50 text-slate-200 border border-slate-700"}>
+                  <th className="p-2 text-left">Aspecto</th>
+                  <th className="p-2 text-left">Painel Admin</th>
+                  <th className="p-2 text-left">Painel Franqueado</th>
+                </tr>
+              </thead>
+              <tbody className={subtextColor}>
+                {[
+                  ["Layout", "AdminLayout + AdminSidebar", "FranchiseeLayout + FranchiseeSidebar"],
+                  ["Sidebar", "Menu completo com gestão, relatórios e configurações", "Menu focado em operação diária"],
+                  ["Topbar", "Topbar compartilhado com avatar e logout", "Mesmo Topbar"],
+                  ["Tema", "Dark premium com glassmorphism", "Mesmo tema, mesma paleta"],
+                  ["Proteção", "ProtectedRoute com roles [admin, suporte]", "ProtectedRoute com role [franqueado]"],
+                  ["Dados", "Acesso global (todas unidades)", "Acesso isolado (apenas sua unidade)"],
+                  ["Componentes", "Tabelas avançadas, filtros, KPIs, gráficos", "Cards, listas, loja, chat"],
+                ].map(([aspecto, admin, franq]) => (
+                  <tr key={aspecto} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                    <td className="p-2 font-semibold text-xs">{aspecto}</td>
+                    <td className="p-2 text-xs">{admin}</td>
+                    <td className="p-2 text-xs">{franq}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <InfoCard printMode={printMode}>
+            <div className="space-y-1 text-sm">
+              <div><strong className={headingColor}>Convenção de rotas:</strong><span className={` ${subtextColor}`}> Admin: <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>/admin/*</code>. Franqueado: <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>/franqueado/*</code>. Públicas: <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>/login</code>, <code className={cx(printMode, "text-xs bg-muted px-1 rounded", "text-xs bg-slate-100 px-1 rounded")}>/docs</code>. Rotas em português exceto termos universais (checkout).</span></div>
+              <div><strong className={headingColor}>React Query config:</strong><span className={` ${subtextColor}`}> retry: 1, refetchOnWindowFocus: false. Queries específicas usam staleTime customizado.</span></div>
+            </div>
+          </InfoCard>
         </SectionBlock>
 
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />

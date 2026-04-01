@@ -23,6 +23,7 @@ const NAV_SECTIONS = [
     icon: Wrench,
     items: [
       { id: "diagramas", label: "Diagramas de Arquitetura" },
+      { id: "arquitetura-frontend", label: "Arquitetura do Front-end" },
       { id: "autenticacao", label: "Autenticação e RBAC" },
       { id: "banco-dados", label: "Banco de Dados" },
       { id: "design-system", label: "Design System" },
