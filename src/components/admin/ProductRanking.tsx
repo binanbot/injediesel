@@ -75,7 +75,7 @@ export default function ProductRanking({ dateRange, franchiseProfileId }: Produc
     return (
       <div className="space-y-2">
         {items.map((product, index) => {
-          const barValue = highlight === "qty" ? product.total_qty : product.total_revenue;
+          const barValue = highlight === "qty" ? product.total_quantity : product.total_revenue;
           const barPct = maxVal ? (barValue / maxVal) * 100 : 0;
 
           return (
