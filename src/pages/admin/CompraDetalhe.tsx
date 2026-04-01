@@ -9,18 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { getOrderStatus, orderStatusList } from "@/utils/orderStatus";
-import { updateOrderStatus } from "@/services/orderStatusService";
+import { getOrderStatus } from "@/utils/orderStatus";
 import { getPaymentMethodLabel, type PaymentMethod } from "@/utils/whatsappOrder";
+import { getHistoryStatusLabel, type PaymentStatus, type FulfillmentStatus } from "@/utils/orderAdminStatus";
+import { AdminOrderStatusPanel } from "@/components/admin/AdminOrderStatusPanel";
 
 interface OrderItem {
   id: string;
