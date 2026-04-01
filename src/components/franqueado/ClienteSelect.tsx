@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Check, ChevronsUpDown, Plus, User, History } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Check, ChevronsUpDown, Plus, User, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,46 +16,76 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Cliente, clientesMock, servicosClientesMock } from "@/data/clientes-mock";
+import { supabase } from "@/integrations/supabase/client";
+import { useDebounce } from "@/hooks/useDebounce";
+
+export interface CustomerOption {
+  id: string;
+  full_name: string;
+  cpf: string | null;
+  cnpj: string | null;
+  phone: string | null;
+  address_city: string | null;
+  address_state: string | null;
+  type: string;
+  is_active: boolean;
+}
 
 interface ClienteSelectProps {
   value: string;
   onChange: (clienteId: string) => void;
   onAddNew: () => void;
-  onViewCliente: (cliente: Cliente) => void;
+  /** Called after a new customer is created inline, so parent can auto-select */
+  refreshSignal?: number;
 }
 
-export function ClienteSelect({ value, onChange, onAddNew, onViewCliente }: ClienteSelectProps) {
+export function ClienteSelect({ value, onChange, onAddNew, refreshSignal }: ClienteSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Contar serviços por cliente
-  const servicosPorCliente = useMemo(() => {
-    const count: Record<string, number> = {};
-    servicosClientesMock.forEach((s) => {
-      count[s.clienteId] = (count[s.clienteId] || 0) + 1;
-    });
-    return count;
-  }, []);
+  const debouncedSearch = useDebounce(search, 250);
 
-  const clienteSelecionado = clientesMock.find((c) => c.id === value);
-  const totalServicos = value ? servicosPorCliente[value] || 0 : 0;
+  // Load customers from Supabase (unit_id filtered by RLS)
+  useEffect(() => {
+    loadCustomers();
+  }, [refreshSignal]);
 
-  const clientesFiltrados = useMemo(() => {
-    if (!search) return clientesMock;
-    const searchLower = search.toLowerCase();
-    return clientesMock.filter(
+  const loadCustomers = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from("customers")
+      .select("id, full_name, cpf, cnpj, phone, address_city, address_state, type, is_active")
+      .eq("is_active", true)
+      .order("full_name");
+
+    if (!error && data) {
+      setCustomers(data);
+    }
+    setIsLoading(false);
+  };
+
+  const selected = customers.find((c) => c.id === value);
+
+  const filtered = useMemo(() => {
+    if (!debouncedSearch) return customers;
+    const q = debouncedSearch.toLowerCase();
+    return customers.filter(
       (c) =>
-        c.nome.toLowerCase().includes(searchLower) ||
-        c.telefone.includes(search) ||
-        c.cidade?.toLowerCase().includes(searchLower)
+        c.full_name.toLowerCase().includes(q) ||
+        c.cpf?.includes(debouncedSearch) ||
+        c.cnpj?.includes(debouncedSearch) ||
+        c.phone?.includes(debouncedSearch)
     );
-  }, [search]);
+  }, [debouncedSearch, customers]);
+
+  const docLabel = (c: CustomerOption) =>
+    c.type === "PJ" ? c.cnpj : c.cpf;
 
   return (
     <div className="space-y-2">
       <div className="flex gap-2">
-        {/* Select de cliente */}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -64,13 +94,13 @@ export function ClienteSelect({ value, onChange, onAddNew, onViewCliente }: Clie
               aria-expanded={open}
               className="flex-1 justify-between h-10 glass-input hover:bg-secondary/50"
             >
-              {clienteSelecionado ? (
+              {selected ? (
                 <div className="flex items-center gap-2 truncate">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="truncate">{clienteSelecionado.nome}</span>
-                  {totalServicos > 0 && (
-                    <Badge variant="secondary" className="ml-1 text-xs">
-                      {totalServicos} serviço{totalServicos > 1 ? "s" : ""}
+                  <span className="truncate">{selected.full_name}</span>
+                  {selected.type && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                      {selected.type}
                     </Badge>
                   )}
                 </div>
@@ -83,92 +113,67 @@ export function ClienteSelect({ value, onChange, onAddNew, onViewCliente }: Clie
           <PopoverContent className="w-[400px] p-0 glass-card" align="start">
             <Command className="bg-transparent">
               <CommandInput
-                placeholder="Buscar cliente por nome, telefone ou cidade..."
+                placeholder="Buscar por nome, CPF/CNPJ ou telefone..."
                 value={search}
                 onValueChange={setSearch}
                 className="border-none focus:ring-0"
               />
               <CommandList>
-                <CommandEmpty className="py-6 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Nenhum cliente encontrado.
-                  </p>
-                </CommandEmpty>
-                <CommandGroup heading="Clientes">
-                  {clientesFiltrados.map((cliente) => {
-                    const qtdServicos = servicosPorCliente[cliente.id] || 0;
-                    return (
-                      <CommandItem
-                        key={cliente.id}
-                        value={cliente.id}
-                        onSelect={() => {
-                          onChange(cliente.id);
-                          setOpen(false);
-                        }}
-                        className="flex items-center justify-between py-3 cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <User className="h-4 w-4 text-primary" />
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <>
+                    <CommandEmpty className="py-6 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Nenhum cliente encontrado.
+                      </p>
+                    </CommandEmpty>
+                    <CommandGroup heading="Clientes">
+                      {filtered.map((c) => (
+                        <CommandItem
+                          key={c.id}
+                          value={`${c.full_name} ${c.cpf || ""} ${c.cnpj || ""} ${c.phone || ""}`}
+                          onSelect={() => {
+                            onChange(c.id);
+                            setOpen(false);
+                          }}
+                          className="flex items-center justify-between py-3 cursor-pointer"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <User className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{c.full_name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {docLabel(c) || c.phone || "Sem documento"}
+                                {c.address_city && ` • ${c.address_city}/${c.address_state || ""}`}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium">{cliente.nome}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {cliente.telefone} {cliente.cidade && `• ${cliente.cidade}`}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {qtdServicos > 0 && (
-                            <Badge variant="outline" className="text-xs">
-                              <History className="h-3 w-3 mr-1" />
-                              {qtdServicos}
-                            </Badge>
-                          )}
                           <Check
                             className={cn(
                               "h-4 w-4",
-                              value === cliente.id ? "opacity-100 text-primary" : "opacity-0"
+                              value === c.id ? "opacity-100 text-primary" : "opacity-0"
                             )}
                           />
-                        </div>
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </>
+                )}
               </CommandList>
             </Command>
           </PopoverContent>
         </Popover>
 
-        {/* Botão Adicionar Novo Cliente */}
-        <Button
-          type="button"
-          onClick={onAddNew}
-          className="shrink-0"
-        >
+        <Button type="button" onClick={onAddNew} className="shrink-0">
           <Plus className="h-4 w-4 mr-2" />
-          Adicionar Novo Cliente
+          Novo Cliente
         </Button>
       </div>
-
-      {/* Info do cliente selecionado */}
-      {clienteSelecionado && totalServicos > 0 && (
-        <div className="flex items-center justify-between p-2 rounded-lg bg-info/10 border border-info/20">
-          <p className="text-xs text-info">
-            Este cliente já possui {totalServicos} serviço{totalServicos > 1 ? "s" : ""} anterior{totalServicos > 1 ? "es" : ""}
-          </p>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-6 text-xs text-info hover:text-info"
-            onClick={() => onViewCliente(clienteSelecionado)}
-          >
-            Ver histórico
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
