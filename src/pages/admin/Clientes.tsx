@@ -72,6 +72,7 @@ export default function Clientes() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [unitFilter, setUnitFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
   const [showExportModal, setShowExportModal] = useState(false);
