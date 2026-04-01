@@ -184,20 +184,31 @@ export default function ClienteDetalhe() {
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" disabled={hasBindings}>
+              <Button variant="destructive">
                 <Trash2 className="h-4 w-4" /> Excluir
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Esta ação é irreversível. O cliente será removido permanentemente.
+                <AlertDialogTitle>Excluir cliente permanentemente?</AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                  <div className="space-y-3">
+                    <p>Esta ação é irreversível. O cliente será removido permanentemente do sistema.</p>
+                    {hasBindings && (
+                      <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm space-y-1">
+                        <p className="font-medium text-destructive">Exclusão bloqueada — vínculos encontrados:</p>
+                        {vehicles.length > 0 && <p>• {vehicles.length} veículo(s) cadastrado(s)</p>}
+                        {files.length > 0 && <p>• {files.length} arquivo(s) enviado(s)</p>}
+                        {services.length > 0 && <p>• {services.length} serviço(s) registrado(s)</p>}
+                        <p className="text-muted-foreground mt-2">Prefira inativar o cliente para preservar o histórico.</p>
+                      </div>
+                    )}
+                  </div>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+                <AlertDialogAction onClick={handleDelete} disabled={hasBindings}>Excluir</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
