@@ -9,6 +9,7 @@ import {
   Palette,
   MessageSquare,
   User,
+  Users,
   LogOut,
   X,
   Bell,
