@@ -148,6 +148,7 @@ export default function LojaCheckout() {
   const steps: { key: CheckoutStep; label: string; icon: React.ElementType }[] = [
     { key: "review", label: "Revisar", icon: ShoppingCart },
     { key: "delivery", label: "Entrega", icon: Package },
+    { key: "payment", label: "Pagamento", icon: CreditCard },
     { key: "confirm", label: "Enviar", icon: MessageCircle },
   ];
   const currentStepIndex = steps.findIndex((s) => s.key === step);
