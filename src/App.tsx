@@ -54,6 +54,7 @@ const AdminSuporte = lazy(() => import("./pages/admin/Suporte"));
 const AdminRelatorios = lazy(() => import("./pages/admin/Relatorios"));
 const AdminConfiguracoes = lazy(() => import("./pages/admin/Configuracoes"));
 const DocumentacaoSistema = lazy(() => import("./pages/admin/DocumentacaoSistema"));
+const DocumentacaoPrint = lazy(() => import("./pages/admin/DocumentacaoPrint"));
 const AdminCorrecoes = lazy(() => import("./pages/admin/Correcoes"));
 const AdminContratos = lazy(() => import("./pages/admin/Contratos"));
 const ImportarFranqueados = lazy(() => import("./pages/admin/ImportarFranqueados"));
@@ -94,6 +95,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               
               <Route path="/docs" element={<DocumentacaoPublica />} />
+              <Route path="/admin/documentacao/print" element={<DocumentacaoPrint />} />
 
               {/* Franqueado Routes */}
               <Route
