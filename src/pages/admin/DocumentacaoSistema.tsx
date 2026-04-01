@@ -420,7 +420,7 @@ export default function DocumentacaoSistema() {
         </CardHeader>
 
         <CardContent className="p-6">
-          <ScrollArea className="h-[calc(100vh-400px)] pr-4">
+          <div className="space-y-4">
             <div className="space-y-4">
 
               {/* DIAGRAMAS */}
