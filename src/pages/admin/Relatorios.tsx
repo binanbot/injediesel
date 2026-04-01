@@ -530,6 +530,9 @@ export default function AdminRelatorios() {
       {/* Gráfico Mensal de Vendas */}
       <MonthlySalesChart dateRange={effectiveRange} />
 
+      {/* Ranking por Categoria */}
+      <CategoryRankingCard dateRange={effectiveRange} />
+
       {/* Desempenho por Categoria/Nicho */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
