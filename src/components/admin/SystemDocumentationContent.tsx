@@ -574,6 +574,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
         {/* ── PAINEL FRANQUEADO ─────────────── */}
+        <div id="painel-franqueado" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <Users className="h-5 w-5" />
