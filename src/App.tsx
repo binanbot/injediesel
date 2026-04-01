@@ -39,6 +39,9 @@ const LojaCheckout = lazy(() => import("./pages/franqueado/LojaCheckout"));
 const Carrinho = lazy(() => import("./pages/franqueado/Carrinho"));
 const MeusPedidos = lazy(() => import("./pages/franqueado/MeusPedidos"));
 const PedidoDetalhe = lazy(() => import("./pages/franqueado/PedidoDetalhe"));
+const FranqueadoClientes = lazy(() => import("./pages/franqueado/Clientes"));
+const FranqueadoClienteForm = lazy(() => import("./pages/franqueado/ClienteForm"));
+const FranqueadoClienteDetalhe = lazy(() => import("./pages/franqueado/ClienteDetalhe"));
 import LandingLancamento from "./pages/franqueado/LandingLancamento";
 const DocumentacaoPublica = lazy(() => import("./pages/DocumentacaoPublica"));
 
