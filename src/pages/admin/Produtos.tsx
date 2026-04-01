@@ -125,6 +125,11 @@ export default function Produtos() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState("");
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const importFileRef = useRef<HTMLInputElement>(null);
+
   // Fetch products
   const { data: products, isLoading } = useQuery({
     queryKey: ["admin-products"],
