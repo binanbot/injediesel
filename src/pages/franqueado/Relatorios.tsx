@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
@@ -15,9 +17,13 @@ import {
   HardHat,
   MoreHorizontal,
   CalendarIcon,
+  ShoppingBag,
+  Package,
+  ChevronRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -41,6 +47,10 @@ import {
   Tooltip,
 } from "recharts";
 import { MetricTooltip, metricDefinitions } from "@/components/MetricTooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { getOrderStatus } from "@/utils/orderStatus";
+
 // Dados mockados de faturamento por categoria de veículo
 const faturamentoMock = [
   { categoria: "Truck", valor: 45800, quantidade: 28, icon: Truck },
@@ -56,15 +66,15 @@ const faturamentoMock = [
 
 // Cores para o gráfico de pizza
 const COLORS = [
-  "hsl(217, 91%, 60%)",   // Azul
-  "hsl(142, 76%, 36%)",   // Verde
-  "hsl(45, 93%, 47%)",    // Amarelo
-  "hsl(262, 83%, 58%)",   // Roxo
-  "hsl(0, 84%, 60%)",     // Vermelho
-  "hsl(199, 89%, 48%)",   // Ciano
-  "hsl(25, 95%, 53%)",    // Laranja
-  "hsl(330, 81%, 60%)",   // Rosa
-  "hsl(210, 14%, 53%)",   // Cinza
+  "hsl(217, 91%, 60%)",
+  "hsl(142, 76%, 36%)",
+  "hsl(45, 93%, 47%)",
+  "hsl(262, 83%, 58%)",
+  "hsl(0, 84%, 60%)",
+  "hsl(199, 89%, 48%)",
+  "hsl(25, 95%, 53%)",
+  "hsl(330, 81%, 60%)",
+  "hsl(210, 14%, 53%)",
 ];
 
 type Periodo = "dia" | "semana" | "mes" | "semestre" | "ano";
@@ -86,10 +96,101 @@ const multiplicadores: Record<Periodo, number> = {
   ano: 12,
 };
 
+function getDateRangeForPeriodo(periodo: Periodo): { from: Date; to: Date } {
+  const now = new Date();
+  const to = new Date(now);
+  to.setHours(23, 59, 59, 999);
+  const from = new Date(now);
+  from.setHours(0, 0, 0, 0);
+
+  switch (periodo) {
+    case "dia":
+      break;
+    case "semana":
+      from.setDate(from.getDate() - from.getDay());
+      break;
+    case "mes":
+      from.setDate(1);
+      break;
+    case "semestre":
+      from.setMonth(from.getMonth() - 5, 1);
+      break;
+    case "ano":
+      from.setMonth(0, 1);
+      break;
+  }
+  return { from, to };
+}
+
 export default function Relatorios() {
   const [periodo, setPeriodo] = useState<Periodo>("mes");
   const [dataInicio, setDataInicio] = useState<Date>();
   const [dataFim, setDataFim] = useState<Date>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  /* ── Profile ID ── */
+  const { data: profileId } = useQuery({
+    queryKey: ["my-profile-id-reports", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles_franchisees")
+        .select("id")
+        .eq("user_id", user!.id)
+        .single();
+      if (error) throw error;
+      return data.id;
+    },
+    enabled: !!user?.id,
+  });
+
+  /* ── Financial entries (custos peças) ── */
+  const effectiveRange = useMemo(() => {
+    if (dataInicio || dataFim) {
+      return {
+        from: dataInicio || new Date("2020-01-01"),
+        to: dataFim || new Date(),
+      };
+    }
+    return getDateRangeForPeriodo(periodo);
+  }, [periodo, dataInicio, dataFim]);
+
+  const { data: financialData, isLoading: loadingFinancial } = useQuery({
+    queryKey: ["financial-costs", profileId, effectiveRange.from.toISOString(), effectiveRange.to.toISOString()],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financial_entries")
+        .select(`
+          *,
+          orders (
+            id,
+            order_number,
+            status,
+            total_amount,
+            items_count,
+            created_at
+          )
+        `)
+        .eq("franchise_profile_id", profileId!)
+        .eq("scope", "franqueado")
+        .eq("entry_type", "custo")
+        .eq("category", "pecas_acessorios")
+        .gte("competency_date", format(effectiveRange.from, "yyyy-MM-dd"))
+        .lte("competency_date", format(effectiveRange.to, "yyyy-MM-dd"))
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profileId,
+  });
+
+  const costStats = useMemo(() => {
+    if (!financialData) return { total: 0, count: 0, avgTicket: 0 };
+    const total = financialData.reduce((sum, e) => sum + Number(e.amount), 0);
+    const count = financialData.length;
+    return { total, count, avgTicket: count > 0 ? total / count : 0 };
+  }, [financialData]);
 
   // Calcular dados com base no período selecionado
   const dadosFaturamento = useMemo(() => {
@@ -134,6 +235,13 @@ export default function Relatorios() {
     const percent = totalFaturamento > 0 ? (value / totalFaturamento) * 100 : 0;
     return `${percent.toFixed(1)}%`;
   };
+
+  const fmtDate = (d: string) =>
+    new Date(d).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
 
   return (
     <div className="space-y-6">
@@ -318,6 +426,117 @@ export default function Relatorios() {
           </Card>
         </motion.div>
       </div>
+
+      {/* ═══════════════════════════════════════
+          Custos com Peças e Acessórios (Loja)
+         ═══════════════════════════════════════ */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+      >
+        <Card className="glass-card">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <ShoppingBag className="h-5 w-5" />
+                Custos com Peças e Acessórios
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/franqueado/loja/pedidos")}
+              >
+                Ver pedidos
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* KPI cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20">
+                <p className="text-sm text-muted-foreground">Custo Total</p>
+                <p className="text-xl font-bold text-destructive">
+                  {formatCurrency(costStats.total)}
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
+                <p className="text-sm text-muted-foreground">Pedidos</p>
+                <p className="text-xl font-bold">{costStats.count}</p>
+              </div>
+              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm text-muted-foreground">Ticket Médio</p>
+                  <MetricTooltip explanation="Valor médio por pedido de peças e acessórios no período selecionado." />
+                </div>
+                <p className="text-xl font-bold">{formatCurrency(costStats.avgTicket)}</p>
+              </div>
+            </div>
+
+            {/* Order list */}
+            {loadingFinancial ? (
+              <div className="text-center py-4 text-muted-foreground text-sm">
+                Carregando...
+              </div>
+            ) : !financialData || financialData.length === 0 ? (
+              <div className="text-center py-6">
+                <Package className="h-10 w-10 text-muted-foreground/40 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Nenhum pedido de peças no período
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {financialData.slice(0, 10).map((entry) => {
+                  const order = entry.orders as any;
+                  if (!order) return null;
+                  const status = getOrderStatus(order.status);
+                  const StatusIcon = status.icon;
+
+                  return (
+                    <div
+                      key={entry.id}
+                      className="flex items-center justify-between gap-3 p-3 rounded-xl bg-secondary/30 border border-border/30 cursor-pointer hover:border-primary/30 transition-colors"
+                      onClick={() => navigate(`/franqueado/loja/pedidos`)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-lg bg-muted/30 flex items-center justify-center">
+                          <StatusIcon className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">#{order.order_number}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {fmtDate(order.created_at)} • {order.items_count}{" "}
+                            {order.items_count === 1 ? "item" : "itens"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge className={cn("gap-1 border text-xs", status.badgeClass)}>
+                          {status.label}
+                        </Badge>
+                        <span className="font-semibold text-sm text-destructive">
+                          -{formatCurrency(Number(entry.amount))}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+                {financialData.length > 10 && (
+                  <Button
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => navigate("/franqueado/loja/pedidos")}
+                  >
+                    Ver todos os {financialData.length} pedidos
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Gráfico de Pizza */}
       <motion.div
