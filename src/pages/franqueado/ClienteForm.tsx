@@ -215,9 +215,26 @@ export default function ClienteForm() {
             </div>
 
             {/* Endereço */}
-            <div className="space-y-2">
-              <Label htmlFor="address_line">Endereço</Label>
-              <Input id="address_line" value={form.address_line} onChange={(e) => update("address_line", e.target.value)} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="address_line">Rua / Logradouro</Label>
+                <Input id="address_line" value={form.address_line} onChange={(e) => update("address_line", e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address_number">Número</Label>
+                <Input id="address_number" value={form.address_number} onChange={(e) => update("address_number", e.target.value)} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="address_complement">Complemento</Label>
+                <Input id="address_complement" value={form.address_complement} onChange={(e) => update("address_complement", e.target.value)} placeholder="Apto, sala, bloco..." />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address_district">Bairro</Label>
+                <Input id="address_district" value={form.address_district} onChange={(e) => update("address_district", e.target.value)} />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
