@@ -691,6 +691,9 @@ export default function Relatorios() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Ranking de Produtos — Inteligência Comercial */}
+      {profileId && <ProductRanking dateRange={effectiveRange} franchiseProfileId={profileId} />}
     </div>
   );
 }

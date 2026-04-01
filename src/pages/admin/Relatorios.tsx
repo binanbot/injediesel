@@ -517,6 +517,9 @@ export default function AdminRelatorios() {
         </Card>
       </motion.div>
 
+      {/* Ranking de Produtos — Inteligência Comercial */}
+      <ProductRanking dateRange={effectiveRange} />
+
       {/* Desempenho por Categoria/Nicho */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
