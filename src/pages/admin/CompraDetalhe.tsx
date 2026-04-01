@@ -129,21 +129,11 @@ export default function CompraDetalhe() {
     enabled: !!id,
   });
 
-  const statusMutation = useMutation({
-    mutationFn: async (newStatus: string) => {
-      if (!id) throw new Error("ID não fornecido");
-      await updateOrderStatus(id, newStatus as any, user?.id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-order", id] });
-      queryClient.invalidateQueries({ queryKey: ["admin-order-history", id] });
-      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
-      toast.success("Status atualizado com sucesso!");
-    },
-    onError: (error) => {
-      toast.error("Erro ao atualizar status: " + error.message);
-    },
-  });
+  const invalidateOrder = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["admin-order", id] });
+    await queryClient.invalidateQueries({ queryKey: ["admin-order-history", id] });
+    await queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+  };
 
   const fmt = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
