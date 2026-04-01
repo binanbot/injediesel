@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { useCartStore, CartItem } from "@/stores/useCartStore";
 import { cn } from "@/lib/utils";
 import { createOrderFromCart, openOrderOnWhatsApp } from "@/services/orderService";
+import type { PaymentMethod } from "@/utils/whatsappOrder";
+import { getPaymentMethodLabel } from "@/utils/whatsappOrder";
 import {
   DeliveryAddressForm,
   DeliveryAddress,
