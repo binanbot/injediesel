@@ -1,19 +1,25 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Package, Loader2, Building2 } from "lucide-react";
+import { ArrowLeft, Package, Loader2, Building2, MapPin, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getOrderStatus, orderStatusList } from "@/utils/orderStatus";
+import { updateOrderStatus } from "@/services/orderStatusService";
 
 interface OrderItem {
   id: string;
@@ -22,7 +28,14 @@ interface OrderItem {
   quantity: number;
   unit_price: number;
   line_total: number;
-  product_id: string | null;
+}
+
+interface StatusHistory {
+  id: string;
+  previous_status: string | null;
+  new_status: string;
+  internal_note: string | null;
+  created_at: string;
 }
 
 interface Order {
@@ -55,6 +68,7 @@ export default function CompraDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: order, isLoading: orderLoading } = useQuery({
     queryKey: ["admin-order", id],
@@ -78,6 +92,20 @@ export default function CompraDetalhe() {
     enabled: !!order?.unit_id,
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ["franchise-profile", order?.franchise_profile_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles_franchisees")
+        .select("display_name, email, cnpj, phone")
+        .eq("id", order!.franchise_profile_id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!order?.franchise_profile_id,
+  });
+
   const { data: items, isLoading: itemsLoading } = useQuery({
     queryKey: ["admin-order-items", id],
     queryFn: async () => {
@@ -89,14 +117,29 @@ export default function CompraDetalhe() {
     enabled: !!id,
   });
 
-  const updateStatus = useMutation({
+  const { data: statusHistory } = useQuery({
+    queryKey: ["admin-order-history", id],
+    queryFn: async () => {
+      if (!id) throw new Error("ID não fornecido");
+      const { data, error } = await supabase
+        .from("order_status_history")
+        .select("*")
+        .eq("order_id", id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as StatusHistory[];
+    },
+    enabled: !!id,
+  });
+
+  const statusMutation = useMutation({
     mutationFn: async (newStatus: string) => {
       if (!id) throw new Error("ID não fornecido");
-      const { error } = await supabase.from("orders").update({ status: newStatus }).eq("id", id);
-      if (error) throw error;
+      await updateOrderStatus(id, newStatus as any, user?.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-order", id] });
+      queryClient.invalidateQueries({ queryKey: ["admin-order-history", id] });
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
       toast.success("Status atualizado com sucesso!");
     },
@@ -135,9 +178,11 @@ export default function CompraDetalhe() {
 
   const status = getOrderStatus(order.status);
   const StatusIcon = status.icon;
+  const addr = order.delivery_address as Record<string, string> | null;
 
   return (
     <div className="space-y-6 max-w-5xl">
+      {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate("/admin/compras")}>
           <ArrowLeft className="h-5 w-5" />
@@ -153,27 +198,71 @@ export default function CompraDetalhe() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left column */}
         <div className="lg:col-span-2 space-y-6">
-          {unit && (
+          {/* Franchisee info */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Building2 className="h-5 w-5" /> Franqueado
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {unit && (
+                <div>
+                  <p className="font-medium">{unit.name}</p>
+                  {unit.city && (
+                    <p className="text-sm text-muted-foreground">
+                      {unit.city}, {unit.state}
+                    </p>
+                  )}
+                </div>
+              )}
+              {profile && (
+                <div className="text-sm space-y-0.5 pt-1 border-t border-border/20">
+                  {profile.display_name && <p>{profile.display_name}</p>}
+                  <p className="text-muted-foreground">{profile.email}</p>
+                  {profile.cnpj && <p className="text-muted-foreground">CNPJ: {profile.cnpj}</p>}
+                  {profile.phone && <p className="text-muted-foreground">Tel: {profile.phone}</p>}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Delivery address */}
+          {addr && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Building2 className="h-5 w-5" />Franqueado
+                  <MapPin className="h-5 w-5" /> Endereço de entrega
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="font-medium">{unit.name}</p>
-                {unit.city && (
-                  <p className="text-sm text-muted-foreground">{unit.city}, {unit.state}</p>
-                )}
+              <CardContent className="text-sm space-y-1">
+                {addr.recipient_name && <p className="font-medium">{addr.recipient_name}</p>}
+                {addr.company_name && <p>{addr.company_name}</p>}
+                {addr.cnpj && <p className="text-muted-foreground">CNPJ: {addr.cnpj}</p>}
+                <p>
+                  {addr.street}
+                  {addr.number ? `, ${addr.number}` : ""}
+                </p>
+                {addr.complement && <p>{addr.complement}</p>}
+                <p>
+                  {addr.district && `${addr.district} – `}
+                  {addr.city}
+                  {addr.state ? ` / ${addr.state}` : ""}
+                </p>
+                {addr.zip_code && <p>CEP: {addr.zip_code}</p>}
+                {addr.phone && <p className="text-muted-foreground">Tel: {addr.phone}</p>}
+                {addr.email && <p className="text-muted-foreground">E-mail: {addr.email}</p>}
               </CardContent>
             </Card>
           )}
 
+          {/* Items */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Package className="h-5 w-5" />Itens do pedido
+                <Package className="h-5 w-5" /> Itens do pedido
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -185,7 +274,12 @@ export default function CompraDetalhe() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium line-clamp-1">{item.product_name}</p>
-                      <p className="text-sm text-muted-foreground">{item.quantity}x {fmt(item.unit_price)}</p>
+                      {item.product_sku && (
+                        <p className="text-xs text-muted-foreground">SKU: {item.product_sku}</p>
+                      )}
+                      <p className="text-sm text-muted-foreground">
+                        {item.quantity}x {fmt(item.unit_price)}
+                      </p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="font-semibold">{fmt(item.line_total)}</p>
@@ -197,14 +291,18 @@ export default function CompraDetalhe() {
           </Card>
         </div>
 
+        {/* Right column */}
         <div className="space-y-6">
+          {/* Status update */}
           <Card>
-            <CardHeader><CardTitle className="text-lg">Atualizar Status</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-lg">Atualizar Status</CardTitle>
+            </CardHeader>
             <CardContent>
               <Select
                 value={order.status}
-                onValueChange={(value) => updateStatus.mutate(value)}
-                disabled={updateStatus.isPending}
+                onValueChange={(value) => statusMutation.mutate(value)}
+                disabled={statusMutation.isPending}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -223,8 +321,11 @@ export default function CompraDetalhe() {
             </CardContent>
           </Card>
 
+          {/* Summary */}
           <Card>
-            <CardHeader><CardTitle className="text-lg">Resumo</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-lg">Resumo</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
@@ -241,7 +342,7 @@ export default function CompraDetalhe() {
               {order.discount_amount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Desconto</span>
-                  <span className="text-green-500">-{fmt(order.discount_amount)}</span>
+                  <span className="text-emerald-500">-{fmt(order.discount_amount)}</span>
                 </div>
               )}
               <Separator />
@@ -251,6 +352,48 @@ export default function CompraDetalhe() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Status history */}
+          {statusHistory && statusHistory.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Clock className="h-5 w-5" /> Histórico
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="relative pl-4 border-l-2 border-border/30 space-y-4">
+                  {statusHistory.map((h) => {
+                    const sMeta = getOrderStatus(h.new_status);
+                    const SIcon = sMeta.icon;
+                    return (
+                      <div key={h.id} className="relative">
+                        <div
+                          className={cn(
+                            "absolute -left-[calc(0.5rem+1px)] top-0.5 h-4 w-4 rounded-full flex items-center justify-center",
+                            sMeta.color
+                          )}
+                        >
+                          <SIcon className="h-2.5 w-2.5 text-white" />
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium">{sMeta.label}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {fmtDate(h.created_at)}
+                          </p>
+                          {h.internal_note && (
+                            <p className="text-xs text-muted-foreground mt-0.5 italic">
+                              {h.internal_note}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
