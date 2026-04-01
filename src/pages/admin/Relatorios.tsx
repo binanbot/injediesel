@@ -407,6 +407,115 @@ export default function AdminRelatorios() {
         </Card>
       </div>
 
+      {/* Faturamento Loja Promax */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-primary" />
+                Faturamento Loja Promax — Peças e Acessórios
+              </CardTitle>
+              <Link to="/admin/compras">
+                <Button variant="outline" size="sm">Ver todos os pedidos →</Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* KPIs */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl border border-border/50 bg-secondary/20">
+                <p className="text-sm text-muted-foreground">Faturamento Total</p>
+                <p className="text-2xl font-bold text-success mt-1">{formatCurrency(matrizStats.total)}</p>
+              </div>
+              <div className="p-4 rounded-xl border border-border/50 bg-secondary/20">
+                <p className="text-sm text-muted-foreground">Pedidos no Período</p>
+                <p className="text-2xl font-bold mt-1">{matrizStats.count}</p>
+              </div>
+              <div className="p-4 rounded-xl border border-border/50 bg-secondary/20">
+                <p className="text-sm text-muted-foreground">Ticket Médio</p>
+                <p className="text-2xl font-bold text-primary mt-1">{formatCurrency(matrizStats.avg)}</p>
+              </div>
+            </div>
+
+            {/* Ranking por Unidade */}
+            {matrizStats.byUnit.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">Ranking de Unidades — Compras</h3>
+                <div className="space-y-2">
+                  {matrizStats.byUnit.slice(0, 10).map((unit, index) => (
+                    <motion.div
+                      key={unit.name}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.04 }}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-xl border transition-colors",
+                        index === 0 ? "border-yellow-500/50 bg-yellow-500/10"
+                          : index === 1 ? "border-gray-400/50 bg-gray-400/10"
+                          : index === 2 ? "border-amber-600/50 bg-amber-600/10"
+                          : "border-border/50 bg-secondary/20"
+                      )}
+                    >
+                      <div className="flex-shrink-0">{getMedalIcon(index)}</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{unit.name}</p>
+                        <p className="text-xs text-muted-foreground">{unit.count} pedido{unit.count !== 1 ? "s" : ""}</p>
+                      </div>
+                      <p className="font-bold text-success">{formatCurrency(unit.total)}</p>
+                      <div className="hidden sm:block flex-shrink-0 w-24">
+                        <div className="h-2 rounded-full bg-secondary/50 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${matrizStats.byUnit[0]?.total ? (unit.total / matrizStats.byUnit[0].total) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recent orders list */}
+            {matrizFinancial && matrizFinancial.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">Pedidos Recentes</h3>
+                <div className="space-y-2">
+                  {matrizFinancial.slice(0, 8).map((entry) => {
+                    const order = entry.orders as any;
+                    if (!order) return null;
+                    const status = getOrderStatus(order.status);
+                    return (
+                      <Link key={entry.id} to={`/admin/compras/${order.id}`} className="block">
+                        <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-secondary/10 hover:bg-secondary/30 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <Badge className={cn(status.color, "text-white text-xs")}>{status.label}</Badge>
+                            <span className="font-mono text-sm">{order.order_number}</span>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm">
+                            <span className="text-muted-foreground">{order.items_count} ite{order.items_count !== 1 ? "ns" : "m"}</span>
+                            <span className="font-bold text-success">{formatCurrency(Number(order.total_amount))}</span>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {matrizFinancial && matrizFinancial.length === 0 && (
+              <p className="text-center text-muted-foreground py-8">Nenhum pedido encontrado no período selecionado.</p>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Desempenho por Categoria/Nicho */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
