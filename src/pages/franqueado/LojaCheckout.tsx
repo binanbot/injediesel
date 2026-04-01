@@ -364,6 +364,7 @@ export default function LojaCheckout() {
                 )}
                 <Button
                   className={cn("flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white", step === "confirm" && "bg-green-700 hover:bg-green-800")}
+                  disabled={submitting}
                   onClick={() => {
                     if (step === "confirm") {
                       handleSendWhatsApp();
@@ -374,7 +375,9 @@ export default function LojaCheckout() {
                     }
                   }}
                 >
-                  {step === "confirm" ? (
+                  {submitting ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" />Criando pedido...</>
+                  ) : step === "confirm" ? (
                     <><MessageCircle className="h-4 w-4" />Enviar via WhatsApp</>
                   ) : (
                     "Continuar"
