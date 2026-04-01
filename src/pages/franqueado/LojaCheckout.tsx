@@ -108,7 +108,7 @@ export default function LojaCheckout() {
     try {
       const order = await createOrderFromCart(profile.id, delivery, items);
 
-      openOrderOnWhatsApp(delivery, items, paymentMethod);
+      openOrderOnWhatsApp(delivery, items, selectedPayment, paymentNote);
       clearCart();
       toast.success(`Pedido ${order.order_number} criado e enviado via WhatsApp!`);
       navigate("/franqueado/meus-pedidos");
