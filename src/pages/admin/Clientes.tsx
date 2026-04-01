@@ -456,15 +456,17 @@ export default function Clientes() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>CPF/CNPJ</TableHead>
-                  <TableHead>Cidade/Estado</TableHead>
-                  {isFranchisor && <TableHead>Unidade</TableHead>}
-                  <TableHead>Serviços</TableHead>
-                  <TableHead>Último Serviço</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
+                 <TableRow>
+                   <TableHead>Cliente</TableHead>
+                   <TableHead>Tipo</TableHead>
+                   <TableHead>CPF/CNPJ</TableHead>
+                   <TableHead>Telefone</TableHead>
+                   <TableHead>Cidade/Estado</TableHead>
+                   {isFranchisor && <TableHead>Unidade</TableHead>}
+                   <TableHead>Status</TableHead>
+                   <TableHead>Serviços</TableHead>
+                   <TableHead className="text-right">Ações</TableHead>
+                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredCustomers.map((customer) => (
