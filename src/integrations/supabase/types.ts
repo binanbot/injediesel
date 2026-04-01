@@ -1139,37 +1139,67 @@ export type Database = {
         Row: {
           brand: string | null
           category: string | null
+          chassis: string | null
+          color: string | null
           created_at: string | null
+          created_by: string | null
           customer_id: string
           engine: string | null
+          fuel: string | null
           id: string
+          is_active: boolean
           model: string | null
+          model_year: number | null
+          notes: string | null
           plate: string | null
+          transmission: string | null
           unit_id: string
+          updated_at: string | null
+          updated_by: string | null
           year: string | null
         }
         Insert: {
           brand?: string | null
           category?: string | null
+          chassis?: string | null
+          color?: string | null
           created_at?: string | null
+          created_by?: string | null
           customer_id: string
           engine?: string | null
+          fuel?: string | null
           id?: string
+          is_active?: boolean
           model?: string | null
+          model_year?: number | null
+          notes?: string | null
           plate?: string | null
+          transmission?: string | null
           unit_id: string
+          updated_at?: string | null
+          updated_by?: string | null
           year?: string | null
         }
         Update: {
           brand?: string | null
           category?: string | null
+          chassis?: string | null
+          color?: string | null
           created_at?: string | null
+          created_by?: string | null
           customer_id?: string
           engine?: string | null
+          fuel?: string | null
           id?: string
+          is_active?: boolean
           model?: string | null
+          model_year?: number | null
+          notes?: string | null
           plate?: string | null
+          transmission?: string | null
           unit_id?: string
+          updated_at?: string | null
+          updated_by?: string | null
           year?: string | null
         }
         Relationships: [
