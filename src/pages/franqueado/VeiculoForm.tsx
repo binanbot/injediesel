@@ -40,6 +40,12 @@ export default function VeiculoForm() {
     year: "",
     category: "",
     engine: "",
+    model_year: "",
+    transmission: "",
+    fuel: "",
+    color: "",
+    chassis: "",
+    notes: "",
   });
 
   useEffect(() => {
