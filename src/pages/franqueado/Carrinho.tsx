@@ -158,7 +158,7 @@ export default function Carrinho() {
                     </div>
                   ))}
                 </RadioGroup>
-                {paymentMethod === "credit" && (
+                {paymentMethod === "cartao_credito" && (
                   <div className="mt-4 pt-4 border-t border-border/30">
                     <Label htmlFor="installments" className="text-sm">Parcelas</Label>
                     <Select value={installments} onValueChange={setInstallments}>
