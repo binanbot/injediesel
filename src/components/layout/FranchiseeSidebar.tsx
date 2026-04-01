@@ -48,6 +48,7 @@ const menuItems = [
   { icon: ShoppingBag, label: "Loja Promax", path: "/franqueado/loja" },
   { icon: ShoppingCart, label: "Meu Carrinho", path: "/franqueado/loja/carrinho" },
   { icon: Package, label: "Histórico de Compras", path: "/franqueado/loja/pedidos" },
+  { icon: Users, label: "Clientes", path: "/franqueado/clientes" },
   { icon: BarChart3, label: "Relatórios", path: "/franqueado/relatorios" },
   { icon: RefreshCw, label: "Atualizações", path: "/franqueado/atualizacoes" },
   { icon: HeadphonesIcon, label: "Suporte", path: "/franqueado/suporte" },
