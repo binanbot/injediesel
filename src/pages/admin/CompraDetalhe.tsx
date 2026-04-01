@@ -13,8 +13,10 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getOrderStatus } from "@/utils/orderStatus";
 import { getPaymentMethodLabel, type PaymentMethod } from "@/utils/whatsappOrder";
-import { getHistoryStatusLabel, type PaymentStatus, type FulfillmentStatus } from "@/utils/orderAdminStatus";
+import { type PaymentStatus, type FulfillmentStatus } from "@/utils/orderAdminStatus";
 import { AdminOrderStatusPanel } from "@/components/admin/AdminOrderStatusPanel";
+import { OrderTimeline } from "@/components/admin/OrderTimeline";
+import { OrderTimelineFromHistory } from "@/components/admin/OrderTimelineFromHistory";
 
 interface OrderItem {
   id: string;
