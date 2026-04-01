@@ -56,8 +56,6 @@ import {
 } from "@/data/servicos-categorias";
 import { ClienteSelect } from "@/components/franqueado/ClienteSelect";
 import { NovoClienteDrawer } from "@/components/franqueado/NovoClienteDrawer";
-import { ClientePerfilDialog } from "@/components/franqueado/ClientePerfilDialog";
-import { Cliente, clientesMock } from "@/data/clientes-mock";
 import { supabase } from "@/integrations/supabase/client";
 
 const MAX_FILES = 2;
