@@ -172,15 +172,17 @@ export default function Clientes() {
         c.full_name.toLowerCase().includes(searchLower) ||
         c.cpf?.includes(debouncedSearch) ||
         c.cnpj?.includes(debouncedSearch) ||
+        c.phone?.includes(debouncedSearch) ||
         c.email?.toLowerCase().includes(searchLower);
 
       const matchesUnit = unitFilter === "all" || c.unit_id === unitFilter;
-      const matchesCity = cityFilter === "all" || c.active_city === cityFilter;
+      const matchesStatus = statusFilter === "all" || (statusFilter === "active" ? c.is_active : !c.is_active);
+      const matchesCity = cityFilter === "all" || (c.active_city === cityFilter || c.address_city === cityFilter);
       const matchesState = stateFilter === "all" || c.address_state === stateFilter;
 
-      return matchesSearch && matchesUnit && matchesCity && matchesState;
+      return matchesSearch && matchesUnit && matchesStatus && matchesCity && matchesState;
     });
-  }, [customers, debouncedSearch, unitFilter, cityFilter, stateFilter]);
+  }, [customers, debouncedSearch, unitFilter, statusFilter, cityFilter, stateFilter]);
 
   const clearFilters = () => {
     setSearch("");
