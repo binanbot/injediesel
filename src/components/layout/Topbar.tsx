@@ -26,6 +26,7 @@ export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuB
   const showContractAlert = contractStatus.isNearExpiration || contractStatus.isExpired;
   const itemCount = useCartStore((s) => s.getItemCount());
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   return (
     <header className="h-16 glass-topbar sticky top-0 z-40">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
