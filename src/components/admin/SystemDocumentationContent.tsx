@@ -1461,6 +1461,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         </SectionBlock>
 
         {/* ── ESTADOS E TRANSIÇÕES ───────────────────────── */}
+        <div id="estados-transicoes" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <GitBranch className="h-5 w-5" /> ESTADOS E TRANSIÇÕES
