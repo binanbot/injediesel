@@ -11,6 +11,8 @@ import {
   X,
   Building2,
   MapPin,
+  ToggleLeft,
+  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +48,10 @@ interface Customer {
   email: string | null;
   phone: string | null;
   active_city: string | null;
+  address_city: string | null;
   address_state: string | null;
+  is_active: boolean;
+  type: string;
   unit_id: string;
   created_at: string;
   unit?: {
@@ -69,6 +74,7 @@ export default function Clientes() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [unitFilter, setUnitFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
   const [showExportModal, setShowExportModal] = useState(false);
@@ -168,25 +174,28 @@ export default function Clientes() {
         c.full_name.toLowerCase().includes(searchLower) ||
         c.cpf?.includes(debouncedSearch) ||
         c.cnpj?.includes(debouncedSearch) ||
+        c.phone?.includes(debouncedSearch) ||
         c.email?.toLowerCase().includes(searchLower);
 
       const matchesUnit = unitFilter === "all" || c.unit_id === unitFilter;
-      const matchesCity = cityFilter === "all" || c.active_city === cityFilter;
+      const matchesStatus = statusFilter === "all" || (statusFilter === "active" ? c.is_active : !c.is_active);
+      const matchesCity = cityFilter === "all" || (c.active_city === cityFilter || c.address_city === cityFilter);
       const matchesState = stateFilter === "all" || c.address_state === stateFilter;
 
-      return matchesSearch && matchesUnit && matchesCity && matchesState;
+      return matchesSearch && matchesUnit && matchesStatus && matchesCity && matchesState;
     });
-  }, [customers, debouncedSearch, unitFilter, cityFilter, stateFilter]);
+  }, [customers, debouncedSearch, unitFilter, statusFilter, cityFilter, stateFilter]);
 
   const clearFilters = () => {
     setSearch("");
     setUnitFilter("all");
+    setStatusFilter("all");
     setCityFilter("all");
     setStateFilter("all");
   };
 
   const hasActiveFilters =
-    search || unitFilter !== "all" || cityFilter !== "all" || stateFilter !== "all";
+    search || unitFilter !== "all" || statusFilter !== "all" || cityFilter !== "all" || stateFilter !== "all";
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -297,12 +306,12 @@ export default function Clientes() {
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome, CPF, CNPJ ou email..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
-                />
+                 <Input
+                   placeholder="Buscar por nome, CPF, CNPJ, telefone ou email..."
+                   value={search}
+                   onChange={(e) => setSearch(e.target.value)}
+                   className="pl-10"
+                 />
               </div>
 
               {isFranchisor && (
@@ -321,6 +330,18 @@ export default function Clientes() {
                   </SelectContent>
                 </Select>
               )}
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-36">
+                  <ToggleLeft className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="active">Ativos</SelectItem>
+                  <SelectItem value="inactive">Inativos</SelectItem>
+                </SelectContent>
+              </Select>
 
               <Select value={cityFilter} onValueChange={setCityFilter}>
                 <SelectTrigger className="w-full sm:w-40">
@@ -371,6 +392,15 @@ export default function Clientes() {
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => setUnitFilter("all")}
+                    />
+                  </Badge>
+                )}
+                {statusFilter !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Status: {statusFilter === "active" ? "Ativos" : "Inativos"}
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => setStatusFilter("all")}
                     />
                   </Badge>
                 )}
@@ -426,15 +456,17 @@ export default function Clientes() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>CPF/CNPJ</TableHead>
-                  <TableHead>Cidade/Estado</TableHead>
-                  {isFranchisor && <TableHead>Unidade</TableHead>}
-                  <TableHead>Serviços</TableHead>
-                  <TableHead>Último Serviço</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
+                 <TableRow>
+                   <TableHead>Cliente</TableHead>
+                   <TableHead>Tipo</TableHead>
+                   <TableHead>CPF/CNPJ</TableHead>
+                   <TableHead>Telefone</TableHead>
+                   <TableHead>Cidade/Estado</TableHead>
+                   {isFranchisor && <TableHead>Unidade</TableHead>}
+                   <TableHead>Status</TableHead>
+                   <TableHead>Serviços</TableHead>
+                   <TableHead className="text-right">Ações</TableHead>
+                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredCustomers.map((customer) => (
@@ -453,31 +485,37 @@ export default function Clientes() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {customer.cpf || customer.cnpj || "-"}
-                    </TableCell>
-                    <TableCell>
-                      {customer.active_city && customer.address_state ? (
-                        <span>
-                          {customer.active_city}/{customer.address_state}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    {isFranchisor && (
-                      <TableCell>
-                        <Badge variant="outline">{customer.unit?.name || "-"}</Badge>
-                      </TableCell>
-                    )}
-                    <TableCell>
-                      <Badge variant="secondary">{customer.total_services}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {customer.last_service_date
-                        ? new Date(customer.last_service_date).toLocaleDateString("pt-BR")
-                        : "-"}
-                    </TableCell>
+                     <TableCell className="text-xs">
+                       <Badge variant="outline">{customer.type === "PJ" ? "PJ" : "PF"}</Badge>
+                     </TableCell>
+                     <TableCell className="text-muted-foreground font-mono text-sm">
+                       {customer.cpf || customer.cnpj || "-"}
+                     </TableCell>
+                     <TableCell className="text-muted-foreground text-sm">
+                       {customer.phone ? (
+                         <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{customer.phone}</span>
+                       ) : "-"}
+                     </TableCell>
+                     <TableCell>
+                       {(customer.address_city || customer.active_city) && customer.address_state ? (
+                         <span>{customer.address_city || customer.active_city}/{customer.address_state}</span>
+                       ) : (
+                         <span className="text-muted-foreground">-</span>
+                       )}
+                     </TableCell>
+                     {isFranchisor && (
+                       <TableCell>
+                         <Badge variant="outline">{customer.unit?.name || "-"}</Badge>
+                       </TableCell>
+                     )}
+                     <TableCell>
+                       <Badge variant={customer.is_active ? "default" : "secondary"}>
+                         {customer.is_active ? "Ativo" : "Inativo"}
+                       </Badge>
+                     </TableCell>
+                     <TableCell>
+                       <Badge variant="secondary">{customer.total_services}</Badge>
+                     </TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"

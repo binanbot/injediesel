@@ -194,6 +194,7 @@ export type Database = {
           cnpj: string | null
           cpf: string | null
           created_at: string | null
+          created_by: string | null
           email: string | null
           full_name: string
           id: string
@@ -203,6 +204,7 @@ export type Database = {
           type: string
           unit_id: string
           updated_at: string | null
+          updated_by: string | null
           whatsapp: string | null
           zip_code: string | null
         }
@@ -218,6 +220,7 @@ export type Database = {
           cnpj?: string | null
           cpf?: string | null
           created_at?: string | null
+          created_by?: string | null
           email?: string | null
           full_name: string
           id?: string
@@ -227,6 +230,7 @@ export type Database = {
           type?: string
           unit_id: string
           updated_at?: string | null
+          updated_by?: string | null
           whatsapp?: string | null
           zip_code?: string | null
         }
@@ -242,6 +246,7 @@ export type Database = {
           cnpj?: string | null
           cpf?: string | null
           created_at?: string | null
+          created_by?: string | null
           email?: string | null
           full_name?: string
           id?: string
@@ -251,6 +256,7 @@ export type Database = {
           type?: string
           unit_id?: string
           updated_at?: string | null
+          updated_by?: string | null
           whatsapp?: string | null
           zip_code?: string | null
         }
