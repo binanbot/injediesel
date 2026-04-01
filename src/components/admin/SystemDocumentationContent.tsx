@@ -940,6 +940,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
         {/* ── REGRAS DE NEGÓCIO OFICIAIS ─── */}
+        <div id="regras-negocio" className="scroll-mt-20" />
         <SectionBlock printMode={printMode}>
           <SectionTitle printMode={printMode}>
             <BookOpen className="h-5 w-5" />
