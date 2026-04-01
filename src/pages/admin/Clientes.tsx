@@ -11,6 +11,8 @@ import {
   X,
   Building2,
   MapPin,
+  ToggleLeft,
+  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
