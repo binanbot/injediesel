@@ -15,8 +15,10 @@ import {
   Eye,
   EyeOff,
   Upload,
+  Download,
   Loader2,
   Link as LinkIcon,
+  FileSpreadsheet,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
