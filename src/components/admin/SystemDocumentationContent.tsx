@@ -1429,11 +1429,267 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
           </div>
         </SectionBlock>
 
+        {/* ── ESTADOS E TRANSIÇÕES ───────────────────────── */}
+        <SectionBlock printMode={printMode}>
+          <SectionTitle printMode={printMode}>
+            <GitBranch className="h-5 w-5" /> ESTADOS E TRANSIÇÕES
+          </SectionTitle>
+          <p className={`mb-6 ${subtextColor}`}>
+            Referência oficial de todos os status do sistema, transições permitidas, responsáveis e efeitos colaterais de cada mudança de estado.
+          </p>
+
+          {/* ─── 1. Arquivos ECU ─── */}
+          <div className="mb-8 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-3 ${headingColor}`}>1. Status de Arquivos ECU (received_files.status)</h3>
+            <div className="overflow-x-auto">
+              <table className={`w-full text-xs border-collapse ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>
+                <thead>
+                  <tr className={printMode ? "bg-slate-100" : "bg-slate-800"}>
+                    {["Status técnico", "Label", "Descrição", "Quem altera", "Transições permitidas", "Bloqueios", "Efeitos colaterais"].map(h => (
+                      <th key={h} className={`p-2 text-left font-semibold ${printMode ? "border border-slate-300 text-slate-900" : "border border-slate-700 text-white"}`}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className={subtextColor}>
+                  {[
+                    ["pending", "Pendente", "Arquivo enviado, aguardando processamento.", "Sistema (automático)", "→ in_progress", "Não pode ir direto para completed", "Insere file_status_history. Notificação no dashboard admin. Contabiliza arquivo pendente."],
+                    ["in_progress", "Em Processamento", "Arquivo sendo trabalhado pela equipe técnica.", "Admin / Suporte", "→ completed, → rejected", "Não pode voltar para pending", "Insere file_status_history. Atualiza contadores do dashboard."],
+                    ["completed", "Concluído", "Arquivo processado e disponível para download.", "Admin / Suporte", "→ in_progress (reprocessamento)", "Não pode ir para pending", "Insere file_status_history. arquivo_modificado_url preenchido. Notificação para franqueado. Incrementa total de serviços do dashboard."],
+                    ["rejected", "Rejeitado", "Arquivo recusado por problemas técnicos.", "Admin / Suporte", "→ in_progress (revisão)", "Não pode ir para completed diretamente", "Insere file_status_history com observação obrigatória. Franqueado pode abrir correction_ticket."],
+                  ].map(([status, label, desc, who, allowed, blocked, effects]) => (
+                    <tr key={status} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                      <td className={`p-2 font-mono font-bold ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{status}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{label}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{desc}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{who}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{allowed}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{blocked}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{effects}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-1 text-sm">
+                <div><strong className={headingColor}>Timeline:</strong><span className={` ${subtextColor}`}> Cada transição gera entrada em file_status_history com alterado_por, status_anterior, status_novo, observacao e timestamp.</span></div>
+                <div><strong className={headingColor}>Dashboard:</strong><span className={` ${subtextColor}`}> Contadores de pendentes/em progresso/concluídos atualizados em tempo real.</span></div>
+                <div><strong className={headingColor}>Notificações:</strong><span className={` ${subtextColor}`}> Mudança para completed dispara notificação visual + sonora para o franqueado.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* ─── 2. Pagamento da Loja ─── */}
+          <div className="mb-8 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-3 ${headingColor}`}>2. Status de Pagamento (orders.payment_status)</h3>
+            <div className="overflow-x-auto">
+              <table className={`w-full text-xs border-collapse ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>
+                <thead>
+                  <tr className={printMode ? "bg-slate-100" : "bg-slate-800"}>
+                    {["Status técnico", "Label", "Descrição", "Quem altera", "Transições permitidas", "Bloqueios", "Efeitos colaterais"].map(h => (
+                      <th key={h} className={`p-2 text-left font-semibold ${printMode ? "border border-slate-300 text-slate-900" : "border border-slate-700 text-white"}`}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className={subtextColor}>
+                  {[
+                    ["pendente", "Pendente", "Pagamento não realizado.", "Sistema (automático na criação)", "→ aguardando_comprovante, → aprovado, → recusado", "Não pode ir para reembolsado", "Registro em order_status_history com status_type implícito."],
+                    ["aguardando_comprovante", "Aguardando Comprovante", "Esperando franqueado enviar comprovante.", "Admin", "→ aprovado, → recusado", "Não pode voltar para pendente", "Insere order_status_history."],
+                    ["aprovado", "Aprovado", "Pagamento confirmado.", "Admin", "→ reembolsado", "Estado final (exceto reembolso)", "Insere order_status_history. Pode liberar separação logística."],
+                    ["recusado", "Recusado", "Pagamento não aceito.", "Admin", "→ pendente, → aguardando_comprovante", "Não pode ir para aprovado diretamente", "Insere order_status_history com observação."],
+                    ["reembolsado", "Reembolsado", "Valor devolvido ao franqueado.", "Admin", "Nenhuma (estado terminal)", "Estado final absoluto", "Insere order_status_history. Pode gerar lançamento financeiro de estorno."],
+                  ].map(([status, label, desc, who, allowed, blocked, effects]) => (
+                    <tr key={status} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                      <td className={`p-2 font-mono font-bold ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{status}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{label}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{desc}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{who}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{allowed}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{blocked}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{effects}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-1 text-sm">
+                <div><strong className={headingColor}>Timeline:</strong><span className={` ${subtextColor}`}> Cada alteração gera entrada em order_status_history. Exibida na timeline do pedido com ícone de pagamento.</span></div>
+                <div><strong className={headingColor}>Dashboard:</strong><span className={` ${subtextColor}`}> Contagem de pedidos por status de pagamento no painel admin.</span></div>
+                <div><strong className={headingColor}>Badges:</strong><span className={` ${subtextColor}`}> OrderStatusBadges exibe badge colorido (amarelo=pendente, azul=aguardando, verde=aprovado, vermelho=recusado, roxo=reembolsado).</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* ─── 3. Logística da Loja ─── */}
+          <div className="mb-8 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-3 ${headingColor}`}>3. Status de Logística (orders.fulfillment_status)</h3>
+            <div className="overflow-x-auto">
+              <table className={`w-full text-xs border-collapse ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>
+                <thead>
+                  <tr className={printMode ? "bg-slate-100" : "bg-slate-800"}>
+                    {["Status técnico", "Label", "Descrição", "Quem altera", "Transições permitidas", "Bloqueios", "Efeitos colaterais"].map(h => (
+                      <th key={h} className={`p-2 text-left font-semibold ${printMode ? "border border-slate-300 text-slate-900" : "border border-slate-700 text-white"}`}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className={subtextColor}>
+                  {[
+                    ["pedido_realizado", "Pedido Realizado", "Pedido criado pelo franqueado.", "Sistema (automático)", "→ em_separacao", "Início do fluxo", "orders.status sincronizado. Entrada em order_status_history. Lançamentos financeiros criados."],
+                    ["em_separacao", "Em Separação", "Itens sendo coletados no estoque.", "Admin", "→ em_preparacao, → cancelado", "Não pode voltar a pedido_realizado", "Insere order_status_history. orders.status = em_separacao."],
+                    ["em_preparacao", "Em Preparação", "Pedido sendo embalado para envio.", "Admin", "→ enviado, → cancelado", "Sequencial — não pula etapas", "Insere order_status_history. orders.status sincronizado."],
+                    ["enviado", "Enviado", "Pedido despachado para transportadora.", "Admin", "→ em_transito", "Não pode cancelar após envio", "Insere order_status_history."],
+                    ["em_transito", "Em Trânsito", "Pedido em rota de entrega.", "Admin", "→ entregue", "Sequencial", "Insere order_status_history."],
+                    ["entregue", "Entregue", "Pedido recebido pelo franqueado.", "Admin", "Nenhuma (estado terminal)", "Estado final", "Insere order_status_history. orders.status = entregue."],
+                    ["cancelado", "Cancelado", "Pedido cancelado antes do envio.", "Admin", "Nenhuma (estado terminal)", "Só permitido antes de enviado", "Insere order_status_history com observação. orders.status = cancelado. Pode requerer estorno financeiro."],
+                  ].map(([status, label, desc, who, allowed, blocked, effects]) => (
+                    <tr key={status} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                      <td className={`p-2 font-mono font-bold ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{status}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{label}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{desc}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{who}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{allowed}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{blocked}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{effects}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-1 text-sm">
+                <div><strong className={headingColor}>Sincronização:</strong><span className={` ${subtextColor}`}> orders.status é sempre mantido em sincronia com fulfillment_status pela camada de aplicação (updateOrderAdminStatuses).</span></div>
+                <div><strong className={headingColor}>Timeline:</strong><span className={` ${subtextColor}`}> OrderTimeline exibe progresso visual com ícones (Package, Truck, CheckCircle). OrderTimelineFromHistory mostra histórico real com datas.</span></div>
+                <div><strong className={headingColor}>Dashboard:</strong><span className={` ${subtextColor}`}> OrderStatusBadges no admin. Contagem por status em /admin/compras.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* ─── 4. Tickets de Correção ─── */}
+          <div className="mb-8 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-3 ${headingColor}`}>4. Status de Tickets de Correção (correction_tickets.status)</h3>
+            <div className="overflow-x-auto">
+              <table className={`w-full text-xs border-collapse ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>
+                <thead>
+                  <tr className={printMode ? "bg-slate-100" : "bg-slate-800"}>
+                    {["Status técnico", "Label", "Descrição", "Quem altera", "Transições permitidas", "Bloqueios", "Efeitos colaterais"].map(h => (
+                      <th key={h} className={`p-2 text-left font-semibold ${printMode ? "border border-slate-300 text-slate-900" : "border border-slate-700 text-white"}`}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className={subtextColor}>
+                  {[
+                    ["aberto", "Aberto", "Ticket criado pelo franqueado.", "Sistema (automático)", "→ em_andamento", "Não pode ir direto para resolvido", "Cria conversa de suporte vinculada (opcional). Contabiliza no dashboard admin."],
+                    ["em_andamento", "Em Andamento", "Equipe técnica analisando a solicitação.", "Admin / Suporte", "→ resolvido, → recusado", "Não pode voltar para aberto", "Atualiza updated_at. Pode gerar mensagens na conversa vinculada."],
+                    ["resolvido", "Resolvido", "Correção aplicada e arquivo re-enviado.", "Admin / Suporte", "Nenhuma (estado terminal)", "Estado final", "Pode atualizar received_file vinculado. Notificação para franqueado."],
+                    ["recusado", "Recusado", "Solicitação não procede.", "Admin / Suporte", "Nenhuma (estado terminal)", "Estado final", "Observação obrigatória. Franqueado pode abrir novo ticket se necessário."],
+                  ].map(([status, label, desc, who, allowed, blocked, effects]) => (
+                    <tr key={status} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                      <td className={`p-2 font-mono font-bold ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{status}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{label}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{desc}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{who}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{allowed}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{blocked}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{effects}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-1 text-sm">
+                <div><strong className={headingColor}>Timeline:</strong><span className={` ${subtextColor}`}> TicketTimeline exibe progresso visual com ícones e cores por status.</span></div>
+                <div><strong className={headingColor}>Histórico:</strong><span className={` ${subtextColor}`}> updated_at atualizado a cada transição. Conversa de suporte vinculada registra interações.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* ─── 5. Conversas de Suporte ─── */}
+          <div className="mb-8 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-3 ${headingColor}`}>5. Status de Conversas de Suporte (support_conversations.status)</h3>
+            <div className="overflow-x-auto">
+              <table className={`w-full text-xs border-collapse ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>
+                <thead>
+                  <tr className={printMode ? "bg-slate-100" : "bg-slate-800"}>
+                    {["Status técnico", "Label", "Descrição", "Quem altera", "Transições permitidas", "Bloqueios", "Efeitos colaterais"].map(h => (
+                      <th key={h} className={`p-2 text-left font-semibold ${printMode ? "border border-slate-300 text-slate-900" : "border border-slate-700 text-white"}`}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className={subtextColor}>
+                  {[
+                    ["open", "Aberto", "Conversa ativa aguardando ou em atendimento.", "Sistema (automático na criação)", "→ closed", "—", "Trigger atualiza updated_at a cada nova mensagem. Realtime WebSocket ativo. Contabiliza no badge do admin."],
+                    ["closed", "Fechado", "Conversa encerrada.", "Admin / Suporte", "→ open (reabrir)", "—", "Desativa notificações. Franqueado pode reabrir se necessário."],
+                  ].map(([status, label, desc, who, allowed, blocked, effects]) => (
+                    <tr key={status} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                      <td className={`p-2 font-mono font-bold ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{status}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{label}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{desc}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{who}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{allowed}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{blocked}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{effects}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-1 text-sm">
+                <div><strong className={headingColor}>Realtime:</strong><span className={` ${subtextColor}`}> Mensagens novas disparam Realtime WebSocket. Trigger update_support_conversation_updated_at() atualiza timestamp da conversa.</span></div>
+                <div><strong className={headingColor}>Dashboard:</strong><span className={` ${subtextColor}`}> /admin/suporte lista conversas abertas com prioridade. Notificação sonora + visual para novas mensagens.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* ─── 6. Contratos ─── */}
+          <div className="mb-8 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-3 ${headingColor}`}>6. Status de Contratos (contract_history.status + profiles_franchisees.contract_expiration_date)</h3>
+            <div className="overflow-x-auto">
+              <table className={`w-full text-xs border-collapse ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>
+                <thead>
+                  <tr className={printMode ? "bg-slate-100" : "bg-slate-800"}>
+                    {["Status técnico", "Label", "Descrição", "Quem altera", "Transições permitidas", "Bloqueios", "Efeitos colaterais"].map(h => (
+                      <th key={h} className={`p-2 text-left font-semibold ${printMode ? "border border-slate-300 text-slate-900" : "border border-slate-700 text-white"}`}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className={subtextColor}>
+                  {[
+                    ["active", "Ativo", "Contrato vigente, todas as funcionalidades liberadas.", "Admin (ao criar/renovar)", "→ expiring (automático), → expired (automático), → cancelled", "—", "Franqueado tem acesso total ao sistema."],
+                    ["expiring", "Expirando", "Faltam ≤ 30 dias para vencimento (cálculo em runtime).", "Sistema (useContractStatus)", "→ expired (automático)", "Não é um status persistido — calculado em tempo real", "ContractAlert exibe aviso. Barra de progresso muda para amarelo/vermelho. Botão Renovar destacado."],
+                    ["expired", "Expirado", "contract_expiration_date < hoje.", "Sistema (automático)", "→ active (após renovação pelo admin)", "Bloqueia envios e downloads", "ContractBlockOverlay impede ações. Franqueado vê overlay de bloqueio. Admin pode renovar em /admin/contratos."],
+                    ["cancelled", "Cancelado", "Contrato encerrado manualmente.", "Admin", "→ active (novo contrato)", "Estado terminal (exceto novo contrato)", "Registro em contract_history. Bloqueio total de funcionalidades."],
+                  ].map(([status, label, desc, who, allowed, blocked, effects]) => (
+                    <tr key={status} className={printMode ? "border border-slate-300" : "border border-slate-700"}>
+                      <td className={`p-2 font-mono font-bold ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{status}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{label}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{desc}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{who}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{allowed}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{blocked}</td>
+                      <td className={`p-2 ${printMode ? "border border-slate-300" : "border border-slate-700"}`}>{effects}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-1 text-sm">
+                <div><strong className={headingColor}>Histórico:</strong><span className={` ${subtextColor}`}> Cada renovação gera registro em contract_history com start_date, end_date, contract_type, status e notes.</span></div>
+                <div><strong className={headingColor}>Dashboard:</strong><span className={` ${subtextColor}`}> /admin/contratos exibe filtros por Ativo/Expirando/Expirado. Contadores atualizados em tempo real.</span></div>
+                <div><strong className={headingColor}>Notificações:</strong><span className={` ${subtextColor}`}> ContractAlert no layout do franqueado. Animação pulse se &lt; 15 dias. Barra de progresso verde → amarelo → vermelho.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+        </SectionBlock>
+
         {/* ── FOOTER ───────────────────────── */}
         <div className={`mt-8 pt-6 border-t text-center text-sm ${cx(printMode, "border-border text-muted-foreground", "border-slate-200 text-slate-500")}`}>
           <p>© {new Date().getFullYear()} Injediesel - Todos os direitos reservados</p>
           <p className="mt-1">Documento gerado automaticamente pelo sistema</p>
-          <p className="mt-2 text-xs">Versão 3.2 - Atualizado em {currentDate}</p>
+          <p className="mt-2 text-xs">Versão 3.3 - Atualizado em {currentDate}</p>
         </div>
       </div>
     </div>
