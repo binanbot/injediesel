@@ -110,7 +110,7 @@ export default function ProductRanking({ dateRange, franchiseProfileId }: Produc
               <div className="text-right flex-shrink-0">
                 <p className="font-bold">
                   {highlight === "qty"
-                    ? `${product.total_qty} un.`
+                    ? `${product.total_quantity} un.`
                     : formatCurrency(product.total_revenue)}
                 </p>
                 <p className="text-xs text-muted-foreground">
