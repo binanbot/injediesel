@@ -1197,6 +1197,7 @@ export type Database = {
         Returns: boolean
       }
       is_franchisor_admin: { Args: { _user_id: string }; Returns: boolean }
+      safe_delete_customer: { Args: { _customer_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "suporte" | "franqueado"
