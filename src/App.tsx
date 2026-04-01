@@ -39,6 +39,9 @@ const LojaCheckout = lazy(() => import("./pages/franqueado/LojaCheckout"));
 const Carrinho = lazy(() => import("./pages/franqueado/Carrinho"));
 const MeusPedidos = lazy(() => import("./pages/franqueado/MeusPedidos"));
 const PedidoDetalhe = lazy(() => import("./pages/franqueado/PedidoDetalhe"));
+const FranqueadoClientes = lazy(() => import("./pages/franqueado/Clientes"));
+const FranqueadoClienteForm = lazy(() => import("./pages/franqueado/ClienteForm"));
+const FranqueadoClienteDetalhe = lazy(() => import("./pages/franqueado/ClienteDetalhe"));
 import LandingLancamento from "./pages/franqueado/LandingLancamento";
 const DocumentacaoPublica = lazy(() => import("./pages/DocumentacaoPublica"));
 
@@ -136,7 +139,10 @@ const App = () => (
                 <Route path="loja/pedidos" element={<MeusPedidos />} />
                 <Route path="loja/pedidos/:id" element={<PedidoDetalhe />} />
                 <Route path="meus-pedidos" element={<MeusPedidos />} />
-                
+                <Route path="clientes" element={<FranqueadoClientes />} />
+                <Route path="clientes/novo" element={<FranqueadoClienteForm />} />
+                <Route path="clientes/:id" element={<FranqueadoClienteDetalhe />} />
+                <Route path="clientes/:id/editar" element={<FranqueadoClienteForm />} />
               </Route>
 
               {/* Admin Routes */}
