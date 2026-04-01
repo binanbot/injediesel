@@ -129,10 +129,10 @@ export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuB
               <DropdownMenuContent align="end" className="glass-card border-border/40">
                 <DropdownMenuLabel className="text-foreground">Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-border/30" />
-                <DropdownMenuItem className="focus:bg-secondary/50 text-foreground">Perfil</DropdownMenuItem>
-                <DropdownMenuItem className="focus:bg-secondary/50 text-foreground">Configurações</DropdownMenuItem>
+                <DropdownMenuItem className="focus:bg-secondary/50 text-foreground cursor-pointer" onClick={() => navigate("/franqueado/perfil")}>Perfil</DropdownMenuItem>
+                <DropdownMenuItem className="focus:bg-secondary/50 text-foreground cursor-pointer" onClick={() => navigate("/franqueado/perfil")}>Configurações</DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-border/30" />
-                <DropdownMenuItem className="text-destructive focus:bg-destructive/10">Sair</DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive focus:bg-destructive/10 cursor-pointer" onClick={async () => { await signOut(); navigate("/login"); }}>Sair</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
