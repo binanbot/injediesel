@@ -62,7 +62,7 @@ const FranqueadoDetalhe = lazy(() => import("./pages/admin/FranqueadoDetalhe"));
 const GerenciarCobertura = lazy(() => import("./pages/admin/GerenciarCobertura"));
 const Clientes = lazy(() => import("./pages/admin/Clientes"));
 const ClienteDetalhe = lazy(() => import("./pages/admin/ClienteDetalhe"));
-const ImportarProdutos = lazy(() => import("./pages/admin/ImportarProdutos"));
+
 const ComprasFranqueados = lazy(() => import("./pages/admin/ComprasFranqueados"));
 const CompraDetalhe = lazy(() => import("./pages/admin/CompraDetalhe"));
 const Produtos = lazy(() => import("./pages/admin/Produtos"));
@@ -179,11 +179,6 @@ const App = () => (
                 <Route path="contratos" element={<AdminContratos />} />
                 <Route path="documentacao" element={<SystemDocumentationPage />} />
                 <Route path="produtos" element={<Produtos />} />
-                <Route path="importar-produtos" element={
-                  <ErrorBoundary moduleName="Importar Produtos">
-                    <ImportarProdutos />
-                  </ErrorBoundary>
-                } />
                 <Route path="compras" element={<ComprasFranqueados />} />
                 <Route path="compras/:id" element={<CompraDetalhe />} />
                 <Route path="loja-dashboard" element={<PromaxDashboard />} />
