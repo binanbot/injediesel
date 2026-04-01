@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useCartStore, CartItem } from "@/stores/useCartStore";
 import { cn } from "@/lib/utils";
-import { createOrderFromCart } from "@/services/orderService";
+import { createOrderFromCart, openOrderOnWhatsApp } from "@/services/orderService";
 import {
   DeliveryAddressForm,
   DeliveryAddress,
