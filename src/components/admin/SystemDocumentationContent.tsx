@@ -1224,11 +1224,216 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
           </div>
         </SectionBlock>
 
+        {/* ── MODELO CANÔNICO DE DOMÍNIO ───────────────────────── */}
+        <SectionBlock printMode={printMode}>
+          <SectionTitle printMode={printMode}>
+            <Database className="h-5 w-5" /> MODELO CANÔNICO DE DOMÍNIO
+          </SectionTitle>
+          <p className={`mb-6 ${subtextColor}`}>
+            Referência definitiva de cada entidade do sistema: definição, responsabilidade, relacionamentos, tabela de origem, fluxos e visibilidade.
+          </p>
+
+          {/* 1. Usuário */}
+          <div className="mb-6 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-2 ${headingColor}`}>1. Usuário (auth.users)</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-2 text-sm">
+                <div><strong className={headingColor}>Definição:</strong><span className={` ${subtextColor}`}> Registro de autenticação gerenciado pelo serviço de Auth. Representa uma credencial de acesso ao sistema.</span></div>
+                <div><strong className={headingColor}>Responsabilidade:</strong><span className={` ${subtextColor}`}> Autenticação (login/logout), geração de JWT, recuperação de senha.</span></div>
+                <div><strong className={headingColor}>Relacionamentos:</strong><span className={` ${subtextColor}`}> 1:N → user_roles (papéis), 1:1 → profiles_franchisees (via user_id), referenciado indiretamente por todas as entidades via auth.uid().</span></div>
+                <div><strong className={headingColor}>Tabela:</strong><span className={` ${subtextColor}`}> auth.users (gerenciada pelo serviço de Auth — não editável diretamente).</span></div>
+                <div><strong className={headingColor}>Fluxos:</strong><span className={` ${subtextColor}`}> Login, signup, reset de senha, verificação de e-mail.</span></div>
+                <div><strong className={headingColor}>Visibilidade:</strong><span className={` ${subtextColor}`}> Interno ao sistema. Nenhuma tela expõe auth.users diretamente.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* 2. Role */}
+          <div className="mb-6 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-2 ${headingColor}`}>2. Role (Papel do Usuário)</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-2 text-sm">
+                <div><strong className={headingColor}>Definição:</strong><span className={` ${subtextColor}`}> Atribuição de permissão a um usuário. Enum: admin, suporte, franqueado.</span></div>
+                <div><strong className={headingColor}>Responsabilidade:</strong><span className={` ${subtextColor}`}> Controlar acesso via RLS. Determina quais rotas, dados e ações o usuário pode executar.</span></div>
+                <div><strong className={headingColor}>Relacionamentos:</strong><span className={` ${subtextColor}`}> N:1 → auth.users (user_id). Validado pela função has_role() e is_franchisor_admin().</span></div>
+                <div><strong className={headingColor}>Tabela:</strong><span className={` ${subtextColor}`}> public.user_roles (id, user_id, role, created_at). Unique constraint em (user_id, role).</span></div>
+                <div><strong className={headingColor}>Fluxos:</strong><span className={` ${subtextColor}`}> useAuth() no frontend, todas as RLS policies no banco.</span></div>
+                <div><strong className={headingColor}>Visibilidade:</strong><span className={` ${subtextColor}`}> Admin: gerencia roles em /admin/franqueados/:id. Franqueado: apenas lê seu próprio role.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* 3. Perfil do Franqueado */}
+          <div className="mb-6 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-2 ${headingColor}`}>3. Perfil do Franqueado</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-2 text-sm">
+                <div><strong className={headingColor}>Definição:</strong><span className={` ${subtextColor}`}> Dados cadastrais, contratuais e operacionais de um franqueado. Criado automaticamente no primeiro acesso.</span></div>
+                <div><strong className={headingColor}>Responsabilidade:</strong><span className={` ${subtextColor}`}> Armazenar dados pessoais, endereço, equipamentos (KESS/KTAG), tipo de contrato, áreas de atuação e endereço de entrega.</span></div>
+                <div><strong className={headingColor}>Relacionamentos:</strong><span className={` ${subtextColor}`}> 1:1 → auth.users (user_id), 1:N → units (franchisee_id), 1:N → orders (franchise_profile_id), 1:N → financial_entries.</span></div>
+                <div><strong className={headingColor}>Tabela:</strong><span className={` ${subtextColor}`}> public.profiles_franchisees. Colunas-chave: email, display_name, cpf, cnpj, contract_expiration_date, delivery_address (JSONB), service_areas (JSONB).</span></div>
+                <div><strong className={headingColor}>Fluxos:</strong><span className={` ${subtextColor}`}> Perfil (/franqueado/perfil), Checkout (preenchimento automático de endereço), Importação em massa, Detalhes admin.</span></div>
+                <div><strong className={headingColor}>Visibilidade:</strong><span className={` ${subtextColor}`}> Franqueado: lê/edita seu próprio perfil. Admin: lê/edita todos via /admin/franqueados/:id.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* 4. Unidade */}
+          <div className="mb-6 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-2 ${headingColor}`}>4. Unidade</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-2 text-sm">
+                <div><strong className={headingColor}>Definição:</strong><span className={` ${subtextColor}`}> Ponto de operação de um franqueado. Representa uma filial ou local de atendimento.</span></div>
+                <div><strong className={headingColor}>Responsabilidade:</strong><span className={` ${subtextColor}`}> Isolamento multi-tenant. Todas as entidades operacionais (clientes, veículos, serviços, arquivos) são vinculadas a uma unit_id.</span></div>
+                <div><strong className={headingColor}>Relacionamentos:</strong><span className={` ${subtextColor}`}> N:1 → profiles_franchisees (franchisee_id), 1:N → customers, vehicles, services, received_files, orders.</span></div>
+                <div><strong className={headingColor}>Tabela:</strong><span className={` ${subtextColor}`}> public.units (id, name, city, state, country, franchisee_id, is_active). Função get_user_unit_id() resolve unit do usuário logado.</span></div>
+                <div><strong className={headingColor}>Fluxos:</strong><span className={` ${subtextColor}`}> Filtro de dados em todas as telas, RLS via get_user_unit_id(), gestão em /admin/franqueados.</span></div>
+                <div><strong className={headingColor}>Visibilidade:</strong><span className={` ${subtextColor}`}> Franqueado: vê apenas sua unidade. Admin: vê e gerencia todas.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* 5. Cliente */}
+          <div className="mb-6 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-2 ${headingColor}`}>5. Cliente</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-2 text-sm">
+                <div><strong className={headingColor}>Definição:</strong><span className={` ${subtextColor}`}> Pessoa física ou jurídica atendida por uma unidade franqueada.</span></div>
+                <div><strong className={headingColor}>Responsabilidade:</strong><span className={` ${subtextColor}`}> Centralizar dados de contato, documentos (CPF/CNPJ) e histórico de serviços e veículos.</span></div>
+                <div><strong className={headingColor}>Relacionamentos:</strong><span className={` ${subtextColor}`}> N:1 → units (unit_id), 1:N → vehicles, 1:N → services, 1:N → received_files (customer_id).</span></div>
+                <div><strong className={headingColor}>Tabela:</strong><span className={` ${subtextColor}`}> public.customers (full_name, cpf, cnpj, email, phone, active_city, address_state, unit_id).</span></div>
+                <div><strong className={headingColor}>Fluxos:</strong><span className={` ${subtextColor}`}> Cadastro via NovoClienteDrawer, listagem /admin/clientes, detalhes /admin/clientes/:id, envio de arquivos ECU, exportação CSV com LGPD.</span></div>
+                <div><strong className={headingColor}>Visibilidade:</strong><span className={` ${subtextColor}`}> Franqueado: apenas clientes da sua unidade. Admin: todos os clientes com filtros por unidade/cidade/estado.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* 6. Veículo */}
+          <div className="mb-6 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-2 ${headingColor}`}>6. Veículo</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-2 text-sm">
+                <div><strong className={headingColor}>Definição:</strong><span className={` ${subtextColor}`}> Veículo associado a um cliente, identificado por placa.</span></div>
+                <div><strong className={headingColor}>Responsabilidade:</strong><span className={` ${subtextColor}`}> Vincular serviços e arquivos ECU a um veículo específico. Armazenar dados técnicos (marca, modelo, ano, motor).</span></div>
+                <div><strong className={headingColor}>Relacionamentos:</strong><span className={` ${subtextColor}`}> N:1 → customers (customer_id), N:1 → units (unit_id), 1:N → services, 1:N → received_files (vehicle_id).</span></div>
+                <div><strong className={headingColor}>Tabela:</strong><span className={` ${subtextColor}`}> public.vehicles (plate, brand, model, year, category, engine, customer_id, unit_id).</span></div>
+                <div><strong className={headingColor}>Fluxos:</strong><span className={` ${subtextColor}`}> Cadastro automático via lookup de placa, detalhes do cliente, envio de arquivo ECU.</span></div>
+                <div><strong className={headingColor}>Visibilidade:</strong><span className={` ${subtextColor}`}> Franqueado: veículos da sua unidade. Admin: todos.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* 7. Arquivo ECU */}
+          <div className="mb-6 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-2 ${headingColor}`}>7. Arquivo ECU</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-2 text-sm">
+                <div><strong className={headingColor}>Definição:</strong><span className={` ${subtextColor}`}> Arquivo de calibração de ECU enviado por um franqueado para processamento pela matriz.</span></div>
+                <div><strong className={headingColor}>Responsabilidade:</strong><span className={` ${subtextColor}`}> Rastrear o ciclo de vida do arquivo: envio → processamento → entrega. Armazena original e modificado no Storage.</span></div>
+                <div><strong className={headingColor}>Relacionamentos:</strong><span className={` ${subtextColor}`}> N:1 → units (unit_id), N:1 → customers (customer_id), N:1 → vehicles (vehicle_id), 1:N → file_status_history, 1:N → correction_tickets.</span></div>
+                <div><strong className={headingColor}>Tabela:</strong><span className={` ${subtextColor}`}> public.received_files. Status: pending → in_progress → completed / rejected. Campos: placa, servico, categorias, valor_brl, arquivo_original_url, arquivo_modificado_url.</span></div>
+                <div><strong className={headingColor}>Fluxos:</strong><span className={` ${subtextColor}`}> Envio (/franqueado/enviar-arquivo), gestão (/admin/arquivos), detalhes, correções, notificações de status.</span></div>
+                <div><strong className={headingColor}>Visibilidade:</strong><span className={` ${subtextColor}`}> Franqueado: arquivos da sua unidade. Admin: todos, com filtros e ações de status.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* 8. Pedido da Loja */}
+          <div className="mb-6 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-2 ${headingColor}`}>8. Pedido da Loja Promax</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-2 text-sm">
+                <div><strong className={headingColor}>Definição:</strong><span className={` ${subtextColor}`}> Solicitação de compra de peças/acessórios feita por um franqueado na Loja Promax.</span></div>
+                <div><strong className={headingColor}>Responsabilidade:</strong><span className={` ${subtextColor}`}> Controlar ciclo de compra com dois eixos independentes: pagamento (payment_status) e logística (fulfillment_status). Gerar snapshot de endereço e itens.</span></div>
+                <div><strong className={headingColor}>Relacionamentos:</strong><span className={` ${subtextColor}`}> N:1 → profiles_franchisees (franchise_profile_id), N:1 → units (unit_id), 1:N → order_items, 1:N → order_status_history, 1:N → financial_entries.</span></div>
+                <div><strong className={headingColor}>Tabela:</strong><span className={` ${subtextColor}`}> public.orders. Campos: order_number, payment_status, fulfillment_status, payment_method, payment_note, delivery_address (JSONB), total_amount.</span></div>
+                <div><strong className={headingColor}>Fluxos:</strong><span className={` ${subtextColor}`}> Checkout → WhatsApp → status (/franqueado/pedidos/:id), gestão admin (/admin/compras/:id), timeline, badges, dashboard.</span></div>
+                <div><strong className={headingColor}>Visibilidade:</strong><span className={` ${subtextColor}`}> Franqueado: seus pedidos. Admin: todos, com painel de alteração de status.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* 9. Item do Pedido */}
+          <div className="mb-6 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-2 ${headingColor}`}>9. Item do Pedido</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-2 text-sm">
+                <div><strong className={headingColor}>Definição:</strong><span className={` ${subtextColor}`}> Linha individual de produto dentro de um pedido. Contém snapshot imutável do produto no momento da compra.</span></div>
+                <div><strong className={headingColor}>Responsabilidade:</strong><span className={` ${subtextColor}`}> Preservar dados históricos (nome, SKU, preço unitário) independente de alterações futuras no catálogo.</span></div>
+                <div><strong className={headingColor}>Relacionamentos:</strong><span className={` ${subtextColor}`}> N:1 → orders (order_id), N:1 → products (product_id, referência fraca — produto pode ser removido).</span></div>
+                <div><strong className={headingColor}>Tabela:</strong><span className={` ${subtextColor}`}> public.order_items (product_name, product_sku, unit_price, quantity, line_total, product_snapshot JSONB).</span></div>
+                <div><strong className={headingColor}>Fluxos:</strong><span className={` ${subtextColor}`}> Criado em createOrderFromCart(), exibido em detalhes do pedido (franqueado e admin).</span></div>
+                <div><strong className={headingColor}>Visibilidade:</strong><span className={` ${subtextColor}`}> Franqueado: itens dos seus pedidos. Admin: todos.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* 10. Lançamento Financeiro */}
+          <div className="mb-6 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-2 ${headingColor}`}>10. Lançamento Financeiro</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-2 text-sm">
+                <div><strong className={headingColor}>Definição:</strong><span className={` ${subtextColor}`}> Registro contábil vinculado a um pedido ou operação. Dupla entrada: custo (franqueado) + receita (matriz).</span></div>
+                <div><strong className={headingColor}>Responsabilidade:</strong><span className={` ${subtextColor}`}> Alimentar relatórios financeiros, dashboards e visão consolidada de receita/custo por período.</span></div>
+                <div><strong className={headingColor}>Relacionamentos:</strong><span className={` ${subtextColor}`}> N:1 → profiles_franchisees (franchise_profile_id), N:1 → orders (order_id). Scope: "franqueado" ou "matriz".</span></div>
+                <div><strong className={headingColor}>Tabela:</strong><span className={` ${subtextColor}`}> public.financial_entries (scope, entry_type, category, amount, competency_date, description).</span></div>
+                <div><strong className={headingColor}>Fluxos:</strong><span className={` ${subtextColor}`}> Criado automaticamente em createOrderFromCart(). Consultado em /admin/relatorios e /franqueado/relatorios.</span></div>
+                <div><strong className={headingColor}>Visibilidade:</strong><span className={` ${subtextColor}`}> Franqueado: seus lançamentos (scope=franqueado). Admin: todos (ambos os scopes).</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* 11. Ticket de Correção */}
+          <div className="mb-6 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-2 ${headingColor}`}>11. Ticket de Correção</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-2 text-sm">
+                <div><strong className={headingColor}>Definição:</strong><span className={` ${subtextColor}`}> Solicitação de correção de um arquivo ECU já processado. Vinculado a um received_file e opcionalmente a uma conversa de suporte.</span></div>
+                <div><strong className={headingColor}>Responsabilidade:</strong><span className={` ${subtextColor}`}> Rastrear motivo, anexo alternativo e status da correção (aberto → em_andamento → resolvido / recusado).</span></div>
+                <div><strong className={headingColor}>Relacionamentos:</strong><span className={` ${subtextColor}`}> N:1 → received_files (arquivo_id, referência textual), N:1 → support_conversations (conversation_id), franqueado_id = auth.uid().</span></div>
+                <div><strong className={headingColor}>Tabela:</strong><span className={` ${subtextColor}`}> public.correction_tickets (arquivo_id, motivo, arquivo_anexo_url, status, conversation_id).</span></div>
+                <div><strong className={headingColor}>Fluxos:</strong><span className={` ${subtextColor}`}> Abertura pelo franqueado via detalhes do arquivo, gestão em /admin/correcoes, timeline no ticket.</span></div>
+                <div><strong className={headingColor}>Visibilidade:</strong><span className={` ${subtextColor}`}> Franqueado: seus tickets. Admin/Suporte: todos.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* 12. Conversa de Suporte */}
+          <div className="mb-6 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-2 ${headingColor}`}>12. Conversa de Suporte</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-2 text-sm">
+                <div><strong className={headingColor}>Definição:</strong><span className={` ${subtextColor}`}> Canal de comunicação entre franqueado e equipe de suporte/admin. Suporta anexos e realtime.</span></div>
+                <div><strong className={headingColor}>Responsabilidade:</strong><span className={` ${subtextColor}`}> Gerenciar tópicos de suporte com status (open → closed), mensagens ordenadas e anexos.</span></div>
+                <div><strong className={headingColor}>Relacionamentos:</strong><span className={` ${subtextColor}`}> 1:N → support_messages (conversation_id), N:1 → auth.users (franqueado_id). Referenciado por correction_tickets.</span></div>
+                <div><strong className={headingColor}>Tabela:</strong><span className={` ${subtextColor}`}> public.support_conversations (subject, status, franqueado_id, attachment_url) + public.support_messages (content, sender_id, sender_type).</span></div>
+                <div><strong className={headingColor}>Fluxos:</strong><span className={` ${subtextColor}`}> /franqueado/suporte (abertura e chat), /admin/suporte (gestão e resposta), Realtime WebSocket para mensagens.</span></div>
+                <div><strong className={headingColor}>Visibilidade:</strong><span className={` ${subtextColor}`}> Franqueado: suas conversas. Admin/Suporte: todas.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+
+          {/* 13. Contrato */}
+          <div className="mb-6 break-inside-avoid">
+            <h3 className={`text-lg font-bold mb-2 ${headingColor}`}>13. Contrato</h3>
+            <InfoCard printMode={printMode}>
+              <div className="space-y-2 text-sm">
+                <div><strong className={headingColor}>Definição:</strong><span className={` ${subtextColor}`}> Registro do vínculo contratual entre franqueado e matriz. O contrato ativo fica em profiles_franchisees; renovações e histórico em contract_history.</span></div>
+                <div><strong className={headingColor}>Responsabilidade:</strong><span className={` ${subtextColor}`}> Controlar validade do acesso do franqueado. Contrato expirado bloqueia funcionalidades via ContractBlockOverlay.</span></div>
+                <div><strong className={headingColor}>Relacionamentos:</strong><span className={` ${subtextColor}`}> profiles_franchisees.contract_expiration_date (ativo), contract_history (franqueado_id) para histórico de renovações.</span></div>
+                <div><strong className={headingColor}>Tabela:</strong><span className={` ${subtextColor}`}> public.contract_history (start_date, end_date, contract_type, status, notes, franqueado_id).</span></div>
+                <div><strong className={headingColor}>Fluxos:</strong><span className={` ${subtextColor}`}> useContractStatus() verifica validade, /admin/contratos para gestão, alerta visual no layout do franqueado.</span></div>
+                <div><strong className={headingColor}>Visibilidade:</strong><span className={` ${subtextColor}`}> Franqueado: vê status e progresso do seu contrato. Admin: gestão completa com filtros e renovação.</span></div>
+              </div>
+            </InfoCard>
+          </div>
+        </SectionBlock>
+
         {/* ── FOOTER ───────────────────────── */}
         <div className={`mt-8 pt-6 border-t text-center text-sm ${cx(printMode, "border-border text-muted-foreground", "border-slate-200 text-slate-500")}`}>
           <p>© {new Date().getFullYear()} Injediesel - Todos os direitos reservados</p>
           <p className="mt-1">Documento gerado automaticamente pelo sistema</p>
-          <p className="mt-2 text-xs">Versão 3.0 - Atualizado em {currentDate}</p>
+          <p className="mt-2 text-xs">Versão 3.2 - Atualizado em {currentDate}</p>
         </div>
       </div>
     </div>
