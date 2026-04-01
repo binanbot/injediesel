@@ -56,8 +56,6 @@ import {
 } from "@/data/servicos-categorias";
 import { ClienteSelect } from "@/components/franqueado/ClienteSelect";
 import { NovoClienteDrawer } from "@/components/franqueado/NovoClienteDrawer";
-import { ClientePerfilDialog } from "@/components/franqueado/ClientePerfilDialog";
-import { Cliente, clientesMock } from "@/data/clientes-mock";
 import { supabase } from "@/integrations/supabase/client";
 
 const MAX_FILES = 2;
@@ -125,8 +123,7 @@ export default function EnviarArquivo() {
   // Cliente
   const [clienteId, setClienteId] = useState<string>("");
   const [novoClienteDrawerOpen, setNovoClienteDrawerOpen] = useState(false);
-  const [clientePerfilOpen, setClientePerfilOpen] = useState(false);
-  const [clienteSelecionadoParaPerfil, setClienteSelecionadoParaPerfil] = useState<Cliente | null>(null);
+  const [clienteRefreshSignal, setClienteRefreshSignal] = useState(0);
 
   // Valor
   const [valor, setValor] = useState<string>("");
@@ -373,14 +370,9 @@ export default function EnviarArquivo() {
     setDadosManuais(false);
   };
 
-  const handleClienteCriado = (novoCliente: { id: string; nome: string; telefone: string; email?: string; cidade?: string }) => {
-    // Em produção, adicionaria ao banco. Aqui apenas seleciona
+  const handleClienteCriado = (novoCliente: { id: string; full_name: string }) => {
     setClienteId(novoCliente.id);
-  };
-
-  const handleViewCliente = (cliente: Cliente) => {
-    setClienteSelecionadoParaPerfil(cliente);
-    setClientePerfilOpen(true);
+    setClienteRefreshSignal((s) => s + 1);
   };
 
   const formatValor = (val: string) => {
@@ -473,6 +465,7 @@ export default function EnviarArquivo() {
       const insertData: Record<string, unknown> = {
         id: arquivoId,
         unit_id: unitData.id,
+        customer_id: clienteId || null,
         placa: placa || "SEM PLACA",
         marca: marca,
         modelo: modelo,
@@ -655,7 +648,7 @@ export default function EnviarArquivo() {
               value={clienteId}
               onChange={setClienteId}
               onAddNew={() => setNovoClienteDrawerOpen(true)}
-              onViewCliente={handleViewCliente}
+              refreshSignal={clienteRefreshSignal}
             />
           </CardContent>
         </Card>
@@ -1089,13 +1082,6 @@ export default function EnviarArquivo() {
         open={novoClienteDrawerOpen}
         onOpenChange={setNovoClienteDrawerOpen}
         onClienteCriado={handleClienteCriado}
-      />
-
-      {/* Dialog perfil do cliente */}
-      <ClientePerfilDialog
-        cliente={clienteSelecionadoParaPerfil}
-        open={clientePerfilOpen}
-        onOpenChange={setClientePerfilOpen}
       />
 
       {/* Modal de Responsabilidade - Placa não encontrada */}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, UserPlus, Phone, Mail, MapPin } from "lucide-react";
+import { UserPlus, Phone, Mail, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,27 +13,28 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NovoClienteDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onClienteCriado: (cliente: { id: string; nome: string; telefone: string; email?: string; cidade?: string }) => void;
+  onClienteCriado: (cliente: { id: string; full_name: string }) => void;
 }
 
 export function NovoClienteDrawer({ open, onOpenChange, onClienteCriado }: NovoClienteDrawerProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    nome: "",
-    telefone: "",
+    full_name: "",
+    phone: "",
     email: "",
-    cidade: "",
+    address_city: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.nome.trim() || !formData.telefone.trim()) {
+
+    if (!formData.full_name.trim() || !formData.phone.trim()) {
       toast({
         title: "Campos obrigatórios",
         description: "Preencha o nome e telefone do cliente.",
@@ -44,26 +45,50 @@ export function NovoClienteDrawer({ open, onOpenChange, onClienteCriado }: NovoC
 
     setIsSubmitting(true);
 
-    // Simula criação (mock)
-    setTimeout(() => {
-      const novoCliente = {
-        id: `cli-${Date.now()}`,
-        nome: formData.nome.trim(),
-        telefone: formData.telefone.trim(),
-        email: formData.email.trim() || undefined,
-        cidade: formData.cidade.trim() || undefined,
-      };
+    try {
+      // Get unit_id via RPC
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) throw new Error("Não autenticado");
 
-      onClienteCriado(novoCliente);
-      setFormData({ nome: "", telefone: "", email: "", cidade: "" });
-      setIsSubmitting(false);
+      const { data: unitId, error: unitError } = await supabase.rpc("get_user_unit_id", {
+        _user_id: userData.user.id,
+      });
+
+      if (unitError || !unitId) throw new Error("Unidade não encontrada");
+
+      const { data, error } = await supabase
+        .from("customers")
+        .insert({
+          unit_id: unitId,
+          full_name: formData.full_name.trim(),
+          phone: formData.phone.trim(),
+          email: formData.email.trim() || null,
+          address_city: formData.address_city.trim() || null,
+          type: "PF",
+        } as any)
+        .select("id, full_name")
+        .single();
+
+      if (error) throw error;
+
+      onClienteCriado({ id: data.id, full_name: data.full_name });
+      setFormData({ full_name: "", phone: "", email: "", address_city: "" });
       onOpenChange(false);
 
       toast({
         title: "Cliente cadastrado!",
-        description: `${novoCliente.nome} foi adicionado com sucesso.`,
+        description: `${data.full_name} foi adicionado com sucesso.`,
       });
-    }, 800);
+    } catch (err: any) {
+      console.error("Erro ao criar cliente:", err);
+      toast({
+        title: "Erro ao cadastrar",
+        description: err.message || "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -75,35 +100,35 @@ export function NovoClienteDrawer({ open, onOpenChange, onClienteCriado }: NovoC
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                 <UserPlus className="h-5 w-5 text-primary" />
               </div>
-              <span>Novo Cliente</span>
+              <span>Cadastro Rápido de Cliente</span>
             </DrawerTitle>
             <DrawerDescription>
-              Cadastre um novo cliente para vincular ao serviço.
+              Preencha os dados básicos. Para cadastro completo, use a área de Clientes.
             </DrawerDescription>
           </DrawerHeader>
 
           <form onSubmit={handleSubmit} className="px-4 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nome">Nome do cliente *</Label>
+              <Label htmlFor="full_name">Nome do cliente *</Label>
               <Input
-                id="nome"
+                id="full_name"
                 placeholder="Nome completo"
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                 className="glass-input"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="telefone">Telefone / WhatsApp *</Label>
+              <Label htmlFor="phone">Telefone / WhatsApp *</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="telefone"
+                  id="phone"
                   placeholder="(00) 00000-0000"
-                  value={formData.telefone}
-                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="glass-input pl-10"
                   required
                 />
@@ -126,14 +151,14 @@ export function NovoClienteDrawer({ open, onOpenChange, onClienteCriado }: NovoC
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cidade">Cidade</Label>
+              <Label htmlFor="address_city">Cidade</Label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="cidade"
+                  id="address_city"
                   placeholder="Cidade"
-                  value={formData.cidade}
-                  onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
+                  value={formData.address_city}
+                  onChange={(e) => setFormData({ ...formData, address_city: e.target.value })}
                   className="glass-input pl-10"
                 />
               </div>
