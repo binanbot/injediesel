@@ -161,17 +161,41 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
     supabase
       .rpc("get_company_by_hostname", { _hostname: hostname })
-      .then(({ data, error }) => {
-        if (error || !data) {
-          console.warn("Company not resolved for hostname:", hostname, "— using default");
-          setCompany(DEFAULT_COMPANY);
-          applyBranding(DEFAULT_COMPANY.branding);
-        } else {
+      .then(async ({ data, error }) => {
+        if (!error && data) {
           const resolved = data as unknown as Company;
           setCompany(resolved);
           setIsResolved(true);
           if (resolved.branding) applyBranding(resolved.branding);
+          setIsLoading(false);
+          return;
         }
+
+        // Fallback: resolve company via authenticated user's company_id
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          const { data: companyId } = await supabase.rpc("get_user_company_id", { _user_id: session.user.id });
+          if (companyId) {
+            const { data: companyRow } = await supabase
+              .from("companies")
+              .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
+              .eq("id", companyId)
+              .single();
+            if (companyRow) {
+              const resolved = companyRow as unknown as Company;
+              setCompany(resolved);
+              setIsResolved(true);
+              if (resolved.branding) applyBranding(resolved.branding);
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
+
+        // Final fallback: default company
+        console.warn("Company not resolved for hostname:", hostname, "— using default");
+        setCompany(DEFAULT_COMPANY);
+        applyBranding(DEFAULT_COMPANY.branding);
         setIsLoading(false);
       });
   }, []);
