@@ -134,11 +134,19 @@ export default function Login() {
         >
           <Link
             to={company?.slug && company.slug !== "injediesel" ? `/?brand=${company.slug}` : "/"}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
             Voltar para o início
           </Link>
+
+          {equipmentName && (
+            <div className="flex justify-center mb-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide uppercase bg-primary/10 text-primary border border-primary/20">
+                Equipamento {equipmentName}
+              </span>
+            </div>
+          )}
 
           <div className="flex justify-center mb-6">
             <Logo size="lg" />
