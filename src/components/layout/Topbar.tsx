@@ -22,14 +22,17 @@ interface TopbarProps {
   showMenuButton?: boolean;
 }
 
-export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuButton = false }: TopbarProps) {
+export function Topbar({ unitName, onMenuClick, showMenuButton = false }: TopbarProps) {
   const contractStatus = useContractStatus();
   const showContractAlert = contractStatus.isNearExpiration || contractStatus.isExpired;
   const itemCount = useCartStore((s) => s.getItemCount());
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, userRole } = useAuth();
   const { company } = useCompany();
-  const displayName = unitName || company?.brand_name || "Unidade";
+  const displayName = unitName || company?.brand_name || "Painel";
+  const roleLabel = userRole === "admin" || userRole === "admin_empresa" ? "Administrador"
+    : userRole === "suporte" || userRole === "suporte_empresa" ? "Suporte"
+    : "Franqueado";
   return (
     <header className="h-16 glass-topbar sticky top-0 z-40">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
