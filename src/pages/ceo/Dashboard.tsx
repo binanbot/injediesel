@@ -13,16 +13,19 @@ import {
   Percent,
   AlertTriangle,
   CheckCircle,
-  Info,
   CalendarIcon,
   ArrowRight,
   BarChart3,
+  Activity,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import {
   AreaChart,
   Area,
@@ -135,9 +138,9 @@ export default function CeoDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {isLoading ? (
-          Array.from({ length: 8 }).map((_, i) => (
+          Array.from({ length: 10 }).map((_, i) => (
             <Card key={i} className="glass-card">
               <CardContent className="pt-6">
                 <Skeleton className="h-4 w-24 mb-2" />
@@ -152,24 +155,45 @@ export default function CeoDashboard() {
               value={fmt(kpis?.total_revenue || 0)}
               icon={DollarSign}
               accent="text-emerald-400"
+              variation={kpis?.revenue_variation}
             />
             <KpiCard
               title="Custo Total"
               value={fmt(kpis?.total_cost || 0)}
               icon={TrendingDown}
               accent="text-rose-400"
+              variation={kpis?.cost_variation}
+              invertColor
             />
             <KpiCard
               title="Margem Estimada"
               value={fmt(kpis?.estimated_margin || 0)}
               icon={TrendingUp}
               accent="text-emerald-400"
+              variation={kpis?.margin_variation}
             />
             <KpiCard
               title="Margem %"
               value={`${(kpis?.margin_percent || 0).toFixed(1)}%`}
               icon={Percent}
-              accent={(kpis?.margin_percent || 0) >= 30 ? "text-emerald-400" : "text-amber-400"}
+              accent={
+                (kpis?.margin_percent || 0) >= 30
+                  ? "text-emerald-400"
+                  : "text-amber-400"
+              }
+            />
+            <KpiCard
+              title="Ativação Operacional"
+              value={`${(kpis?.activation_rate || 0).toFixed(0)}%`}
+              icon={Activity}
+              accent={
+                (kpis?.activation_rate || 0) >= 70
+                  ? "text-emerald-400"
+                  : (kpis?.activation_rate || 0) >= 40
+                  ? "text-amber-400"
+                  : "text-destructive"
+              }
+              subtitle={`${kpis?.units_active || 0} unidades`}
             />
             <KpiCard
               title="Empresas Ativas"
@@ -193,6 +217,16 @@ export default function CeoDashboard() {
               title="Arquivos ECU"
               value={String(kpis?.total_files || 0)}
               icon={FileText}
+              accent="text-primary"
+            />
+            <KpiCard
+              title="Ticket Médio"
+              value={
+                kpis && kpis.total_orders > 0
+                  ? fmt(kpis.total_revenue / kpis.total_orders)
+                  : "—"
+              }
+              icon={DollarSign}
               accent="text-primary"
             />
           </>
@@ -222,8 +256,12 @@ export default function CeoDashboard() {
                   <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
                 )}
                 <div>
-                  <p className="text-sm font-medium text-foreground">{alert.title}</p>
-                  <p className="text-xs text-muted-foreground">{alert.description}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {alert.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {alert.description}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -252,8 +290,15 @@ export default function CeoDashboard() {
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={monthly}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(230,15%,18%)" />
-                    <XAxis dataKey="label" stroke="hsl(230,10%,55%)" fontSize={12} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="hsl(230,15%,18%)"
+                    />
+                    <XAxis
+                      dataKey="label"
+                      stroke="hsl(230,10%,55%)"
+                      fontSize={12}
+                    />
                     <YAxis
                       stroke="hsl(230,10%,55%)"
                       fontSize={12}
@@ -308,7 +353,10 @@ export default function CeoDashboard() {
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={comparisons} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(230,15%,18%)" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="hsl(230,15%,18%)"
+                    />
                     <XAxis
                       type="number"
                       stroke="hsl(230,10%,55%)"
@@ -364,11 +412,12 @@ export default function CeoDashboard() {
                 <thead>
                   <tr className="border-b border-border text-muted-foreground">
                     <th className="text-left py-3 px-2 font-medium">Empresa</th>
-                    <th className="text-right py-3 px-2 font-medium">Unidades</th>
+                    <th className="text-right py-3 px-2 font-medium">Unid.</th>
                     <th className="text-right py-3 px-2 font-medium">Faturamento</th>
                     <th className="text-right py-3 px-2 font-medium">Pedidos</th>
                     <th className="text-right py-3 px-2 font-medium">Arquivos</th>
-                    <th className="text-right py-3 px-2 font-medium">Margem %</th>
+                    <th className="text-right py-3 px-2 font-medium">Margem</th>
+                    <th className="text-right py-3 px-2 font-medium">Crescimento</th>
                     <th className="text-center py-3 px-2 font-medium"></th>
                   </tr>
                 </thead>
@@ -382,7 +431,9 @@ export default function CeoDashboard() {
                         <div>
                           <p className="font-medium text-foreground">{c.name}</p>
                           {c.brand_name && (
-                            <p className="text-xs text-muted-foreground">{c.brand_name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {c.brand_name}
+                            </p>
                           )}
                         </div>
                       </td>
@@ -411,9 +462,20 @@ export default function CeoDashboard() {
                           {c.margin_percent.toFixed(1)}%
                         </span>
                       </td>
+                      <td className="text-right py-3 px-2">
+                        {c.growth_percent !== null ? (
+                          <VariationBadge value={c.growth_percent} />
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="text-center py-3 px-2">
                         <Link to={`/ceo/empresas/${c.id}`}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             <ArrowRight className="h-4 w-4" />
                           </Button>
                         </Link>
@@ -432,16 +494,47 @@ export default function CeoDashboard() {
 
 // ── Sub-components ──────────────────────────────────────────
 
+function VariationBadge({
+  value,
+  invertColor = false,
+}: {
+  value: number;
+  invertColor?: boolean;
+}) {
+  const isPositive = value >= 0;
+  const color = invertColor
+    ? isPositive
+      ? "text-rose-400"
+      : "text-emerald-400"
+    : isPositive
+    ? "text-emerald-400"
+    : "text-rose-400";
+  const Icon = isPositive ? ArrowUpRight : ArrowDownRight;
+
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${color}`}>
+      <Icon className="h-3 w-3" />
+      {Math.abs(value).toFixed(1)}%
+    </span>
+  );
+}
+
 function KpiCard({
   title,
   value,
   icon: Icon,
   accent,
+  variation,
+  invertColor = false,
+  subtitle,
 }: {
   title: string;
   value: string;
   icon: any;
   accent: string;
+  variation?: number;
+  invertColor?: boolean;
+  subtitle?: string;
 }) {
   return (
     <Card className="glass-card">
@@ -453,6 +546,17 @@ function KpiCard({
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold text-foreground">{value}</div>
+        <div className="flex items-center gap-2 mt-1">
+          {variation !== undefined && variation !== null && (
+            <VariationBadge value={variation} invertColor={invertColor} />
+          )}
+          {subtitle && (
+            <span className="text-xs text-muted-foreground">{subtitle}</span>
+          )}
+          {variation !== undefined && variation !== null && (
+            <span className="text-xs text-muted-foreground">vs anterior</span>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
