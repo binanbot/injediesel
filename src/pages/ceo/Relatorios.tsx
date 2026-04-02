@@ -66,7 +66,7 @@ export default function CeoRelatorios() {
           </div>
 
           {/* Highlights & Risks */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div data-export-section="highlights-risks" data-export-title="Destaques e Riscos" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <HighlightsCard highlights={report.highlights} />
             <RisksCard risks={report.risks} />
           </div>
