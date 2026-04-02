@@ -156,48 +156,96 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isResolved, setIsResolved] = useState(false);
 
+  /** Resolve company by slug from the companies table */
+  const resolveBySlug = async (slug: string): Promise<Company | null> => {
+    const { data } = await supabase
+      .from("companies")
+      .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .single();
+    return data ? (data as unknown as Company) : null;
+  };
+
+  /** Resolve company by user's company_id */
+  const resolveByUser = async (userId: string): Promise<Company | null> => {
+    const { data: companyId } = await supabase.rpc("get_user_company_id", { _user_id: userId });
+    if (!companyId) return null;
+    const { data: companyRow } = await supabase
+      .from("companies")
+      .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
+      .eq("id", companyId)
+      .single();
+    return companyRow ? (companyRow as unknown as Company) : null;
+  };
+
+  const finalize = (resolved: Company) => {
+    setCompany(resolved);
+    setIsResolved(true);
+    if (resolved.branding) applyBranding(resolved.branding);
+    // Persist slug in sessionStorage so navigation within the session keeps brand
+    try { sessionStorage.setItem("__company_slug", resolved.slug); } catch {}
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    const hostname = window.location.hostname;
+    const resolve = async () => {
+      const hostname = window.location.hostname;
 
-    supabase
-      .rpc("get_company_by_hostname", { _hostname: hostname })
-      .then(async ({ data, error }) => {
-        if (!error && data) {
-          const resolved = data as unknown as Company;
-          setCompany(resolved);
-          setIsResolved(true);
-          if (resolved.branding) applyBranding(resolved.branding);
-          setIsLoading(false);
-          return;
+      // 1. Hostname-based resolution (production domains)
+      const { data: hostnameData, error: hostnameErr } = await supabase.rpc("get_company_by_hostname", { _hostname: hostname });
+      if (!hostnameErr && hostnameData) {
+        finalize(hostnameData as unknown as Company);
+        return;
+      }
+
+      // 2. Query param ?brand=slug (dev/preview brand override)
+      const urlParams = new URLSearchParams(window.location.search);
+      const brandParam = urlParams.get("brand");
+      if (brandParam) {
+        const bySlug = await resolveBySlug(brandParam);
+        if (bySlug) { finalize(bySlug); return; }
+      }
+
+      // 3. SessionStorage persisted slug (keeps brand during navigation in preview)
+      try {
+        const storedSlug = sessionStorage.getItem("__company_slug");
+        if (storedSlug) {
+          const byStored = await resolveBySlug(storedSlug);
+          if (byStored) { finalize(byStored); return; }
         }
+      } catch {}
 
-        // Fallback: resolve company via authenticated user's company_id
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.id) {
-          const { data: companyId } = await supabase.rpc("get_user_company_id", { _user_id: session.user.id });
-          if (companyId) {
-            const { data: companyRow } = await supabase
-              .from("companies")
-              .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
-              .eq("id", companyId)
-              .single();
-            if (companyRow) {
-              const resolved = companyRow as unknown as Company;
-              setCompany(resolved);
-              setIsResolved(true);
-              if (resolved.branding) applyBranding(resolved.branding);
-              setIsLoading(false);
-              return;
-            }
-          }
-        }
+      // 4. Authenticated user's company_id fallback
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        const byUser = await resolveByUser(session.user.id);
+        if (byUser) { finalize(byUser); return; }
+      }
 
-        // Final fallback: default company
-        console.warn("Company not resolved for hostname:", hostname, "— using default");
+      // 5. Final fallback: default Injediesel
+      console.warn("Company not resolved for hostname:", hostname, "— using default");
+      finalize(DEFAULT_COMPANY);
+    };
+
+    resolve();
+
+    // Re-resolve company on auth state change (login/logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user?.id && !isResolved) {
+        const byUser = await resolveByUser(session.user.id);
+        if (byUser) finalize(byUser);
+      }
+      if (event === "SIGNED_OUT") {
+        // Clear persisted slug on logout so next visitor sees default
+        try { sessionStorage.removeItem("__company_slug"); } catch {}
         setCompany(DEFAULT_COMPANY);
         applyBranding(DEFAULT_COMPANY.branding);
-        setIsLoading(false);
-      });
+        setIsResolved(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const isModuleEnabled = useMemo(() => {
