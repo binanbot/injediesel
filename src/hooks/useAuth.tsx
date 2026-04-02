@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-type UserRole = "admin" | "suporte" | "franqueado" | "admin_empresa" | "suporte_empresa" | "master_admin" | "ceo" | null;
+export type UserRole = "admin" | "suporte" | "franqueado" | "admin_empresa" | "suporte_empresa" | "master_admin" | "ceo" | null;
 
 // Role hierarchy helpers
 const ADMIN_ROLES: UserRole[] = ["admin", "suporte", "master_admin", "ceo"];
