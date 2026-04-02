@@ -27,9 +27,7 @@ import { CompanyGrowthRanking } from "@/components/ceo/CompanyGrowthRanking";
 import { UnitGrowthRanking } from "@/components/ceo/UnitGrowthRanking";
 import { GrowthInsightsPanel } from "@/components/ceo/GrowthInsightsPanel";
 import { useCeoFilters } from "@/contexts/CeoFiltersContext";
-
-const fmt = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+import { fmtCurrency } from "@/utils/ceoFormatters";
 
 export default function ReceitaCrescimento() {
   const { filters } = useCeoFilters();

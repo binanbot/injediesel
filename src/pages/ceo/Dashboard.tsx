@@ -36,9 +36,7 @@ import { CeoTopClients } from "@/components/ceo/CeoTopClients";
 import { CeoTopProducts } from "@/components/ceo/CeoTopProducts";
 import { CeoCategoryBreakdown } from "@/components/ceo/CeoCategoryBreakdown";
 import { useCeoFilters } from "@/contexts/CeoFiltersContext";
-
-const fmt = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+import { fmtCurrency } from "@/utils/ceoFormatters";
 
 export default function CeoDashboard() {
   const { filters } = useCeoFilters();
