@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { calcularTempoDecorrido, getTempoClasses } from "@/utils/tempoDecorrido";
 import { useContractStatus } from "@/hooks/useContractStatus";
+import { useCompany } from "@/hooks/useCompany";
 import { toast } from "@/hooks/use-toast";
 
 // Dados mockados dos banners - em produção viriam do banco de dados
