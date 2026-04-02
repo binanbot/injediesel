@@ -28,7 +28,10 @@ export function CeoTopClients({ data, isLoading, title = "Top 10 Clientes por Fa
       </CardHeader>
       <CardContent>
         {isLoading ? <Skeleton className="h-[300px] w-full" /> : data.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">Sem dados de clientes no período</p>
+          <div className="text-center py-10 space-y-2">
+            <p className="text-muted-foreground">Sem dados de clientes no período</p>
+            <p className="text-xs text-muted-foreground/60">O ranking será preenchido conforme os arquivos forem vinculados a clientes cadastrados.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div style={{ height: Math.max(250, data.length * 36) }}>

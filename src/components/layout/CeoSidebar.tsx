@@ -17,12 +17,11 @@ import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Painel Executivo", path: "/ceo" },
-  { icon: TrendingUp, label: "Receita & Crescimento", path: "/ceo/receita" },
-  { icon: Building2, label: "Comparativo Empresas", path: "/ceo/empresas" },
-  { icon: PieChart, label: "Market Share", path: "/ceo/market-share" },
-  { icon: Target, label: "Metas & OKRs", path: "/ceo/metas" },
-  { icon: BarChart3, label: "Relatórios", path: "/ceo/relatorios" },
+  { icon: LayoutDashboard, label: "Painel Executivo", path: "/ceo", badge: null },
+  { icon: TrendingUp, label: "Receita & Crescimento", path: "/ceo/receita", badge: "Em breve" },
+  { icon: PieChart, label: "Market Share", path: "/ceo/market-share", badge: "Em breve" },
+  { icon: Target, label: "Metas & OKRs", path: "/ceo/metas", badge: "Em breve" },
+  { icon: BarChart3, label: "Relatórios", path: "/ceo/relatorios", badge: "Em breve" },
 ];
 
 interface CeoSidebarProps {
