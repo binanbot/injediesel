@@ -123,15 +123,25 @@ async function fetchCost(filters?: Filters): Promise<number> {
 // ── Main exports ───────────────────────────────────────────
 
 export async function getGrowthKPIs(filters: Filters): Promise<GrowthKPIs> {
-  const { data: allUnits } = await supabase.from("units").select("id").eq("is_active", true);
+  // Resolve company-scoped unit IDs
+  let scopedUnitIds: string[] | undefined;
+  if (filters.companyId) {
+    const { data } = await supabase.from("units").select("id").eq("company_id", filters.companyId);
+    scopedUnitIds = (data || []).map((u) => u.id);
+  }
+
+  const unitsQuery = scopedUnitIds
+    ? supabase.from("units").select("id").eq("is_active", true).in("id", scopedUnitIds)
+    : supabase.from("units").select("id").eq("is_active", true);
+  const { data: allUnits } = await unitsQuery;
   const totalUnits = (allUnits || []).length;
 
-  const [cur, cost] = await Promise.all([fetchRevenue(filters), fetchCost(filters)]);
+  const [cur, cost] = await Promise.all([fetchRevenue(filters, scopedUnitIds), fetchCost(filters)]);
   const margin = cur.revenue - cost;
   const marginPct = cur.revenue > 0 ? (margin / cur.revenue) * 100 : 0;
 
   const prev = getPreviousPeriod(filters.startDate!, filters.endDate!);
-  const [prevData, prevCost] = await Promise.all([fetchRevenue(prev), fetchCost(prev)]);
+  const [prevData, prevCost] = await Promise.all([fetchRevenue(prev, scopedUnitIds), fetchCost(prev)]);
   const prevMargin = prevData.revenue - prevCost;
 
   return {
