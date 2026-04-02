@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Building2 as DashIcon } from "lucide-react";
 import {
   DollarSign,
   TrendingUp,
