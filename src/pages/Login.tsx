@@ -18,6 +18,9 @@ export default function Login() {
   const { user, userRole, signIn, signUp, isLoading: authLoading } = useAuth();
   const { company } = useCompany();
   const brandName = company?.brand_name || company?.name || "Injediesel";
+  const isPromax = company?.slug === "promax-tuner";
+  const equipmentName = company?.settings?.proprietary_equipment_name;
+  const contacts = company?.contacts;
   
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -131,11 +134,19 @@ export default function Login() {
         >
           <Link
             to={company?.slug && company.slug !== "injediesel" ? `/?brand=${company.slug}` : "/"}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
             Voltar para o início
           </Link>
+
+          {equipmentName && (
+            <div className="flex justify-center mb-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide uppercase bg-primary/10 text-primary border border-primary/20">
+                Equipamento {equipmentName}
+              </span>
+            </div>
+          )}
 
           <div className="flex justify-center mb-6">
             <Logo size="lg" />
@@ -148,9 +159,13 @@ export default function Login() {
             </TabsList>
 
             <TabsContent value="login">
-              <h1 className="text-2xl font-bold mb-2 text-center">Bem-vindo de volta</h1>
+              <h1 className="text-2xl font-bold mb-2 text-center">
+                {isPromax ? "Painel PROMAX TUNER" : "Bem-vindo de volta"}
+              </h1>
               <p className="text-muted-foreground mb-6 text-center">
-                Entre com suas credenciais para acessar o sistema.
+                {isPromax
+                  ? "Acesse sua plataforma de reprogramação ECU."
+                  : "Entre com suas credenciais para acessar o sistema."}
               </p>
 
               <form onSubmit={handleLogin} className="space-y-5">
@@ -343,22 +358,26 @@ export default function Login() {
               Precisa de ajuda? Entre em contato:
             </p>
             <div className="flex items-center justify-center gap-4">
-              <a
-                href="tel:+5500000000000"
-                className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
-              >
-                <Phone className="h-4 w-4" />
-                (00) 0000-0000
-              </a>
-              <a
-                href="https://wa.me/5500000000000"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-green-500 hover:text-green-400 transition-colors"
-              >
-                <MessageCircle className="h-4 w-4" />
-                WhatsApp
-              </a>
+              {(contacts?.phone || !contacts) && (
+                <a
+                  href={`tel:${contacts?.phone || "+5500000000000"}`}
+                  className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+                >
+                  <Phone className="h-4 w-4" />
+                  {contacts?.phone || "(00) 0000-0000"}
+                </a>
+              )}
+              {(contacts?.whatsapp || !contacts) && (
+                <a
+                  href={`https://wa.me/${(contacts?.whatsapp || "5500000000000").replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-green-500 hover:text-green-400 transition-colors"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp
+                </a>
+              )}
             </div>
           </div>
         </motion.div>

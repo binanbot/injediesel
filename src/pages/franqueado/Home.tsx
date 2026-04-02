@@ -244,12 +244,18 @@ export default function FranqueadoHome() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              {company?.brand_name || "Página Inicial"}
-            </h1>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-2xl font-bold text-foreground">
+                {company?.brand_name || "Página Inicial"}
+              </h1>
+              {equipmentName && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase bg-primary/10 text-primary border border-primary/20">
+                  {equipmentName}
+                </span>
+              )}
+            </div>
             <p className="text-muted-foreground">
-              Bem-vindo de volta! Aqui está um resumo da sua conta
-              {equipmentName ? ` ${equipmentName}` : ""}.
+              Bem-vindo de volta! Aqui está um resumo da sua conta.
             </p>
           </div>
           <Link to="/franqueado/enviar">
