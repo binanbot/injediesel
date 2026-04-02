@@ -55,7 +55,7 @@ export interface GrowthInsight {
   metric?: string;
 }
 
-type Filters = { startDate?: string; endDate?: string };
+type Filters = { startDate?: string; endDate?: string; companyId?: string };
 
 const EXCLUDED = ["cancelado", "reembolsado"];
 
