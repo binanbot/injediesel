@@ -67,9 +67,6 @@ export default function ReceitaCrescimento() {
   return (
     <div className="space-y-6">
       <ExecutivePageHeader icon={TrendingUp} title="Receita & Crescimento" subtitle="Evolução financeira, crescimento e comparativo entre empresas e unidades" />
-          Análise de crescimento, tendências e performance financeira do grupo
-        </p>
-      </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
