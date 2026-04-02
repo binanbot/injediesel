@@ -28,6 +28,7 @@ const menuItems = [
   { icon: Shield, label: "Permissões", path: "/master/permissoes" },
   { icon: BarChart3, label: "Relatórios Globais", path: "/master/relatorios" },
   { icon: UsersRound, label: "Colaboradores", path: "/master/colaboradores" },
+  { icon: TrendingUp, label: "Painel Comercial", path: "/master/vendas" },
   { icon: Settings, label: "Configurações", path: "/master/configuracoes" },
   { icon: FileText, label: "Documentação", path: "/master/documentacao" },
 ];
