@@ -14,59 +14,28 @@ import {
   FileText,
   CalendarIcon,
   Activity,
-  BarChart3,
-  Crown,
-  Package,
-  Layers,
-  ArrowUpRight,
-  ArrowDownRight,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  PieChart,
-  Pie,
-} from "recharts";
 import { getCompanyExecutiveDetail } from "@/services/ceoDashboardService";
+import {
+  getTopUnits,
+  getTopClients,
+  getTopProducts,
+  getCategoryBreakdown,
+} from "@/services/ceoRankingService";
+import { CeoKpiCard } from "@/components/ceo/CeoKpiCard";
+import { CeoMonthlyChart } from "@/components/ceo/CeoMonthlyChart";
+import { CeoUnitRanking } from "@/components/ceo/CeoUnitRanking";
+import { CeoTopClients } from "@/components/ceo/CeoTopClients";
+import { CeoTopProducts } from "@/components/ceo/CeoTopProducts";
+import { CeoCategoryBreakdown } from "@/components/ceo/CeoCategoryBreakdown";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const fmtShort = (v: number) => {
-  if (v >= 1_000_000) return `R$${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `R$${(v / 1_000).toFixed(0)}k`;
-  return fmt(v);
-};
-
-const tooltipStyle = {
-  backgroundColor: "hsl(230, 15%, 8%)",
-  border: "1px solid hsl(230, 15%, 18%)",
-  borderRadius: "8px",
-};
-
-const COLORS = [
-  "hsl(160, 84%, 39%)",
-  "hsl(217, 91%, 60%)",
-  "hsl(45, 93%, 47%)",
-  "hsl(339, 90%, 51%)",
-  "hsl(262, 83%, 58%)",
-  "hsl(30, 90%, 50%)",
-  "hsl(180, 70%, 45%)",
-];
 
 export default function CompanyExecutiveDetail() {
   const { companyId } = useParams<{ companyId: string }>();
@@ -83,9 +52,38 @@ export default function CompanyExecutiveDetail() {
     [dateRange]
   );
 
+  const rankingFilters = useMemo(
+    () => ({ ...filters, companyId }),
+    [filters, companyId]
+  );
+
   const { data, isLoading } = useQuery({
     queryKey: ["ceo-company-detail", companyId, filters],
     queryFn: () => getCompanyExecutiveDetail(companyId!, filters),
+    enabled: !!companyId,
+  });
+
+  const { data: topUnits = [], isLoading: loadingUnits } = useQuery({
+    queryKey: ["ceo-top-units", rankingFilters],
+    queryFn: () => getTopUnits(rankingFilters),
+    enabled: !!companyId,
+  });
+
+  const { data: topClients = [], isLoading: loadingClients } = useQuery({
+    queryKey: ["ceo-top-clients", rankingFilters],
+    queryFn: () => getTopClients(rankingFilters),
+    enabled: !!companyId,
+  });
+
+  const { data: topProducts = [], isLoading: loadingProducts } = useQuery({
+    queryKey: ["ceo-top-products", rankingFilters],
+    queryFn: () => getTopProducts(rankingFilters),
+    enabled: !!companyId,
+  });
+
+  const { data: categories = [], isLoading: loadingCategories } = useQuery({
+    queryKey: ["ceo-categories", rankingFilters],
+    queryFn: () => getCategoryBreakdown(rankingFilters),
     enabled: !!companyId,
   });
 
@@ -108,81 +106,11 @@ export default function CompanyExecutiveDetail() {
       <div className="text-center py-20">
         <p className="text-muted-foreground">Empresa não encontrada</p>
         <Link to="/ceo">
-          <Button variant="outline" className="mt-4">
-            Voltar
-          </Button>
+          <Button variant="outline" className="mt-4">Voltar</Button>
         </Link>
       </div>
     );
   }
-
-  const kpiCards = [
-    {
-      title: "Faturamento",
-      value: fmt(data.revenue),
-      icon: DollarSign,
-      accent: "text-emerald-400",
-    },
-    {
-      title: "Custo",
-      value: fmt(data.cost),
-      icon: TrendingDown,
-      accent: "text-rose-400",
-    },
-    {
-      title: "Margem",
-      value: fmt(data.margin),
-      icon: TrendingUp,
-      accent: "text-emerald-400",
-    },
-    {
-      title: "Margem %",
-      value: `${data.margin_percent.toFixed(1)}%`,
-      icon: Percent,
-      accent: data.margin_percent >= 30 ? "text-emerald-400" : "text-amber-400",
-    },
-    {
-      title: "Ativação",
-      value: `${data.activation_rate.toFixed(0)}%`,
-      icon: Activity,
-      accent:
-        data.activation_rate >= 70
-          ? "text-emerald-400"
-          : data.activation_rate >= 40
-          ? "text-amber-400"
-          : "text-destructive",
-    },
-    {
-      title: "Unidades",
-      value: String(data.units_count),
-      icon: Building2,
-      accent: "text-emerald-400",
-    },
-    {
-      title: "Clientes",
-      value: String(data.customers_count),
-      icon: Users,
-      accent: "text-emerald-400",
-    },
-    {
-      title: "Pedidos",
-      value: String(data.orders),
-      icon: ShoppingCart,
-      accent: "text-primary",
-    },
-    {
-      title: "Arquivos ECU",
-      value: String(data.files),
-      icon: FileText,
-      accent: "text-primary",
-    },
-    {
-      title: "Ticket Médio",
-      value: data.orders > 0 ? fmt(data.revenue / data.orders) : "—",
-      icon: DollarSign,
-      accent: "text-primary",
-    },
-  ];
 
   return (
     <div className="space-y-6">
@@ -227,526 +155,104 @@ export default function CompanyExecutiveDetail() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {kpiCards.map((kpi) => (
-          <Card key={kpi.title} className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {kpi.title}
-              </CardTitle>
-              <kpi.icon className={`h-4 w-4 ${kpi.accent}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
-                {kpi.value}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <CeoKpiCard
+          title="Faturamento"
+          value={fmt(data.revenue)}
+          icon={DollarSign}
+          accent="text-emerald-400"
+        />
+        <CeoKpiCard
+          title="Custo"
+          value={fmt(data.cost)}
+          icon={TrendingDown}
+          accent="text-rose-400"
+        />
+        <CeoKpiCard
+          title="Margem"
+          value={fmt(data.margin)}
+          icon={TrendingUp}
+          accent="text-emerald-400"
+        />
+        <CeoKpiCard
+          title="Margem %"
+          value={`${data.margin_percent.toFixed(1)}%`}
+          icon={Percent}
+          accent={data.margin_percent >= 30 ? "text-emerald-400" : "text-amber-400"}
+        />
+        <CeoKpiCard
+          title="Ativação"
+          value={`${data.activation_rate.toFixed(0)}%`}
+          icon={Activity}
+          accent={
+            data.activation_rate >= 70
+              ? "text-emerald-400"
+              : data.activation_rate >= 40
+              ? "text-amber-400"
+              : "text-destructive"
+          }
+        />
+        <CeoKpiCard
+          title="Unidades"
+          value={String(data.units_count)}
+          icon={Building2}
+          accent="text-emerald-400"
+        />
+        <CeoKpiCard
+          title="Clientes"
+          value={String(data.customers_count)}
+          icon={Users}
+          accent="text-emerald-400"
+        />
+        <CeoKpiCard
+          title="Pedidos"
+          value={String(data.orders)}
+          icon={ShoppingCart}
+          accent="text-primary"
+        />
+        <CeoKpiCard
+          title="Arquivos ECU"
+          value={String(data.files)}
+          icon={FileText}
+          accent="text-primary"
+        />
+        <CeoKpiCard
+          title="Ticket Médio"
+          value={data.orders > 0 ? fmt(data.revenue / data.orders) : "—"}
+          icon={DollarSign}
+          accent="text-primary"
+        />
       </div>
 
-      {/* Monthly Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-emerald-400" />
-            Evolução Mensal — {data.company.name}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {data.monthly.length === 0 ? (
-            <p className="text-center text-muted-foreground py-12">
-              Sem dados no período
-            </p>
-          ) : (
-            <div className="h-[320px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.monthly}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="hsl(230,15%,18%)"
-                  />
-                  <XAxis
-                    dataKey="label"
-                    stroke="hsl(230,10%,55%)"
-                    fontSize={12}
-                  />
-                  <YAxis
-                    stroke="hsl(230,10%,55%)"
-                    fontSize={12}
-                    tickFormatter={(v) => fmtShort(v)}
-                  />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    formatter={(v: number, name: string) => [
-                      fmt(v),
-                      name === "revenue" ? "Faturamento" : "Margem",
-                    ]}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="hsl(160,84%,39%)"
-                    fill="hsl(160,84%,39%)"
-                    fillOpacity={0.15}
-                    name="revenue"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="margin"
-                    stroke="hsl(217,91%,60%)"
-                    fill="hsl(217,91%,60%)"
-                    fillOpacity={0.1}
-                    name="margin"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Monthly Chart with 3 lines */}
+      <CeoMonthlyChart
+        data={data.monthly}
+        title={`Evolução Mensal — ${data.company.name}`}
+        showCost
+      />
 
-      {/* Tabbed sections */}
+      {/* Rankings Tabs — reusing shared components */}
       <Tabs defaultValue="units" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="units">Ranking de Unidades</TabsTrigger>
-          <TabsTrigger value="clients">Top Clientes</TabsTrigger>
-          <TabsTrigger value="products">Top Produtos</TabsTrigger>
+          <TabsTrigger value="units">Unidades</TabsTrigger>
+          <TabsTrigger value="clients">Clientes</TabsTrigger>
+          <TabsTrigger value="products">Produtos</TabsTrigger>
           <TabsTrigger value="categories">Categorias</TabsTrigger>
         </TabsList>
 
-        {/* ── Unit Rankings ──────────────────────────────── */}
         <TabsContent value="units">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-emerald-400" />
-                  Faturamento por Unidade
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {data.unit_rankings.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    Sem dados
-                  </p>
-                ) : (
-                  <div
-                    className="h-[300px]"
-                    style={{
-                      minHeight: Math.max(
-                        200,
-                        data.unit_rankings.length * 40
-                      ),
-                    }}
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={data.unit_rankings.slice(0, 10)}
-                        layout="vertical"
-                      >
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="hsl(230,15%,18%)"
-                        />
-                        <XAxis
-                          type="number"
-                          stroke="hsl(230,10%,55%)"
-                          fontSize={12}
-                          tickFormatter={(v) => fmtShort(v)}
-                        />
-                        <YAxis
-                          type="category"
-                          dataKey="name"
-                          stroke="hsl(230,10%,55%)"
-                          fontSize={11}
-                          width={130}
-                        />
-                        <Tooltip
-                          contentStyle={tooltipStyle}
-                          formatter={(v: number) => [fmt(v), "Faturamento"]}
-                        />
-                        <Bar dataKey="revenue" radius={[0, 4, 4, 0]}>
-                          {data.unit_rankings.slice(0, 10).map((_, i) => (
-                            <Cell
-                              key={i}
-                              fill={COLORS[i % COLORS.length]}
-                            />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-emerald-400" />
-                  Detalhamento por Unidade
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border text-muted-foreground">
-                        <th className="text-left py-2 px-2 font-medium">#</th>
-                        <th className="text-left py-2 px-2 font-medium">
-                          Unidade
-                        </th>
-                        <th className="text-right py-2 px-2 font-medium">
-                          Faturamento
-                        </th>
-                        <th className="text-right py-2 px-2 font-medium">
-                          Ped.
-                        </th>
-                        <th className="text-right py-2 px-2 font-medium">
-                          Arq.
-                        </th>
-                        <th className="text-right py-2 px-2 font-medium">
-                          Clientes
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.unit_rankings.map((u, i) => (
-                        <tr
-                          key={u.id}
-                          className="border-b border-border/50 hover:bg-secondary/30"
-                        >
-                          <td className="py-2 px-2 text-muted-foreground">
-                            {i + 1}
-                          </td>
-                          <td className="py-2 px-2">
-                            <p className="font-medium text-foreground">
-                              {u.name}
-                            </p>
-                            {u.city && (
-                              <p className="text-xs text-muted-foreground">
-                                {u.city}/{u.state}
-                              </p>
-                            )}
-                          </td>
-                          <td className="text-right py-2 px-2 font-medium text-emerald-400">
-                            {fmt(u.revenue)}
-                          </td>
-                          <td className="text-right py-2 px-2 text-muted-foreground">
-                            {u.orders}
-                          </td>
-                          <td className="text-right py-2 px-2 text-muted-foreground">
-                            {u.files}
-                          </td>
-                          <td className="text-right py-2 px-2 text-muted-foreground">
-                            {u.customers}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <CeoUnitRanking data={topUnits} isLoading={loadingUnits} />
         </TabsContent>
 
-        {/* ── Top Clients ────────────────────────────────── */}
         <TabsContent value="clients">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Crown className="h-5 w-5 text-emerald-400" />
-                Top 10 Clientes por Faturamento
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {data.top_clients.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  Sem dados de clientes no período
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={data.top_clients}
-                        layout="vertical"
-                      >
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="hsl(230,15%,18%)"
-                        />
-                        <XAxis
-                          type="number"
-                          stroke="hsl(230,10%,55%)"
-                          fontSize={12}
-                          tickFormatter={(v) => fmtShort(v)}
-                        />
-                        <YAxis
-                          type="category"
-                          dataKey="name"
-                          stroke="hsl(230,10%,55%)"
-                          fontSize={11}
-                          width={140}
-                        />
-                        <Tooltip
-                          contentStyle={tooltipStyle}
-                          formatter={(v: number) => [fmt(v), "Faturamento"]}
-                        />
-                        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                          {data.top_clients.map((_, i) => (
-                            <Cell
-                              key={i}
-                              fill={COLORS[i % COLORS.length]}
-                            />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div>
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border text-muted-foreground">
-                          <th className="text-left py-2 px-2 font-medium">
-                            #
-                          </th>
-                          <th className="text-left py-2 px-2 font-medium">
-                            Cliente
-                          </th>
-                          <th className="text-right py-2 px-2 font-medium">
-                            Faturamento
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.top_clients.map((c, i) => (
-                          <tr
-                            key={i}
-                            className="border-b border-border/50"
-                          >
-                            <td className="py-2 px-2 text-muted-foreground">
-                              {i + 1}
-                            </td>
-                            <td className="py-2 px-2 font-medium text-foreground">
-                              {c.name}
-                            </td>
-                            <td className="text-right py-2 px-2 text-emerald-400 font-medium">
-                              {fmt(c.value)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <CeoTopClients data={topClients} isLoading={loadingClients} />
         </TabsContent>
 
-        {/* ── Top Products ───────────────────────────────── */}
         <TabsContent value="products">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Package className="h-5 w-5 text-emerald-400" />
-                Top 10 Produtos por Receita
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {data.top_products.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  Sem dados de produtos no período
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={data.top_products}
-                        layout="vertical"
-                      >
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="hsl(230,15%,18%)"
-                        />
-                        <XAxis
-                          type="number"
-                          stroke="hsl(230,10%,55%)"
-                          fontSize={12}
-                          tickFormatter={(v) => fmtShort(v)}
-                        />
-                        <YAxis
-                          type="category"
-                          dataKey="name"
-                          stroke="hsl(230,10%,55%)"
-                          fontSize={11}
-                          width={140}
-                        />
-                        <Tooltip
-                          contentStyle={tooltipStyle}
-                          formatter={(v: number) => [fmt(v), "Receita"]}
-                        />
-                        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                          {data.top_products.map((_, i) => (
-                            <Cell
-                              key={i}
-                              fill={COLORS[i % COLORS.length]}
-                            />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div>
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border text-muted-foreground">
-                          <th className="text-left py-2 px-2 font-medium">
-                            #
-                          </th>
-                          <th className="text-left py-2 px-2 font-medium">
-                            Produto
-                          </th>
-                          <th className="text-right py-2 px-2 font-medium">
-                            Qtd
-                          </th>
-                          <th className="text-right py-2 px-2 font-medium">
-                            Receita
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.top_products.map((p, i) => (
-                          <tr
-                            key={i}
-                            className="border-b border-border/50"
-                          >
-                            <td className="py-2 px-2 text-muted-foreground">
-                              {i + 1}
-                            </td>
-                            <td className="py-2 px-2 font-medium text-foreground">
-                              {p.name}
-                            </td>
-                            <td className="text-right py-2 px-2 text-muted-foreground">
-                              {p.count || "—"}
-                            </td>
-                            <td className="text-right py-2 px-2 text-emerald-400 font-medium">
-                              {fmt(p.value)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <CeoTopProducts data={topProducts} isLoading={loadingProducts} />
         </TabsContent>
 
-        {/* ── Categories ─────────────────────────────────── */}
         <TabsContent value="categories">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Layers className="h-5 w-5 text-emerald-400" />
-                Faturamento por Categoria de Serviço
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {data.category_breakdown.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  Sem dados de categorias no período
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={data.category_breakdown}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={110}
-                          innerRadius={60}
-                          paddingAngle={2}
-                          label={({ name, percent }) =>
-                            `${name} ${(percent * 100).toFixed(0)}%`
-                          }
-                          labelLine={false}
-                          fontSize={11}
-                        >
-                          {data.category_breakdown.map((_, i) => (
-                            <Cell
-                              key={i}
-                              fill={COLORS[i % COLORS.length]}
-                            />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          contentStyle={tooltipStyle}
-                          formatter={(v: number) => [fmt(v), "Faturamento"]}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div>
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border text-muted-foreground">
-                          <th className="text-left py-2 px-2 font-medium">
-                            Categoria
-                          </th>
-                          <th className="text-right py-2 px-2 font-medium">
-                            Qtd
-                          </th>
-                          <th className="text-right py-2 px-2 font-medium">
-                            Faturamento
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.category_breakdown.map((cat, i) => (
-                          <tr
-                            key={i}
-                            className="border-b border-border/50"
-                          >
-                            <td className="py-2 px-2">
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="w-3 h-3 rounded-full shrink-0"
-                                  style={{
-                                    backgroundColor:
-                                      COLORS[i % COLORS.length],
-                                  }}
-                                />
-                                <span className="font-medium text-foreground">
-                                  {cat.name}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="text-right py-2 px-2 text-muted-foreground">
-                              {cat.count || "—"}
-                            </td>
-                            <td className="text-right py-2 px-2 text-emerald-400 font-medium">
-                              {fmt(cat.value)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <CeoCategoryBreakdown data={categories} isLoading={loadingCategories} />
         </TabsContent>
       </Tabs>
     </div>
