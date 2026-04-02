@@ -256,8 +256,10 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     return (module: string) => modules.has(module);
   }, [company?.enabled_modules]);
 
+  const equipmentName = company?.settings?.proprietary_equipment_name ?? null;
+
   return (
-    <CompanyContext.Provider value={{ company, isLoading, isResolved, isModuleEnabled }}>
+    <CompanyContext.Provider value={{ company, isLoading, isResolved, isModuleEnabled, equipmentName }}>
       {children}
     </CompanyContext.Provider>
   );
