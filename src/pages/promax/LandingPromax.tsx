@@ -139,7 +139,7 @@ export default function LandingPromax() {
               <Button
                 size="lg"
                 className="group px-8 relative overflow-hidden shadow-[0_0_30px_rgba(193,13,25,0.2)] hover:shadow-[0_0_40px_rgba(193,13,25,0.3)] transition-shadow"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/login?brand=promax-tuner")}
               >
                 Entrar no Painel
                 <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
