@@ -203,6 +203,30 @@ const App = () => (
                 <Route path="loja-dashboard" element={<PromaxDashboard />} />
               </Route>
 
+              {/* Master Admin Routes */}
+              <Route
+                path="/master"
+                element={
+                  <ProtectedRoute allowedRoles={["master_admin"]}>
+                    <MasterLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<MasterDashboard />} />
+              </Route>
+
+              {/* CEO Routes */}
+              <Route
+                path="/ceo"
+                element={
+                  <ProtectedRoute allowedRoles={["ceo"]}>
+                    <CeoLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<CeoDashboard />} />
+              </Route>
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
