@@ -73,6 +73,26 @@ export default function CeoDashboard() {
     queryFn: () => getMonthlyEvolution(filters),
   });
 
+  const { data: topUnits = [], isLoading: loadingUnits } = useQuery({
+    queryKey: ["ceo-top-units", filters],
+    queryFn: () => getTopUnits(filters),
+  });
+
+  const { data: topClients = [], isLoading: loadingClients } = useQuery({
+    queryKey: ["ceo-top-clients", filters],
+    queryFn: () => getTopClients(filters),
+  });
+
+  const { data: topProducts = [], isLoading: loadingProducts } = useQuery({
+    queryKey: ["ceo-top-products", filters],
+    queryFn: () => getTopProducts(filters),
+  });
+
+  const { data: categories = [], isLoading: loadingCategories } = useQuery({
+    queryKey: ["ceo-categories", filters],
+    queryFn: () => getCategoryBreakdown(filters),
+  });
+
   const alerts = useMemo(
     () =>
       kpis && comparisons.length
@@ -82,6 +102,7 @@ export default function CeoDashboard() {
   );
 
   const isLoading = loadingKPIs || loadingComparisons;
+
 
   return (
     <div className="space-y-6">
