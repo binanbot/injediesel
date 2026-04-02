@@ -93,7 +93,7 @@ export default function CeoDashboard() {
       <ExecutivePageHeader icon={DashIcon} title="Painel Executivo" subtitle="Visão consolidada de desempenho do grupo" />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div data-export-section="kpis" data-export-title="KPIs Consolidados" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {isLoading ? (
           Array.from({ length: 10 }).map((_, i) => (
             <Card key={i} className="glass-card">
