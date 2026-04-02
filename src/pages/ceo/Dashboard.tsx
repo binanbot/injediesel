@@ -120,7 +120,8 @@ export default function CeoDashboard() {
       </div>
 
       <div data-export-section="alerts" data-export-title="Alertas Executivos">
-      <CeoAlertsFeed alerts={alerts} />
+        <CeoAlertsFeed alerts={alerts} />
+      </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
