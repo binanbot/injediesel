@@ -1393,6 +1393,10 @@ export type Database = {
         Args: { _company_id: string; _user_id: string }
         Returns: boolean
       }
+      can_access_franchisee_profile: {
+        Args: { _profile_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_access_unit: {
         Args: { _unit_id: string; _user_id: string }
         Returns: boolean
