@@ -63,6 +63,7 @@ export default function CeoRelatorios() {
               <p className="text-sm leading-relaxed text-foreground/90">{report.narrative}</p>
             </CardContent>
           </Card>
+          </div>
 
           {/* Highlights & Risks */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
