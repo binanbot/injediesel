@@ -51,6 +51,7 @@ export default function CeoRelatorios() {
       ) : report ? (
         <>
           {/* Narrative */}
+          <div data-export-section="narrative" data-export-title="Resumo Executivo">
           <Card className="border-emerald-400/20">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
