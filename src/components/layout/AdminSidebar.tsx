@@ -26,6 +26,7 @@ import { Logo } from "@/components/Logo";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, isAdminLevel, isSupportLevel } from "@/hooks/useAuth";
+import { useCompany } from "@/hooks/useCompany";
 
 interface MenuItem {
   icon: React.ElementType;
