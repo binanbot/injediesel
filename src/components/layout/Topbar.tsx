@@ -28,7 +28,7 @@ export function Topbar({ unitName, onMenuClick, showMenuButton = false }: Topbar
   const itemCount = useCartStore((s) => s.getItemCount());
   const navigate = useNavigate();
   const { signOut, userRole } = useAuth();
-  const { company } = useCompany();
+  const { company, isModuleEnabled } = useCompany();
   const displayName = unitName || company?.brand_name || "Painel";
   const roleLabel = userRole === "admin" || userRole === "admin_empresa" ? "Administrador"
     : userRole === "suporte" || userRole === "suporte_empresa" ? "Suporte"
