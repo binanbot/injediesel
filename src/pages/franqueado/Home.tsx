@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { calcularTempoDecorrido, getTempoClasses } from "@/utils/tempoDecorrido";
 import { useContractStatus } from "@/hooks/useContractStatus";
+import { useCompany } from "@/hooks/useCompany";
 import { toast } from "@/hooks/use-toast";
 
 // Dados mockados dos banners - em produção viriam do banco de dados
@@ -172,6 +173,7 @@ const getStatusBadge = (status: string) => {
 export default function FranqueadoHome() {
   const navigate = useNavigate();
   const contractStatus = useContractStatus();
+  const { company, isModuleEnabled, equipmentName } = useCompany();
   const [selectedArquivo, setSelectedArquivo] = useState<ArquivoDetalhado | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -242,8 +244,13 @@ export default function FranqueadoHome() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Página Inicial</h1>
-            <p className="text-muted-foreground">Bem-vindo de volta! Aqui está um resumo da sua conta.</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              {company?.brand_name || "Página Inicial"}
+            </h1>
+            <p className="text-muted-foreground">
+              Bem-vindo de volta! Aqui está um resumo da sua conta
+              {equipmentName ? ` ${equipmentName}` : ""}.
+            </p>
           </div>
           <Link to="/franqueado/enviar">
             <Button variant="hero" size="lg">

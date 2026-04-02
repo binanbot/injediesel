@@ -28,7 +28,7 @@ export function Topbar({ unitName, onMenuClick, showMenuButton = false }: Topbar
   const itemCount = useCartStore((s) => s.getItemCount());
   const navigate = useNavigate();
   const { signOut, userRole } = useAuth();
-  const { company } = useCompany();
+  const { company, isModuleEnabled } = useCompany();
   const displayName = unitName || company?.brand_name || "Painel";
   const roleLabel = userRole === "admin" || userRole === "admin_empresa" ? "Administrador"
     : userRole === "suporte" || userRole === "suporte_empresa" ? "Suporte"
@@ -52,20 +52,22 @@ export function Topbar({ unitName, onMenuClick, showMenuButton = false }: Topbar
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Cart Icon */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="relative hover:bg-secondary/50"
-            onClick={() => navigate("/franqueado/loja/carrinho")}
-          >
-            <ShoppingCart className="h-5 w-5" />
-            {itemCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground border-0">
-                {itemCount > 9 ? "9+" : itemCount}
-              </Badge>
-            )}
-          </Button>
+          {/* Cart Icon — only when loja module is enabled */}
+          {isModuleEnabled("loja") && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="relative hover:bg-secondary/50"
+              onClick={() => navigate("/franqueado/loja/carrinho")}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {itemCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground border-0">
+                  {itemCount > 9 ? "9+" : itemCount}
+                </Badge>
+              )}
+            </Button>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
