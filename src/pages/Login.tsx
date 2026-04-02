@@ -306,7 +306,7 @@ export default function Login() {
                     <div className="flex items-center space-x-3 p-3 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors cursor-pointer">
                       <RadioGroupItem value="existente" id="existente" />
                       <Label htmlFor="existente" className="cursor-pointer flex-1 font-normal">
-                        Já sou representante Injediesel
+                        Já sou representante {brandName}
                       </Label>
                     </div>
                     <div className="flex items-center space-x-3 p-3 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors cursor-pointer">
