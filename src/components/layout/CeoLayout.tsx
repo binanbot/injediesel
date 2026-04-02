@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { CeoSidebar } from "./CeoSidebar";
 import { Topbar } from "./Topbar";
+import { CeoFiltersProvider } from "@/contexts/CeoFiltersContext";
+import { CeoGlobalFilterBar } from "@/components/ceo/CeoGlobalFilterBar";
 
 export function CeoLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -21,9 +23,12 @@ export function CeoLayout() {
           onMenuClick={() => setSidebarOpen(true)}
           showMenuButton
         />
-        <main className="p-4 lg:p-6">
-          <Outlet />
-        </main>
+        <CeoFiltersProvider>
+          <CeoGlobalFilterBar />
+          <main className="p-4 lg:p-6">
+            <Outlet />
+          </main>
+        </CeoFiltersProvider>
       </div>
     </div>
   );

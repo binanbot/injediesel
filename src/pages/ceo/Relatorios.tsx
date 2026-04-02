@@ -1,9 +1,7 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format, subMonths, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
 import {
   BarChart3,
-  CalendarIcon,
   FileText,
   DollarSign,
   TrendingUp,
@@ -18,99 +16,38 @@ import {
   Percent,
   Activity,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { buildExecutiveReport, type ExecutiveReport, type ReportHighlight, type ReportRisk } from "@/services/ceoReportsService";
+import { buildExecutiveReport, type ReportHighlight, type ReportRisk } from "@/services/ceoReportsService";
 import { CeoKpiCard, VariationBadge } from "@/components/ceo/CeoKpiCard";
 import { getMetricLabel } from "@/services/ceoGoalsService";
+import { useCeoFilters } from "@/contexts/CeoFiltersContext";
 
 const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-type ReportType = "mensal" | "trimestral" | "anual" | "personalizado";
-
-function getPresetRange(type: ReportType): { from: Date; to: Date } {
-  const now = new Date();
-  switch (type) {
-    case "mensal": return { from: startOfMonth(now), to: endOfMonth(now) };
-    case "trimestral": return { from: startOfQuarter(now), to: endOfQuarter(now) };
-    case "anual": return { from: startOfYear(now), to: endOfYear(now) };
-    default: return { from: subMonths(now, 3), to: now };
-  }
-}
-
 export default function CeoRelatorios() {
-  const [reportType, setReportType] = useState<ReportType>("mensal");
-  const [dateRange, setDateRange] = useState(getPresetRange("mensal"));
-
-  const filters = useMemo(
-    () => ({ startDate: format(dateRange.from, "yyyy-MM-dd"), endDate: format(dateRange.to, "yyyy-MM-dd") }),
-    [dateRange]
-  );
+  const { filters } = useCeoFilters();
 
   const { data: report, isLoading } = useQuery({
     queryKey: ["ceo-executive-report", filters],
     queryFn: () => buildExecutiveReport(filters),
   });
 
-  const handleTypeChange = (type: ReportType) => {
-    setReportType(type);
-    setDateRange(getPresetRange(type));
-  };
-
   return (
     <div className="space-y-8">
-      {/* ── Report Header ─────────────────────────────────── */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <BarChart3 className="h-6 w-6 text-emerald-400" />
-              Relatório Executivo
-            </h1>
-            <p className="text-muted-foreground">
-              Consolidação periódica para tomada de decisão
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <CalendarIcon className="h-4 w-4" />
-                  {format(dateRange.from, "dd/MM/yy")} — {format(dateRange.to, "dd/MM/yy")}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <Calendar
-                  mode="range"
-                  selected={{ from: dateRange.from, to: dateRange.to }}
-                  onSelect={(range) => {
-                    if (range?.from && range?.to) {
-                      setDateRange({ from: range.from, to: range.to });
-                      setReportType("personalizado");
-                    }
-                  }}
-                  numberOfMonths={2}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-        <Tabs value={reportType} onValueChange={(v) => handleTypeChange(v as ReportType)}>
-          <TabsList>
-            <TabsTrigger value="mensal">Mensal</TabsTrigger>
-            <TabsTrigger value="trimestral">Trimestral</TabsTrigger>
-            <TabsTrigger value="anual">Anual</TabsTrigger>
-            <TabsTrigger value="personalizado">Personalizado</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <BarChart3 className="h-6 w-6 text-emerald-400" />
+          Relatório Executivo
+        </h1>
+        <p className="text-muted-foreground">
+          Consolidação periódica para tomada de decisão
+        </p>
       </div>
 
       {isLoading ? (
@@ -121,7 +58,7 @@ export default function CeoRelatorios() {
         </div>
       ) : report ? (
         <>
-          {/* ── Executive Narrative ────────────────────────── */}
+          {/* Narrative */}
           <Card className="border-emerald-400/20">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -134,13 +71,13 @@ export default function CeoRelatorios() {
             </CardContent>
           </Card>
 
-          {/* ── Highlights & Risks ────────────────────────── */}
+          {/* Highlights & Risks */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <HighlightsCard highlights={report.highlights} />
             <RisksCard risks={report.risks} />
           </div>
 
-          {/* ── Financial Section ─────────────────────────── */}
+          {/* Financial */}
           <ReportSection icon={DollarSign} title="Desempenho Financeiro">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <CeoKpiCard title="Faturamento" value={fmtBRL(report.financial.total_revenue)} icon={DollarSign} accent="text-emerald-400" variation={report.financial.revenue_variation} />
@@ -150,7 +87,7 @@ export default function CeoRelatorios() {
             </div>
           </ReportSection>
 
-          {/* ── Growth Section ────────────────────────────── */}
+          {/* Growth */}
           <ReportSection icon={TrendingUp} title="Crescimento">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <CeoKpiCard title="Crescimento" value={`${report.growth.revenue_growth.toFixed(1)}%`} icon={report.growth.revenue_growth >= 0 ? ArrowUpRight : ArrowDownRight} accent={report.growth.revenue_growth >= 0 ? "text-emerald-400" : "text-rose-400"} subtitle="vs período anterior" />
@@ -178,7 +115,7 @@ export default function CeoRelatorios() {
             )}
           </ReportSection>
 
-          {/* ── Market Share Section ──────────────────────── */}
+          {/* Market Share */}
           <ReportSection icon={PieChart} title="Participação e Concentração">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <CeoKpiCard title="Líder" value={report.shareKPIs.leader_name} icon={PieChart} accent="text-emerald-400" subtitle={`${report.shareKPIs.leader_share.toFixed(1)}% do total`} />
@@ -208,7 +145,7 @@ export default function CeoRelatorios() {
             )}
           </ReportSection>
 
-          {/* ── Goals Section ─────────────────────────────── */}
+          {/* Goals */}
           <ReportSection icon={Target} title="Metas & OKRs">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <CeoKpiCard title="Atingidas" value={`${report.goalsSummary.achieved}/${report.goalsSummary.total}`} icon={CheckCircle2} accent="text-emerald-400" subtitle={report.goalsSummary.total > 0 ? `${((report.goalsSummary.achieved / report.goalsSummary.total) * 100).toFixed(0)}%` : "—"} />
@@ -241,7 +178,7 @@ export default function CeoRelatorios() {
             )}
           </ReportSection>
 
-          {/* ── Alerts ────────────────────────────────────── */}
+          {/* Alerts */}
           {report.alerts.length > 0 && (
             <ReportSection icon={AlertTriangle} title="Alertas Executivos">
               <div className="space-y-2">
