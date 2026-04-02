@@ -175,10 +175,11 @@ function deriveRisks(
 
 const fmt = fmtCurrency;
 
-function buildNarrative(fin: CeoKPIs, growth: GrowthKPIs, share: MarketShareKPIs, goals: GoalsSummary): string {
+function buildNarrative(fin: CeoKPIs, growth: GrowthKPIs, share: MarketShareKPIs, goals: GoalsSummary, companyName?: string): string {
   const parts: string[] = [];
+  const subject = companyName || "O grupo";
 
-  parts.push(`O grupo registrou faturamento de ${fmt(fin.total_revenue)} no período analisado`);
+  parts.push(`${subject} registrou faturamento de ${fmt(fin.total_revenue)} no período analisado`);
 
   if (fin.prev_revenue > 0) {
     const dir = growth.revenue_growth >= 0 ? "crescimento" : "queda";
@@ -188,7 +189,9 @@ function buildNarrative(fin: CeoKPIs, growth: GrowthKPIs, share: MarketShareKPIs
   if (fin.total_cost > 0)
     parts.push(`O custo operacional foi de ${fmt(fin.total_cost)}, resultando em margem de ${fin.margin_percent.toFixed(1)}%`);
 
-  parts.push(`A concentração do grupo está ${share.concentration_level}, com ${share.leader_name} respondendo por ${share.leader_share.toFixed(1)}% da receita`);
+  if (!companyName) {
+    parts.push(`A concentração do grupo está ${share.concentration_level}, com ${share.leader_name} respondendo por ${share.leader_share.toFixed(1)}% da receita`);
+  }
 
   if (goals.total > 0) {
     parts.push(`Das ${goals.total} metas executivas, ${goals.achieved} foram atingidas e ${goals.critical + goals.at_risk} requerem atenção`);
