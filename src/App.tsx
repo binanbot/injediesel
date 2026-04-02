@@ -73,8 +73,9 @@ const ComprasFranqueados = lazy(() => import("./pages/admin/ComprasFranqueados")
 const CompraDetalhe = lazy(() => import("./pages/admin/CompraDetalhe"));
 const Produtos = lazy(() => import("./pages/admin/Produtos"));
 const PromaxDashboard = lazy(() => import("./pages/admin/PromaxDashboard"));
+const Colaboradores = lazy(() => import("./pages/admin/Colaboradores"));
 
-// Lazy-loaded pages - Master
+// Lazy-loaded pages
 const MasterDashboard = lazy(() => import("./pages/master/Dashboard"));
 const MasterCompanyDetail = lazy(() => import("./pages/master/CompanyDetail"));
 
