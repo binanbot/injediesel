@@ -174,7 +174,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
         .eq("slug", slug)
         .eq("is_active", true)
-        .single()
+        .maybeSingle()
     );
     return data ? (data as unknown as Company) : null;
   };
@@ -209,26 +209,28 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         const urlParams = new URLSearchParams(window.location.search);
         const brandParam = urlParams.get("brand");
 
-        // 1. Query param ?brand=slug (dev/preview brand override) — check FIRST, no network needed for the param itself
+        // When ?brand= is explicitly set, immediately persist it so sessionStorage
+        // never serves a stale slug from a previous brand visit.
         if (brandParam) {
+          try { sessionStorage.setItem("__company_slug", brandParam); } catch {}
+        }
+
+        // Determine the slug to resolve: explicit param > sessionStorage
+        const slugToResolve = brandParam || (() => {
+          try { return sessionStorage.getItem("__company_slug"); } catch { return null; }
+        })();
+
+        // 1. Resolve by slug (covers both ?brand= and sessionStorage cases)
+        if (slugToResolve) {
           try {
-            const bySlug = await resolveBySlug(brandParam);
+            const bySlug = await resolveBySlug(slugToResolve);
             if (bySlug) { finalize(bySlug); return; }
           } catch (e) {
-            console.warn("Brand param resolution failed:", e);
+            console.warn("Slug resolution failed for:", slugToResolve, e);
           }
         }
 
-        // 2. SessionStorage persisted slug (keeps brand during navigation in preview)
-        try {
-          const storedSlug = sessionStorage.getItem("__company_slug");
-          if (storedSlug) {
-            const byStored = await resolveBySlug(storedSlug);
-            if (byStored) { finalize(byStored); return; }
-          }
-        } catch {}
-
-        // 3. Hostname-based resolution (production domains)
+        // 2. Hostname-based resolution (production domains)
         try {
           const { data: hostnameData, error: hostnameErr } = await withTimeout(supabase.rpc("get_company_by_hostname", { _hostname: hostname }));
           if (!hostnameErr && hostnameData) {
@@ -239,7 +241,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
           console.warn("Hostname resolution failed:", e);
         }
 
-        // 4. Authenticated user's company_id fallback
+        // 3. Authenticated user's company_id fallback
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user?.id) {
@@ -250,7 +252,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
           console.warn("User-based resolution failed:", e);
         }
 
-        // 5. Final fallback: default Injediesel
+        // 4. Final fallback: default Injediesel
         console.warn("Company not resolved for hostname:", hostname, "— using default");
         finalize(DEFAULT_COMPANY);
       } catch (e) {
