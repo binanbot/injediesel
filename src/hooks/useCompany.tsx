@@ -77,6 +77,7 @@ const CompanyContext = createContext<CompanyContextType>({
   isLoading: true,
   isResolved: false,
   isModuleEnabled: () => true,
+  equipmentName: null,
 });
 
 /** Convert a hex color (#RRGGBB) to HSL string "H S% L%" for CSS variables */
