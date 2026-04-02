@@ -277,5 +277,6 @@ export default function CeoDashboard() {
           <CeoCategoryBreakdown data={categories} isLoading={loadingCategories} />
         </TabsContent>
       </Tabs>
+    </div>
   );
 }
