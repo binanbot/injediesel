@@ -101,6 +101,83 @@ export type Database = {
         }
         Relationships: []
       }
+      companies: {
+        Row: {
+          branding: Json
+          cnpj: string | null
+          contacts: Json
+          created_at: string
+          enabled_modules: string[]
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          trade_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          branding?: Json
+          cnpj?: string | null
+          contacts?: Json
+          created_at?: string
+          enabled_modules?: string[]
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          trade_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          branding?: Json
+          cnpj?: string | null
+          contacts?: Json
+          created_at?: string
+          enabled_modules?: string[]
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          trade_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      company_domains: {
+        Row: {
+          company_id: string
+          created_at: string
+          environment: string
+          hostname: string
+          id: string
+          is_primary: boolean
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          environment?: string
+          hostname: string
+          id?: string
+          is_primary?: boolean
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          environment?: string
+          hostname?: string
+          id?: string
+          is_primary?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_domains_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_history: {
         Row: {
           contract_type: string
@@ -630,6 +707,7 @@ export type Database = {
           available: boolean
           brand: string
           category: string | null
+          company_id: string | null
           created_at: string
           description_full: string | null
           description_short: string | null
@@ -652,6 +730,7 @@ export type Database = {
           available?: boolean
           brand?: string
           category?: string | null
+          company_id?: string | null
           created_at?: string
           description_full?: string | null
           description_short?: string | null
@@ -674,6 +753,7 @@ export type Database = {
           available?: boolean
           brand?: string
           category?: string | null
+          company_id?: string | null
           created_at?: string
           description_full?: string | null
           description_short?: string | null
@@ -692,7 +772,15 @@ export type Database = {
           updated_at?: string
           weight_kg?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles_franchisees: {
         Row: {
@@ -1076,6 +1164,7 @@ export type Database = {
       units: {
         Row: {
           city: string | null
+          company_id: string | null
           country: string | null
           created_at: string | null
           franchisee_id: string | null
@@ -1086,6 +1175,7 @@ export type Database = {
         }
         Insert: {
           city?: string | null
+          company_id?: string | null
           country?: string | null
           created_at?: string | null
           franchisee_id?: string | null
@@ -1096,6 +1186,7 @@ export type Database = {
         }
         Update: {
           city?: string | null
+          company_id?: string | null
           country?: string | null
           created_at?: string | null
           franchisee_id?: string | null
@@ -1105,6 +1196,13 @@ export type Database = {
           state?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "units_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "units_franchisee_id_fkey"
             columns: ["franchisee_id"]
@@ -1224,6 +1322,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_company_by_hostname: { Args: { _hostname: string }; Returns: Json }
       get_user_unit_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
