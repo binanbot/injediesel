@@ -174,7 +174,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
         .eq("slug", slug)
         .eq("is_active", true)
-        .single()
+        .maybeSingle()
     );
     return data ? (data as unknown as Company) : null;
   };
