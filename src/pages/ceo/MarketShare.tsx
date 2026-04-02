@@ -60,15 +60,7 @@ export default function MarketShare() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <PieChart className="h-6 w-6 text-emerald-400" />
-          Market Share
-        </h1>
-        <p className="text-muted-foreground">
-          Participação relativa, concentração e distribuição de receita do grupo
-        </p>
-      </div>
+      <ExecutivePageHeader icon={PieChart} title="Market Share" subtitle="Participação relativa, concentração e distribuição de receita do grupo" />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {isLoading ? (

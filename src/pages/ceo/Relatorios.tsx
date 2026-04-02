@@ -39,15 +39,7 @@ export default function CeoRelatorios() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <BarChart3 className="h-6 w-6 text-emerald-400" />
-          Relatório Executivo
-        </h1>
-        <p className="text-muted-foreground">
-          Consolidação periódica para tomada de decisão
-        </p>
-      </div>
+      <ExecutivePageHeader icon={BarChart3} title="Relatório Executivo" subtitle="Consolidação periódica para tomada de decisão" />
 
       {isLoading ? (
         <div className="space-y-6">

@@ -37,15 +37,7 @@ export default function MetasOkrs() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Target className="h-6 w-6 text-emerald-400" />
-          Metas & OKRs
-        </h1>
-        <p className="text-muted-foreground">
-          Acompanhamento de metas executivas e resultados-chave do grupo
-        </p>
-      </div>
+      <ExecutivePageHeader icon={Target} title="Metas & OKRs" subtitle="Acompanhamento de metas executivas e resultados-chave do grupo" />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {isLoading ? (

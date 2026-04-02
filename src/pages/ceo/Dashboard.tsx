@@ -89,13 +89,7 @@ export default function CeoDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Painel Executivo</h1>
-        <p className="text-muted-foreground">
-          Visão consolidada de desempenho do grupo
-        </p>
-      </div>
+      <ExecutivePageHeader icon={DashIcon} title="Painel Executivo" subtitle="Visão consolidada de desempenho do grupo" />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

@@ -66,13 +66,7 @@ export default function ReceitaCrescimento() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <TrendingUp className="h-6 w-6 text-emerald-400" />
-          Receita & Crescimento
-        </h1>
-        <p className="text-muted-foreground">
+      <ExecutivePageHeader icon={TrendingUp} title="Receita & Crescimento" subtitle="Evolução financeira, crescimento e comparativo entre empresas e unidades" />
           Análise de crescimento, tendências e performance financeira do grupo
         </p>
       </div>
