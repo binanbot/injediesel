@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CompanyProvider } from "@/hooks/useCompany";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ModuleGuard } from "@/components/auth/ModuleGuard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Loader2 } from "lucide-react";
 
@@ -141,7 +142,7 @@ const App = () => (
                 <Route path="perfil" element={<Perfil />} />
                 <Route path="suporte" element={<Suporte />} />
                 <Route path="relatorios" element={<FranqueadoRelatorios />} />
-                <Route path="cursos" element={<Cursos />} />
+                <Route path="cursos" element={<ModuleGuard module="cursos"><Cursos /></ModuleGuard>} />
                 <Route path="loja" element={
                   <ErrorBoundary moduleName="Loja">
                     <Loja />
