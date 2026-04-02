@@ -73,8 +73,9 @@ const ComprasFranqueados = lazy(() => import("./pages/admin/ComprasFranqueados")
 const CompraDetalhe = lazy(() => import("./pages/admin/CompraDetalhe"));
 const Produtos = lazy(() => import("./pages/admin/Produtos"));
 const PromaxDashboard = lazy(() => import("./pages/admin/PromaxDashboard"));
+const Colaboradores = lazy(() => import("./pages/admin/Colaboradores"));
 
-// Lazy-loaded pages - Master
+// Lazy-loaded pages
 const MasterDashboard = lazy(() => import("./pages/master/Dashboard"));
 const MasterCompanyDetail = lazy(() => import("./pages/master/CompanyDetail"));
 
@@ -208,6 +209,7 @@ const App = () => (
                 <Route path="compras" element={<ComprasFranqueados />} />
                 <Route path="compras/:id" element={<CompraDetalhe />} />
                 <Route path="loja-dashboard" element={<PromaxDashboard />} />
+                <Route path="colaboradores" element={<Colaboradores />} />
               </Route>
 
               {/* Master Admin Routes */}
@@ -221,6 +223,7 @@ const App = () => (
               >
                 <Route index element={<MasterDashboard />} />
                 <Route path="empresas/:companyId" element={<MasterCompanyDetail />} />
+                <Route path="colaboradores" element={<Colaboradores />} />
               </Route>
 
               {/* CEO Routes */}
