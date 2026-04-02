@@ -46,6 +46,8 @@ interface CompanyContextType {
   isLoading: boolean;
   isResolved: boolean;
   isModuleEnabled: (module: string) => boolean;
+  /** Name of the company's proprietary equipment (e.g. "EVOPRO") */
+  equipmentName: string | null;
 }
 
 const DEFAULT_MODULES = [
