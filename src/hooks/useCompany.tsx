@@ -230,7 +230,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
         // 3. Hostname-based resolution (production domains)
         try {
-          const { data: hostnameData, error: hostnameErr } = await supabase.rpc("get_company_by_hostname", { _hostname: hostname });
+          const { data: hostnameData, error: hostnameErr } = await withTimeout(supabase.rpc("get_company_by_hostname", { _hostname: hostname }));
           if (!hostnameErr && hostnameData) {
             finalize(hostnameData as unknown as Company);
             return;
