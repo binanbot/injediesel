@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Painel Executivo", path: "/ceo", badge: null },
-  { icon: TrendingUp, label: "Receita & Crescimento", path: "/ceo/receita", badge: "Em breve" },
+  { icon: TrendingUp, label: "Receita & Crescimento", path: "/ceo/receita", badge: null },
   { icon: PieChart, label: "Market Share", path: "/ceo/market-share", badge: "Em breve" },
   { icon: Target, label: "Metas & OKRs", path: "/ceo/metas", badge: "Em breve" },
   { icon: BarChart3, label: "Relatórios", path: "/ceo/relatorios", badge: "Em breve" },
