@@ -67,6 +67,7 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, userRole } = useAuth();
+  const { company } = useCompany();
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({
     suporte: 0,
     correcoes: 0,
