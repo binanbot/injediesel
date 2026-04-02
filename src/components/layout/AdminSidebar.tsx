@@ -65,11 +65,22 @@ interface AdminSidebarProps {
 export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, userRole } = useAuth();
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({
     suporte: 0,
     correcoes: 0,
   });
+
+  // Filter menu items by user role
+  const menuItems = allMenuItems.filter((item) => {
+    if (!item.roles) return true;
+    return userRole ? item.roles.includes(userRole) : false;
+  });
+
+  // Determine the badge label
+  const roleBadge = userRole === "admin_empresa" || userRole === "suporte_empresa"
+    ? "EMPRESA"
+    : "ADM";
 
   const handleLogout = async () => {
     await signOut();
