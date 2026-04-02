@@ -1252,6 +1252,63 @@ export type Database = {
           },
         ]
       }
+      sales_targets: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          metric_key: string
+          period_end: string
+          period_start: string
+          sale_type: string
+          seller_profile_id: string | null
+          target_value: number
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metric_key?: string
+          period_end: string
+          period_start: string
+          sale_type?: string
+          seller_profile_id?: string | null
+          target_value?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metric_key?: string
+          period_end?: string
+          period_start?: string
+          sale_type?: string
+          seller_profile_id?: string | null
+          target_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_targets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_targets_seller_profile_id_fkey"
+            columns: ["seller_profile_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seller_profiles: {
         Row: {
           can_bill: boolean
