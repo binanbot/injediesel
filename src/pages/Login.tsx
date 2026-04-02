@@ -28,11 +28,7 @@ export default function Login() {
   // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading) {
-      if (userRole === "admin" || userRole === "suporte" || userRole === "master_admin" || userRole === "ceo" || userRole === "admin_empresa" || userRole === "suporte_empresa") {
-        navigate("/admin");
-      } else {
-        navigate("/franqueado");
-      }
+      navigate(getHomeRouteForRole(userRole));
     }
   }, [user, userRole, authLoading, navigate]);
 
