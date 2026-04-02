@@ -10,6 +10,7 @@ import {
   X,
   FileText,
   BarChart3,
+  UsersRound,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
