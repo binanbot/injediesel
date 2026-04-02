@@ -31,6 +31,7 @@ import {
 } from "recharts";
 import { MetricTooltip, metricDefinitions } from "@/components/MetricTooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useCompany } from "@/hooks/useCompany";
 import {
   StatsGridSkeleton,
   ChartSkeleton,
