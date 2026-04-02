@@ -246,7 +246,7 @@ export default function LandingPromax() {
             <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
               Acesse o painel PROMAX TUNER e gerencie sua operação de reprogramação ECU com segurança e eficiência.
             </p>
-            <Button size="lg" onClick={() => navigate("/login")} className="group px-8">
+            <Button size="lg" onClick={() => navigate("/login?brand=promax-tuner")} className="group px-8">
               Acessar Painel
               <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Button>
