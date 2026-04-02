@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { format, subMonths } from "date-fns";
+import { fmtCurrency } from "@/utils/ceoFormatters";
 import {
   ArrowLeft,
   DollarSign,

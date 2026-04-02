@@ -85,11 +85,11 @@ export default function ReceitaCrescimento() {
           ))
         ) : (
           <>
-            <CeoKpiCard title="Faturamento" value={fmt(kpis?.revenue || 0)} icon={DollarSign} accent="text-emerald-400" variation={kpis?.revenue_growth} />
+            <CeoKpiCard title="Faturamento" value={fmtCurrency(kpis?.revenue || 0)} icon={DollarSign} accent="text-emerald-400" variation={kpis?.revenue_growth} />
             <CeoKpiCard title="Crescimento" value={`${(kpis?.revenue_growth || 0).toFixed(1)}%`} icon={kpis && kpis.revenue_growth >= 0 ? ArrowUpRight : ArrowDownRight} accent={(kpis?.revenue_growth || 0) >= 0 ? "text-emerald-400" : "text-rose-400"} subtitle="vs período anterior" />
-            <CeoKpiCard title="Custo" value={fmt(kpis?.cost || 0)} icon={TrendingDown} accent="text-rose-400" variation={kpis?.cost_growth} invertColor />
+            <CeoKpiCard title="Custo" value={fmtCurrency(kpis?.cost || 0)} icon={TrendingDown} accent="text-rose-400" variation={kpis?.cost_growth} invertColor />
             <CeoKpiCard title="Margem" value={`${(kpis?.margin_percent || 0).toFixed(1)}%`} icon={Percent} accent={(kpis?.margin_percent || 0) >= 30 ? "text-emerald-400" : "text-amber-400"} variation={kpis?.margin_growth} />
-            <CeoKpiCard title="Ticket Médio" value={kpis && kpis.ticket_medio > 0 ? fmt(kpis.ticket_medio) : "—"} icon={ShoppingCart} accent="text-primary" />
+            <CeoKpiCard title="Ticket Médio" value={kpis && kpis.ticket_medio > 0 ? fmtCurrency(kpis.ticket_medio) : "—"} icon={ShoppingCart} accent="text-primary" />
             <CeoKpiCard title="Ativação" value={`${(kpis?.activation_rate || 0).toFixed(0)}%`} icon={Activity} accent={(kpis?.activation_rate || 0) >= 70 ? "text-emerald-400" : "text-amber-400"} subtitle={`${kpis?.units_active || 0} de ${kpis?.units_total || 0}`} />
             <CeoKpiCard title="Pedidos" value={String(kpis?.total_orders || 0)} icon={ShoppingCart} accent="text-primary" />
             <CeoKpiCard title="Arquivos ECU" value={String(kpis?.total_files || 0)} icon={FileText} accent="text-primary" />
