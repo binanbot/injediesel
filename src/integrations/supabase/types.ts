@@ -103,6 +103,7 @@ export type Database = {
       }
       companies: {
         Row: {
+          brand_name: string | null
           branding: Json
           cnpj: string | null
           contacts: Json
@@ -111,11 +112,13 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          settings: Json
           slug: string
           trade_name: string | null
           updated_at: string
         }
         Insert: {
+          brand_name?: string | null
           branding?: Json
           cnpj?: string | null
           contacts?: Json
@@ -124,11 +127,13 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          settings?: Json
           slug: string
           trade_name?: string | null
           updated_at?: string
         }
         Update: {
+          brand_name?: string | null
           branding?: Json
           cnpj?: string | null
           contacts?: Json
@@ -137,6 +142,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          settings?: Json
           slug?: string
           trade_name?: string | null
           updated_at?: string
@@ -150,6 +156,7 @@ export type Database = {
           environment: string
           hostname: string
           id: string
+          is_active: boolean
           is_primary: boolean
         }
         Insert: {
@@ -158,6 +165,7 @@ export type Database = {
           environment?: string
           hostname: string
           id?: string
+          is_active?: boolean
           is_primary?: boolean
         }
         Update: {
@@ -166,6 +174,7 @@ export type Database = {
           environment?: string
           hostname?: string
           id?: string
+          is_active?: boolean
           is_primary?: boolean
         }
         Relationships: [
