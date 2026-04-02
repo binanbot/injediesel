@@ -80,6 +80,10 @@ const MasterCompanyDetail = lazy(() => import("./pages/master/CompanyDetail"));
 // Lazy-loaded pages - CEO
 const CeoDashboard = lazy(() => import("./pages/ceo/Dashboard"));
 const CeoCompanyDetail = lazy(() => import("./pages/ceo/CompanyExecutiveDetail"));
+const CeoReceitaCrescimento = lazy(() => import("./pages/ceo/ReceitaCrescimento"));
+const CeoMarketShare = lazy(() => import("./pages/ceo/MarketShare"));
+const CeoMetasOkrs = lazy(() => import("./pages/ceo/MetasOkrs"));
+const CeoRelatorios = lazy(() => import("./pages/ceo/Relatorios"));
 
 // Layouts (keep non-lazy for instant routing)
 import { FranchiseeLayout } from "./components/layout/FranchiseeLayout";
