@@ -159,14 +159,23 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isResolved, setIsResolved] = useState(false);
 
+  /** Wrap a promise with a timeout to avoid hanging forever */
+  const withTimeout = <T,>(promise: Promise<T>, ms = 5000): Promise<T> =>
+    Promise.race([
+      promise,
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), ms)),
+    ]);
+
   /** Resolve company by slug from the companies table */
   const resolveBySlug = async (slug: string): Promise<Company | null> => {
-    const { data } = await supabase
-      .from("companies")
-      .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
-      .eq("slug", slug)
-      .eq("is_active", true)
-      .single();
+    const { data } = await withTimeout(
+      supabase
+        .from("companies")
+        .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
+        .eq("slug", slug)
+        .eq("is_active", true)
+        .single()
+    );
     return data ? (data as unknown as Company) : null;
   };
 
