@@ -79,6 +79,7 @@ const MasterCompanyDetail = lazy(() => import("./pages/master/CompanyDetail"));
 
 // Lazy-loaded pages - CEO
 const CeoDashboard = lazy(() => import("./pages/ceo/Dashboard"));
+const CeoCompanyDetail = lazy(() => import("./pages/ceo/CompanyExecutiveDetail"));
 
 // Layouts (keep non-lazy for instant routing)
 import { FranchiseeLayout } from "./components/layout/FranchiseeLayout";
