@@ -26,8 +26,7 @@ import { buildExecutiveReport, type ReportHighlight, type ReportRisk } from "@/s
 import { CeoKpiCard, VariationBadge } from "@/components/ceo/CeoKpiCard";
 import { getMetricLabel } from "@/services/ceoGoalsService";
 import { useCeoFilters } from "@/contexts/CeoFiltersContext";
-
-const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+import { fmtCurrency } from "@/utils/ceoFormatters";
 
 export default function CeoRelatorios() {
   const { filters } = useCeoFilters();
@@ -80,8 +79,8 @@ export default function CeoRelatorios() {
           {/* Financial */}
           <ReportSection icon={DollarSign} title="Desempenho Financeiro">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <CeoKpiCard title="Faturamento" value={fmtBRL(report.financial.total_revenue)} icon={DollarSign} accent="text-emerald-400" variation={report.financial.revenue_variation} />
-              <CeoKpiCard title="Custo" value={fmtBRL(report.financial.total_cost)} icon={ArrowDownRight} accent="text-rose-400" variation={report.financial.cost_variation} invertColor />
+              <CeoKpiCard title="Faturamento" value={fmtCurrency(report.financial.total_revenue)} icon={DollarSign} accent="text-emerald-400" variation={report.financial.revenue_variation} />
+              <CeoKpiCard title="Custo" value={fmtCurrency(report.financial.total_cost)} icon={ArrowDownRight} accent="text-rose-400" variation={report.financial.cost_variation} invertColor />
               <CeoKpiCard title="Margem" value={`${report.financial.margin_percent.toFixed(1)}%`} icon={Percent} accent={report.financial.margin_percent >= 30 ? "text-emerald-400" : "text-amber-400"} variation={report.financial.margin_variation} />
               <CeoKpiCard title="Ativação" value={`${report.financial.activation_rate.toFixed(0)}%`} icon={Activity} accent={report.financial.activation_rate >= 70 ? "text-emerald-400" : "text-amber-400"} subtitle={`${report.financial.units_active} unidades`} />
             </div>
@@ -105,7 +104,7 @@ export default function CeoRelatorios() {
                         <span className="text-sm font-medium text-foreground">{c.name}</span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-sm text-muted-foreground">{fmtBRL(c.revenue)}</span>
+                        <span className="text-sm text-muted-foreground">{fmtCurrency(c.revenue)}</span>
                         <VariationBadge value={c.growth_percent} />
                       </div>
                     </div>

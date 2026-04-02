@@ -36,9 +36,7 @@ import { CeoTopClients } from "@/components/ceo/CeoTopClients";
 import { CeoTopProducts } from "@/components/ceo/CeoTopProducts";
 import { CeoCategoryBreakdown } from "@/components/ceo/CeoCategoryBreakdown";
 import { useCeoFilters } from "@/contexts/CeoFiltersContext";
-
-const fmt = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+import { fmtCurrency } from "@/utils/ceoFormatters";
 
 export default function CeoDashboard() {
   const { filters } = useCeoFilters();
@@ -111,16 +109,16 @@ export default function CeoDashboard() {
           ))
         ) : (
           <>
-            <CeoKpiCard title="Faturamento Total" value={fmt(kpis?.total_revenue || 0)} icon={DollarSign} accent="text-emerald-400" variation={kpis?.revenue_variation} />
-            <CeoKpiCard title="Custo Total" value={fmt(kpis?.total_cost || 0)} icon={TrendingDown} accent="text-rose-400" variation={kpis?.cost_variation} invertColor />
-            <CeoKpiCard title="Margem Estimada" value={fmt(kpis?.estimated_margin || 0)} icon={TrendingUp} accent="text-emerald-400" variation={kpis?.margin_variation} />
+            <CeoKpiCard title="Faturamento Total" value={fmtCurrency(kpis?.total_revenue || 0)} icon={DollarSign} accent="text-emerald-400" variation={kpis?.revenue_variation} />
+            <CeoKpiCard title="Custo Total" value={fmtCurrency(kpis?.total_cost || 0)} icon={TrendingDown} accent="text-rose-400" variation={kpis?.cost_variation} invertColor />
+            <CeoKpiCard title="Margem Estimada" value={fmtCurrency(kpis?.estimated_margin || 0)} icon={TrendingUp} accent="text-emerald-400" variation={kpis?.margin_variation} />
             <CeoKpiCard title="Margem %" value={`${(kpis?.margin_percent || 0).toFixed(1)}%`} icon={Percent} accent={(kpis?.margin_percent || 0) >= 30 ? "text-emerald-400" : "text-amber-400"} />
             <CeoKpiCard title="Ativação Operacional" value={`${(kpis?.activation_rate || 0).toFixed(0)}%`} icon={Activity} accent={(kpis?.activation_rate || 0) >= 70 ? "text-emerald-400" : (kpis?.activation_rate || 0) >= 40 ? "text-amber-400" : "text-destructive"} subtitle={`${kpis?.units_active || 0} unidades`} />
             <CeoKpiCard title="Empresas Ativas" value={String(kpis?.companies_active || 0)} icon={Building2} accent="text-emerald-400" />
             <CeoKpiCard title="Unidades Ativas" value={String(kpis?.units_active || 0)} icon={Users} accent="text-emerald-400" />
             <CeoKpiCard title="Pedidos" value={String(kpis?.total_orders || 0)} icon={ShoppingCart} accent="text-primary" />
             <CeoKpiCard title="Arquivos ECU" value={String(kpis?.total_files || 0)} icon={FileText} accent="text-primary" />
-            <CeoKpiCard title="Ticket Médio" value={kpis && kpis.total_orders > 0 ? fmt(kpis.total_revenue / kpis.total_orders) : "—"} icon={DollarSign} accent="text-primary" />
+            <CeoKpiCard title="Ticket Médio" value={kpis && kpis.total_orders > 0 ? fmtCurrency(kpis.total_revenue / kpis.total_orders) : "—"} icon={DollarSign} accent="text-primary" />
           </>
         )}
       </div>
