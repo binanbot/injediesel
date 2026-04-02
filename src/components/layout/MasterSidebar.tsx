@@ -11,6 +11,7 @@ import {
   FileText,
   BarChart3,
   UsersRound,
+  TrendingUp,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
