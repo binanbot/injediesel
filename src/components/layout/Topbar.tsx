@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useContractStatus } from "@/hooks/useContractStatus";
 import { useCartStore } from "@/stores/useCartStore";
+import { useCompany } from "@/hooks/useCompany";
 interface TopbarProps {
   unitName?: string;
   onMenuClick?: () => void;
