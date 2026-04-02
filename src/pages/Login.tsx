@@ -10,6 +10,7 @@ import { Logo } from "@/components/Logo";
 import { useAuth, getHomeRouteForRole } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useCompany } from "@/hooks/useCompany";
 
 export default function Login() {
   const navigate = useNavigate();
