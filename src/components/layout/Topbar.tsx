@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useContractStatus } from "@/hooks/useContractStatus";
 import { useCartStore } from "@/stores/useCartStore";
+import { useCompany } from "@/hooks/useCompany";
 interface TopbarProps {
   unitName?: string;
   onMenuClick?: () => void;
@@ -27,6 +28,8 @@ export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuB
   const itemCount = useCartStore((s) => s.getItemCount());
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { company } = useCompany();
+  const displayName = unitName || company?.brand_name || "Unidade";
   return (
     <header className="h-16 glass-topbar sticky top-0 z-40">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
@@ -114,7 +117,7 @@ export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuB
 
           <div className="hidden md:flex items-center gap-3 pl-3 border-l border-border/30">
             <div className="text-right">
-              <p className="text-sm font-medium text-foreground">{unitName}</p>
+              <p className="text-sm font-medium text-foreground">{displayName}</p>
               <p className="text-xs text-muted-foreground">Franqueado</p>
             </div>
             <DropdownMenu>

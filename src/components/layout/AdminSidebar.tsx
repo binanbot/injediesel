@@ -26,6 +26,7 @@ import { Logo } from "@/components/Logo";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, isAdminLevel, isSupportLevel } from "@/hooks/useAuth";
+import { useCompany } from "@/hooks/useCompany";
 
 interface MenuItem {
   icon: React.ElementType;
@@ -66,6 +67,7 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, userRole } = useAuth();
+  const { company } = useCompany();
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({
     suporte: 0,
     correcoes: 0,
@@ -157,6 +159,11 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
             <Logo size="md" />
             <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">{roleBadge}</span>
           </Link>
+          {company?.brand_name && (
+            <span className="text-[10px] text-muted-foreground font-medium truncate max-w-[80px] hidden lg:block">
+              {company.brand_name}
+            </span>
+          )}
           <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
             <X className="h-5 w-5" />
           </Button>
