@@ -45,6 +45,8 @@ export async function createOrderFromCart(
       delivery_address: address as any,
       payment_method: paymentMethod || null,
       payment_note: paymentNote || null,
+      seller_profile_id: sellerProfileId || null,
+      sale_type: saleType,
     })
     .select()
     .single();

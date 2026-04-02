@@ -27,9 +27,18 @@ export interface SellerRow {
   commission_value: number;
   can_sell_ecu: boolean;
   can_sell_parts: boolean;
+  can_bill: boolean;
   is_active: boolean;
   target_monthly: number | null;
   notes: string | null;
+}
+
+/** Fetch active sellers for a company (for use in dropdowns/selectors) */
+export async function fetchActiveSellers(companyId: string): Promise<(EmployeeRow & { seller_profile: SellerRow })[]> {
+  const employees = await fetchEmployees({ companyId, isActive: true, isSeller: true });
+  return employees.filter((e): e is EmployeeRow & { seller_profile: SellerRow } => 
+    e.seller_profile !== null && e.seller_profile.is_active
+  );
 }
 
 export interface DepartmentRow {
