@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth, isAdminLevel, type UserRole } from "@/hooks/useAuth";
+import { useAuth, isAdminLevel } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
 type AppRole = "admin" | "suporte" | "franqueado" | "admin_empresa" | "suporte_empresa" | "master_admin" | "ceo";
