@@ -75,6 +75,7 @@ const PromaxDashboard = lazy(() => import("./pages/admin/PromaxDashboard"));
 
 // Lazy-loaded pages - Master
 const MasterDashboard = lazy(() => import("./pages/master/Dashboard"));
+const MasterCompanyDetail = lazy(() => import("./pages/master/CompanyDetail"));
 
 // Lazy-loaded pages - CEO
 const CeoDashboard = lazy(() => import("./pages/ceo/Dashboard"));
