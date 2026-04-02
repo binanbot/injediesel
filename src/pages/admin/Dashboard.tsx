@@ -73,6 +73,7 @@ const topUnidades = [
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
+  const { company } = useCompany();
 
   // Simula carregamento de dados - em produção viria do banco
   useEffect(() => {
