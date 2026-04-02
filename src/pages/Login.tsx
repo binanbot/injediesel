@@ -358,22 +358,26 @@ export default function Login() {
               Precisa de ajuda? Entre em contato:
             </p>
             <div className="flex items-center justify-center gap-4">
-              <a
-                href="tel:+5500000000000"
-                className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
-              >
-                <Phone className="h-4 w-4" />
-                (00) 0000-0000
-              </a>
-              <a
-                href="https://wa.me/5500000000000"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-green-500 hover:text-green-400 transition-colors"
-              >
-                <MessageCircle className="h-4 w-4" />
-                WhatsApp
-              </a>
+              {(contacts?.phone || !contacts) && (
+                <a
+                  href={`tel:${contacts?.phone || "+5500000000000"}`}
+                  className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+                >
+                  <Phone className="h-4 w-4" />
+                  {contacts?.phone || "(00) 0000-0000"}
+                </a>
+              )}
+              {(contacts?.whatsapp || !contacts) && (
+                <a
+                  href={`https://wa.me/${(contacts?.whatsapp || "5500000000000").replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-green-500 hover:text-green-400 transition-colors"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp
+                </a>
+              )}
             </div>
           </div>
         </motion.div>
