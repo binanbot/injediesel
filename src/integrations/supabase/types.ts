@@ -356,6 +356,117 @@ export type Database = {
           },
         ]
       }
+      departments: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_profiles: {
+        Row: {
+          company_id: string
+          created_at: string
+          department_id: string | null
+          display_name: string | null
+          hired_at: string | null
+          id: string
+          is_active: boolean
+          job_position_id: string | null
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          department_id?: string | null
+          display_name?: string | null
+          hired_at?: string | null
+          id?: string
+          is_active?: boolean
+          job_position_id?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          department_id?: string | null
+          display_name?: string | null
+          hired_at?: string | null
+          id?: string
+          is_active?: boolean
+          job_position_id?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_profiles_job_position_id_fkey"
+            columns: ["job_position_id"]
+            isOneToOne: false
+            referencedRelation: "job_positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       executive_goals: {
         Row: {
           company_id: string | null
@@ -560,6 +671,60 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      job_positions: {
+        Row: {
+          company_id: string
+          created_at: string
+          department_id: string | null
+          hierarchy_level: number
+          id: string
+          is_active: boolean
+          scope: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          department_id?: string | null
+          hierarchy_level?: number
+          id?: string
+          is_active?: boolean
+          scope?: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          department_id?: string | null
+          hierarchy_level?: number
+          id?: string
+          is_active?: boolean
+          scope?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_positions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_positions_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_items: {
         Row: {
@@ -1060,6 +1225,59 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_profiles: {
+        Row: {
+          can_sell_ecu: boolean
+          can_sell_parts: boolean
+          commission_type: string
+          commission_value: number
+          created_at: string
+          employee_profile_id: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          seller_mode: string
+          target_monthly: number | null
+          updated_at: string
+        }
+        Insert: {
+          can_sell_ecu?: boolean
+          can_sell_parts?: boolean
+          commission_type?: string
+          commission_value?: number
+          created_at?: string
+          employee_profile_id: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          seller_mode?: string
+          target_monthly?: number | null
+          updated_at?: string
+        }
+        Update: {
+          can_sell_ecu?: boolean
+          can_sell_parts?: boolean
+          commission_type?: string
+          commission_value?: number
+          created_at?: string
+          employee_profile_id?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          seller_mode?: string
+          target_monthly?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_profiles_employee_profile_id_fkey"
+            columns: ["employee_profile_id"]
+            isOneToOne: true
+            referencedRelation: "employee_profiles"
             referencedColumns: ["id"]
           },
         ]
