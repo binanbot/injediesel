@@ -58,8 +58,10 @@ export default function CeoRelatorios() {
     <div className="space-y-8">
       <ExecutivePageHeader
         icon={BarChart3}
-        title="Relatório Executivo"
-        subtitle="Consolidação periódica para tomada de decisão"
+        title={report?.companyName ? `Relatório — ${report.companyName}` : "Relatório Executivo"}
+        subtitle={report?.companyName
+          ? `Análise consolidada da empresa ${report.companyName}`
+          : "Consolidação periódica para tomada de decisão"}
         actions={exportButton}
       />
 
