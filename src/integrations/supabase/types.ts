@@ -411,6 +411,7 @@ export type Database = {
           is_active: boolean
           job_position_id: string | null
           notes: string | null
+          permission_profile_id: string | null
           phone: string | null
           updated_at: string
           user_id: string
@@ -425,6 +426,7 @@ export type Database = {
           is_active?: boolean
           job_position_id?: string | null
           notes?: string | null
+          permission_profile_id?: string | null
           phone?: string | null
           updated_at?: string
           user_id: string
@@ -439,6 +441,7 @@ export type Database = {
           is_active?: boolean
           job_position_id?: string | null
           notes?: string | null
+          permission_profile_id?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string
@@ -463,6 +466,13 @@ export type Database = {
             columns: ["job_position_id"]
             isOneToOne: false
             referencedRelation: "job_positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_profiles_permission_profile_id_fkey"
+            columns: ["permission_profile_id"]
+            isOneToOne: false
+            referencedRelation: "permission_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -676,6 +686,7 @@ export type Database = {
         Row: {
           company_id: string
           created_at: string
+          default_permission_profile_id: string | null
           department_id: string | null
           hierarchy_level: number
           id: string
@@ -688,6 +699,7 @@ export type Database = {
         Insert: {
           company_id: string
           created_at?: string
+          default_permission_profile_id?: string | null
           department_id?: string | null
           hierarchy_level?: number
           id?: string
@@ -700,6 +712,7 @@ export type Database = {
         Update: {
           company_id?: string
           created_at?: string
+          default_permission_profile_id?: string | null
           department_id?: string | null
           hierarchy_level?: number
           id?: string
@@ -715,6 +728,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_positions_default_permission_profile_id_fkey"
+            columns: ["default_permission_profile_id"]
+            isOneToOne: false
+            referencedRelation: "permission_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -905,6 +925,53 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permission_profiles: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_system_default: boolean
+          name: string
+          permissions: Json
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_system_default?: boolean
+          name: string
+          permissions?: Json
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_system_default?: boolean
+          name?: string
+          permissions?: Json
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
