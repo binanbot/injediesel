@@ -119,7 +119,7 @@ export default function CeoDashboard() {
         )}
       </div>
 
-      {/* Alerts */}
+      <div data-export-section="alerts" data-export-title="Alertas Executivos">
       <CeoAlertsFeed alerts={alerts} />
 
       {/* Charts Row */}
