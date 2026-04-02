@@ -145,7 +145,7 @@ function deriveRisks(
   return r;
 }
 
-const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmt = fmtCurrency;
 
 function buildNarrative(fin: CeoKPIs, growth: GrowthKPIs, share: MarketShareKPIs, goals: GoalsSummary): string {
   const parts: string[] = [];
