@@ -34,15 +34,34 @@ import { useExportReport } from "@/hooks/useExportReport";
 export default function CeoRelatorios() {
   const { filters } = useCeoFilters();
 
+  const { exporting, exportPdf } = useExportReport();
+
   const { data: report, isLoading } = useQuery({
     queryKey: ["ceo-executive-report", filters],
     queryFn: () => buildExecutiveReport(filters),
   });
 
+  const exportButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={exportPdf}
+      disabled={isLoading || !report || exporting}
+      className="gap-2"
+    >
+      <Printer className="h-4 w-4" />
+      {exporting ? "Gerando…" : "Exportar PDF"}
+    </Button>
+  );
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <ExecutivePageHeader icon={BarChart3} title="Relatório Executivo" subtitle="Consolidação periódica para tomada de decisão" />
+      <ExecutivePageHeader
+        icon={BarChart3}
+        title="Relatório Executivo"
+        subtitle="Consolidação periódica para tomada de decisão"
+        actions={exportButton}
+      />
 
       {isLoading ? (
         <div className="space-y-6">
