@@ -16,6 +16,8 @@ export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, userRole, signIn, signUp, isLoading: authLoading } = useAuth();
+  const { company } = useCompany();
+  const brandName = company?.brand_name || company?.name || "Injediesel";
   
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
