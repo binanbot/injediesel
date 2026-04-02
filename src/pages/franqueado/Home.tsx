@@ -173,6 +173,7 @@ const getStatusBadge = (status: string) => {
 export default function FranqueadoHome() {
   const navigate = useNavigate();
   const contractStatus = useContractStatus();
+  const { company, isModuleEnabled, equipmentName } = useCompany();
   const [selectedArquivo, setSelectedArquivo] = useState<ArquivoDetalhado | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
