@@ -228,6 +228,7 @@ const App = () => (
                 }
               >
                 <Route index element={<CeoDashboard />} />
+                <Route path="empresas/:companyId" element={<CeoCompanyDetail />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
