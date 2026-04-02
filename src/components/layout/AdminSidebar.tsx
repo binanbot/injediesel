@@ -159,6 +159,11 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
             <Logo size="md" />
             <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">{roleBadge}</span>
           </Link>
+          {company?.brand_name && (
+            <span className="text-[10px] text-muted-foreground font-medium truncate max-w-[80px] hidden lg:block">
+              {company.brand_name}
+            </span>
+          )}
           <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
             <X className="h-5 w-5" />
           </Button>

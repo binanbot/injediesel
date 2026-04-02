@@ -117,7 +117,7 @@ export function Topbar({ unitName = "Unidade São Paulo", onMenuClick, showMenuB
 
           <div className="hidden md:flex items-center gap-3 pl-3 border-l border-border/30">
             <div className="text-right">
-              <p className="text-sm font-medium text-foreground">{unitName}</p>
+              <p className="text-sm font-medium text-foreground">{displayName}</p>
               <p className="text-xs text-muted-foreground">Franqueado</p>
             </div>
             <DropdownMenu>

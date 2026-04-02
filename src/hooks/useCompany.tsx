@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface CompanyBranding {
@@ -25,6 +25,7 @@ export interface CompanySettings {
   currency?: string;
   locale?: string;
   timezone?: string;
+  proprietary_equipment_name?: string;
 }
 
 export interface Company {
@@ -76,9 +77,59 @@ const CompanyContext = createContext<CompanyContextType>({
   isModuleEnabled: () => true,
 });
 
+/** Convert a hex color (#RRGGBB) to HSL string "H S% L%" for CSS variables */
+function hexToHSL(hex: string): string | null {
+  if (!hex || !hex.startsWith("#")) return null;
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return null;
+
+  let r = parseInt(result[1], 16) / 255;
+  let g = parseInt(result[2], 16) / 255;
+  let b = parseInt(result[3], 16) / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
 function applyBranding(branding: CompanyBranding) {
   const root = document.documentElement;
 
+  // Convert hex colors to HSL and inject into the design system CSS variables
+  const primaryHSL = hexToHSL(branding.primary_color || "");
+  const secondaryHSL = hexToHSL(branding.secondary_color || "");
+  const accentHSL = hexToHSL(branding.accent_color || "");
+
+  if (primaryHSL) {
+    root.style.setProperty("--primary", primaryHSL);
+    root.style.setProperty("--accent", primaryHSL);
+    root.style.setProperty("--ring", primaryHSL);
+    root.style.setProperty("--sidebar-primary", primaryHSL);
+    root.style.setProperty("--sidebar-ring", primaryHSL);
+  }
+
+  if (secondaryHSL) {
+    root.style.setProperty("--company-secondary", branding.secondary_color!);
+  }
+
+  if (accentHSL) {
+    root.style.setProperty("--accent", accentHSL);
+  }
+
+  // Legacy custom properties for components that use them directly
   if (branding.primary_color) root.style.setProperty("--company-primary", branding.primary_color);
   if (branding.secondary_color) root.style.setProperty("--company-secondary", branding.secondary_color);
   if (branding.accent_color) root.style.setProperty("--company-accent", branding.accent_color);
