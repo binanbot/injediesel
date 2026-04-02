@@ -18,17 +18,28 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getCeoKPIs,
   getCompanyComparisons,
   getMonthlyEvolution,
   deriveCeoAlerts,
 } from "@/services/ceoDashboardService";
+import {
+  getTopUnits,
+  getTopClients,
+  getTopProducts,
+  getCategoryBreakdown,
+} from "@/services/ceoRankingService";
 import { CeoKpiCard } from "@/components/ceo/CeoKpiCard";
 import { CeoMonthlyChart } from "@/components/ceo/CeoMonthlyChart";
 import { CeoAlertsFeed } from "@/components/ceo/CeoAlertsFeed";
 import { CeoCompanyTable } from "@/components/ceo/CeoCompanyTable";
 import { CeoRevenueByCompanyChart } from "@/components/ceo/CeoRevenueByCompanyChart";
+import { CeoUnitRanking } from "@/components/ceo/CeoUnitRanking";
+import { CeoTopClients } from "@/components/ceo/CeoTopClients";
+import { CeoTopProducts } from "@/components/ceo/CeoTopProducts";
+import { CeoCategoryBreakdown } from "@/components/ceo/CeoCategoryBreakdown";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
