@@ -2,7 +2,24 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-type UserRole = "admin" | "suporte" | "franqueado" | null;
+export type UserRole = "admin" | "suporte" | "franqueado" | "admin_empresa" | "suporte_empresa" | "master_admin" | "ceo" | null;
+
+// Role hierarchy helpers
+const ADMIN_ROLES: UserRole[] = ["admin", "suporte", "master_admin", "ceo"];
+const COMPANY_ADMIN_ROLES: UserRole[] = ["admin", "suporte", "admin_empresa", "suporte_empresa", "master_admin", "ceo"];
+const MASTER_ROLES: UserRole[] = ["master_admin", "ceo"];
+
+export function isAdminLevel(role: UserRole): boolean {
+  return role !== null && ADMIN_ROLES.includes(role);
+}
+
+export function isCompanyAdminLevel(role: UserRole): boolean {
+  return role !== null && COMPANY_ADMIN_ROLES.includes(role);
+}
+
+export function isMasterLevel(role: UserRole): boolean {
+  return role !== null && MASTER_ROLES.includes(role);
+}
 
 interface AuthContextType {
   user: User | null;

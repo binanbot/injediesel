@@ -1323,6 +1323,7 @@ export type Database = {
     }
     Functions: {
       get_company_by_hostname: { Args: { _hostname: string }; Returns: Json }
+      get_user_role: { Args: { _user_id: string }; Returns: string }
       get_user_unit_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -1331,7 +1332,9 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_company_admin: { Args: { _user_id: string }; Returns: boolean }
       is_franchisor_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_master_level: { Args: { _user_id: string }; Returns: boolean }
       safe_delete_customer: { Args: { _customer_id: string }; Returns: Json }
     }
     Enums: {
