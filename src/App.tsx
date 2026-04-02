@@ -209,6 +209,7 @@ const App = () => (
                 <Route path="compras" element={<ComprasFranqueados />} />
                 <Route path="compras/:id" element={<CompraDetalhe />} />
                 <Route path="loja-dashboard" element={<PromaxDashboard />} />
+                <Route path="colaboradores" element={<Colaboradores />} />
               </Route>
 
               {/* Master Admin Routes */}
