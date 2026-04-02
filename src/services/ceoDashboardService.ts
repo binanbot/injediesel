@@ -152,16 +152,21 @@ function getPreviousPeriod(startDate: string, endDate: string) {
 // ── Main Functions ─────────────────────────────────────────
 
 export async function getCeoKPIs(filters?: Filters): Promise<CeoKPIs> {
-  const [companiesRes, unitsRes] = await Promise.all([
-    supabase
-      .from("companies")
-      .select("*", { count: "exact", head: true })
-      .eq("is_active", true),
-    supabase
-      .from("units")
-      .select("id", { count: "exact" })
-      .eq("is_active", true),
-  ]);
+  // Resolve company-scoped unit IDs if companyId is set
+  let scopedUnitIds: string[] | undefined;
+  if (filters?.companyId) {
+    scopedUnitIds = await getUnitIdsByCompany(filters.companyId);
+  }
+
+  const unitsQuery = scopedUnitIds
+    ? supabase.from("units").select("id", { count: "exact" }).eq("is_active", true).in("id", scopedUnitIds)
+    : supabase.from("units").select("id", { count: "exact" }).eq("is_active", true);
+
+  const companiesQuery = filters?.companyId
+    ? supabase.from("companies").select("*", { count: "exact", head: true }).eq("id", filters.companyId)
+    : supabase.from("companies").select("*", { count: "exact", head: true }).eq("is_active", true);
+
+  const [companiesRes, unitsRes] = await Promise.all([companiesQuery, unitsQuery]);
 
   const companiesCount = companiesRes.count || 0;
   const unitsCount = unitsRes.count || 0;
@@ -169,8 +174,8 @@ export async function getCeoKPIs(filters?: Filters): Promise<CeoKPIs> {
 
   // Current period
   const [ordersResult, filesResult, totalCost] = await Promise.all([
-    getOrdersRevenue(filters),
-    getFilesRevenue(filters),
+    getOrdersRevenue(filters, scopedUnitIds),
+    getFilesRevenue(filters, scopedUnitIds),
     getCosts(filters),
   ]);
 
@@ -193,8 +198,8 @@ export async function getCeoKPIs(filters?: Filters): Promise<CeoKPIs> {
   if (filters?.startDate && filters?.endDate) {
     const prev = getPreviousPeriod(filters.startDate, filters.endDate);
     const [prevOrders, prevFiles, prevCostVal] = await Promise.all([
-      getOrdersRevenue(prev),
-      getFilesRevenue(prev),
+      getOrdersRevenue(prev, scopedUnitIds),
+      getFilesRevenue(prev, scopedUnitIds),
       getCosts(prev),
     ]);
     prevRevenue = prevOrders.revenue + prevFiles.revenue;
