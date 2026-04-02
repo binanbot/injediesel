@@ -29,6 +29,7 @@ import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/useAuth";
 import { useCartStore } from "@/stores/useCartStore";
 import { useSocialLinks } from "@/hooks/useSocialLinks";
+import { useCompany } from "@/hooks/useCompany";
 
 // TikTok icon component
 const TikTokIcon = ({ className }: { className?: string }) => (
