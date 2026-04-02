@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth, isAdminLevel } from "@/hooks/useAuth";
+import { useAuth, isAdminLevel, isMasterLevel, getHomeRouteForRole } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
 type AppRole = "admin" | "suporte" | "franqueado" | "admin_empresa" | "suporte_empresa" | "master_admin" | "ceo";
@@ -28,24 +28,29 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If no specific roles are required, allow any authenticated user
+  // If no specific roles required, allow any authenticated user
   if (!allowedRoles || allowedRoles.length === 0) {
     return <>{children}</>;
   }
 
-  // Admin-level roles (admin, suporte, master_admin, ceo) can access everything
-  if (isAdminLevel(userRole)) {
+  // Master-level roles can access everything
+  if (isMasterLevel(userRole)) {
     return <>{children}</>;
   }
 
-  // Check if user has an allowed role
+  // Admin-level roles (admin, suporte) can access admin + franqueado areas
+  if (isAdminLevel(userRole)) {
+    const isAdminOrFranqueadoArea = allowedRoles.some(r =>
+      ["admin", "suporte", "franqueado", "admin_empresa", "suporte_empresa"].includes(r)
+    );
+    if (isAdminOrFranqueadoArea) return <>{children}</>;
+  }
+
+  // Check if user has an explicitly allowed role
   if (userRole && allowedRoles.includes(userRole as AppRole)) {
     return <>{children}</>;
   }
 
-  // User doesn't have the required role - redirect based on role
-  if (userRole === "admin_empresa" || userRole === "suporte_empresa") {
-    return <Navigate to="/admin" replace />;
-  }
-  return <Navigate to="/franqueado" replace />;
+  // Redirect to the user's home route
+  return <Navigate to={getHomeRouteForRole(userRole)} replace />;
 }

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/Logo";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, getHomeRouteForRole } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
@@ -28,11 +28,7 @@ export default function Login() {
   // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading) {
-      if (userRole === "admin" || userRole === "suporte" || userRole === "master_admin" || userRole === "ceo" || userRole === "admin_empresa" || userRole === "suporte_empresa") {
-        navigate("/admin");
-      } else {
-        navigate("/franqueado");
-      }
+      navigate(getHomeRouteForRole(userRole));
     }
   }, [user, userRole, authLoading, navigate]);
 

@@ -1223,24 +1223,35 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          company_id: string | null
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           id?: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vehicles: {
         Row: {
@@ -1332,6 +1343,8 @@ export type Database = {
     }
     Functions: {
       get_company_by_hostname: { Args: { _hostname: string }; Returns: Json }
+      get_company_unit_ids: { Args: { _company_id: string }; Returns: string[] }
+      get_user_company_id: { Args: { _user_id: string }; Returns: string }
       get_user_role: { Args: { _user_id: string }; Returns: string }
       get_user_unit_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
@@ -1341,9 +1354,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_ceo: { Args: { _user_id: string }; Returns: boolean }
       is_company_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_company_member: {
+        Args: { _company_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_company_support: { Args: { _user_id: string }; Returns: boolean }
       is_franchisor_admin: { Args: { _user_id: string }; Returns: boolean }
       is_master_level: { Args: { _user_id: string }; Returns: boolean }
+      is_same_company: {
+        Args: { _user_id_a: string; _user_id_b: string }
+        Returns: boolean
+      }
       safe_delete_customer: { Args: { _customer_id: string }; Returns: Json }
     }
     Enums: {
