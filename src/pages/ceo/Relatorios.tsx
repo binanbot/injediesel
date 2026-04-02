@@ -196,9 +196,9 @@ export default function CeoRelatorios() {
 
 // ── Sub-components ─────────────────────────────────────────
 
-function ReportSection({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
+function ReportSection({ icon: Icon, title, children, exportKey }: { icon: any; title: string; children: React.ReactNode; exportKey?: string }) {
   return (
-    <Card>
+    <Card {...(exportKey ? { "data-export-section": exportKey, "data-export-title": title } : {})}>
       <CardHeader className="pb-4">
         <CardTitle className="text-lg flex items-center gap-2">
           <Icon className="h-5 w-5 text-emerald-400" />
