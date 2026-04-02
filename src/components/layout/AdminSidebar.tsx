@@ -25,34 +25,35 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, isAdminLevel, isSupportLevel } from "@/hooks/useAuth";
 
 interface MenuItem {
   icon: React.ElementType;
   label: string;
   path: string;
   badgeKey?: string;
+  /** Which roles can see this item. If omitted, all admin-level roles see it. */
+  roles?: string[];
 }
 
-const menuItems: MenuItem[] = [
+const allMenuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
   { icon: Users, label: "Franqueados", path: "/admin/franqueados" },
-  { icon: Upload, label: "Importar Franqueados", path: "/admin/importar" },
+  { icon: Upload, label: "Importar Franqueados", path: "/admin/importar", roles: ["admin", "master_admin", "ceo"] },
   { icon: MapPin, label: "Gerenciar Cobertura", path: "/admin/cobertura" },
   { icon: UserCircle, label: "Clientes", path: "/admin/clientes" },
   { icon: CalendarCheck, label: "Contratos", path: "/admin/contratos" },
   { icon: FileDown, label: "Arquivos Recebidos", path: "/admin/arquivos" },
   { icon: AlertCircle, label: "Correções", path: "/admin/correcoes", badgeKey: "correcoes" },
-  { icon: ImageIcon, label: "Banners", path: "/admin/banners" },
+  { icon: ImageIcon, label: "Banners", path: "/admin/banners", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
   { icon: MapPin, label: "Áreas de Atuação", path: "/admin/areas" },
   { icon: Headphones, label: "Suporte", path: "/admin/suporte", badgeKey: "suporte" },
   { icon: MessageSquare, label: "Mensagens", path: "/admin/mensagens" },
   { icon: BarChart3, label: "Relatórios", path: "/admin/relatorios" },
   { icon: ShoppingBag, label: "Compras Franqueados", path: "/admin/compras" },
   { icon: BarChart3, label: "Dashboard Loja", path: "/admin/loja-dashboard" },
-  { icon: Package, label: "Produtos", path: "/admin/produtos" },
-  
-  { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
+  { icon: Package, label: "Produtos", path: "/admin/produtos", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
+  { icon: Settings, label: "Configurações", path: "/admin/configuracoes", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
   { icon: FileText, label: "Documentação", path: "/admin/documentacao" },
 ];
 
@@ -64,11 +65,22 @@ interface AdminSidebarProps {
 export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, userRole } = useAuth();
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({
     suporte: 0,
     correcoes: 0,
   });
+
+  // Filter menu items by user role
+  const menuItems = allMenuItems.filter((item) => {
+    if (!item.roles) return true;
+    return userRole ? item.roles.includes(userRole) : false;
+  });
+
+  // Determine the badge label
+  const roleBadge = userRole === "admin_empresa" || userRole === "suporte_empresa"
+    ? "EMPRESA"
+    : "ADM";
 
   const handleLogout = async () => {
     await signOut();
@@ -143,7 +155,7 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
           <Link to="/admin" className="flex items-center gap-2">
             <Logo size="md" />
-            <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">ADM</span>
+            <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">{roleBadge}</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
             <X className="h-5 w-5" />

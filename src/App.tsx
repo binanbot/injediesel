@@ -73,9 +73,17 @@ const CompraDetalhe = lazy(() => import("./pages/admin/CompraDetalhe"));
 const Produtos = lazy(() => import("./pages/admin/Produtos"));
 const PromaxDashboard = lazy(() => import("./pages/admin/PromaxDashboard"));
 
+// Lazy-loaded pages - Master
+const MasterDashboard = lazy(() => import("./pages/master/Dashboard"));
+
+// Lazy-loaded pages - CEO
+const CeoDashboard = lazy(() => import("./pages/ceo/Dashboard"));
+
 // Layouts (keep non-lazy for instant routing)
 import { FranchiseeLayout } from "./components/layout/FranchiseeLayout";
 import { AdminLayout } from "./components/layout/AdminLayout";
+import { MasterLayout } from "./components/layout/MasterLayout";
+import { CeoLayout } from "./components/layout/CeoLayout";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -154,7 +162,7 @@ const App = () => (
               <Route
                 path="/admin"
                 element={
-                  <ProtectedRoute allowedRoles={["admin", "suporte"]}>
+                  <ProtectedRoute allowedRoles={["admin", "suporte", "admin_empresa", "suporte_empresa"]}>
                     <AdminLayout />
                   </ProtectedRoute>
                 }
@@ -193,6 +201,30 @@ const App = () => (
                 <Route path="compras" element={<ComprasFranqueados />} />
                 <Route path="compras/:id" element={<CompraDetalhe />} />
                 <Route path="loja-dashboard" element={<PromaxDashboard />} />
+              </Route>
+
+              {/* Master Admin Routes */}
+              <Route
+                path="/master"
+                element={
+                  <ProtectedRoute allowedRoles={["master_admin"]}>
+                    <MasterLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<MasterDashboard />} />
+              </Route>
+
+              {/* CEO Routes */}
+              <Route
+                path="/ceo"
+                element={
+                  <ProtectedRoute allowedRoles={["ceo"]}>
+                    <CeoLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<CeoDashboard />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
