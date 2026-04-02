@@ -6,7 +6,7 @@ import { ptBR } from "date-fns/locale";
 import {
   Building2, MapPin, Users, Car, FileDown, Wrench,
   ShoppingBag, Headphones, AlertTriangle, CheckCircle2,
-  Info, CalendarIcon, Filter, TrendingUp,
+  Info, CalendarIcon, Filter, TrendingUp, Eye,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
