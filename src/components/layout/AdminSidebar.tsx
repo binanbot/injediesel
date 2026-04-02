@@ -157,6 +157,9 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
           <Link to="/admin" className="flex items-center gap-2 min-w-0">
             <Logo size="md" className="shrink-0" />
+            <span className="text-sm font-semibold text-sidebar-foreground truncate">
+              {company?.branding?.platform_name || company?.brand_name || "Painel"}
+            </span>
             <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded shrink-0">{roleBadge}</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">

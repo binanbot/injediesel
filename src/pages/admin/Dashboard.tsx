@@ -31,6 +31,7 @@ import {
 } from "recharts";
 import { MetricTooltip, metricDefinitions } from "@/components/MetricTooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useCompany } from "@/hooks/useCompany";
 import {
   StatsGridSkeleton,
   ChartSkeleton,
@@ -72,6 +73,7 @@ const topUnidades = [
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
+  const { company } = useCompany();
 
   // Simula carregamento de dados - em produção viria do banco
   useEffect(() => {
@@ -111,7 +113,7 @@ export default function AdminDashboard() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Visão geral do sistema.</p>
+          <p className="text-muted-foreground">Visão geral do sistema{company?.brand_name ? ` ${company.brand_name}` : ""}.</p>
         </div>
 
         {/* Alert: New Files */}

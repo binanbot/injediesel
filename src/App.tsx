@@ -45,7 +45,7 @@ const FranqueadoClientes = lazy(() => import("./pages/franqueado/Clientes"));
 const FranqueadoClienteForm = lazy(() => import("./pages/franqueado/ClienteForm"));
 const FranqueadoClienteDetalhe = lazy(() => import("./pages/franqueado/ClienteDetalhe"));
 const FranqueadoVeiculoForm = lazy(() => import("./pages/franqueado/VeiculoForm"));
-import LandingLancamento from "./pages/franqueado/LandingLancamento";
+import LandingRouter from "./pages/LandingRouter";
 const DocumentacaoPublica = lazy(() => import("./pages/DocumentacaoPublica"));
 
 // Lazy-loaded pages - Admin (heavy pages)
@@ -112,7 +112,7 @@ const App = () => (
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public Routes */}
-              <Route path="/" element={<LandingLancamento />} />
+              <Route path="/" element={<LandingRouter />} />
               <Route path="/login" element={<Login />} />
               
               <Route path="/docs" element={<DocumentacaoPublica />} />

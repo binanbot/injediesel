@@ -10,11 +10,14 @@ import { Logo } from "@/components/Logo";
 import { useAuth, getHomeRouteForRole } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useCompany } from "@/hooks/useCompany";
 
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, userRole, signIn, signUp, isLoading: authLoading } = useAuth();
+  const { company } = useCompany();
+  const brandName = company?.brand_name || company?.name || "Injediesel";
   
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -303,13 +306,13 @@ export default function Login() {
                     <div className="flex items-center space-x-3 p-3 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors cursor-pointer">
                       <RadioGroupItem value="existente" id="existente" />
                       <Label htmlFor="existente" className="cursor-pointer flex-1 font-normal">
-                        Já sou representante Injediesel
+                        Já sou representante {brandName}
                       </Label>
                     </div>
                     <div className="flex items-center space-x-3 p-3 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors cursor-pointer">
                       <RadioGroupItem value="novo" id="novo" />
                       <Label htmlFor="novo" className="cursor-pointer flex-1 font-normal">
-                        Quero me tornar um representante Injediesel
+                        Quero me tornar um representante {brandName}
                       </Label>
                     </div>
                   </RadioGroup>
