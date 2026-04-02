@@ -105,13 +105,21 @@ function hexToHSL(hex: string): string | null {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
+/** Normalize a color value to HSL string. Accepts #hex or raw HSL "H S% L%" */
+function toHSL(color: string | undefined): string | null {
+  if (!color) return null;
+  if (color.startsWith("#")) return hexToHSL(color);
+  // Already an HSL string like "217 91% 60%"
+  if (/^\d+\s+\d+%\s+\d+%$/.test(color.trim())) return color.trim();
+  return null;
+}
+
 function applyBranding(branding: CompanyBranding) {
   const root = document.documentElement;
 
-  // Convert hex colors to HSL and inject into the design system CSS variables
-  const primaryHSL = hexToHSL(branding.primary_color || "");
-  const secondaryHSL = hexToHSL(branding.secondary_color || "");
-  const accentHSL = hexToHSL(branding.accent_color || "");
+  const primaryHSL = toHSL(branding.primary_color);
+  const secondaryHSL = toHSL(branding.secondary_color);
+  const accentHSL = toHSL(branding.accent_color);
 
   if (primaryHSL) {
     root.style.setProperty("--primary", primaryHSL);
@@ -119,10 +127,6 @@ function applyBranding(branding: CompanyBranding) {
     root.style.setProperty("--ring", primaryHSL);
     root.style.setProperty("--sidebar-primary", primaryHSL);
     root.style.setProperty("--sidebar-ring", primaryHSL);
-  }
-
-  if (secondaryHSL) {
-    root.style.setProperty("--company-secondary", branding.secondary_color!);
   }
 
   if (accentHSL) {
@@ -157,17 +161,41 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
     supabase
       .rpc("get_company_by_hostname", { _hostname: hostname })
-      .then(({ data, error }) => {
-        if (error || !data) {
-          console.warn("Company not resolved for hostname:", hostname, "— using default");
-          setCompany(DEFAULT_COMPANY);
-          applyBranding(DEFAULT_COMPANY.branding);
-        } else {
+      .then(async ({ data, error }) => {
+        if (!error && data) {
           const resolved = data as unknown as Company;
           setCompany(resolved);
           setIsResolved(true);
           if (resolved.branding) applyBranding(resolved.branding);
+          setIsLoading(false);
+          return;
         }
+
+        // Fallback: resolve company via authenticated user's company_id
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          const { data: companyId } = await supabase.rpc("get_user_company_id", { _user_id: session.user.id });
+          if (companyId) {
+            const { data: companyRow } = await supabase
+              .from("companies")
+              .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
+              .eq("id", companyId)
+              .single();
+            if (companyRow) {
+              const resolved = companyRow as unknown as Company;
+              setCompany(resolved);
+              setIsResolved(true);
+              if (resolved.branding) applyBranding(resolved.branding);
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
+
+        // Final fallback: default company
+        console.warn("Company not resolved for hostname:", hostname, "— using default");
+        setCompany(DEFAULT_COMPANY);
+        applyBranding(DEFAULT_COMPANY.branding);
         setIsLoading(false);
       });
   }, []);
