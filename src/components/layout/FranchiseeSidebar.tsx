@@ -45,22 +45,22 @@ const notifications: Record<string, number> = {
   "/franqueado/mensagens": 2, // 2 mensagens não lidas
 };
 
-const menuItems = [
-  { icon: Home, label: "Página Inicial", path: "/franqueado" },
-  { icon: Upload, label: "Enviar Arquivo", path: "/franqueado/enviar" },
-  { icon: FolderOpen, label: "Meus Arquivos", path: "/franqueado/arquivos" },
-  { icon: ShoppingBag, label: "Loja Promax", path: "/franqueado/loja" },
-  { icon: ShoppingCart, label: "Meu Carrinho", path: "/franqueado/loja/carrinho" },
-  { icon: Package, label: "Histórico de Compras", path: "/franqueado/loja/pedidos" },
-  { icon: Users, label: "Clientes", path: "/franqueado/clientes" },
-  { icon: BarChart3, label: "Relatórios", path: "/franqueado/relatorios" },
-  { icon: RefreshCw, label: "Atualizações", path: "/franqueado/atualizacoes" },
-  { icon: HeadphonesIcon, label: "Suporte", path: "/franqueado/suporte" },
-  { icon: GraduationCap, label: "Cursos", path: "/franqueado/cursos" },
-  { icon: BookOpen, label: "Tutoriais", path: "/franqueado/tutoriais" },
-  { icon: Palette, label: "Materiais MKT", path: "/franqueado/materiais" },
-  { icon: MessageSquare, label: "Mensagens", path: "/franqueado/mensagens" },
-  { icon: User, label: "Perfil", path: "/franqueado/perfil" },
+const allMenuItems = [
+  { icon: Home, label: "Página Inicial", path: "/franqueado", module: "dashboard" },
+  { icon: Upload, label: "Enviar Arquivo", path: "/franqueado/enviar", module: "enviar" },
+  { icon: FolderOpen, label: "Meus Arquivos", path: "/franqueado/arquivos", module: "arquivos" },
+  { icon: ShoppingBag, label: "Loja Promax", path: "/franqueado/loja", module: "loja" },
+  { icon: ShoppingCart, label: "Meu Carrinho", path: "/franqueado/loja/carrinho", module: "loja" },
+  { icon: Package, label: "Histórico de Compras", path: "/franqueado/loja/pedidos", module: "pedidos" },
+  { icon: Users, label: "Clientes", path: "/franqueado/clientes", module: "clientes" },
+  { icon: BarChart3, label: "Relatórios", path: "/franqueado/relatorios", module: "relatorios" },
+  { icon: RefreshCw, label: "Atualizações", path: "/franqueado/atualizacoes", module: "atualizacoes" },
+  { icon: HeadphonesIcon, label: "Suporte", path: "/franqueado/suporte", module: "suporte" },
+  { icon: GraduationCap, label: "Cursos", path: "/franqueado/cursos", module: "cursos" },
+  { icon: BookOpen, label: "Tutoriais", path: "/franqueado/tutoriais", module: "tutoriais" },
+  { icon: Palette, label: "Materiais MKT", path: "/franqueado/materiais", module: "materiais" },
+  { icon: MessageSquare, label: "Mensagens", path: "/franqueado/mensagens", module: "mensagens" },
+  { icon: User, label: "Perfil", path: "/franqueado/perfil", module: null },
 ];
 
 interface FranchiseeSidebarProps {
