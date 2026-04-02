@@ -20,6 +20,7 @@ import {
   ShoppingBag,
   Package,
   UsersRound,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ const allMenuItems: MenuItem[] = [
   { icon: Package, label: "Produtos", path: "/admin/produtos", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
   { icon: Settings, label: "Configurações", path: "/admin/configuracoes", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
   { icon: UsersRound, label: "Colaboradores", path: "/admin/colaboradores", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
+  { icon: TrendingUp, label: "Painel Comercial", path: "/admin/vendas", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
   { icon: FileText, label: "Documentação", path: "/admin/documentacao" },
 ];
 
