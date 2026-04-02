@@ -80,8 +80,7 @@ export default function CeoRelatorios() {
             </div>
           </ReportSection>
 
-          {/* Growth */}
-          <ReportSection icon={TrendingUp} title="Crescimento">
+          <ReportSection icon={TrendingUp} title="Crescimento" exportKey="growth">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <CeoKpiCard title="Crescimento" value={`${report.growth.revenue_growth.toFixed(1)}%`} icon={report.growth.revenue_growth >= 0 ? ArrowUpRight : ArrowDownRight} accent={report.growth.revenue_growth >= 0 ? "text-emerald-400" : "text-rose-400"} subtitle="vs período anterior" />
               <CeoKpiCard title="Pedidos" value={String(report.growth.total_orders)} icon={BarChart3} accent="text-primary" />
