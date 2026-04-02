@@ -26,8 +26,7 @@ import { buildExecutiveReport, type ReportHighlight, type ReportRisk } from "@/s
 import { CeoKpiCard, VariationBadge } from "@/components/ceo/CeoKpiCard";
 import { getMetricLabel } from "@/services/ceoGoalsService";
 import { useCeoFilters } from "@/contexts/CeoFiltersContext";
-
-const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+import { fmtCurrency } from "@/utils/ceoFormatters";
 
 export default function CeoRelatorios() {
   const { filters } = useCeoFilters();
