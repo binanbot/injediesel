@@ -20,6 +20,7 @@ import {
   ShoppingBag,
   Package,
   UsersRound,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
