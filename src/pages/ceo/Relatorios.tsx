@@ -107,8 +107,7 @@ export default function CeoRelatorios() {
             )}
           </ReportSection>
 
-          {/* Market Share */}
-          <ReportSection icon={PieChart} title="Participação e Concentração">
+          <ReportSection icon={PieChart} title="Participação e Concentração" exportKey="market-share">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <CeoKpiCard title="Líder" value={report.shareKPIs.leader_name} icon={PieChart} accent="text-emerald-400" subtitle={`${report.shareKPIs.leader_share.toFixed(1)}% do total`} />
               <CeoKpiCard title="Concentração (HHI)" value={report.shareKPIs.hhi.toLocaleString("pt-BR")} icon={BarChart3} accent={report.shareKPIs.concentration_level === "baixa" ? "text-emerald-400" : "text-amber-400"} subtitle={report.shareKPIs.concentration_level} />
