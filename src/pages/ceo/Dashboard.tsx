@@ -130,7 +130,9 @@ export default function CeoDashboard() {
       </div>
 
       {/* Company Comparison Table */}
-      <CeoCompanyTable comparisons={comparisons} isLoading={loadingComparisons} />
+      <div data-export-section="companies" data-export-title="Comparativo de Empresas">
+        <CeoCompanyTable comparisons={comparisons} isLoading={loadingComparisons} />
+      </div>
 
       {/* Rankings & Analysis */}
       <Tabs defaultValue="units" className="space-y-4">
