@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { format, subMonths, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Building2, MapPin, Users, Car, FileDown, Wrench,
   ShoppingBag, Headphones, AlertTriangle, CheckCircle2,
-  Info, CalendarIcon, Filter, TrendingUp,
+  Info, CalendarIcon, Filter, TrendingUp, Eye,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -99,34 +100,37 @@ function CompanyRow({ company }: { company: CompanySummary }) {
     : "healthy";
 
   return (
-    <div className="flex items-center gap-4 p-4 rounded-xl glass-card hover:border-amber-400/20 transition-colors">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <Building2 className="h-4 w-4 text-amber-400 shrink-0" />
-          <span className="font-semibold text-foreground truncate">{company.brand_name || company.name}</span>
-          <Badge variant={health === "healthy" ? "outline" : "destructive"} className="text-xs shrink-0">
-            {health === "healthy" ? "Saudável" : "Atenção"}
-          </Badge>
+    <Link to={`/master/empresas/${company.id}`} className="block">
+      <div className="flex items-center gap-4 p-4 rounded-xl glass-card hover:border-amber-400/20 transition-colors">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <Building2 className="h-4 w-4 text-amber-400 shrink-0" />
+            <span className="font-semibold text-foreground truncate">{company.brand_name || company.name}</span>
+            <Badge variant={health === "healthy" ? "outline" : "destructive"} className="text-xs shrink-0">
+              {health === "healthy" ? "Saudável" : "Atenção"}
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground">{company.slug}</p>
         </div>
-        <p className="text-xs text-muted-foreground">{company.slug}</p>
-      </div>
 
-      <div className="hidden md:grid grid-cols-6 gap-4 text-center">
-        <Metric icon={MapPin} value={company.units_count} label="Unidades" />
-        <Metric icon={Users} value={company.customers_count} label="Clientes" />
-        <Metric icon={FileDown} value={company.files_count} label="Arquivos" />
-        <Metric icon={Wrench} value={company.services_count} label="Serviços" />
-        <Metric icon={ShoppingBag} value={company.orders_count} label="Pedidos" />
-        <Metric icon={Headphones} value={company.open_tickets} label="Tickets" accent={company.open_tickets > 0 ? "rose" : undefined} />
-      </div>
+        <div className="hidden md:grid grid-cols-6 gap-4 text-center">
+          <Metric icon={MapPin} value={company.units_count} label="Unidades" />
+          <Metric icon={Users} value={company.customers_count} label="Clientes" />
+          <Metric icon={FileDown} value={company.files_count} label="Arquivos" />
+          <Metric icon={Wrench} value={company.services_count} label="Serviços" />
+          <Metric icon={ShoppingBag} value={company.orders_count} label="Pedidos" />
+          <Metric icon={Headphones} value={company.open_tickets} label="Tickets" accent={company.open_tickets > 0 ? "rose" : undefined} />
+        </div>
 
-      {/* Mobile: compact stats */}
-      <div className="md:hidden flex items-center gap-3 text-xs text-muted-foreground">
-        <span>{company.units_count} un.</span>
-        <span>{company.customers_count} cli.</span>
-        <span>{company.files_count} arq.</span>
+        <div className="md:hidden flex items-center gap-3 text-xs text-muted-foreground">
+          <span>{company.units_count} un.</span>
+          <span>{company.customers_count} cli.</span>
+          <span>{company.files_count} arq.</span>
+        </div>
+
+        <Eye className="h-4 w-4 text-muted-foreground shrink-0" />
       </div>
-    </div>
+    </Link>
   );
 }
 
