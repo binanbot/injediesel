@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
@@ -15,12 +14,14 @@ import {
   ArrowDownRight,
   Percent,
   Activity,
+  Printer,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { buildExecutiveReport, type ReportHighlight, type ReportRisk } from "@/services/ceoReportsService";
 import { CeoKpiCard, VariationBadge } from "@/components/ceo/CeoKpiCard";
@@ -28,19 +29,39 @@ import { getMetricLabel } from "@/services/ceoGoalsService";
 import { useCeoFilters } from "@/contexts/CeoFiltersContext";
 import { ExecutivePageHeader } from "@/components/ceo/ExecutivePageHeader";
 import { fmtCurrency } from "@/utils/ceoFormatters";
+import { useExportReport } from "@/hooks/useExportReport";
 
 export default function CeoRelatorios() {
   const { filters } = useCeoFilters();
+
+  const { exporting, exportPdf } = useExportReport();
 
   const { data: report, isLoading } = useQuery({
     queryKey: ["ceo-executive-report", filters],
     queryFn: () => buildExecutiveReport(filters),
   });
 
+  const exportButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={exportPdf}
+      disabled={isLoading || !report || exporting}
+      className="gap-2"
+    >
+      <Printer className="h-4 w-4" />
+      {exporting ? "Gerando…" : "Exportar PDF"}
+    </Button>
+  );
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <ExecutivePageHeader icon={BarChart3} title="Relatório Executivo" subtitle="Consolidação periódica para tomada de decisão" />
+      <ExecutivePageHeader
+        icon={BarChart3}
+        title="Relatório Executivo"
+        subtitle="Consolidação periódica para tomada de decisão"
+        actions={exportButton}
+      />
 
       {isLoading ? (
         <div className="space-y-6">
