@@ -111,7 +111,7 @@ export default function AdminDashboard() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Visão geral do sistema Injediesel.</p>
+          <p className="text-muted-foreground">Visão geral do sistema.</p>
         </div>
 
         {/* Alert: New Files */}
