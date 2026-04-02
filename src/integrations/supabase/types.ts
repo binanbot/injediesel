@@ -832,6 +832,8 @@ export type Database = {
           payment_method: string | null
           payment_note: string | null
           payment_status: string
+          sale_type: string | null
+          seller_profile_id: string | null
           shipping_amount: number
           status: string
           subtotal: number
@@ -852,6 +854,8 @@ export type Database = {
           payment_method?: string | null
           payment_note?: string | null
           payment_status?: string
+          sale_type?: string | null
+          seller_profile_id?: string | null
           shipping_amount?: number
           status?: string
           subtotal?: number
@@ -872,6 +876,8 @@ export type Database = {
           payment_method?: string | null
           payment_note?: string | null
           payment_status?: string
+          sale_type?: string | null
+          seller_profile_id?: string | null
           shipping_amount?: number
           status?: string
           subtotal?: number
@@ -885,6 +891,13 @@ export type Database = {
             columns: ["franchise_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles_franchisees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_seller_profile_id_fkey"
+            columns: ["seller_profile_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1144,6 +1157,7 @@ export type Database = {
           plate_lookup_success: boolean | null
           plate_lookup_unit_id: string | null
           plate_lookup_user_id: string | null
+          seller_profile_id: string | null
           servico: string
           status: string
           unit_id: string
@@ -1171,6 +1185,7 @@ export type Database = {
           plate_lookup_success?: boolean | null
           plate_lookup_unit_id?: string | null
           plate_lookup_user_id?: string | null
+          seller_profile_id?: string | null
           servico: string
           status?: string
           unit_id: string
@@ -1198,6 +1213,7 @@ export type Database = {
           plate_lookup_success?: boolean | null
           plate_lookup_unit_id?: string | null
           plate_lookup_user_id?: string | null
+          seller_profile_id?: string | null
           servico?: string
           status?: string
           unit_id?: string
@@ -1211,6 +1227,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "received_files_seller_profile_id_fkey"
+            columns: ["seller_profile_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1231,6 +1254,7 @@ export type Database = {
       }
       seller_profiles: {
         Row: {
+          can_bill: boolean
           can_sell_ecu: boolean
           can_sell_parts: boolean
           commission_type: string
@@ -1245,6 +1269,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          can_bill?: boolean
           can_sell_ecu?: boolean
           can_sell_parts?: boolean
           commission_type?: string
@@ -1259,6 +1284,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          can_bill?: boolean
           can_sell_ecu?: boolean
           can_sell_parts?: boolean
           commission_type?: string
@@ -1290,6 +1316,8 @@ export type Database = {
           description: string | null
           id: string
           protocol: string | null
+          sale_type: string | null
+          seller_profile_id: string | null
           service_type: string
           status: string | null
           unit_id: string
@@ -1302,6 +1330,8 @@ export type Database = {
           description?: string | null
           id?: string
           protocol?: string | null
+          sale_type?: string | null
+          seller_profile_id?: string | null
           service_type: string
           status?: string | null
           unit_id: string
@@ -1314,6 +1344,8 @@ export type Database = {
           description?: string | null
           id?: string
           protocol?: string | null
+          sale_type?: string | null
+          seller_profile_id?: string | null
           service_type?: string
           status?: string | null
           unit_id?: string
@@ -1325,6 +1357,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_seller_profile_id_fkey"
+            columns: ["seller_profile_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
             referencedColumns: ["id"]
           },
           {
