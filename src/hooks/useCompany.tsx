@@ -117,10 +117,9 @@ function toHSL(color: string | undefined): string | null {
 function applyBranding(branding: CompanyBranding) {
   const root = document.documentElement;
 
-  // Convert hex colors to HSL and inject into the design system CSS variables
-  const primaryHSL = hexToHSL(branding.primary_color || "");
-  const secondaryHSL = hexToHSL(branding.secondary_color || "");
-  const accentHSL = hexToHSL(branding.accent_color || "");
+  const primaryHSL = toHSL(branding.primary_color);
+  const secondaryHSL = toHSL(branding.secondary_color);
+  const accentHSL = toHSL(branding.accent_color);
 
   if (primaryHSL) {
     root.style.setProperty("--primary", primaryHSL);
@@ -128,10 +127,6 @@ function applyBranding(branding: CompanyBranding) {
     root.style.setProperty("--ring", primaryHSL);
     root.style.setProperty("--sidebar-primary", primaryHSL);
     root.style.setProperty("--sidebar-ring", primaryHSL);
-  }
-
-  if (secondaryHSL) {
-    root.style.setProperty("--company-secondary", branding.secondary_color!);
   }
 
   if (accentHSL) {
