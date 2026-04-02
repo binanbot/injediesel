@@ -1,0 +1,52 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Target, TrendingDown, AlertTriangle, CheckCircle2, type LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { GoalInsight } from "@/services/ceoGoalsService";
+
+const iconMap: Record<GoalInsight["type"], LucideIcon> = {
+  success: CheckCircle2,
+  warning: AlertTriangle,
+  danger: TrendingDown,
+};
+
+const colorMap: Record<GoalInsight["type"], string> = {
+  success: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
+  warning: "text-amber-400 bg-amber-400/10 border-amber-400/20",
+  danger: "text-rose-400 bg-rose-400/10 border-rose-400/20",
+};
+
+interface Props {
+  insights: GoalInsight[];
+}
+
+export function GoalInsightsPanel({ insights }: Props) {
+  if (insights.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Target className="h-5 w-5 text-emerald-400" />
+          Insights de Metas
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {insights.map((insight, i) => {
+          const Icon = iconMap[insight.type];
+          return (
+            <div key={i} className={cn("flex items-start gap-3 p-3 rounded-lg border", colorMap[insight.type])}>
+              <Icon className="h-5 w-5 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium">{insight.title}</p>
+                  {insight.metric && <span className="text-xs font-mono shrink-0">{insight.metric}</span>}
+                </div>
+                <p className="text-xs opacity-80 mt-0.5">{insight.description}</p>
+              </div>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
