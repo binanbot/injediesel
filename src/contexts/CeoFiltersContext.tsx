@@ -27,23 +27,7 @@ interface CeoFiltersContextValue {
   filters: { startDate: string; endDate: string; companyId?: string };
 }
 
-// ── Helpers ────────────────────────────────────────────────
-
-export function getPresetRange(preset: PeriodPreset): CeoDateRange {
-  const now = new Date();
-  switch (preset) {
-    case "mes":
-      return { from: startOfMonth(now), to: endOfMonth(now) };
-    case "trimestre":
-      return { from: startOfQuarter(now), to: endOfQuarter(now) };
-    case "semestre":
-      return { from: subMonths(now, 6), to: now };
-    case "ano":
-      return { from: startOfYear(now), to: endOfYear(now) };
-    default:
-      return { from: subMonths(now, 6), to: now };
-  }
-}
+// getPresetRange is now imported from @/utils/periodUtils
 
 // ── Context ────────────────────────────────────────────────
 
