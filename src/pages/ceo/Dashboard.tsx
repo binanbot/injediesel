@@ -124,7 +124,7 @@ export default function CeoDashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div data-export-section="charts" data-export-title="Evolução e Comparativo" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CeoMonthlyChart data={monthly} isLoading={loadingMonthly} showCost />
         <CeoRevenueByCompanyChart comparisons={comparisons} isLoading={loadingComparisons} />
       </div>
