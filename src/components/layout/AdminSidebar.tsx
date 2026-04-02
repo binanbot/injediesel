@@ -155,7 +155,7 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
           <Link to="/admin" className="flex items-center gap-2">
             <Logo size="md" />
-            <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">ADM</span>
+            <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">{roleBadge}</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
             <X className="h-5 w-5" />
