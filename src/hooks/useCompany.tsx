@@ -160,9 +160,9 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const [isResolved, setIsResolved] = useState(false);
 
   /** Wrap a promise with a timeout to avoid hanging forever */
-  const withTimeout = <T,>(promise: Promise<T>, ms = 5000): Promise<T> =>
+  const withTimeout = <T,>(promise: PromiseLike<T>, ms = 5000): Promise<T> =>
     Promise.race([
-      promise,
+      Promise.resolve(promise),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), ms)),
     ]);
 
@@ -181,13 +181,15 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
   /** Resolve company by user's company_id */
   const resolveByUser = async (userId: string): Promise<Company | null> => {
-    const { data: companyId } = await supabase.rpc("get_user_company_id", { _user_id: userId });
+    const { data: companyId } = await withTimeout(supabase.rpc("get_user_company_id", { _user_id: userId }));
     if (!companyId) return null;
-    const { data: companyRow } = await supabase
-      .from("companies")
-      .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
-      .eq("id", companyId)
-      .single();
+    const { data: companyRow } = await withTimeout(
+      supabase
+        .from("companies")
+        .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
+        .eq("id", companyId)
+        .single()
+    );
     return companyRow ? (companyRow as unknown as Company) : null;
   };
 
