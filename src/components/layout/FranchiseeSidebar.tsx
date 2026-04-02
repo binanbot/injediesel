@@ -76,6 +76,11 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
   const { signOut } = useAuth();
   const { socialLinks, loading: loadingSocial } = useSocialLinks();
   const itemCount = useCartStore((s) => s.getItemCount());
+  const { isModuleEnabled } = useCompany();
+
+  const menuItems = allMenuItems.filter(
+    (item) => item.module === null || isModuleEnabled(item.module)
+  );
 
   const handleLogout = async () => {
     await signOut();
