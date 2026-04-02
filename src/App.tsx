@@ -74,6 +74,7 @@ const CompraDetalhe = lazy(() => import("./pages/admin/CompraDetalhe"));
 const Produtos = lazy(() => import("./pages/admin/Produtos"));
 const PromaxDashboard = lazy(() => import("./pages/admin/PromaxDashboard"));
 const Colaboradores = lazy(() => import("./pages/admin/Colaboradores"));
+const VendasDashboard = lazy(() => import("./pages/admin/VendasDashboard"));
 
 // Lazy-loaded pages
 const MasterDashboard = lazy(() => import("./pages/master/Dashboard"));
