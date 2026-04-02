@@ -1,10 +1,12 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, isAdminLevel, type UserRole } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
+
+type AppRole = "admin" | "suporte" | "franqueado" | "admin_empresa" | "suporte_empresa" | "master_admin" | "ceo";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ("admin" | "suporte" | "franqueado")[];
+  allowedRoles?: AppRole[];
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
@@ -31,16 +33,19 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <>{children}</>;
   }
 
-  // Admin and suporte can access everything
-  if (userRole === "admin" || userRole === "suporte") {
+  // Admin-level roles (admin, suporte, master_admin, ceo) can access everything
+  if (isAdminLevel(userRole)) {
     return <>{children}</>;
   }
 
   // Check if user has an allowed role
-  if (userRole && allowedRoles.includes(userRole)) {
+  if (userRole && allowedRoles.includes(userRole as AppRole)) {
     return <>{children}</>;
   }
 
-  // User doesn't have the required role - redirect to franqueado by default
+  // User doesn't have the required role - redirect based on role
+  if (userRole === "admin_empresa" || userRole === "suporte_empresa") {
+    return <Navigate to="/admin" replace />;
+  }
   return <Navigate to="/franqueado" replace />;
 }
