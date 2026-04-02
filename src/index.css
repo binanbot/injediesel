@@ -377,6 +377,12 @@
   }
 }
 
+@media print {
+  body { background: white !important; color: black !important; }
+  [data-export-section] { break-inside: avoid; }
+  nav, aside, [data-hide-print] { display: none !important; }
+}
+
 @page {
   size: A4;
   margin: 16mm;

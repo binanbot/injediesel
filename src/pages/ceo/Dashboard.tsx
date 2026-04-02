@@ -93,7 +93,7 @@ export default function CeoDashboard() {
       <ExecutivePageHeader icon={DashIcon} title="Painel Executivo" subtitle="Visão consolidada de desempenho do grupo" />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div data-export-section="kpis" data-export-title="KPIs Consolidados" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {isLoading ? (
           Array.from({ length: 10 }).map((_, i) => (
             <Card key={i} className="glass-card">
@@ -119,17 +119,20 @@ export default function CeoDashboard() {
         )}
       </div>
 
-      {/* Alerts */}
-      <CeoAlertsFeed alerts={alerts} />
+      <div data-export-section="alerts" data-export-title="Alertas Executivos">
+        <CeoAlertsFeed alerts={alerts} />
+      </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div data-export-section="charts" data-export-title="Evolução e Comparativo" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CeoMonthlyChart data={monthly} isLoading={loadingMonthly} showCost />
         <CeoRevenueByCompanyChart comparisons={comparisons} isLoading={loadingComparisons} />
       </div>
 
       {/* Company Comparison Table */}
-      <CeoCompanyTable comparisons={comparisons} isLoading={loadingComparisons} />
+      <div data-export-section="companies" data-export-title="Comparativo de Empresas">
+        <CeoCompanyTable comparisons={comparisons} isLoading={loadingComparisons} />
+      </div>
 
       {/* Rankings & Analysis */}
       <Tabs defaultValue="units" className="space-y-4">

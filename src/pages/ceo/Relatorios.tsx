@@ -51,6 +51,7 @@ export default function CeoRelatorios() {
       ) : report ? (
         <>
           {/* Narrative */}
+          <div data-export-section="narrative" data-export-title="Resumo Executivo">
           <Card className="border-emerald-400/20">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -62,15 +63,15 @@ export default function CeoRelatorios() {
               <p className="text-sm leading-relaxed text-foreground/90">{report.narrative}</p>
             </CardContent>
           </Card>
+          </div>
 
           {/* Highlights & Risks */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div data-export-section="highlights-risks" data-export-title="Destaques e Riscos" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <HighlightsCard highlights={report.highlights} />
             <RisksCard risks={report.risks} />
           </div>
 
-          {/* Financial */}
-          <ReportSection icon={DollarSign} title="Desempenho Financeiro">
+          <ReportSection icon={DollarSign} title="Desempenho Financeiro" exportKey="financial">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <CeoKpiCard title="Faturamento" value={fmtCurrency(report.financial.total_revenue)} icon={DollarSign} accent="text-emerald-400" variation={report.financial.revenue_variation} />
               <CeoKpiCard title="Custo" value={fmtCurrency(report.financial.total_cost)} icon={ArrowDownRight} accent="text-rose-400" variation={report.financial.cost_variation} invertColor />
@@ -79,8 +80,7 @@ export default function CeoRelatorios() {
             </div>
           </ReportSection>
 
-          {/* Growth */}
-          <ReportSection icon={TrendingUp} title="Crescimento">
+          <ReportSection icon={TrendingUp} title="Crescimento" exportKey="growth">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <CeoKpiCard title="Crescimento" value={`${report.growth.revenue_growth.toFixed(1)}%`} icon={report.growth.revenue_growth >= 0 ? ArrowUpRight : ArrowDownRight} accent={report.growth.revenue_growth >= 0 ? "text-emerald-400" : "text-rose-400"} subtitle="vs período anterior" />
               <CeoKpiCard title="Pedidos" value={String(report.growth.total_orders)} icon={BarChart3} accent="text-primary" />
@@ -107,8 +107,7 @@ export default function CeoRelatorios() {
             )}
           </ReportSection>
 
-          {/* Market Share */}
-          <ReportSection icon={PieChart} title="Participação e Concentração">
+          <ReportSection icon={PieChart} title="Participação e Concentração" exportKey="market-share">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <CeoKpiCard title="Líder" value={report.shareKPIs.leader_name} icon={PieChart} accent="text-emerald-400" subtitle={`${report.shareKPIs.leader_share.toFixed(1)}% do total`} />
               <CeoKpiCard title="Concentração (HHI)" value={report.shareKPIs.hhi.toLocaleString("pt-BR")} icon={BarChart3} accent={report.shareKPIs.concentration_level === "baixa" ? "text-emerald-400" : "text-amber-400"} subtitle={report.shareKPIs.concentration_level} />
@@ -137,8 +136,7 @@ export default function CeoRelatorios() {
             )}
           </ReportSection>
 
-          {/* Goals */}
-          <ReportSection icon={Target} title="Metas & OKRs">
+          <ReportSection icon={Target} title="Metas & OKRs" exportKey="goals">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <CeoKpiCard title="Atingidas" value={`${report.goalsSummary.achieved}/${report.goalsSummary.total}`} icon={CheckCircle2} accent="text-emerald-400" subtitle={report.goalsSummary.total > 0 ? `${((report.goalsSummary.achieved / report.goalsSummary.total) * 100).toFixed(0)}%` : "—"} />
               <CeoKpiCard title="Em Risco" value={String(report.goalsSummary.at_risk)} icon={AlertTriangle} accent={report.goalsSummary.at_risk > 0 ? "text-amber-400" : "text-emerald-400"} />
@@ -198,9 +196,9 @@ export default function CeoRelatorios() {
 
 // ── Sub-components ─────────────────────────────────────────
 
-function ReportSection({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
+function ReportSection({ icon: Icon, title, children, exportKey }: { icon: any; title: string; children: React.ReactNode; exportKey?: string }) {
   return (
-    <Card>
+    <Card {...(exportKey ? { "data-export-section": exportKey, "data-export-title": title } : {})}>
       <CardHeader className="pb-4">
         <CardTitle className="text-lg flex items-center gap-2">
           <Icon className="h-5 w-5 text-emerald-400" />
