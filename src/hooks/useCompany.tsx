@@ -105,6 +105,15 @@ function hexToHSL(hex: string): string | null {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
+/** Normalize a color value to HSL string. Accepts #hex or raw HSL "H S% L%" */
+function toHSL(color: string | undefined): string | null {
+  if (!color) return null;
+  if (color.startsWith("#")) return hexToHSL(color);
+  // Already an HSL string like "217 91% 60%"
+  if (/^\d+\s+\d+%\s+\d+%$/.test(color.trim())) return color.trim();
+  return null;
+}
+
 function applyBranding(branding: CompanyBranding) {
   const root = document.documentElement;
 
