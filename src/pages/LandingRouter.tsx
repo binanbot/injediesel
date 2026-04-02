@@ -13,9 +13,12 @@ const PageLoader = () => (
 
 /**
  * Routes to the correct landing page based on the resolved company.
- * Injediesel (default) → LandingLancamento
- * PROMAX TUNER → LandingPromax
- * Future companies → extend the switch.
+ * Resolution order in CompanyProvider:
+ * 1. Hostname (production domains)
+ * 2. ?brand=slug query param (dev/preview)
+ * 3. sessionStorage persisted slug
+ * 4. Authenticated user's company
+ * 5. Default (Injediesel)
  */
 export default function LandingRouter() {
   const { company, isLoading } = useCompany();
