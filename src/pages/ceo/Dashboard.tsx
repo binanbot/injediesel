@@ -1,72 +1,37 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { format, subMonths } from "date-fns";
 import {
   DollarSign,
   TrendingUp,
   TrendingDown,
-  Building2,
   Users,
   FileText,
   ShoppingCart,
   Percent,
-  AlertTriangle,
-  CheckCircle,
   CalendarIcon,
-  ArrowRight,
-  BarChart3,
   Activity,
-  ArrowUpRight,
-  ArrowDownRight,
+  Building2,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   getCeoKPIs,
   getCompanyComparisons,
   getMonthlyEvolution,
   deriveCeoAlerts,
 } from "@/services/ceoDashboardService";
+import { CeoKpiCard } from "@/components/ceo/CeoKpiCard";
+import { CeoMonthlyChart } from "@/components/ceo/CeoMonthlyChart";
+import { CeoAlertsFeed } from "@/components/ceo/CeoAlertsFeed";
+import { CeoCompanyTable } from "@/components/ceo/CeoCompanyTable";
+import { CeoRevenueByCompanyChart } from "@/components/ceo/CeoRevenueByCompanyChart";
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-const fmtShort = (v: number) => {
-  if (v >= 1_000_000) return `R$${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `R$${(v / 1_000).toFixed(0)}k`;
-  return fmt(v);
-};
-
-const tooltipStyle = {
-  backgroundColor: "hsl(230, 15%, 8%)",
-  border: "1px solid hsl(230, 15%, 18%)",
-  borderRadius: "8px",
-};
-
-const COLORS = [
-  "hsl(160, 84%, 39%)",
-  "hsl(217, 91%, 60%)",
-  "hsl(45, 93%, 47%)",
-  "hsl(339, 90%, 51%)",
-  "hsl(262, 83%, 58%)",
-];
 
 export default function CeoDashboard() {
   const [dateRange, setDateRange] = useState({
@@ -150,14 +115,14 @@ export default function CeoDashboard() {
           ))
         ) : (
           <>
-            <KpiCard
+            <CeoKpiCard
               title="Faturamento Total"
               value={fmt(kpis?.total_revenue || 0)}
               icon={DollarSign}
               accent="text-emerald-400"
               variation={kpis?.revenue_variation}
             />
-            <KpiCard
+            <CeoKpiCard
               title="Custo Total"
               value={fmt(kpis?.total_cost || 0)}
               icon={TrendingDown}
@@ -165,14 +130,14 @@ export default function CeoDashboard() {
               variation={kpis?.cost_variation}
               invertColor
             />
-            <KpiCard
+            <CeoKpiCard
               title="Margem Estimada"
               value={fmt(kpis?.estimated_margin || 0)}
               icon={TrendingUp}
               accent="text-emerald-400"
               variation={kpis?.margin_variation}
             />
-            <KpiCard
+            <CeoKpiCard
               title="Margem %"
               value={`${(kpis?.margin_percent || 0).toFixed(1)}%`}
               icon={Percent}
@@ -182,7 +147,7 @@ export default function CeoDashboard() {
                   : "text-amber-400"
               }
             />
-            <KpiCard
+            <CeoKpiCard
               title="Ativação Operacional"
               value={`${(kpis?.activation_rate || 0).toFixed(0)}%`}
               icon={Activity}
@@ -195,31 +160,31 @@ export default function CeoDashboard() {
               }
               subtitle={`${kpis?.units_active || 0} unidades`}
             />
-            <KpiCard
+            <CeoKpiCard
               title="Empresas Ativas"
               value={String(kpis?.companies_active || 0)}
               icon={Building2}
               accent="text-emerald-400"
             />
-            <KpiCard
+            <CeoKpiCard
               title="Unidades Ativas"
               value={String(kpis?.units_active || 0)}
               icon={Users}
               accent="text-emerald-400"
             />
-            <KpiCard
+            <CeoKpiCard
               title="Pedidos"
               value={String(kpis?.total_orders || 0)}
               icon={ShoppingCart}
               accent="text-primary"
             />
-            <KpiCard
+            <CeoKpiCard
               title="Arquivos ECU"
               value={String(kpis?.total_files || 0)}
               icon={FileText}
               accent="text-primary"
             />
-            <KpiCard
+            <CeoKpiCard
               title="Ticket Médio"
               value={
                 kpis && kpis.total_orders > 0
@@ -234,330 +199,26 @@ export default function CeoDashboard() {
       </div>
 
       {/* Alerts */}
-      {alerts.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {alerts.map((alert, i) => (
-            <Card
-              key={i}
-              className={`border-l-4 ${
-                alert.type === "danger"
-                  ? "border-l-destructive"
-                  : alert.type === "warning"
-                  ? "border-l-amber-500"
-                  : "border-l-emerald-500"
-              }`}
-            >
-              <CardContent className="pt-4 pb-3 flex items-start gap-3">
-                {alert.type === "danger" ? (
-                  <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                ) : alert.type === "warning" ? (
-                  <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                ) : (
-                  <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
-                )}
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    {alert.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {alert.description}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <CeoAlertsFeed alerts={alerts} />
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Monthly Evolution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-emerald-400" />
-              Evolução Mensal
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingMonthly ? (
-              <Skeleton className="h-[280px] w-full" />
-            ) : monthly.length === 0 ? (
-              <p className="text-center text-muted-foreground py-12">
-                Sem dados no período
-              </p>
-            ) : (
-              <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={monthly}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="hsl(230,15%,18%)"
-                    />
-                    <XAxis
-                      dataKey="label"
-                      stroke="hsl(230,10%,55%)"
-                      fontSize={12}
-                    />
-                    <YAxis
-                      stroke="hsl(230,10%,55%)"
-                      fontSize={12}
-                      tickFormatter={(v) => fmtShort(v)}
-                    />
-                    <Tooltip
-                      contentStyle={tooltipStyle}
-                      formatter={(v: number, name: string) => [
-                        fmt(v),
-                        name === "revenue" ? "Faturamento" : "Margem",
-                      ]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="hsl(160,84%,39%)"
-                      fill="hsl(160,84%,39%)"
-                      fillOpacity={0.15}
-                      name="revenue"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="margin"
-                      stroke="hsl(217,91%,60%)"
-                      fill="hsl(217,91%,60%)"
-                      fillOpacity={0.1}
-                      name="margin"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Revenue by Company */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-emerald-400" />
-              Faturamento por Empresa
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingComparisons ? (
-              <Skeleton className="h-[280px] w-full" />
-            ) : comparisons.length === 0 ? (
-              <p className="text-center text-muted-foreground py-12">
-                Sem dados no período
-              </p>
-            ) : (
-              <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={comparisons} layout="vertical">
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="hsl(230,15%,18%)"
-                    />
-                    <XAxis
-                      type="number"
-                      stroke="hsl(230,10%,55%)"
-                      fontSize={12}
-                      tickFormatter={(v) => fmtShort(v)}
-                    />
-                    <YAxis
-                      type="category"
-                      dataKey="name"
-                      stroke="hsl(230,10%,55%)"
-                      fontSize={12}
-                      width={120}
-                    />
-                    <Tooltip
-                      contentStyle={tooltipStyle}
-                      formatter={(v: number) => [fmt(v), "Faturamento"]}
-                    />
-                    <Bar dataKey="revenue" radius={[0, 4, 4, 0]}>
-                      {comparisons.map((_, i) => (
-                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <CeoMonthlyChart
+          data={monthly}
+          isLoading={loadingMonthly}
+          showCost
+        />
+        <CeoRevenueByCompanyChart
+          comparisons={comparisons}
+          isLoading={loadingComparisons}
+        />
       </div>
 
       {/* Company Comparison Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-emerald-400" />
-            Comparativo de Empresas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingComparisons ? (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full" />
-              ))}
-            </div>
-          ) : comparisons.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              Nenhuma empresa encontrada
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-muted-foreground">
-                    <th className="text-left py-3 px-2 font-medium">Empresa</th>
-                    <th className="text-right py-3 px-2 font-medium">Unid.</th>
-                    <th className="text-right py-3 px-2 font-medium">Faturamento</th>
-                    <th className="text-right py-3 px-2 font-medium">Pedidos</th>
-                    <th className="text-right py-3 px-2 font-medium">Arquivos</th>
-                    <th className="text-right py-3 px-2 font-medium">Margem</th>
-                    <th className="text-right py-3 px-2 font-medium">Crescimento</th>
-                    <th className="text-center py-3 px-2 font-medium"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisons.map((c) => (
-                    <tr
-                      key={c.id}
-                      className="border-b border-border/50 hover:bg-secondary/30 transition-colors"
-                    >
-                      <td className="py-3 px-2">
-                        <div>
-                          <p className="font-medium text-foreground">{c.name}</p>
-                          {c.brand_name && (
-                            <p className="text-xs text-muted-foreground">
-                              {c.brand_name}
-                            </p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="text-right py-3 px-2 text-muted-foreground">
-                        {c.units}
-                      </td>
-                      <td className="text-right py-3 px-2 font-medium text-emerald-400">
-                        {fmt(c.revenue)}
-                      </td>
-                      <td className="text-right py-3 px-2 text-muted-foreground">
-                        {c.orders}
-                      </td>
-                      <td className="text-right py-3 px-2 text-muted-foreground">
-                        {c.files}
-                      </td>
-                      <td className="text-right py-3 px-2">
-                        <span
-                          className={
-                            c.margin_percent >= 30
-                              ? "text-emerald-400"
-                              : c.margin_percent >= 15
-                              ? "text-amber-400"
-                              : "text-destructive"
-                          }
-                        >
-                          {c.margin_percent.toFixed(1)}%
-                        </span>
-                      </td>
-                      <td className="text-right py-3 px-2">
-                        {c.growth_percent !== null ? (
-                          <VariationBadge value={c.growth_percent} />
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      <td className="text-center py-3 px-2">
-                        <Link to={`/ceo/empresas/${c.id}`}>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <ArrowRight className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <CeoCompanyTable
+        comparisons={comparisons}
+        isLoading={loadingComparisons}
+      />
     </div>
-  );
-}
-
-// ── Sub-components ──────────────────────────────────────────
-
-function VariationBadge({
-  value,
-  invertColor = false,
-}: {
-  value: number;
-  invertColor?: boolean;
-}) {
-  const isPositive = value >= 0;
-  const color = invertColor
-    ? isPositive
-      ? "text-rose-400"
-      : "text-emerald-400"
-    : isPositive
-    ? "text-emerald-400"
-    : "text-rose-400";
-  const Icon = isPositive ? ArrowUpRight : ArrowDownRight;
-
-  return (
-    <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${color}`}>
-      <Icon className="h-3 w-3" />
-      {Math.abs(value).toFixed(1)}%
-    </span>
-  );
-}
-
-function KpiCard({
-  title,
-  value,
-  icon: Icon,
-  accent,
-  variation,
-  invertColor = false,
-  subtitle,
-}: {
-  title: string;
-  value: string;
-  icon: any;
-  accent: string;
-  variation?: number;
-  invertColor?: boolean;
-  subtitle?: string;
-}) {
-  return (
-    <Card className="glass-card">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        <Icon className={`h-4 w-4 ${accent}`} />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-foreground">{value}</div>
-        <div className="flex items-center gap-2 mt-1">
-          {variation !== undefined && variation !== null && (
-            <VariationBadge value={variation} invertColor={invertColor} />
-          )}
-          {subtitle && (
-            <span className="text-xs text-muted-foreground">{subtitle}</span>
-          )}
-          {variation !== undefined && variation !== null && (
-            <span className="text-xs text-muted-foreground">vs anterior</span>
-          )}
-        </div>
-      </CardContent>
-    </Card>
   );
 }
