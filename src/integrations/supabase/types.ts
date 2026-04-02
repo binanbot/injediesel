@@ -1342,6 +1342,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_company: {
+        Args: { _company_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_access_unit: {
+        Args: { _unit_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_company_by_hostname: { Args: { _hostname: string }; Returns: Json }
       get_company_unit_ids: { Args: { _company_id: string }; Returns: string[] }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
