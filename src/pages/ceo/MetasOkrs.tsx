@@ -22,6 +22,7 @@ import { OkrProgressGrid } from "@/components/ceo/OkrProgressGrid";
 import { CriticalGoalsPanel } from "@/components/ceo/CriticalGoalsPanel";
 import { GoalInsightsPanel } from "@/components/ceo/GoalInsightsPanel";
 import { useCeoFilters } from "@/contexts/CeoFiltersContext";
+import { ExecutivePageHeader } from "@/components/ceo/ExecutivePageHeader";
 
 export default function MetasOkrs() {
   const { filters } = useCeoFilters();

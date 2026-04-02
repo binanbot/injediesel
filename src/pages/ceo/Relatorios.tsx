@@ -26,6 +26,7 @@ import { buildExecutiveReport, type ReportHighlight, type ReportRisk } from "@/s
 import { CeoKpiCard, VariationBadge } from "@/components/ceo/CeoKpiCard";
 import { getMetricLabel } from "@/services/ceoGoalsService";
 import { useCeoFilters } from "@/contexts/CeoFiltersContext";
+import { ExecutivePageHeader } from "@/components/ceo/ExecutivePageHeader";
 import { fmtCurrency } from "@/utils/ceoFormatters";
 
 export default function CeoRelatorios() {

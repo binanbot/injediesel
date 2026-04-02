@@ -27,6 +27,7 @@ import { CompanyGrowthRanking } from "@/components/ceo/CompanyGrowthRanking";
 import { UnitGrowthRanking } from "@/components/ceo/UnitGrowthRanking";
 import { GrowthInsightsPanel } from "@/components/ceo/GrowthInsightsPanel";
 import { useCeoFilters } from "@/contexts/CeoFiltersContext";
+import { ExecutivePageHeader } from "@/components/ceo/ExecutivePageHeader";
 import { fmtCurrency } from "@/utils/ceoFormatters";
 
 export default function ReceitaCrescimento() {

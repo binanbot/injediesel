@@ -27,6 +27,7 @@ import { CategoryShareBreakdown } from "@/components/ceo/CategoryShareBreakdown"
 import { ConcentrationCard } from "@/components/ceo/ConcentrationCard";
 import { ShareInsightsPanel } from "@/components/ceo/ShareInsightsPanel";
 import { useCeoFilters } from "@/contexts/CeoFiltersContext";
+import { ExecutivePageHeader } from "@/components/ceo/ExecutivePageHeader";
 
 export default function MarketShare() {
   const { filters } = useCeoFilters();

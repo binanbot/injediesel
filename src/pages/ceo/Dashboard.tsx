@@ -37,6 +37,7 @@ import { CeoTopClients } from "@/components/ceo/CeoTopClients";
 import { CeoTopProducts } from "@/components/ceo/CeoTopProducts";
 import { CeoCategoryBreakdown } from "@/components/ceo/CeoCategoryBreakdown";
 import { useCeoFilters } from "@/contexts/CeoFiltersContext";
+import { ExecutivePageHeader } from "@/components/ceo/ExecutivePageHeader";
 import { fmtCurrency } from "@/utils/ceoFormatters";
 
 export default function CeoDashboard() {
