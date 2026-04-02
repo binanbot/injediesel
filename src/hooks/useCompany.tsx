@@ -195,8 +195,29 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     const resolve = async () => {
       try {
         const hostname = window.location.hostname;
+        const urlParams = new URLSearchParams(window.location.search);
+        const brandParam = urlParams.get("brand");
 
-        // 1. Hostname-based resolution (production domains)
+        // 1. Query param ?brand=slug (dev/preview brand override) — check FIRST, no network needed for the param itself
+        if (brandParam) {
+          try {
+            const bySlug = await resolveBySlug(brandParam);
+            if (bySlug) { finalize(bySlug); return; }
+          } catch (e) {
+            console.warn("Brand param resolution failed:", e);
+          }
+        }
+
+        // 2. SessionStorage persisted slug (keeps brand during navigation in preview)
+        try {
+          const storedSlug = sessionStorage.getItem("__company_slug");
+          if (storedSlug) {
+            const byStored = await resolveBySlug(storedSlug);
+            if (byStored) { finalize(byStored); return; }
+          }
+        } catch {}
+
+        // 3. Hostname-based resolution (production domains)
         try {
           const { data: hostnameData, error: hostnameErr } = await supabase.rpc("get_company_by_hostname", { _hostname: hostname });
           if (!hostnameErr && hostnameData) {
@@ -206,23 +227,6 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           console.warn("Hostname resolution failed:", e);
         }
-
-        // 2. Query param ?brand=slug (dev/preview brand override)
-        const urlParams = new URLSearchParams(window.location.search);
-        const brandParam = urlParams.get("brand");
-        if (brandParam) {
-          const bySlug = await resolveBySlug(brandParam);
-          if (bySlug) { finalize(bySlug); return; }
-        }
-
-        // 3. SessionStorage persisted slug (keeps brand during navigation in preview)
-        try {
-          const storedSlug = sessionStorage.getItem("__company_slug");
-          if (storedSlug) {
-            const byStored = await resolveBySlug(storedSlug);
-            if (byStored) { finalize(byStored); return; }
-          }
-        } catch {}
 
         // 4. Authenticated user's company_id fallback
         try {
