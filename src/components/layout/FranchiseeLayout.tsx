@@ -20,7 +20,6 @@ export function FranchiseeLayout() {
       />
       <div className={sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"} style={{ transition: "margin-left 300ms" }}>
         <Topbar 
-          unitName="Unidade São Paulo" 
           onMenuClick={() => setSidebarOpen(true)}
           showMenuButton
         />

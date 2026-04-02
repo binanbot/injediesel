@@ -121,7 +121,7 @@ export function Topbar({ unitName, onMenuClick, showMenuButton = false }: Topbar
           <div className="hidden md:flex items-center gap-3 pl-3 border-l border-border/30">
             <div className="text-right">
               <p className="text-sm font-medium text-foreground">{displayName}</p>
-              <p className="text-xs text-muted-foreground">Franqueado</p>
+              <p className="text-xs text-muted-foreground">{roleLabel}</p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
