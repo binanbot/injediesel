@@ -15,7 +15,6 @@ export function AdminLayout() {
       <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="lg:ml-64">
         <Topbar 
-          unitName="Administrador" 
           onMenuClick={() => setSidebarOpen(true)}
           showMenuButton
         />
