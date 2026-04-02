@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 import { fmtCurrency } from "@/utils/ceoFormatters";
 import { getCeoKPIs, getCompanyComparisons, deriveCeoAlerts, type CeoKPIs, type CompanyComparison, type ExecutiveAlert } from "./ceoDashboardService";
 import { getGrowthKPIs, getCompanyGrowthRanking, deriveGrowthInsights, type GrowthKPIs, type CompanyGrowthItem, type GrowthInsight } from "./ceoGrowthService";
@@ -8,6 +9,7 @@ import { getGoalsWithProgress, deriveGoalsSummary, deriveGoalInsights, type Goal
 
 export interface ExecutiveReport {
   period: { startDate: string; endDate: string };
+  companyName?: string;
   financial: CeoKPIs;
   growth: GrowthKPIs;
   companies: CompanyComparison[];
@@ -37,11 +39,22 @@ export interface ReportRisk {
   detail: string;
 }
 
-type Filters = { startDate: string; endDate: string };
+type Filters = { startDate: string; endDate: string; companyId?: string };
 
 // ── Main ───────────────────────────────────────────────────
 
 export async function buildExecutiveReport(filters: Filters): Promise<ExecutiveReport> {
+  // Resolve company name if scoped
+  let companyName: string | undefined;
+  if (filters.companyId) {
+    const { data } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("id", filters.companyId)
+      .single();
+    companyName = data?.name || undefined;
+  }
+
   const [financial, growth, companies, companyGrowth, shares, goals] = await Promise.all([
     getCeoKPIs(filters),
     getGrowthKPIs(filters),
@@ -51,26 +64,41 @@ export async function buildExecutiveReport(filters: Filters): Promise<ExecutiveR
     getGoalsWithProgress(filters),
   ]);
 
-  const shareKPIs = deriveMarketShareKPIs(shares, []);
-  const goalsSummary = deriveGoalsSummary(goals);
-  const alerts = deriveCeoAlerts(financial, companies);
-  const growthInsights = deriveGrowthInsights(growth, companyGrowth);
-  const shareInsights = deriveShareInsights(shareKPIs, shares, []);
-  const goalInsights = deriveGoalInsights(goals);
+  // If scoped to a company, filter company-level arrays
+  const scopedCompanies = filters.companyId
+    ? companies.filter((c) => c.id === filters.companyId)
+    : companies;
+  const scopedGrowth = filters.companyId
+    ? companyGrowth.filter((c) => c.id === filters.companyId)
+    : companyGrowth;
+  const scopedShares = filters.companyId
+    ? shares.filter((s) => s.id === filters.companyId)
+    : shares;
+  const scopedGoals = filters.companyId
+    ? goals.filter((g) => !g.company_id || g.company_id === filters.companyId)
+    : goals;
 
-  const highlights = deriveHighlights(financial, growth, goalsSummary, companies);
-  const risks = deriveRisks(financial, growth, shareKPIs, goalsSummary, companies);
-  const narrative = buildNarrative(financial, growth, shareKPIs, goalsSummary);
+  const shareKPIs = deriveMarketShareKPIs(scopedShares, []);
+  const goalsSummary = deriveGoalsSummary(scopedGoals);
+  const alerts = deriveCeoAlerts(financial, scopedCompanies);
+  const growthInsights = deriveGrowthInsights(growth, scopedGrowth);
+  const shareInsights = deriveShareInsights(shareKPIs, scopedShares, []);
+  const goalInsights = deriveGoalInsights(scopedGoals);
+
+  const highlights = deriveHighlights(financial, growth, goalsSummary, scopedCompanies);
+  const risks = deriveRisks(financial, growth, shareKPIs, goalsSummary, scopedCompanies);
+  const narrative = buildNarrative(financial, growth, shareKPIs, goalsSummary, companyName);
 
   return {
     period: filters,
+    companyName,
     financial,
     growth,
-    companies,
-    companyGrowth,
-    shares,
+    companies: scopedCompanies,
+    companyGrowth: scopedGrowth,
+    shares: scopedShares,
     shareKPIs,
-    goals,
+    goals: scopedGoals,
     goalsSummary,
     alerts,
     growthInsights,
