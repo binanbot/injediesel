@@ -232,6 +232,10 @@ const App = () => (
                 }
               >
                 <Route index element={<CeoDashboard />} />
+                <Route path="receita" element={<CeoReceitaCrescimento />} />
+                <Route path="market-share" element={<CeoMarketShare />} />
+                <Route path="metas" element={<CeoMetasOkrs />} />
+                <Route path="relatorios" element={<CeoRelatorios />} />
                 <Route path="empresas/:companyId" element={<CeoCompanyDetail />} />
               </Route>
 

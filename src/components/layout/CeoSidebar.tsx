@@ -97,7 +97,16 @@ export function CeoSidebar({ isOpen = true, onClose, collapsed = false, onToggle
                       "relative z-10 h-5 w-5 transition-all duration-300",
                       isActive ? "text-emerald-400 drop-shadow-[0_0_6px_rgb(52_211_153)]" : "text-muted-foreground group-hover:text-foreground"
                     )} />
-                    {!collapsed && <span className="relative z-10 flex-1">{item.label}</span>}
+                    {!collapsed && (
+                      <span className="relative z-10 flex-1 flex items-center justify-between">
+                        {item.label}
+                        {item.badge && (
+                          <span className="text-[10px] text-emerald-400/70 bg-emerald-400/10 px-1.5 py-0.5 rounded-full leading-none">
+                            {item.badge}
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </Link>
                 </li>
               );
