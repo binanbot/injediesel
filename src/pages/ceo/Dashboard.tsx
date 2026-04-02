@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Building2 as DashIcon } from "lucide-react";
 import {
   DollarSign,
   TrendingUp,
@@ -36,6 +37,7 @@ import { CeoTopClients } from "@/components/ceo/CeoTopClients";
 import { CeoTopProducts } from "@/components/ceo/CeoTopProducts";
 import { CeoCategoryBreakdown } from "@/components/ceo/CeoCategoryBreakdown";
 import { useCeoFilters } from "@/contexts/CeoFiltersContext";
+import { ExecutivePageHeader } from "@/components/ceo/ExecutivePageHeader";
 import { fmtCurrency } from "@/utils/ceoFormatters";
 
 export default function CeoDashboard() {
@@ -88,13 +90,7 @@ export default function CeoDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Painel Executivo</h1>
-        <p className="text-muted-foreground">
-          Visão consolidada de desempenho do grupo
-        </p>
-      </div>
+      <ExecutivePageHeader icon={DashIcon} title="Painel Executivo" subtitle="Visão consolidada de desempenho do grupo" />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

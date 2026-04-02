@@ -27,6 +27,7 @@ import { CompanyGrowthRanking } from "@/components/ceo/CompanyGrowthRanking";
 import { UnitGrowthRanking } from "@/components/ceo/UnitGrowthRanking";
 import { GrowthInsightsPanel } from "@/components/ceo/GrowthInsightsPanel";
 import { useCeoFilters } from "@/contexts/CeoFiltersContext";
+import { ExecutivePageHeader } from "@/components/ceo/ExecutivePageHeader";
 import { fmtCurrency } from "@/utils/ceoFormatters";
 
 export default function ReceitaCrescimento() {
@@ -66,16 +67,7 @@ export default function ReceitaCrescimento() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <TrendingUp className="h-6 w-6 text-emerald-400" />
-          Receita & Crescimento
-        </h1>
-        <p className="text-muted-foreground">
-          Análise de crescimento, tendências e performance financeira do grupo
-        </p>
-      </div>
+      <ExecutivePageHeader icon={TrendingUp} title="Receita & Crescimento" subtitle="Evolução financeira, crescimento e comparativo entre empresas e unidades" />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
