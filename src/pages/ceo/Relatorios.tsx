@@ -1,19 +1,341 @@
-import { BarChart3 } from "lucide-react";
-import { CeoPlaceholderPage } from "@/components/ceo/CeoPlaceholderPage";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { format, subMonths, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
+import {
+  BarChart3,
+  CalendarIcon,
+  FileText,
+  DollarSign,
+  TrendingUp,
+  PieChart,
+  Target,
+  AlertTriangle,
+  CheckCircle2,
+  ShieldAlert,
+  Sparkles,
+  ArrowUpRight,
+  ArrowDownRight,
+  Percent,
+  Activity,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { buildExecutiveReport, type ExecutiveReport, type ReportHighlight, type ReportRisk } from "@/services/ceoReportsService";
+import { CeoKpiCard, VariationBadge } from "@/components/ceo/CeoKpiCard";
+import { getMetricLabel } from "@/services/ceoGoalsService";
+
+const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+type ReportType = "mensal" | "trimestral" | "anual" | "personalizado";
+
+function getPresetRange(type: ReportType): { from: Date; to: Date } {
+  const now = new Date();
+  switch (type) {
+    case "mensal": return { from: startOfMonth(now), to: endOfMonth(now) };
+    case "trimestral": return { from: startOfQuarter(now), to: endOfQuarter(now) };
+    case "anual": return { from: startOfYear(now), to: endOfYear(now) };
+    default: return { from: subMonths(now, 3), to: now };
+  }
+}
 
 export default function CeoRelatorios() {
+  const [reportType, setReportType] = useState<ReportType>("mensal");
+  const [dateRange, setDateRange] = useState(getPresetRange("mensal"));
+
+  const filters = useMemo(
+    () => ({ startDate: format(dateRange.from, "yyyy-MM-dd"), endDate: format(dateRange.to, "yyyy-MM-dd") }),
+    [dateRange]
+  );
+
+  const { data: report, isLoading } = useQuery({
+    queryKey: ["ceo-executive-report", filters],
+    queryFn: () => buildExecutiveReport(filters),
+  });
+
+  const handleTypeChange = (type: ReportType) => {
+    setReportType(type);
+    setDateRange(getPresetRange(type));
+  };
+
   return (
-    <CeoPlaceholderPage
-      icon={BarChart3}
-      title="Relatórios Executivos"
-      subtitle="Relatórios consolidados e exportáveis para tomada de decisão"
-      description="Este módulo centralizará relatórios executivos com dados consolidados do grupo, permitindo exportação em PDF, compartilhamento e agendamento de envios periódicos."
-      plannedBlocks={[
-        { title: "Relatório Financeiro", description: "Demonstrativo consolidado de receita, custo e margem por período." },
-        { title: "Relatório Operacional", description: "Volume de arquivos, pedidos, tickets e tempo de resposta por empresa." },
-        { title: "Relatório Comparativo", description: "Benchmarks entre empresas do grupo com rankings e destaques." },
-        { title: "Exportação e Agendamento", description: "Geração de PDF executivo e envio programado por e-mail." },
-      ]}
-    />
+    <div className="space-y-8">
+      {/* ── Report Header ─────────────────────────────────── */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <BarChart3 className="h-6 w-6 text-emerald-400" />
+              Relatório Executivo
+            </h1>
+            <p className="text-muted-foreground">
+              Consolidação periódica para tomada de decisão
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  {format(dateRange.from, "dd/MM/yy")} — {format(dateRange.to, "dd/MM/yy")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="range"
+                  selected={{ from: dateRange.from, to: dateRange.to }}
+                  onSelect={(range) => {
+                    if (range?.from && range?.to) {
+                      setDateRange({ from: range.from, to: range.to });
+                      setReportType("personalizado");
+                    }
+                  }}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+        <Tabs value={reportType} onValueChange={(v) => handleTypeChange(v as ReportType)}>
+          <TabsList>
+            <TabsTrigger value="mensal">Mensal</TabsTrigger>
+            <TabsTrigger value="trimestral">Trimestral</TabsTrigger>
+            <TabsTrigger value="anual">Anual</TabsTrigger>
+            <TabsTrigger value="personalizado">Personalizado</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}><CardContent className="pt-6"><Skeleton className="h-[120px] w-full" /></CardContent></Card>
+          ))}
+        </div>
+      ) : report ? (
+        <>
+          {/* ── Executive Narrative ────────────────────────── */}
+          <Card className="border-emerald-400/20">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5 text-emerald-400" />
+                Resumo Executivo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-relaxed text-foreground/90">{report.narrative}</p>
+            </CardContent>
+          </Card>
+
+          {/* ── Highlights & Risks ────────────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <HighlightsCard highlights={report.highlights} />
+            <RisksCard risks={report.risks} />
+          </div>
+
+          {/* ── Financial Section ─────────────────────────── */}
+          <ReportSection icon={DollarSign} title="Desempenho Financeiro">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <CeoKpiCard title="Faturamento" value={fmtBRL(report.financial.total_revenue)} icon={DollarSign} accent="text-emerald-400" variation={report.financial.revenue_variation} />
+              <CeoKpiCard title="Custo" value={fmtBRL(report.financial.total_cost)} icon={ArrowDownRight} accent="text-rose-400" variation={report.financial.cost_variation} invertColor />
+              <CeoKpiCard title="Margem" value={`${report.financial.margin_percent.toFixed(1)}%`} icon={Percent} accent={report.financial.margin_percent >= 30 ? "text-emerald-400" : "text-amber-400"} variation={report.financial.margin_variation} />
+              <CeoKpiCard title="Ativação" value={`${report.financial.activation_rate.toFixed(0)}%`} icon={Activity} accent={report.financial.activation_rate >= 70 ? "text-emerald-400" : "text-amber-400"} subtitle={`${report.financial.units_active} unidades`} />
+            </div>
+          </ReportSection>
+
+          {/* ── Growth Section ────────────────────────────── */}
+          <ReportSection icon={TrendingUp} title="Crescimento">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <CeoKpiCard title="Crescimento" value={`${report.growth.revenue_growth.toFixed(1)}%`} icon={report.growth.revenue_growth >= 0 ? ArrowUpRight : ArrowDownRight} accent={report.growth.revenue_growth >= 0 ? "text-emerald-400" : "text-rose-400"} subtitle="vs período anterior" />
+              <CeoKpiCard title="Pedidos" value={String(report.growth.total_orders)} icon={BarChart3} accent="text-primary" />
+              <CeoKpiCard title="Arquivos ECU" value={String(report.growth.total_files)} icon={FileText} accent="text-primary" />
+            </div>
+            {report.companyGrowth.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wider">Ranking de Crescimento por Empresa</p>
+                <div className="space-y-2">
+                  {[...report.companyGrowth].sort((a, b) => b.growth_percent - a.growth_percent).slice(0, 5).map((c, i) => (
+                    <div key={c.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground w-5 text-right">{i + 1}</span>
+                        <span className="text-sm font-medium text-foreground">{c.name}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-muted-foreground">{fmtBRL(c.revenue)}</span>
+                        <VariationBadge value={c.growth_percent} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </ReportSection>
+
+          {/* ── Market Share Section ──────────────────────── */}
+          <ReportSection icon={PieChart} title="Participação e Concentração">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <CeoKpiCard title="Líder" value={report.shareKPIs.leader_name} icon={PieChart} accent="text-emerald-400" subtitle={`${report.shareKPIs.leader_share.toFixed(1)}% do total`} />
+              <CeoKpiCard title="Concentração (HHI)" value={report.shareKPIs.hhi.toLocaleString("pt-BR")} icon={BarChart3} accent={report.shareKPIs.concentration_level === "baixa" ? "text-emerald-400" : "text-amber-400"} subtitle={report.shareKPIs.concentration_level} />
+              <CeoKpiCard title="Diversificação" value={`${report.shareKPIs.diversification_percent.toFixed(1)}%`} icon={Percent} accent="text-emerald-400" subtitle="receita fora do líder" />
+            </div>
+            {report.shares.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wider">Distribuição por Empresa</p>
+                <div className="space-y-2">
+                  {report.shares.slice(0, 5).map((s, i) => (
+                    <div key={s.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground w-5 text-right">{i + 1}</span>
+                        <span className="text-sm font-medium text-foreground">{s.name}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-emerald-400">{s.share_percent.toFixed(1)}%</span>
+                        <span className={`text-xs font-medium ${s.share_delta >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          {s.share_delta >= 0 ? "+" : ""}{s.share_delta.toFixed(1)}pp
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </ReportSection>
+
+          {/* ── Goals Section ─────────────────────────────── */}
+          <ReportSection icon={Target} title="Metas & OKRs">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <CeoKpiCard title="Atingidas" value={`${report.goalsSummary.achieved}/${report.goalsSummary.total}`} icon={CheckCircle2} accent="text-emerald-400" subtitle={report.goalsSummary.total > 0 ? `${((report.goalsSummary.achieved / report.goalsSummary.total) * 100).toFixed(0)}%` : "—"} />
+              <CeoKpiCard title="Em Risco" value={String(report.goalsSummary.at_risk)} icon={AlertTriangle} accent={report.goalsSummary.at_risk > 0 ? "text-amber-400" : "text-emerald-400"} />
+              <CeoKpiCard title="Críticas" value={String(report.goalsSummary.critical)} icon={ShieldAlert} accent={report.goalsSummary.critical > 0 ? "text-rose-400" : "text-emerald-400"} />
+              <CeoKpiCard title="Progresso Médio" value={`${report.goalsSummary.avg_progress.toFixed(0)}%`} icon={TrendingUp} accent={report.goalsSummary.avg_progress >= 80 ? "text-emerald-400" : "text-amber-400"} />
+            </div>
+            {report.goals.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {report.goals.map((g) => {
+                  const statusColor = g.status === "atingida" ? "text-emerald-400" : g.status === "saudável" ? "text-blue-400" : g.status === "em risco" ? "text-amber-400" : "text-rose-400";
+                  const progressColor = g.status === "atingida" ? "[&>div]:bg-emerald-400" : g.status === "saudável" ? "[&>div]:bg-blue-400" : g.status === "em risco" ? "[&>div]:bg-amber-400" : "[&>div]:bg-rose-400";
+                  return (
+                    <div key={g.id} className="flex items-center gap-4 py-2 border-b border-border/50 last:border-0">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-foreground">
+                            {getMetricLabel(g.metric_key)}
+                            {g.company_name && <span className="text-muted-foreground ml-1">— {g.company_name}</span>}
+                          </span>
+                          <Badge variant="outline" className={cn("text-xs", statusColor)}>{g.status}</Badge>
+                        </div>
+                        <Progress value={Math.min(g.progress_percent, 100)} className={cn("h-1.5", progressColor)} />
+                      </div>
+                      <span className="text-xs font-mono text-muted-foreground w-10 text-right">{g.progress_percent.toFixed(0)}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </ReportSection>
+
+          {/* ── Alerts ────────────────────────────────────── */}
+          {report.alerts.length > 0 && (
+            <ReportSection icon={AlertTriangle} title="Alertas Executivos">
+              <div className="space-y-2">
+                {report.alerts.map((a, i) => {
+                  const color = a.type === "danger" ? "border-rose-400/20 bg-rose-400/5" : a.type === "warning" ? "border-amber-400/20 bg-amber-400/5" : "border-blue-400/20 bg-blue-400/5";
+                  const iconColor = a.type === "danger" ? "text-rose-400" : a.type === "warning" ? "text-amber-400" : "text-blue-400";
+                  return (
+                    <div key={i} className={cn("flex items-start gap-3 p-3 rounded-lg border", color)}>
+                      <AlertTriangle className={cn("h-4 w-4 shrink-0 mt-0.5", iconColor)} />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{a.title}</p>
+                        <p className="text-xs text-muted-foreground">{a.description}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </ReportSection>
+          )}
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+// ── Sub-components ─────────────────────────────────────────
+
+function ReportSection({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
+  return (
+    <Card>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Icon className="h-5 w-5 text-emerald-400" />
+          {title}
+        </CardTitle>
+        <Separator />
+      </CardHeader>
+      <CardContent className="space-y-4">{children}</CardContent>
+    </Card>
+  );
+}
+
+function HighlightsCard({ highlights }: { highlights: ReportHighlight[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-emerald-400" />
+          Destaques Positivos
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {highlights.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Sem destaques identificados no período</p>
+        ) : highlights.map((h, i) => (
+          <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-emerald-400/20 bg-emerald-400/5">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-foreground">{h.title}</p>
+              <p className="text-xs text-muted-foreground">{h.detail}</p>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function RisksCard({ risks }: { risks: ReportRisk[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <ShieldAlert className="h-5 w-5 text-rose-400" />
+          Riscos e Atenções
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {risks.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Nenhum risco identificado — cenário saudável 🎯</p>
+        ) : risks.map((r, i) => {
+          const color = r.severity === "high" ? "border-rose-400/20 bg-rose-400/5" : "border-amber-400/20 bg-amber-400/5";
+          const iconColor = r.severity === "high" ? "text-rose-400" : "text-amber-400";
+          return (
+            <div key={i} className={cn("flex items-start gap-3 p-3 rounded-lg border", color)}>
+              <AlertTriangle className={cn("h-4 w-4 shrink-0 mt-0.5", iconColor)} />
+              <div>
+                <p className="text-sm font-medium text-foreground">{r.title}</p>
+                <p className="text-xs text-muted-foreground">{r.detail}</p>
+              </div>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 }
