@@ -151,9 +151,13 @@ export default function Login() {
             </TabsList>
 
             <TabsContent value="login">
-              <h1 className="text-2xl font-bold mb-2 text-center">Bem-vindo de volta</h1>
+              <h1 className="text-2xl font-bold mb-2 text-center">
+                {isPromax ? "Painel PROMAX TUNER" : "Bem-vindo de volta"}
+              </h1>
               <p className="text-muted-foreground mb-6 text-center">
-                Entre com suas credenciais para acessar o sistema.
+                {isPromax
+                  ? "Acesse sua plataforma de reprogramação ECU."
+                  : "Entre com suas credenciais para acessar o sistema."}
               </p>
 
               <form onSubmit={handleLogin} className="space-y-5">
