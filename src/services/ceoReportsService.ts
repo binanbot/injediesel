@@ -1,3 +1,4 @@
+import { fmtCurrency } from "@/utils/ceoFormatters";
 import { getCeoKPIs, getCompanyComparisons, deriveCeoAlerts, type CeoKPIs, type CompanyComparison, type ExecutiveAlert } from "./ceoDashboardService";
 import { getGrowthKPIs, getCompanyGrowthRanking, deriveGrowthInsights, type GrowthKPIs, type CompanyGrowthItem, type GrowthInsight } from "./ceoGrowthService";
 import { getCompanyShares, deriveMarketShareKPIs, deriveShareInsights, type ShareItem, type MarketShareKPIs, type ShareInsight } from "./ceoMarketShareService";
