@@ -1,10 +1,9 @@
 import { createContext, useContext, useState, useMemo, useCallback, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import { format, subMonths, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
+import { format } from "date-fns";
+import { getPresetRange, type PeriodPreset } from "@/utils/periodUtils";
 
-// ── Types ──────────────────────────────────────────────────
-
-export type PeriodPreset = "mes" | "trimestre" | "semestre" | "ano" | "personalizado";
+export type { PeriodPreset } from "@/utils/periodUtils";
 
 export interface CeoFilters {
   startDate: string;
