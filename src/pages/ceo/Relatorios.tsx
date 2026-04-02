@@ -136,8 +136,7 @@ export default function CeoRelatorios() {
             )}
           </ReportSection>
 
-          {/* Goals */}
-          <ReportSection icon={Target} title="Metas & OKRs">
+          <ReportSection icon={Target} title="Metas & OKRs" exportKey="goals">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <CeoKpiCard title="Atingidas" value={`${report.goalsSummary.achieved}/${report.goalsSummary.total}`} icon={CheckCircle2} accent="text-emerald-400" subtitle={report.goalsSummary.total > 0 ? `${((report.goalsSummary.achieved / report.goalsSummary.total) * 100).toFixed(0)}%` : "—"} />
               <CeoKpiCard title="Em Risco" value={String(report.goalsSummary.at_risk)} icon={AlertTriangle} accent={report.goalsSummary.at_risk > 0 ? "text-amber-400" : "text-emerald-400"} />
