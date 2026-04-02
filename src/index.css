@@ -332,55 +332,127 @@
   color: hsl(0 0% 100%);
 }
 
-/* Print Styles */
+/* ── Print Styles (A4 Executive Report) ── */
 @media print {
-  html,
-  body {
-    background: #ffffff !important;
-    color: #111827 !important;
-    width: 100%;
-    height: auto;
-    overflow: visible !important;
+  @page {
+    size: A4 portrait;
+    margin: 18mm 14mm;
   }
 
-  body * {
+  html, body {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  .no-print {
+  /* Hide navigation, sidebar, filters, topbar */
+  nav, aside, header,
+  [data-hide-print],
+  .no-print,
+  [role="navigation"] {
     display: none !important;
   }
 
+  /* Main content: full width, no padding from layout */
+  main, [data-print-root='true'], .print-root {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  /* Cards: white bg, subtle border, readable text */
+  .card, [class*="Card"], [data-export-section] {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 12pt !important;
+  }
+
+  /* All text forced dark for readability */
+  h1, h2, h3, h4, h5, h6 {
+    color: #111827 !important;
+  }
+
+  p, span, div, td, th, li, label {
+    color: #374151 !important;
+  }
+
+  /* Muted text stays lighter but still readable on white */
+  .text-muted-foreground,
+  [class*="text-muted"] {
+    color: #6b7280 !important;
+  }
+
+  /* Accent colors preserved for badges/indicators */
+  .text-emerald-400, [class*="text-emerald"] {
+    color: #059669 !important;
+  }
+  .text-rose-400, [class*="text-rose"] {
+    color: #e11d48 !important;
+  }
+  .text-amber-400, [class*="text-amber"] {
+    color: #d97706 !important;
+  }
+  .text-blue-400, [class*="text-blue"] {
+    color: #2563eb !important;
+  }
+
+  /* Colored alert/highlight backgrounds: subtle tints */
+  [class*="bg-emerald"] {
+    background: #ecfdf5 !important;
+  }
+  [class*="bg-rose"] {
+    background: #fff1f2 !important;
+  }
+  [class*="bg-amber"] {
+    background: #fffbeb !important;
+  }
+  [class*="bg-blue"] {
+    background: #eff6ff !important;
+  }
+
+  /* Progress bars */
+  [role="progressbar"] {
+    background: #e5e7eb !important;
+  }
+
+  /* Badges */
+  .badge, [class*="Badge"] {
+    border: 1px solid #d1d5db !important;
+    background: #f9fafb !important;
+  }
+
+  /* Separator */
+  [data-orientation="horizontal"] {
+    border-color: #e5e7eb !important;
+  }
+
+  /* Page breaks */
   .break-inside-avoid {
     break-inside: avoid;
     page-break-inside: avoid;
   }
-
   .page-break {
     break-before: page;
     page-break-before: always;
   }
 
-  [data-print-root='true'],
-  .print-root {
-    width: 100% !important;
-    max-width: none !important;
-    overflow: visible !important;
-    transform: none !important;
-    scale: 1 !important;
-  }
-
-  .rounded-2xl,
-  .rounded-xl {
+  /* Recharts / SVG charts: force visible */
+  .recharts-wrapper, svg {
     overflow: visible !important;
   }
-}
-
-@media print {
-  body { background: white !important; color: black !important; }
-  [data-export-section] { break-inside: avoid; }
-  nav, aside, [data-hide-print] { display: none !important; }
 }
 
 @page {
