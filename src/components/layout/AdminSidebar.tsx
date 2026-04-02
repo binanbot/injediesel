@@ -25,34 +25,35 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, isAdminLevel, isSupportLevel } from "@/hooks/useAuth";
 
 interface MenuItem {
   icon: React.ElementType;
   label: string;
   path: string;
   badgeKey?: string;
+  /** Which roles can see this item. If omitted, all admin-level roles see it. */
+  roles?: string[];
 }
 
-const menuItems: MenuItem[] = [
+const allMenuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
   { icon: Users, label: "Franqueados", path: "/admin/franqueados" },
-  { icon: Upload, label: "Importar Franqueados", path: "/admin/importar" },
+  { icon: Upload, label: "Importar Franqueados", path: "/admin/importar", roles: ["admin", "master_admin", "ceo"] },
   { icon: MapPin, label: "Gerenciar Cobertura", path: "/admin/cobertura" },
   { icon: UserCircle, label: "Clientes", path: "/admin/clientes" },
   { icon: CalendarCheck, label: "Contratos", path: "/admin/contratos" },
   { icon: FileDown, label: "Arquivos Recebidos", path: "/admin/arquivos" },
   { icon: AlertCircle, label: "Correções", path: "/admin/correcoes", badgeKey: "correcoes" },
-  { icon: ImageIcon, label: "Banners", path: "/admin/banners" },
+  { icon: ImageIcon, label: "Banners", path: "/admin/banners", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
   { icon: MapPin, label: "Áreas de Atuação", path: "/admin/areas" },
   { icon: Headphones, label: "Suporte", path: "/admin/suporte", badgeKey: "suporte" },
   { icon: MessageSquare, label: "Mensagens", path: "/admin/mensagens" },
   { icon: BarChart3, label: "Relatórios", path: "/admin/relatorios" },
   { icon: ShoppingBag, label: "Compras Franqueados", path: "/admin/compras" },
   { icon: BarChart3, label: "Dashboard Loja", path: "/admin/loja-dashboard" },
-  { icon: Package, label: "Produtos", path: "/admin/produtos" },
-  
-  { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
+  { icon: Package, label: "Produtos", path: "/admin/produtos", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
+  { icon: Settings, label: "Configurações", path: "/admin/configuracoes", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
   { icon: FileText, label: "Documentação", path: "/admin/documentacao" },
 ];
 
