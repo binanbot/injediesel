@@ -1236,7 +1236,14 @@ export type Database = {
       safe_delete_customer: { Args: { _customer_id: string }; Returns: Json }
     }
     Enums: {
-      app_role: "admin" | "suporte" | "franqueado"
+      app_role:
+        | "admin"
+        | "suporte"
+        | "franqueado"
+        | "admin_empresa"
+        | "suporte_empresa"
+        | "master_admin"
+        | "ceo"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1364,7 +1371,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "suporte", "franqueado"],
+      app_role: [
+        "admin",
+        "suporte",
+        "franqueado",
+        "admin_empresa",
+        "suporte_empresa",
+        "master_admin",
+        "ceo",
+      ],
     },
   },
 } as const
