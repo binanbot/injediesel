@@ -18,6 +18,9 @@ export default function Login() {
   const { user, userRole, signIn, signUp, isLoading: authLoading } = useAuth();
   const { company } = useCompany();
   const brandName = company?.brand_name || company?.name || "Injediesel";
+  const isPromax = company?.slug === "promax-tuner";
+  const equipmentName = company?.settings?.proprietary_equipment_name;
+  const contacts = company?.contacts;
   
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
