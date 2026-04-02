@@ -130,7 +130,7 @@ export default function Login() {
           className="glass-card p-8 rounded-2xl"
         >
           <Link
-            to="/"
+            to={company?.slug && company.slug !== "injediesel" ? `/?brand=${company.slug}` : "/"}
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
           >
             <ArrowLeft className="h-4 w-4" />
