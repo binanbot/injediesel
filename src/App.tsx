@@ -214,6 +214,7 @@ const App = () => (
                 }
               >
                 <Route index element={<MasterDashboard />} />
+                <Route path="empresas/:companyId" element={<MasterCompanyDetail />} />
               </Route>
 
               {/* CEO Routes */}
