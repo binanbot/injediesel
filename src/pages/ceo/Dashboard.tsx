@@ -251,6 +251,31 @@ export default function CeoDashboard() {
         comparisons={comparisons}
         isLoading={loadingComparisons}
       />
-    </div>
+
+      {/* Rankings & Analysis */}
+      <Tabs defaultValue="units" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="units">Unidades</TabsTrigger>
+          <TabsTrigger value="clients">Clientes</TabsTrigger>
+          <TabsTrigger value="products">Produtos</TabsTrigger>
+          <TabsTrigger value="categories">Categorias</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="units">
+          <CeoUnitRanking data={topUnits} isLoading={loadingUnits} />
+        </TabsContent>
+
+        <TabsContent value="clients">
+          <CeoTopClients data={topClients} isLoading={loadingClients} />
+        </TabsContent>
+
+        <TabsContent value="products">
+          <CeoTopProducts data={topProducts} isLoading={loadingProducts} />
+        </TabsContent>
+
+        <TabsContent value="categories">
+          <CeoCategoryBreakdown data={categories} isLoading={loadingCategories} />
+        </TabsContent>
+      </Tabs>
   );
 }
