@@ -159,26 +159,37 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isResolved, setIsResolved] = useState(false);
 
+  /** Wrap a promise with a timeout to avoid hanging forever */
+  const withTimeout = <T,>(promise: PromiseLike<T>, ms = 5000): Promise<T> =>
+    Promise.race([
+      Promise.resolve(promise),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), ms)),
+    ]);
+
   /** Resolve company by slug from the companies table */
   const resolveBySlug = async (slug: string): Promise<Company | null> => {
-    const { data } = await supabase
-      .from("companies")
-      .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
-      .eq("slug", slug)
-      .eq("is_active", true)
-      .single();
+    const { data } = await withTimeout(
+      supabase
+        .from("companies")
+        .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
+        .eq("slug", slug)
+        .eq("is_active", true)
+        .single()
+    );
     return data ? (data as unknown as Company) : null;
   };
 
   /** Resolve company by user's company_id */
   const resolveByUser = async (userId: string): Promise<Company | null> => {
-    const { data: companyId } = await supabase.rpc("get_user_company_id", { _user_id: userId });
+    const { data: companyId } = await withTimeout(supabase.rpc("get_user_company_id", { _user_id: userId }));
     if (!companyId) return null;
-    const { data: companyRow } = await supabase
-      .from("companies")
-      .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
-      .eq("id", companyId)
-      .single();
+    const { data: companyRow } = await withTimeout(
+      supabase
+        .from("companies")
+        .select("id, slug, name, trade_name, brand_name, cnpj, branding, settings, enabled_modules, contacts")
+        .eq("id", companyId)
+        .single()
+    );
     return companyRow ? (companyRow as unknown as Company) : null;
   };
 
@@ -193,42 +204,59 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const resolve = async () => {
-      const hostname = window.location.hostname;
-
-      // 1. Hostname-based resolution (production domains)
-      const { data: hostnameData, error: hostnameErr } = await supabase.rpc("get_company_by_hostname", { _hostname: hostname });
-      if (!hostnameErr && hostnameData) {
-        finalize(hostnameData as unknown as Company);
-        return;
-      }
-
-      // 2. Query param ?brand=slug (dev/preview brand override)
-      const urlParams = new URLSearchParams(window.location.search);
-      const brandParam = urlParams.get("brand");
-      if (brandParam) {
-        const bySlug = await resolveBySlug(brandParam);
-        if (bySlug) { finalize(bySlug); return; }
-      }
-
-      // 3. SessionStorage persisted slug (keeps brand during navigation in preview)
       try {
-        const storedSlug = sessionStorage.getItem("__company_slug");
-        if (storedSlug) {
-          const byStored = await resolveBySlug(storedSlug);
-          if (byStored) { finalize(byStored); return; }
+        const hostname = window.location.hostname;
+        const urlParams = new URLSearchParams(window.location.search);
+        const brandParam = urlParams.get("brand");
+
+        // 1. Query param ?brand=slug (dev/preview brand override) — check FIRST, no network needed for the param itself
+        if (brandParam) {
+          try {
+            const bySlug = await resolveBySlug(brandParam);
+            if (bySlug) { finalize(bySlug); return; }
+          } catch (e) {
+            console.warn("Brand param resolution failed:", e);
+          }
         }
-      } catch {}
 
-      // 4. Authenticated user's company_id fallback
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        const byUser = await resolveByUser(session.user.id);
-        if (byUser) { finalize(byUser); return; }
+        // 2. SessionStorage persisted slug (keeps brand during navigation in preview)
+        try {
+          const storedSlug = sessionStorage.getItem("__company_slug");
+          if (storedSlug) {
+            const byStored = await resolveBySlug(storedSlug);
+            if (byStored) { finalize(byStored); return; }
+          }
+        } catch {}
+
+        // 3. Hostname-based resolution (production domains)
+        try {
+          const { data: hostnameData, error: hostnameErr } = await withTimeout(supabase.rpc("get_company_by_hostname", { _hostname: hostname }));
+          if (!hostnameErr && hostnameData) {
+            finalize(hostnameData as unknown as Company);
+            return;
+          }
+        } catch (e) {
+          console.warn("Hostname resolution failed:", e);
+        }
+
+        // 4. Authenticated user's company_id fallback
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.id) {
+            const byUser = await resolveByUser(session.user.id);
+            if (byUser) { finalize(byUser); return; }
+          }
+        } catch (e) {
+          console.warn("User-based resolution failed:", e);
+        }
+
+        // 5. Final fallback: default Injediesel
+        console.warn("Company not resolved for hostname:", hostname, "— using default");
+        finalize(DEFAULT_COMPANY);
+      } catch (e) {
+        console.error("Company resolution error:", e);
+        finalize(DEFAULT_COMPANY);
       }
-
-      // 5. Final fallback: default Injediesel
-      console.warn("Company not resolved for hostname:", hostname, "— using default");
-      finalize(DEFAULT_COMPANY);
     };
 
     resolve();
