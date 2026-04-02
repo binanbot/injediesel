@@ -71,7 +71,7 @@ export default function CeoRelatorios() {
             <RisksCard risks={report.risks} />
           </div>
 
-          {/* Financial */}
+          <div data-export-section="financial" data-export-title="Desempenho Financeiro">
           <ReportSection icon={DollarSign} title="Desempenho Financeiro">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <CeoKpiCard title="Faturamento" value={fmtCurrency(report.financial.total_revenue)} icon={DollarSign} accent="text-emerald-400" variation={report.financial.revenue_variation} />
