@@ -2,7 +2,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   TrendingUp,
-  Building2,
   PieChart,
   BarChart3,
   Target,
@@ -17,12 +16,11 @@ import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Painel Executivo", path: "/ceo" },
-  { icon: TrendingUp, label: "Receita & Crescimento", path: "/ceo/receita" },
-  { icon: Building2, label: "Comparativo Empresas", path: "/ceo/empresas" },
-  { icon: PieChart, label: "Market Share", path: "/ceo/market-share" },
-  { icon: Target, label: "Metas & OKRs", path: "/ceo/metas" },
-  { icon: BarChart3, label: "Relatórios", path: "/ceo/relatorios" },
+  { icon: LayoutDashboard, label: "Painel Executivo", path: "/ceo", badge: null },
+  { icon: TrendingUp, label: "Receita & Crescimento", path: "/ceo/receita", badge: "Em breve" },
+  { icon: PieChart, label: "Market Share", path: "/ceo/market-share", badge: "Em breve" },
+  { icon: Target, label: "Metas & OKRs", path: "/ceo/metas", badge: "Em breve" },
+  { icon: BarChart3, label: "Relatórios", path: "/ceo/relatorios", badge: "Em breve" },
 ];
 
 interface CeoSidebarProps {
@@ -99,7 +97,16 @@ export function CeoSidebar({ isOpen = true, onClose, collapsed = false, onToggle
                       "relative z-10 h-5 w-5 transition-all duration-300",
                       isActive ? "text-emerald-400 drop-shadow-[0_0_6px_rgb(52_211_153)]" : "text-muted-foreground group-hover:text-foreground"
                     )} />
-                    {!collapsed && <span className="relative z-10 flex-1">{item.label}</span>}
+                    {!collapsed && (
+                      <span className="relative z-10 flex-1 flex items-center justify-between">
+                        {item.label}
+                        {item.badge && (
+                          <span className="text-[10px] text-emerald-400/70 bg-emerald-400/10 px-1.5 py-0.5 rounded-full leading-none">
+                            {item.badge}
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </Link>
                 </li>
               );
