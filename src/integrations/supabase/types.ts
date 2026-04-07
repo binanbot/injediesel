@@ -151,6 +151,7 @@ export type Database = {
       }
       company_domains: {
         Row: {
+          channel_type: string
           company_id: string
           created_at: string
           environment: string
@@ -160,6 +161,7 @@ export type Database = {
           is_primary: boolean
         }
         Insert: {
+          channel_type?: string
           company_id: string
           created_at?: string
           environment?: string
@@ -169,6 +171,7 @@ export type Database = {
           is_primary?: boolean
         }
         Update: {
+          channel_type?: string
           company_id?: string
           created_at?: string
           environment?: string
