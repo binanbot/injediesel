@@ -116,7 +116,7 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
         {/* Logo Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-border/20">
           {!collapsed && (
-            <Link to="/franqueado" className="flex items-center gap-2">
+            <Link to={resolve("/franqueado", "/franqueado")} className="flex items-center gap-2">
               <Logo size="md" />
             </Link>
           )}

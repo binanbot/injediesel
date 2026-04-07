@@ -166,7 +166,7 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
         )}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
-          <Link to="/admin" className="flex items-center gap-2 min-w-0">
+          <Link to={resolve("/admin", "/admin")} className="flex items-center gap-2 min-w-0">
             <Logo size="md" className="shrink-0" />
             <span className="text-sm font-semibold text-sidebar-foreground truncate">
               {company?.branding?.platform_name || company?.brand_name || "Painel"}
