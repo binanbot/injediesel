@@ -30,6 +30,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCartStore } from "@/stores/useCartStore";
 import { useSocialLinks } from "@/hooks/useSocialLinks";
 import { useCompany } from "@/hooks/useCompany";
+import { useChannelPaths } from "@/hooks/useChannelPaths";
 
 // TikTok icon component
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -77,10 +78,14 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
   const { socialLinks, loading: loadingSocial } = useSocialLinks();
   const itemCount = useCartStore((s) => s.getItemCount());
   const { isModuleEnabled } = useCompany();
+  const { resolve } = useChannelPaths();
 
-  const menuItems = allMenuItems.filter(
-    (item) => item.module === null || isModuleEnabled(item.module)
-  );
+  const menuItems = allMenuItems
+    .filter((item) => item.module === null || isModuleEnabled(item.module))
+    .map((item) => ({
+      ...item,
+      path: resolve(item.path, "/franqueado"),
+    }));
 
   const handleLogout = async () => {
     await signOut();
@@ -111,7 +116,7 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
         {/* Logo Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-border/20">
           {!collapsed && (
-            <Link to="/franqueado" className="flex items-center gap-2">
+            <Link to={resolve("/franqueado", "/franqueado")} className="flex items-center gap-2">
               <Logo size="md" />
             </Link>
           )}

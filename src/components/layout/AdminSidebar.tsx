@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, isAdminLevel, isSupportLevel } from "@/hooks/useAuth";
 import { useCompany } from "@/hooks/useCompany";
+import { useChannelPaths } from "@/hooks/useChannelPaths";
 
 interface MenuItem {
   icon: React.ElementType;
@@ -72,16 +73,22 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
   const navigate = useNavigate();
   const { signOut, userRole } = useAuth();
   const { company } = useCompany();
+  const { resolve } = useChannelPaths();
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({
     suporte: 0,
     correcoes: 0,
   });
 
-  // Filter menu items by user role
-  const menuItems = allMenuItems.filter((item) => {
-    if (!item.roles) return true;
-    return userRole ? item.roles.includes(userRole) : false;
-  });
+  // Filter menu items by user role and resolve paths for channel mode
+  const menuItems = allMenuItems
+    .filter((item) => {
+      if (!item.roles) return true;
+      return userRole ? item.roles.includes(userRole) : false;
+    })
+    .map((item) => ({
+      ...item,
+      path: resolve(item.path, "/admin"),
+    }));
 
   // Determine the badge label
   const roleBadge = userRole === "admin_empresa" || userRole === "suporte_empresa"
@@ -159,7 +166,7 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
         )}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
-          <Link to="/admin" className="flex items-center gap-2 min-w-0">
+          <Link to={resolve("/admin", "/admin")} className="flex items-center gap-2 min-w-0">
             <Logo size="md" className="shrink-0" />
             <span className="text-sm font-semibold text-sidebar-foreground truncate">
               {company?.branding?.platform_name || company?.brand_name || "Painel"}

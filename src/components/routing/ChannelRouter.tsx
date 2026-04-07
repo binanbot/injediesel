@@ -1,0 +1,432 @@
+import { lazy, Suspense } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useChannel, type ChannelType } from "@/hooks/useChannel";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ModuleGuard } from "@/components/auth/ModuleGuard";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Loader2 } from "lucide-react";
+import NotFound from "@/pages/NotFound";
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-64">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
+
+// ─── Lazy-loaded pages ───────────────────────────────────────────────
+
+// Public / Landing
+const LandingRouter = lazy(() => import("@/pages/LandingRouter"));
+const DocumentacaoPublica = lazy(() => import("@/pages/DocumentacaoPublica"));
+
+// Login (shared, branded by company)
+import Login from "@/pages/Login";
+
+// Franqueado / App pages
+const FranqueadoHome = lazy(() => import("@/pages/franqueado/Home"));
+const EnviarArquivo = lazy(() => import("@/pages/franqueado/EnviarArquivo"));
+const MeusArquivos = lazy(() => import("@/pages/franqueado/MeusArquivos"));
+const ArquivoDetalhes = lazy(() => import("@/pages/franqueado/ArquivoDetalhes"));
+const Atualizacoes = lazy(() => import("@/pages/franqueado/Atualizacoes"));
+const Tutoriais = lazy(() => import("@/pages/franqueado/Tutoriais"));
+const Materiais = lazy(() => import("@/pages/franqueado/Materiais"));
+const Mensagens = lazy(() => import("@/pages/franqueado/Mensagens"));
+const Perfil = lazy(() => import("@/pages/franqueado/Perfil"));
+const Suporte = lazy(() => import("@/pages/franqueado/Suporte"));
+const FranqueadoRelatorios = lazy(() => import("@/pages/franqueado/Relatorios"));
+const Cursos = lazy(() => import("@/pages/franqueado/Cursos"));
+const Loja = lazy(() => import("@/pages/franqueado/Loja"));
+const LojaCheckout = lazy(() => import("@/pages/franqueado/LojaCheckout"));
+const Carrinho = lazy(() => import("@/pages/franqueado/Carrinho"));
+const MeusPedidos = lazy(() => import("@/pages/franqueado/MeusPedidos"));
+const PedidoDetalhe = lazy(() => import("@/pages/franqueado/PedidoDetalhe"));
+const FranqueadoClientes = lazy(() => import("@/pages/franqueado/Clientes"));
+const FranqueadoClienteForm = lazy(() => import("@/pages/franqueado/ClienteForm"));
+const FranqueadoClienteDetalhe = lazy(() => import("@/pages/franqueado/ClienteDetalhe"));
+const FranqueadoVeiculoForm = lazy(() => import("@/pages/franqueado/VeiculoForm"));
+
+// Admin pages
+const AdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
+const AdminFranqueados = lazy(() => import("@/pages/admin/Franqueados"));
+const AdminArquivos = lazy(() => import("@/pages/admin/Arquivos"));
+const AdminArquivoDetalhes = lazy(() => import("@/pages/admin/ArquivoDetalhes"));
+const AdminBanners = lazy(() => import("@/pages/admin/Banners"));
+const AdminAreas = lazy(() => import("@/pages/admin/Areas"));
+const AdminMensagens = lazy(() => import("@/pages/admin/Mensagens"));
+const AdminSuporte = lazy(() => import("@/pages/admin/Suporte"));
+const AdminRelatorios = lazy(() => import("@/pages/admin/Relatorios"));
+const AdminConfiguracoes = lazy(() => import("@/pages/admin/Configuracoes"));
+const SystemDocumentationPage = lazy(() => import("@/pages/documentation/SystemDocumentationPage"));
+const SystemDocumentationPrintPage = lazy(() => import("@/pages/documentation/SystemDocumentationPrintPage"));
+const AdminCorrecoes = lazy(() => import("@/pages/admin/Correcoes"));
+const AdminContratos = lazy(() => import("@/pages/admin/Contratos"));
+const ImportarFranqueados = lazy(() => import("@/pages/admin/ImportarFranqueados"));
+const FranqueadoDetalhe = lazy(() => import("@/pages/admin/FranqueadoDetalhe"));
+const GerenciarCobertura = lazy(() => import("@/pages/admin/GerenciarCobertura"));
+const Clientes = lazy(() => import("@/pages/admin/Clientes"));
+const ClienteDetalhe = lazy(() => import("@/pages/admin/ClienteDetalhe"));
+const ComprasFranqueados = lazy(() => import("@/pages/admin/ComprasFranqueados"));
+const CompraDetalhe = lazy(() => import("@/pages/admin/CompraDetalhe"));
+const Produtos = lazy(() => import("@/pages/admin/Produtos"));
+const PromaxDashboard = lazy(() => import("@/pages/admin/PromaxDashboard"));
+const Colaboradores = lazy(() => import("@/pages/admin/Colaboradores"));
+const VendasDashboard = lazy(() => import("@/pages/admin/VendasDashboard"));
+
+// Master pages
+const MasterDashboard = lazy(() => import("@/pages/master/Dashboard"));
+const MasterCompanyDetail = lazy(() => import("@/pages/master/CompanyDetail"));
+
+// CEO pages
+const CeoDashboard = lazy(() => import("@/pages/ceo/Dashboard"));
+const CeoCompanyDetail = lazy(() => import("@/pages/ceo/CompanyExecutiveDetail"));
+const CeoReceitaCrescimento = lazy(() => import("@/pages/ceo/ReceitaCrescimento"));
+const CeoMarketShare = lazy(() => import("@/pages/ceo/MarketShare"));
+const CeoMetasOkrs = lazy(() => import("@/pages/ceo/MetasOkrs"));
+const CeoRelatorios = lazy(() => import("@/pages/ceo/Relatorios"));
+
+// Layouts
+import { FranchiseeLayout } from "@/components/layout/FranchiseeLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
+import { MasterLayout } from "@/components/layout/MasterLayout";
+import { CeoLayout } from "@/components/layout/CeoLayout";
+
+// ─── Channel-specific route sets ─────────────────────────────────────
+
+/** Public channel: landing + login + docs */
+function PublicRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<LandingRouter />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/docs" element={<DocumentacaoPublica />} />
+      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
+      {/* Legacy path redirects for backward compatibility */}
+      <Route path="/franqueado/*" element={<Navigate to="/login" replace />} />
+      <Route path="/admin/*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+/** App channel: franchisee panel with clean routes */
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute allowedRoles={["franqueado"]}>
+            <FranchiseeLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<FranqueadoHome />} />
+        <Route path="enviar" element={
+          <ErrorBoundary moduleName="Enviar Arquivo"><EnviarArquivo /></ErrorBoundary>
+        } />
+        <Route path="arquivos" element={<MeusArquivos />} />
+        <Route path="arquivos/:id" element={<ArquivoDetalhes />} />
+        <Route path="atualizacoes" element={<Atualizacoes />} />
+        <Route path="tutoriais" element={<Tutoriais />} />
+        <Route path="materiais" element={<Materiais />} />
+        <Route path="mensagens" element={<Mensagens />} />
+        <Route path="perfil" element={<Perfil />} />
+        <Route path="suporte" element={<Suporte />} />
+        <Route path="relatorios" element={<FranqueadoRelatorios />} />
+        <Route path="cursos" element={<ModuleGuard module="cursos"><Cursos /></ModuleGuard>} />
+        <Route path="loja" element={
+          <ErrorBoundary moduleName="Loja"><Loja /></ErrorBoundary>
+        } />
+        <Route path="loja/carrinho" element={<Carrinho />} />
+        <Route path="loja/checkout" element={
+          <ErrorBoundary moduleName="Checkout"><LojaCheckout /></ErrorBoundary>
+        } />
+        <Route path="loja/pedidos" element={<MeusPedidos />} />
+        <Route path="loja/pedidos/:id" element={<PedidoDetalhe />} />
+        <Route path="meus-pedidos" element={<MeusPedidos />} />
+        <Route path="clientes" element={<FranqueadoClientes />} />
+        <Route path="clientes/novo" element={<FranqueadoClienteForm />} />
+        <Route path="clientes/:id" element={<FranqueadoClienteDetalhe />} />
+        <Route path="clientes/:id/editar" element={<FranqueadoClienteForm />} />
+        <Route path="clientes/:id/veiculos/novo" element={<FranqueadoVeiculoForm />} />
+        <Route path="clientes/:id/veiculos/:vehicleId/editar" element={<FranqueadoVeiculoForm />} />
+      </Route>
+      {/* Legacy redirect */}
+      <Route path="/franqueado/*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+/** Admin channel: admin panel with clean routes */
+function AdminRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "suporte", "admin_empresa", "suporte_empresa"]}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="franqueados" element={<AdminFranqueados />} />
+        <Route path="franqueados/:id" element={<FranqueadoDetalhe />} />
+        <Route path="importar" element={
+          <ErrorBoundary moduleName="Importar Franqueados"><ImportarFranqueados /></ErrorBoundary>
+        } />
+        <Route path="cobertura" element={
+          <ErrorBoundary moduleName="Mapa de Cobertura"><GerenciarCobertura /></ErrorBoundary>
+        } />
+        <Route path="clientes" element={<Clientes />} />
+        <Route path="clientes/:id" element={<ClienteDetalhe />} />
+        <Route path="arquivos" element={<AdminArquivos />} />
+        <Route path="arquivos/:id" element={<AdminArquivoDetalhes />} />
+        <Route path="banners" element={<AdminBanners />} />
+        <Route path="areas" element={<AdminAreas />} />
+        <Route path="mensagens" element={<AdminMensagens />} />
+        <Route path="suporte" element={<AdminSuporte />} />
+        <Route path="relatorios" element={
+          <ErrorBoundary moduleName="Relatórios"><AdminRelatorios /></ErrorBoundary>
+        } />
+        <Route path="configuracoes" element={<AdminConfiguracoes />} />
+        <Route path="correcoes" element={<AdminCorrecoes />} />
+        <Route path="contratos" element={<AdminContratos />} />
+        <Route path="documentacao" element={<SystemDocumentationPage />} />
+        <Route path="produtos" element={<Produtos />} />
+        <Route path="compras" element={<ComprasFranqueados />} />
+        <Route path="compras/:id" element={<CompraDetalhe />} />
+        <Route path="loja-dashboard" element={<PromaxDashboard />} />
+        <Route path="colaboradores" element={<Colaboradores />} />
+        <Route path="vendas" element={<VendasDashboard />} />
+      </Route>
+      {/* Legacy redirect */}
+      <Route path="/admin/*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+/** CEO global channel */
+function CeoRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute allowedRoles={["ceo"]}>
+            <CeoLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<CeoDashboard />} />
+        <Route path="receita" element={<CeoReceitaCrescimento />} />
+        <Route path="market-share" element={<CeoMarketShare />} />
+        <Route path="metas" element={<CeoMetasOkrs />} />
+        <Route path="relatorios" element={<CeoRelatorios />} />
+        <Route path="empresas/:companyId" element={<CeoCompanyDetail />} />
+      </Route>
+      <Route path="/ceo/*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+/** Master global channel */
+function MasterRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute allowedRoles={["master_admin"]}>
+            <MasterLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<MasterDashboard />} />
+        <Route path="empresas/:companyId" element={<MasterCompanyDetail />} />
+        <Route path="colaboradores" element={<Colaboradores />} />
+        <Route path="vendas" element={<VendasDashboard />} />
+      </Route>
+      <Route path="/master/*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+// ─── Channel-to-routes mapping ───────────────────────────────────────
+
+const CHANNEL_ROUTES: Record<ChannelType, React.FC> = {
+  public: PublicRoutes,
+  app: AppRoutes,
+  admin: AdminRoutes,
+  ceo_global: CeoRoutes,
+  master_global: MasterRoutes,
+};
+
+/**
+ * Main router that selects route set based on the resolved channel.
+ * In legacy mode (no hostname-based channel), falls back to the
+ * combined route set from the original App.tsx.
+ */
+export function ChannelRouter() {
+  const { channel, isLoading } = useChannel();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const ChannelRouteSet = CHANNEL_ROUTES[channel];
+
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <ChannelRouteSet />
+    </Suspense>
+  );
+}
+
+// ─── Legacy combined routes (backward compatibility) ─────────────────
+
+/**
+ * Full combined route set that mirrors the original App.tsx routing.
+ * Used when no hostname-based channel is resolved (dev/preview/fallback).
+ */
+export function LegacyCombinedRoutes() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<LandingRouter />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/docs" element={<DocumentacaoPublica />} />
+        <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
+
+        {/* Franqueado Routes */}
+        <Route
+          path="/franqueado"
+          element={
+            <ProtectedRoute allowedRoles={["franqueado"]}>
+              <FranchiseeLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<FranqueadoHome />} />
+          <Route path="enviar" element={
+            <ErrorBoundary moduleName="Enviar Arquivo"><EnviarArquivo /></ErrorBoundary>
+          } />
+          <Route path="arquivos" element={<MeusArquivos />} />
+          <Route path="arquivos/:id" element={<ArquivoDetalhes />} />
+          <Route path="atualizacoes" element={<Atualizacoes />} />
+          <Route path="tutoriais" element={<Tutoriais />} />
+          <Route path="materiais" element={<Materiais />} />
+          <Route path="mensagens" element={<Mensagens />} />
+          <Route path="perfil" element={<Perfil />} />
+          <Route path="suporte" element={<Suporte />} />
+          <Route path="relatorios" element={<FranqueadoRelatorios />} />
+          <Route path="cursos" element={<ModuleGuard module="cursos"><Cursos /></ModuleGuard>} />
+          <Route path="loja" element={
+            <ErrorBoundary moduleName="Loja"><Loja /></ErrorBoundary>
+          } />
+          <Route path="loja/carrinho" element={<Carrinho />} />
+          <Route path="loja/checkout" element={
+            <ErrorBoundary moduleName="Checkout"><LojaCheckout /></ErrorBoundary>
+          } />
+          <Route path="loja/pedidos" element={<MeusPedidos />} />
+          <Route path="loja/pedidos/:id" element={<PedidoDetalhe />} />
+          <Route path="meus-pedidos" element={<MeusPedidos />} />
+          <Route path="clientes" element={<FranqueadoClientes />} />
+          <Route path="clientes/novo" element={<FranqueadoClienteForm />} />
+          <Route path="clientes/:id" element={<FranqueadoClienteDetalhe />} />
+          <Route path="clientes/:id/editar" element={<FranqueadoClienteForm />} />
+          <Route path="clientes/:id/veiculos/novo" element={<FranqueadoVeiculoForm />} />
+          <Route path="clientes/:id/veiculos/:vehicleId/editar" element={<FranqueadoVeiculoForm />} />
+        </Route>
+
+        {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "suporte", "admin_empresa", "suporte_empresa"]}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="franqueados" element={<AdminFranqueados />} />
+          <Route path="franqueados/:id" element={<FranqueadoDetalhe />} />
+          <Route path="importar" element={
+            <ErrorBoundary moduleName="Importar Franqueados"><ImportarFranqueados /></ErrorBoundary>
+          } />
+          <Route path="cobertura" element={
+            <ErrorBoundary moduleName="Mapa de Cobertura"><GerenciarCobertura /></ErrorBoundary>
+          } />
+          <Route path="clientes" element={<Clientes />} />
+          <Route path="clientes/:id" element={<ClienteDetalhe />} />
+          <Route path="arquivos" element={<AdminArquivos />} />
+          <Route path="arquivos/:id" element={<AdminArquivoDetalhes />} />
+          <Route path="banners" element={<AdminBanners />} />
+          <Route path="areas" element={<AdminAreas />} />
+          <Route path="mensagens" element={<AdminMensagens />} />
+          <Route path="suporte" element={<AdminSuporte />} />
+          <Route path="relatorios" element={
+            <ErrorBoundary moduleName="Relatórios"><AdminRelatorios /></ErrorBoundary>
+          } />
+          <Route path="configuracoes" element={<AdminConfiguracoes />} />
+          <Route path="correcoes" element={<AdminCorrecoes />} />
+          <Route path="contratos" element={<AdminContratos />} />
+          <Route path="documentacao" element={<SystemDocumentationPage />} />
+          <Route path="produtos" element={<Produtos />} />
+          <Route path="compras" element={<ComprasFranqueados />} />
+          <Route path="compras/:id" element={<CompraDetalhe />} />
+          <Route path="loja-dashboard" element={<PromaxDashboard />} />
+          <Route path="colaboradores" element={<Colaboradores />} />
+          <Route path="vendas" element={<VendasDashboard />} />
+        </Route>
+
+        {/* Master Admin Routes */}
+        <Route
+          path="/master"
+          element={
+            <ProtectedRoute allowedRoles={["master_admin"]}>
+              <MasterLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<MasterDashboard />} />
+          <Route path="empresas/:companyId" element={<MasterCompanyDetail />} />
+          <Route path="colaboradores" element={<Colaboradores />} />
+          <Route path="vendas" element={<VendasDashboard />} />
+        </Route>
+
+        {/* CEO Routes */}
+        <Route
+          path="/ceo"
+          element={
+            <ProtectedRoute allowedRoles={["ceo"]}>
+              <CeoLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<CeoDashboard />} />
+          <Route path="receita" element={<CeoReceitaCrescimento />} />
+          <Route path="market-share" element={<CeoMarketShare />} />
+          <Route path="metas" element={<CeoMetasOkrs />} />
+          <Route path="relatorios" element={<CeoRelatorios />} />
+          <Route path="empresas/:companyId" element={<CeoCompanyDetail />} />
+        </Route>
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
+  );
+}

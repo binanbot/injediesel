@@ -39,6 +39,8 @@ export interface Company {
   settings: CompanySettings;
   enabled_modules: string[];
   contacts: CompanyContacts;
+  /** Channel type resolved from company_domains (hostname-based) */
+  channel_type?: string;
 }
 
 interface CompanyContextType {

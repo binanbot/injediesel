@@ -30,8 +30,15 @@ export function isFranqueado(role: UserRole): boolean {
   return role === "franqueado";
 }
 
-/** Returns the default home route for a given role */
-export function getHomeRouteForRole(role: UserRole): string {
+/** Returns the default home route for a given role.
+ *  When running on a channel-based hostname, routes are relative (e.g. "/").
+ *  When running in legacy mode, uses prefixed routes (e.g. "/admin").
+ */
+export function getHomeRouteForRole(role: UserRole, channelMode = false): string {
+  if (channelMode) {
+    // In channel mode, all panels mount at "/"
+    return "/";
+  }
   switch (role) {
     case "master_admin":
     case "ceo":
