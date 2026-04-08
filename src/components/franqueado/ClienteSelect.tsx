@@ -140,6 +140,7 @@ export function ClienteSelect({ value, onChange, onCustomerSelect, onAddNew, ref
                           value={`${c.full_name} ${c.cpf || ""} ${c.cnpj || ""} ${c.phone || ""}`}
                           onSelect={() => {
                             onChange(c.id);
+                            onCustomerSelect?.(c);
                             setOpen(false);
                           }}
                           className="flex items-center justify-between py-3 cursor-pointer"
