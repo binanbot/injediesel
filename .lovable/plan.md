@@ -1,35 +1,51 @@
 
-## ✅ Bloco 1 — PermissionGuard em páginas críticas (concluído)
+## Bloco 1 — Auditoria e Compliance
 
-Aplicado `<PermissionGuard>` em:
-- **Produtos** (`catalogo.export`, `catalogo.create`)
-- **Pedidos** (`pedidos.export`)
-- **Colaboradores** (`usuarios.create`, `usuarios.edit`, `usuarios.manage`)
-- **Clientes** (`clientes.export`, `clientes.create`)
-- **Suporte** (`suporte.manage` para alterar status)
+### Modelagem
+- Tabela `audit_logs` com: `id`, `company_id`, `user_id`, `action` (enum text), `module`, `target_type`, `target_id`, `details` (jsonb), `created_at`
+- RLS: company admins veem da própria empresa, master/ceo veem tudo
+- Sem UPDATE/DELETE (append-only)
 
-## ✅ Bloco 2 — Página /admin/permissoes (concluído)
+### Ações rastreadas
+- `permission_profile.updated` / `permission_profile.cloned`
+- `employee.created` / `employee.updated` / `employee.deactivated`
+- `seller.activated` / `seller.deactivated` / `seller.commission_changed` / `seller.mode_changed`
+- `permission_override.set` / `permission_override.removed`
+- `ticket.status_changed`
+- `discount_policy.violated`
 
-- Listagem de perfis com contagem de permissões
-- Cargos vinculados exibidos
-- Colaboradores vinculados exibidos (via posição + overrides)
-- Badge de override com tooltip
-- Clonagem de perfil
-- Matriz módulo×ação expandível com checkboxes
-- Toggle "Todos" por módulo
+### Frontend
+- Service `auditService.ts` com `logAuditEvent()` e `getAuditLogs()`
+- Página `/admin/auditoria` com tabela filtrada por período, módulo, usuário e ação
+- Rota também em `/master/auditoria` com visão consolidada
 
-## ✅ Bloco 3 — Painel comercial (concluído)
+## Bloco 2 — Metas comerciais formais
 
-- KPIs: faturamento, pedidos, arquivos ECU, vendedores, ticket médio, comissão
-- Ranking por faturamento, volume, ticket médio
-- Aba de Metas com progresso (atingida/saudável/em risco/crítica)
-- Aba de Descontos com análise vs política comercial
-- Filtro por modalidade (ECU/Peças/Misto)
-- Filtro por tipo de venda (consolidado/ECU/peças)
-- Alertas visuais para desconto acima da política
-- Funcional em /admin/vendas e /master/vendas
+### Modelagem
+- Tabela `sales_targets` já existe com `seller_profile_id`, `company_id`, `sale_type`, `metric_key`, `target_value`, `period_start`, `period_end`, `is_active`
+- Já é suficiente para metas por vendedor e por modalidade — não precisa de nova tabela
 
-## Próximos passos sugeridos
-1. Aplicar PermissionGuard em Relatórios (exportações)
-2. Audit trail para alterações de perfis de permissão
-3. Painel do vendedor individual (visão própria de desempenho)
+### Frontend
+- Evoluir `salesRankingService.ts` para cruzar targets com realizado por modalidade
+- Aba "Metas" no VendasDashboard já existe — evoluir com:
+  - Progresso por modalidade (ECU/Peças/Total)
+  - Status: Atingida (≥100%), Saudável (≥70%), Em risco (≥40%), Crítica (<40%)
+  - Comissão prevista (meta) vs comissão realizada
+  - Alertas para vendedor abaixo da meta
+- Formulário de criação/edição de meta por vendedor no painel
+
+## Plano incremental
+1. Migration: criar `audit_logs`
+2. Service + inserções de auditoria nos pontos críticos
+3. Página de auditoria admin/master
+4. Evolução das metas no VendasDashboard
+5. Formulário de gestão de metas
+
+## Checklist
+- [ ] audit_logs criada com RLS
+- [ ] logAuditEvent() chamado em permissões, colaboradores, vendedores
+- [ ] Página /admin/auditoria funcional
+- [ ] Metas por modalidade no VendasDashboard
+- [ ] Formulário de meta por vendedor
+- [ ] TypeScript sem erros
+- [ ] Funciona em Injediesel e PROMAX
