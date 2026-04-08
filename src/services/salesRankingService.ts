@@ -10,6 +10,8 @@ export type SellerRankingRow = {
   orders_revenue: number;
   files_count: number;
   files_revenue: number;
+  services_count: number;
+  services_revenue: number;
   total_revenue: number;
   total_items: number;
   avg_ticket: number;
@@ -125,6 +127,14 @@ export async function getSellerRanking(
 
   const { data: files = [] } = await filesQuery;
 
+  // 3b. Aggregate services by seller
+  const { data: svcRows = [] } = await supabase
+    .from("services")
+    .select("seller_profile_id, amount_brl")
+    .in("seller_profile_id", sellerIds)
+    .gte("created_at", opts.startDate)
+    .lte("created_at", opts.endDate);
+
   // 4. Fetch active targets for period
   const { data: targets = [] } = await supabase
     .from("sales_targets")
@@ -152,6 +162,15 @@ export async function getSellerRanking(
     cur.count += 1;
     cur.revenue += Number(f.valor_brl || 0);
     filesBySeller.set(f.seller_profile_id, cur);
+  }
+
+  const servicesBySeller = new Map<string, { count: number; revenue: number }>();
+  for (const sv of svcRows as any[]) {
+    if (!sv.seller_profile_id) continue;
+    const cur = servicesBySeller.get(sv.seller_profile_id) || { count: 0, revenue: 0 };
+    cur.count += 1;
+    cur.revenue += Number(sv.amount_brl || 0);
+    servicesBySeller.set(sv.seller_profile_id, cur);
   }
 
   const targetBySeller = new Map<string, number>();
