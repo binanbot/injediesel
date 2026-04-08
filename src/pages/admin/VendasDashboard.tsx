@@ -1168,18 +1168,18 @@ function AttributionView({ companyId, dateRange }: { companyId?: string; dateRan
     );
   }
 
-  if (!stats || stats.totalOrders === 0) {
+  if (!stats || stats.totalItems === 0) {
     return (
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
-          Nenhum pedido no período.
+          Nenhum registro no período.
         </CardContent>
       </Card>
     );
   }
 
-  const selfPct = stats.totalOrders > 0 ? (stats.selfAttributed / stats.totalOrders * 100) : 0;
-  const thirdPct = stats.totalOrders > 0 ? (stats.thirdPartyAttributed / stats.totalOrders * 100) : 0;
+  const selfPct = stats.totalItems > 0 ? (stats.selfAttributed / stats.totalItems * 100) : 0;
+  const thirdPct = stats.totalItems > 0 ? (stats.thirdPartyAttributed / stats.totalItems * 100) : 0;
   const walletMatchPct = (stats.walletMatch + stats.walletMismatch) > 0
     ? (stats.walletMatch / (stats.walletMatch + stats.walletMismatch) * 100)
     : 0;
