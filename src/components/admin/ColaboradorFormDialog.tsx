@@ -22,6 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ShoppingCart } from "lucide-react";
@@ -61,6 +62,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
   const [targetMonthly, setTargetMonthly] = useState<number>(0);
   const [maxDiscountPct, setMaxDiscountPct] = useState<number>(0);
   const [salesChannelMode, setSalesChannelMode] = useState<string>("both");
+  const [allowedSalesChannels, setAllowedSalesChannels] = useState<string[]>(["whatsapp", "telefone", "balcao"]);
   const [canSellServices, setCanSellServices] = useState(true);
   const [commissionEnabled, setCommissionEnabled] = useState(true);
   const [targetEnabled, setTargetEnabled] = useState(true);
@@ -89,6 +91,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
         setTargetMonthly(employee.seller_profile.target_monthly || 0);
         setMaxDiscountPct(employee.seller_profile.max_discount_pct || 0);
         setSalesChannelMode(employee.seller_profile.sales_channel_mode || "both");
+        setAllowedSalesChannels((employee.seller_profile as any).allowed_sales_channels || ["whatsapp", "telefone", "balcao"]);
         setCanSellServices(employee.seller_profile.can_sell_services ?? true);
         setCommissionEnabled(employee.seller_profile.commission_enabled ?? true);
         setTargetEnabled(employee.seller_profile.target_enabled ?? true);
@@ -111,6 +114,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
     setTargetMonthly(0);
     setMaxDiscountPct(0);
     setSalesChannelMode("both");
+    setAllowedSalesChannels(["whatsapp", "telefone", "balcao"]);
     setCanSellServices(true);
     setCommissionEnabled(true);
     setTargetEnabled(true);
@@ -211,6 +215,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
           can_sell_services: canSellServices,
           commission_enabled: commissionEnabled,
           target_enabled: targetEnabled,
+          allowed_sales_channels: allowedSalesChannels,
         });
 
         // Audit seller-specific changes

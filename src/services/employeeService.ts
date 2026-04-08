@@ -210,6 +210,7 @@ export async function upsertSellerProfile(payload: {
   can_sell_services?: boolean;
   commission_enabled?: boolean;
   target_enabled?: boolean;
+  allowed_sales_channels?: string[];
 }) {
   if (payload.id) {
     const { id, ...rest } = payload;
