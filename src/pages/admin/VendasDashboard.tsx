@@ -51,6 +51,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getSellerRanking, upsertSalesTarget, type SellerRankingRow } from "@/services/salesRankingService";
 import { getCommissionClosings, generateClosing, updateClosingStatus, reopenClosing, updateClosingNotes, getCommissionSummary, type CommissionClosingRow } from "@/services/commissionService";
+import { getAttributionStats, type AttributionStats } from "@/services/saleAttributionService";
 import { buildTeamSummaries } from "@/services/teamPerformanceService";
 import { logAuditEvent } from "@/services/auditService";
 import { useAuth } from "@/hooks/useAuth";
@@ -276,6 +277,7 @@ export default function VendasDashboard() {
           <TabsTrigger value="targets">Metas</TabsTrigger>
           <TabsTrigger value="discounts">Descontos</TabsTrigger>
           <TabsTrigger value="commissions">Comissões</TabsTrigger>
+          <TabsTrigger value="attribution">Atribuição</TabsTrigger>
           <TabsTrigger value="team">Equipe</TabsTrigger>
         </TabsList>
 
@@ -328,6 +330,10 @@ export default function VendasDashboard() {
             companyId={companyId}
             dateRange={dateRange}
           />
+        </TabsContent>
+
+        <TabsContent value="attribution">
+          <AttributionView companyId={companyId} dateRange={dateRange} />
         </TabsContent>
 
         <TabsContent value="team">
@@ -1135,6 +1141,145 @@ function TeamView({
             </CardContent>
           </Card>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Attribution View ── */
+function AttributionView({ companyId, dateRange }: { companyId?: string; dateRange: { from: Date; to: Date } }) {
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ["attribution-stats", dateRange.from.toISOString(), dateRange.to.toISOString(), companyId],
+    queryFn: () =>
+      getAttributionStats({
+        startDate: format(dateRange.from, "yyyy-MM-dd"),
+        endDate: format(dateRange.to, "yyyy-MM-dd"),
+        companyId,
+      }),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i}><CardContent className="pt-6"><Skeleton className="h-8 w-full" /></CardContent></Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (!stats || stats.totalOrders === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-muted-foreground">
+          Nenhum pedido no período.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const selfPct = stats.totalOrders > 0 ? (stats.selfAttributed / stats.totalOrders * 100) : 0;
+  const thirdPct = stats.totalOrders > 0 ? (stats.thirdPartyAttributed / stats.totalOrders * 100) : 0;
+  const walletMatchPct = (stats.walletMatch + stats.walletMismatch) > 0
+    ? (stats.walletMatch / (stats.walletMatch + stats.walletMismatch) * 100)
+    : 0;
+
+  const channelLabels: Record<string, string> = {
+    whatsapp: "WhatsApp",
+    telefone: "Telefone",
+    balcao: "Balcão",
+    loja: "Loja Online",
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Attribution KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Users className="h-4 w-4 text-primary" />
+              <span className="text-xs text-muted-foreground">Total de Pedidos</span>
+            </div>
+            <p className="text-lg font-bold">{stats.totalOrders}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <CheckCircle className="h-4 w-4 text-primary" />
+              <span className="text-xs text-muted-foreground">Venda Própria</span>
+            </div>
+            <p className="text-lg font-bold">{stats.selfAttributed}</p>
+            <p className="text-xs text-muted-foreground">{selfPct.toFixed(0)}% do total</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertTriangle className="h-4 w-4 text-primary" />
+              <span className="text-xs text-muted-foreground">Atribuída a Terceiro</span>
+            </div>
+            <p className="text-lg font-bold">{stats.thirdPartyAttributed}</p>
+            <p className="text-xs text-muted-foreground">{thirdPct.toFixed(0)}% do total</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Target className="h-4 w-4 text-primary" />
+              <span className="text-xs text-muted-foreground">Dentro da Carteira</span>
+            </div>
+            <p className="text-lg font-bold">{walletMatchPct.toFixed(0)}%</p>
+            <p className="text-xs text-muted-foreground">{stats.walletMatch} de {stats.walletMatch + stats.walletMismatch} com carteira</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Channel breakdown + Wallet */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Distribuição por Canal</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {Object.entries(stats.byChannel).sort((a, b) => b[1] - a[1]).map(([ch, count]) => (
+              <div key={ch} className="flex items-center justify-between text-sm">
+                <span>{channelLabels[ch] || ch}</span>
+                <div className="flex items-center gap-2">
+                  <Progress value={(count / stats.totalOrders) * 100} className="w-24 h-2" />
+                  <span className="text-muted-foreground w-12 text-right">{count}</span>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Aderência à Carteira</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-2">
+                <CheckCircle className="h-3.5 w-3.5 text-primary" /> Na carteira
+              </span>
+              <span className="font-medium">{stats.walletMatch}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 text-destructive" /> Fora da carteira
+              </span>
+              <span className="font-medium">{stats.walletMismatch}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-2">
+                <Users className="h-3.5 w-3.5 text-muted-foreground" /> Sem carteira definida
+              </span>
+              <span className="font-medium">{stats.noWallet}</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
