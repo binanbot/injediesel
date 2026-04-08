@@ -637,7 +637,9 @@ function DiscountAnalysis({
                               <AlertTriangle className="h-4 w-4 text-destructive" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="text-xs">Desconto médio acima da política comercial</p>
+                              <p className="text-xs">
+                                Desconto médio ({avgDiscountPct.toFixed(1)}%) acima do limite ({maxAllowed}%)
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
