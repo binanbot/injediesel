@@ -1,41 +1,35 @@
 
-## Bloco 1 — PermissionGuard em páginas críticas
+## ✅ Bloco 1 — PermissionGuard em páginas críticas (concluído)
 
-Aplicar `<PermissionGuard>` em botões/ações sensíveis nas páginas:
-- **Produtos** (`/admin/produtos`): criar, editar, excluir → módulo `catalogo`
-- **Pedidos** (`/admin/compras-franqueados`): aprovar, editar status → módulo `pedidos`
-- **Relatórios** (`/admin/relatorios`): exportar → módulo `relatorios`
-- **Suporte** (`/admin/suporte`): gerenciar tickets → módulo `suporte`
+Aplicado `<PermissionGuard>` em:
+- **Produtos** (`catalogo.export`, `catalogo.create`)
+- **Pedidos** (`pedidos.export`)
+- **Colaboradores** (`usuarios.create`, `usuarios.edit`, `usuarios.manage`)
+- **Clientes** (`clientes.export`, `clientes.create`)
+- **Suporte** (`suporte.manage` para alterar status)
 
-Arquivos a editar: ~4-5 páginas admin existentes.
+## ✅ Bloco 2 — Página /admin/permissoes (concluído)
 
-## Bloco 2 — Página /admin/permissoes
-
-Criar página de gestão de perfis de permissão:
-- Listagem de perfis da empresa (cards ou tabela)
-- Visualização da matriz módulo×ação (checkbox grid)
-- Edição inline dos perfis
+- Listagem de perfis com contagem de permissões
+- Cargos vinculados exibidos
+- Colaboradores vinculados exibidos (via posição + overrides)
+- Badge de override com tooltip
 - Clonagem de perfil
-- Indicação de quais cargos usam cada perfil
-- Rota nova: `/admin/permissoes` (já existe no sidebar?)
+- Matriz módulo×ação expandível com checkboxes
+- Toggle "Todos" por módulo
 
-Arquivos novos:
-- `src/pages/admin/Permissoes.tsx`
-- Reutilizar `permissionService.ts` existente
+## ✅ Bloco 3 — Painel comercial (concluído)
 
-## Bloco 3 — Painel comercial (metas + ranking)
+- KPIs: faturamento, pedidos, arquivos ECU, vendedores, ticket médio, comissão
+- Ranking por faturamento, volume, ticket médio
+- Aba de Metas com progresso (atingida/saudável/em risco/crítica)
+- Aba de Descontos com análise vs política comercial
+- Filtro por modalidade (ECU/Peças/Misto)
+- Filtro por tipo de venda (consolidado/ECU/peças)
+- Alertas visuais para desconto acima da política
+- Funcional em /admin/vendas e /master/vendas
 
-Criar dashboard de vendas com:
-- Página `/admin/vendas` — ranking de vendedores, metas, comissão
-- Página `/master/vendas` — visão consolidada cross-company
-- Reutilizar `salesRankingService.ts` existente
-- Componentes: tabela de ranking, barra de progresso de meta, filtros
-
-Arquivos novos:
-- `src/pages/admin/VendasDashboard.tsx` (pode já existir)
-- `src/pages/master/VendasDashboard.tsx` ou similar
-
-## Ordem de implementação
-1. Bloco 1 (PermissionGuard) — menor risco, maior impacto de segurança
-2. Bloco 2 (Permissões UI) — depende apenas do service existente
-3. Bloco 3 (Painel comercial) — mais complexo, usa services existentes
+## Próximos passos sugeridos
+1. Aplicar PermissionGuard em Relatórios (exportações)
+2. Audit trail para alterações de perfis de permissão
+3. Painel do vendedor individual (visão própria de desempenho)
