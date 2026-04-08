@@ -385,7 +385,7 @@ export default function VendaManual() {
               </Badge>
             )}
             {selectedCustomer?.primary_seller_id && selectedSellerId && selectedCustomer.primary_seller_id !== selectedSellerId && (
-              <Badge variant="outline" className="text-xs text-amber-600 border-amber-400">
+              <Badge variant="outline" className="text-xs text-destructive border-destructive/40">
                 <AlertTriangle className="h-3 w-3 mr-1" />
                 Fora da carteira
               </Badge>
