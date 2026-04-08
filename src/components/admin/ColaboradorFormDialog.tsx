@@ -58,6 +58,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
   const [canSellParts, setCanSellParts] = useState(true);
   const [sellerActive, setSellerActive] = useState(true);
   const [targetMonthly, setTargetMonthly] = useState<number>(0);
+  const [maxDiscountPct, setMaxDiscountPct] = useState<number>(0);
 
   // Populate on edit
   useEffect(() => {

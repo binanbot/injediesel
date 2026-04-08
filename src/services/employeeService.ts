@@ -31,6 +31,7 @@ export interface SellerRow {
   is_active: boolean;
   target_monthly: number | null;
   notes: string | null;
+  max_discount_pct: number;
 }
 
 /** Fetch active sellers for a company (for use in dropdowns/selectors) */
