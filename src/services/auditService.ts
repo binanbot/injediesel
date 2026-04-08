@@ -14,9 +14,12 @@ export type AuditAction =
   | "permission_override.set"
   | "permission_override.removed"
   | "ticket.status_changed"
+  | "order.status_changed"
+  | "order.payment_status_changed"
   | "discount_policy.violated"
   | "sales_target.created"
-  | "sales_target.updated";
+  | "sales_target.updated"
+  | "export.executed";
 
 export type AuditModule =
   | "permissoes"
@@ -24,7 +27,9 @@ export type AuditModule =
   | "vendedores"
   | "suporte"
   | "comercial"
-  | "metas";
+  | "metas"
+  | "pedidos"
+  | "exportacoes";
 
 export interface AuditLogEntry {
   id: string;
