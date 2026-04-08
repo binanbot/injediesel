@@ -188,8 +188,9 @@ export async function getSellerRanking(
     const ep = s.employee_profiles;
     const oData = ordersBySeller.get(s.id) || { count: 0, revenue: 0, items: 0 };
     const fData = filesBySeller.get(s.id) || { count: 0, revenue: 0 };
-    const totalRevenue = oData.revenue + fData.revenue;
-    const totalCount = oData.count + fData.count;
+    const svData = servicesBySeller.get(s.id) || { count: 0, revenue: 0 };
+    const totalRevenue = oData.revenue + fData.revenue + svData.revenue;
+    const totalCount = oData.count + fData.count + svData.count;
     const target = targetBySeller.get(s.id) ?? null;
 
     let estComm = 0;
@@ -209,6 +210,8 @@ export async function getSellerRanking(
       orders_revenue: oData.revenue,
       files_count: fData.count,
       files_revenue: fData.revenue,
+      services_count: svData.count,
+      services_revenue: svData.revenue,
       total_revenue: totalRevenue,
       total_items: oData.items,
       avg_ticket: totalCount > 0 ? totalRevenue / totalCount : 0,
