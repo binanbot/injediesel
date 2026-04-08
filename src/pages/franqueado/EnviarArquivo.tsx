@@ -513,6 +513,26 @@ export default function EnviarArquivo() {
         throw new Error("Erro ao salvar os dados do arquivo");
       }
 
+      // Audit: file commercial attribution
+      if (sellerProfileId || saleChannel) {
+        const walletStatus = getWalletStatus(sellerProfileId || null, clientePrimarySellerId || null);
+        logAuditEvent({
+          action: "file.attribution_set",
+          module: "arquivos",
+          targetType: "received_file",
+          targetId: arquivoId,
+          details: {
+            seller_profile_id: sellerProfileId || null,
+            operator_user_id: userData.user.id,
+            sale_channel: saleChannel || null,
+            customer_id: clienteId || null,
+            customer_primary_seller_id: clientePrimarySellerId || null,
+            is_out_of_wallet: walletStatus === "out_of_wallet",
+            is_third_party: sellerProfileId ? true : false,
+          },
+        });
+      }
+
       setIsSubmitting(false);
       setSubmitted(true);
       toast({
