@@ -92,6 +92,7 @@ const ACTION_LABELS: Record<PermissionAction, string> = {
   export: "Exportar",
   manage: "Gerenciar",
   assign_seller: "Atribuir vendedor",
+  assign_primary_seller: "Definir carteira",
 };
 
 export default function Permissoes() {

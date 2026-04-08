@@ -28,7 +28,8 @@ export type PermissionAction =
   | "approve"
   | "export"
   | "manage"
-  | "assign_seller";
+  | "assign_seller"
+  | "assign_primary_seller";
 
 /** Permissions matrix: module → actions[] */
 export type PermissionsMatrix = Partial<Record<PermissionModule, PermissionAction[]>>;
@@ -52,7 +53,7 @@ export const FULL_ACCESS_MODULES: PermissionModule[] = [
 ];
 
 export const ALL_ACTIONS: PermissionAction[] = [
-  "view", "create", "edit", "delete", "approve", "export", "manage", "assign_seller",
+  "view", "create", "edit", "delete", "approve", "export", "manage", "assign_seller", "assign_primary_seller",
 ];
 
 export const FULL_ACCESS_MATRIX: PermissionsMatrix = Object.fromEntries(

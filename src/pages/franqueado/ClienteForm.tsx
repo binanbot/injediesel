@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Save, Loader2, Search } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Search, Users, Info } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,9 +9,25 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useCompany } from "@/hooks/useCompany";
+import { usePermissions } from "@/hooks/usePermissions";
+import { fetchActiveSellers } from "@/services/employeeService";
+import { logAuditEvent } from "@/services/auditService";
 import { toast } from "sonner";
 
 const EMPTY_FORM = {
@@ -34,7 +51,11 @@ export default function ClienteForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
+  const { company } = useCompany();
+  const { can } = usePermissions();
   const isEdit = !!id;
+
+  const canAssignPrimarySeller = can("clientes", "assign_primary_seller");
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -43,6 +64,16 @@ export default function ClienteForm() {
   const [isActive, setIsActive] = useState(true);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [primarySellerId, setPrimarySellerId] = useState<string>("");
+  const [originalPrimarySellerId, setOriginalPrimarySellerId] = useState<string>("");
+
+  // Load eligible sellers for primary seller field
+  const companyId = company?.id;
+  const { data: sellers = [] } = useQuery({
+    queryKey: ["active-sellers-for-wallet", companyId],
+    queryFn: () => fetchActiveSellers(companyId!),
+    enabled: !!companyId && canAssignPrimarySeller,
+  });
 
   useEffect(() => {
     if (isEdit) loadCustomer();
@@ -77,6 +108,8 @@ export default function ClienteForm() {
       });
       setTipo(d.type === "PJ" ? "PJ" : "PF");
       setIsActive(d.is_active ?? true);
+      setPrimarySellerId(d.primary_seller_id || "");
+      setOriginalPrimarySellerId(d.primary_seller_id || "");
     } catch {
       toast.error("Cliente não encontrado ou sem permissão");
       navigate("/franqueado/clientes");
@@ -157,9 +190,31 @@ export default function ClienteForm() {
         is_active: isActive,
       };
 
+      // Include primary_seller_id if user has permission
+      if (canAssignPrimarySeller) {
+        payload.primary_seller_id = primarySellerId || null;
+      }
+
       if (isEdit) {
         const { error } = await supabase.from("customers").update(payload).eq("id", id!);
         if (error) throw error;
+
+        // Audit primary seller change
+        if (canAssignPrimarySeller && primarySellerId !== originalPrimarySellerId) {
+          await logAuditEvent({
+            action: "customer.primary_seller_changed",
+            module: "comercial",
+            companyId: companyId || undefined,
+            targetType: "customer",
+            targetId: id!,
+            details: {
+              previous_seller_id: originalPrimarySellerId || null,
+              new_seller_id: primarySellerId || null,
+              customer_name: form.full_name.trim(),
+            },
+          });
+        }
+
         toast.success("Cliente atualizado!");
         navigate(`/franqueado/clientes/${id}`);
       } else {
@@ -167,8 +222,25 @@ export default function ClienteForm() {
         const { data: unitId } = await supabase.rpc("get_user_unit_id", { _user_id: user.id });
         if (!unitId) { toast.error("Unidade não encontrada"); setIsSaving(false); return; }
         payload.unit_id = unitId;
-        const { error } = await supabase.from("customers").insert(payload);
+        const { data: newCustomer, error } = await supabase.from("customers").insert(payload).select("id").single();
         if (error) throw error;
+
+        // Audit initial primary seller assignment
+        if (canAssignPrimarySeller && primarySellerId) {
+          await logAuditEvent({
+            action: "customer.primary_seller_changed",
+            module: "comercial",
+            companyId: companyId || undefined,
+            targetType: "customer",
+            targetId: (newCustomer as any)?.id || "",
+            details: {
+              previous_seller_id: null,
+              new_seller_id: primarySellerId,
+              customer_name: form.full_name.trim(),
+            },
+          });
+        }
+
         toast.success("Cliente cadastrado!");
         navigate("/franqueado/clientes");
       }
@@ -184,6 +256,13 @@ export default function ClienteForm() {
     setForm((f) => ({ ...f, [field]: value }));
     if (errors[field]) setErrors((e) => { const n = { ...e }; delete n[field]; return n; });
   };
+
+  // Current seller name for display
+  const currentSellerName = useMemo(() => {
+    if (!primarySellerId) return null;
+    const match = sellers.find((s) => s.seller_profile?.id === primarySellerId);
+    return match?.display_name || null;
+  }, [primarySellerId, sellers]);
 
   if (isLoading) {
     return (
@@ -327,6 +406,55 @@ export default function ClienteForm() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Carteira Comercial */}
+        {canAssignPrimarySeller && (
+          <Card className="glass-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Carteira Comercial
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs">
+                      <p className="text-xs">
+                        O vendedor principal é o responsável comercial deste cliente.
+                        Ele será sugerido automaticamente ao lançar vendas manuais.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1.5">
+                <Label htmlFor="primary_seller">Vendedor principal</Label>
+                <Select
+                  value={primarySellerId || "none"}
+                  onValueChange={(v) => setPrimarySellerId(v === "none" ? "" : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Nenhum vendedor vinculado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {sellers.map((s) => (
+                      <SelectItem key={s.seller_profile!.id} value={s.seller_profile!.id}>
+                        {s.display_name || "Sem nome"} ({s.seller_profile!.seller_mode === "ecu" ? "ECU" : s.seller_profile!.seller_mode === "parts" ? "Peças" : "Misto"})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Este vendedor será sugerido automaticamente nas vendas manuais deste cliente.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Endereço */}
         <Card className="glass-card">
