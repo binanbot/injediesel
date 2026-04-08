@@ -173,6 +173,8 @@ export type Database = {
           period_status: string
           realized_commission: number
           seller_profile_id: string
+          services_count: number
+          services_revenue: number
           status: string
           total_revenue: number
           updated_at: string
@@ -198,6 +200,8 @@ export type Database = {
           period_status?: string
           realized_commission?: number
           seller_profile_id: string
+          services_count?: number
+          services_revenue?: number
           status?: string
           total_revenue?: number
           updated_at?: string
@@ -223,6 +227,8 @@ export type Database = {
           period_status?: string
           realized_commission?: number
           seller_profile_id?: string
+          services_count?: number
+          services_revenue?: number
           status?: string
           total_revenue?: number
           updated_at?: string
