@@ -73,6 +73,7 @@ const PromaxDashboard = lazy(() => import("@/pages/admin/PromaxDashboard"));
 const Colaboradores = lazy(() => import("@/pages/admin/Colaboradores"));
 const VendasDashboard = lazy(() => import("@/pages/admin/VendasDashboard"));
 const Permissoes = lazy(() => import("@/pages/admin/Permissoes"));
+const Auditoria = lazy(() => import("@/pages/admin/Auditoria"));
 
 // Master pages
 const MasterDashboard = lazy(() => import("@/pages/master/Dashboard"));
@@ -205,6 +206,7 @@ function AdminRoutes() {
         <Route path="colaboradores" element={<Colaboradores />} />
         <Route path="vendas" element={<VendasDashboard />} />
         <Route path="permissoes" element={<Permissoes />} />
+        <Route path="auditoria" element={<Auditoria />} />
       </Route>
       {/* Legacy redirect */}
       <Route path="/admin/*" element={<Navigate to="/" replace />} />
@@ -256,6 +258,7 @@ function MasterRoutes() {
         <Route path="empresas/:companyId" element={<MasterCompanyDetail />} />
         <Route path="colaboradores" element={<Colaboradores />} />
         <Route path="vendas" element={<VendasDashboard />} />
+        <Route path="auditoria" element={<Auditoria />} />
       </Route>
       <Route path="/master/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
@@ -397,6 +400,7 @@ export function LegacyCombinedRoutes() {
           <Route path="colaboradores" element={<Colaboradores />} />
           <Route path="vendas" element={<VendasDashboard />} />
           <Route path="permissoes" element={<Permissoes />} />
+          <Route path="auditoria" element={<Auditoria />} />
         </Route>
 
         {/* Master Admin Routes */}
@@ -412,6 +416,7 @@ export function LegacyCombinedRoutes() {
           <Route path="empresas/:companyId" element={<MasterCompanyDetail />} />
           <Route path="colaboradores" element={<Colaboradores />} />
           <Route path="vendas" element={<VendasDashboard />} />
+          <Route path="auditoria" element={<Auditoria />} />
         </Route>
 
         {/* CEO Routes */}

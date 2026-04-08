@@ -52,6 +52,7 @@ import {
   fetchPermissionProfiles,
   upsertPermissionProfile,
 } from "@/services/permissionService";
+import { logAuditEvent } from "@/services/auditService";
 import {
   FULL_ACCESS_MODULES,
   ALL_ACTIONS,
@@ -147,6 +148,16 @@ export default function Permissoes() {
         slug: formSlug,
         description: formDescription || undefined,
         permissions: formPermissions,
+      });
+      // Audit log
+      const isClone = !editingProfile && formName.includes("(cópia)");
+      await logAuditEvent({
+        action: editingProfile ? "permission_profile.updated" : isClone ? "permission_profile.cloned" : "permission_profile.created",
+        module: "permissoes",
+        companyId: company?.id,
+        targetType: "permission_profile",
+        targetId: editingProfile?.id,
+        details: { name: formName, slug: formSlug },
       });
     },
     onSuccess: () => {

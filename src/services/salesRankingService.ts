@@ -16,6 +16,7 @@ export type SellerRankingRow = {
   commission_type: string;
   commission_value: number;
   estimated_commission: number;
+  max_discount_pct: number;
   target_value: number | null;
   target_progress: number | null;
 };
@@ -50,6 +51,7 @@ export async function getSellerRanking(
       seller_mode,
       commission_type,
       commission_value,
+      max_discount_pct,
       employee_profiles!seller_profiles_employee_profile_id_fkey (
         display_name,
         company_id,
@@ -166,6 +168,7 @@ export async function getSellerRanking(
       avg_ticket: totalCount > 0 ? totalRevenue / totalCount : 0,
       commission_type: s.commission_type,
       commission_value: Number(s.commission_value || 0),
+      max_discount_pct: Number(s.max_discount_pct || 0),
       estimated_commission: estComm,
       target_value: target,
       target_progress: target && target > 0 ? (totalRevenue / target) * 100 : null,

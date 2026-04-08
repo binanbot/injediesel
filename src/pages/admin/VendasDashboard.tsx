@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
@@ -15,12 +15,16 @@ import {
   Users,
   Percent,
   AlertTriangle,
+  Plus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -29,17 +33,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { getSellerRanking, type SellerRankingRow } from "@/services/salesRankingService";
+import { getSellerRanking, upsertSalesTarget, type SellerRankingRow } from "@/services/salesRankingService";
+import { logAuditEvent } from "@/services/auditService";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompany } from "@/hooks/useCompany";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const fmtCurrency = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -240,7 +253,12 @@ export default function VendasDashboard() {
         </TabsContent>
 
         <TabsContent value="targets">
-          <TargetsView data={filteredRanking} isLoading={isLoading} />
+          <TargetsView
+            data={filteredRanking}
+            isLoading={isLoading}
+            companyId={companyId}
+            dateRange={dateRange}
+          />
         </TabsContent>
 
         <TabsContent value="discounts">
@@ -348,8 +366,56 @@ function RankingList({
   );
 }
 
-function TargetsView({ data, isLoading }: { data: SellerRankingRow[]; isLoading: boolean }) {
+function TargetsView({
+  data,
+  isLoading,
+  companyId,
+  dateRange,
+}: {
+  data: SellerRankingRow[];
+  isLoading: boolean;
+  companyId?: string;
+  dateRange: { from: Date; to: Date };
+}) {
+  const queryClient = useQueryClient();
+  const [showForm, setShowForm] = useState(false);
+  const [formSellerId, setFormSellerId] = useState("");
+  const [formValue, setFormValue] = useState("");
+  const [formSaleType, setFormSaleType] = useState("total");
+
   const sellersWithTargets = data.filter((r) => r.target_value !== null && r.target_value > 0);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!formSellerId || !formValue) throw new Error("Vendedor e valor são obrigatórios");
+      await upsertSalesTarget({
+        seller_profile_id: formSellerId,
+        company_id: companyId || null,
+        sale_type: formSaleType,
+        metric_key: "revenue",
+        target_value: Number(formValue),
+        period_start: format(dateRange.from, "yyyy-MM-dd"),
+        period_end: format(dateRange.to, "yyyy-MM-dd"),
+        is_active: true,
+      });
+      await logAuditEvent({
+        action: "sales_target.created",
+        module: "metas",
+        companyId,
+        targetType: "sales_target",
+        targetId: formSellerId,
+        details: { target_value: Number(formValue), sale_type: formSaleType },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["seller-ranking"] });
+      toast.success("Meta salva!");
+      setShowForm(false);
+      setFormSellerId("");
+      setFormValue("");
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
 
   if (isLoading) {
     return (
@@ -361,69 +427,143 @@ function TargetsView({ data, isLoading }: { data: SellerRankingRow[]; isLoading:
     );
   }
 
-  if (!sellersWithTargets.length) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          Nenhuma meta configurada para o período. Configure metas na página de Colaboradores.
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" />
           Progresso de Metas
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {sellersWithTargets.map((row) => {
-            const progress = Math.min(row.target_progress || 0, 100);
-            const status = progress >= 100 ? "atingida" : progress >= 75 ? "saudável" : progress >= 50 ? "em risco" : "crítica";
-            const statusColor = {
-              atingida: "text-emerald-500",
-              "saudável": "text-emerald-400",
-              "em risco": "text-amber-500",
-              "crítica": "text-destructive",
-            }[status];
+        </h3>
+        <Button size="sm" onClick={() => setShowForm(true)}>
+          <Plus className="h-4 w-4 mr-1" />
+          Nova Meta
+        </Button>
+      </div>
 
-            return (
-              <div key={row.seller_profile_id} className="p-4 rounded-xl border border-border/50 bg-secondary/10">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="font-medium">{row.seller_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {row.company_name} • {modeLabel[row.seller_mode] || row.seller_mode}
-                    </p>
+      {/* Target creation dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova Meta de Vendas</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Vendedor</Label>
+              <Select value={formSellerId} onValueChange={setFormSellerId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {data.map((s) => (
+                    <SelectItem key={s.seller_profile_id} value={s.seller_profile_id}>
+                      {s.seller_name} ({modeLabel[s.seller_mode] || s.seller_mode})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Tipo de Venda</Label>
+              <Select value={formSaleType} onValueChange={setFormSaleType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="total">Consolidado</SelectItem>
+                  <SelectItem value="ecu">ECU</SelectItem>
+                  <SelectItem value="parts">Peças</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Valor da Meta (R$)</Label>
+              <Input
+                type="number"
+                value={formValue}
+                onChange={(e) => setFormValue(e.target.value)}
+                placeholder="Ex: 50000"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Período: {format(dateRange.from, "dd/MM/yyyy")} a {format(dateRange.to, "dd/MM/yyyy")}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? "Salvando..." : "Salvar Meta"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {sellersWithTargets.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            Nenhuma meta configurada para o período. Clique em "Nova Meta" para começar.
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="pt-4">
+            <div className="space-y-4">
+              {sellersWithTargets.map((row) => {
+                const progress = Math.min(row.target_progress || 0, 100);
+                const status = progress >= 100 ? "atingida" : progress >= 75 ? "saudável" : progress >= 50 ? "em risco" : "crítica";
+                const statusColor = {
+                  atingida: "text-emerald-500",
+                  "saudável": "text-emerald-400",
+                  "em risco": "text-amber-500",
+                  "crítica": "text-destructive",
+                }[status];
+
+                // Calculate expected commission on target vs actual
+                const commOnTarget = row.commission_type === "percentage"
+                  ? (row.target_value || 0) * (row.commission_value / 100)
+                  : 0;
+
+                return (
+                  <div key={row.seller_profile_id} className="p-4 rounded-xl border border-border/50 bg-secondary/10">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-medium">{row.seller_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {row.company_name} • {modeLabel[row.seller_mode] || row.seller_mode}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={cn("font-bold text-sm", statusColor)}>
+                          {progress.toFixed(0)}%
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {fmtCurrency(row.total_revenue)} / {fmtCurrency(row.target_value!)}
+                        </p>
+                      </div>
+                    </div>
+                    <Progress value={progress} className="h-2" />
+                    <div className="flex items-center justify-between mt-1">
+                      <Badge variant="outline" className={cn("text-[10px]", statusColor)}>
+                        {status}
+                      </Badge>
+                      <div className="flex gap-3">
+                        <span className="text-[10px] text-muted-foreground">
+                          Comissão est.: {fmtCurrency(row.estimated_commission)}
+                        </span>
+                        {commOnTarget > 0 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Comissão meta: {fmtCurrency(commOnTarget)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className={cn("font-bold text-sm", statusColor)}>
-                      {progress.toFixed(0)}%
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {fmtCurrency(row.total_revenue)} / {fmtCurrency(row.target_value!)}
-                    </p>
-                  </div>
-                </div>
-                <Progress value={progress} className="h-2" />
-                <div className="flex items-center justify-between mt-1">
-                  <Badge variant="outline" className={cn("text-[10px]", statusColor)}>
-                    {status}
-                  </Badge>
-                  <span className="text-[10px] text-muted-foreground">
-                    Comissão est.: {fmtCurrency(row.estimated_commission)}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
 
@@ -473,10 +613,8 @@ function DiscountAnalysis({
             const avgDiscountPct = disc && disc.totalSubtotal > 0
               ? (disc.totalDiscount / disc.totalSubtotal) * 100
               : 0;
-            const maxAllowed = row.commission_value > 0 ? row.commission_value : 0;
-            // Use max_discount_pct from ranking (we pass it through)
-            // For now approximate: if commission_type is percentage, max_discount is separate
-            const exceedsPolicy = avgDiscountPct > 0 && avgDiscountPct > 15; // default threshold
+            const maxAllowed = row.max_discount_pct > 0 ? row.max_discount_pct : 15;
+            const exceedsPolicy = avgDiscountPct > 0 && avgDiscountPct > maxAllowed;
 
             return (
               <div
@@ -499,7 +637,9 @@ function DiscountAnalysis({
                               <AlertTriangle className="h-4 w-4 text-destructive" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p className="text-xs">Desconto médio acima da política comercial</p>
+                              <p className="text-xs">
+                                Desconto médio ({avgDiscountPct.toFixed(1)}%) acima do limite ({maxAllowed}%)
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
