@@ -219,12 +219,14 @@ export default function VendasDashboard() {
 
       {/* Ranking Tabs */}
       <Tabs defaultValue="revenue" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="revenue">Faturamento</TabsTrigger>
           <TabsTrigger value="orders">Volume</TabsTrigger>
           <TabsTrigger value="ticket">Ticket Médio</TabsTrigger>
           <TabsTrigger value="targets">Metas</TabsTrigger>
           <TabsTrigger value="discounts">Descontos</TabsTrigger>
+          <TabsTrigger value="commissions">Comissões</TabsTrigger>
+          <TabsTrigger value="team">Equipe</TabsTrigger>
         </TabsList>
 
         <TabsContent value="revenue">
@@ -268,6 +270,18 @@ export default function VendasDashboard() {
 
         <TabsContent value="discounts">
           <DiscountAnalysis data={filteredRanking} discountBySeller={discountBySeller} isLoading={isLoading} />
+        </TabsContent>
+
+        <TabsContent value="commissions">
+          <CommissionsView
+            sellers={filteredRanking}
+            companyId={companyId}
+            dateRange={dateRange}
+          />
+        </TabsContent>
+
+        <TabsContent value="team">
+          <TeamView data={filteredRanking} isLoading={isLoading} isMaster={isMaster} />
         </TabsContent>
       </Tabs>
     </div>
