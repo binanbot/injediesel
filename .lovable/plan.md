@@ -1,54 +1,56 @@
 
-## Bloco 1 — Fechamento comercial e comissão
+## Acesso Comercial — Proposta Técnica
 
 ### Modelagem
-Nova tabela `commission_closings` para registrar fechamentos mensais:
-- `id`, `seller_profile_id`, `company_id`
-- `period_start`, `period_end`
-- `orders_revenue`, `files_revenue`, `total_revenue`
-- `commission_type`, `commission_value`, `estimated_commission`, `realized_commission`
-- `status`: `apurada` → `aprovada` → `paga`
-- `approved_by`, `approved_at`, `paid_at`
-- `notes`
-- RLS: company admins da própria empresa + master global
-- Audit trail integrado para mudanças de status
 
-### Service
-- `commissionService.ts`:
-  - `generateClosing(sellerId, period)` — calcula e insere fechamento
-  - `getClosings(filters)` — lista com filtros
-  - `updateClosingStatus(id, newStatus)` — com audit log
-  - `getClosingHistory(sellerId)` — histórico
+Evoluir `seller_profiles` com 4 novas colunas (em vez de criar tabela separada, já que seller_profile É a camada comercial):
 
-### UI
-- Nova aba "Comissões" no `VendasDashboard`
-- Tabela com vendedor, período, prevista vs realizada, status, ações
-- Botões de aprovação/pagamento com confirmação
-- Badges de status coloridos
+| Coluna | Tipo | Default | Descrição |
+|---|---|---|---|
+| `sales_channel_mode` | text | `'both'` | `counter`, `phone`, `both` |
+| `can_sell_services` | boolean | `true` | Pode vender serviços ECU/mapa |
+| `commission_enabled` | boolean | `true` | Tem direito a comissão |
+| `target_enabled` | boolean | `true` | Participa de metas |
 
-## Bloco 2 — Painel gerencial por equipe
+Campos já existentes que cobrem o resto:
+- `is_active` → equivale a `sales_access_enabled`
+- `can_sell_ecu` / `can_sell_parts` → tipos de produto
+- `seller_mode` → modalidade
+- `commission_type` / `commission_value` → comissão
+- `max_discount_pct` → desconto
+- `can_bill` → pode faturar
 
-### Service
-- `teamPerformanceService.ts`:
-  - Agrupa sellers por empresa
-  - Calcula concentração (% do top seller no total)
-  - Top performers e vendedores em risco
-  - Evolução mensal da equipe
+### Novo módulo de permissão: `vendas`
 
-### UI
-- Nova aba "Equipe" no `VendasDashboard`
-- Cards: total equipe, concentração, em risco, top performer
-- Mini-ranking por modalidade
-- No `/master/vendas`: comparativo entre empresas
-- Sem alteração no `/ceo`
+Adicionar `"vendas"` ao `PermissionModule` type com ações: view, create, manage, export.
 
-## Checklist
-- [ ] Migration commission_closings
-- [ ] commissionService.ts
-- [ ] teamPerformanceService.ts
-- [ ] Aba Comissões no VendasDashboard
-- [ ] Aba Equipe no VendasDashboard
-- [ ] Audit integrado em aprovação/pagamento
-- [ ] Filtros por empresa/vendedor/período
+### Ajustes no formulário (ColaboradorFormDialog)
+
+Seção "Acesso Comercial" reorganizada:
+1. Toggle "Habilitar vendas" (cria/ativa seller_profile)
+2. Canal de venda (balcão / telefone / ambos)
+3. Pode vender serviços / Pode vender produtos (ECU/Peças)
+4. Participa de metas / Tem comissão
+5. Configuração de comissão (condicional)
+6. Desconto máximo
+
+### Integração com painéis
+
+- Ranking: filtrar por `is_active AND target_enabled`
+- Metas: filtrar por `target_enabled = true`
+- Comissão: filtrar por `commission_enabled = true`
+- Filtros: adicionar canal de venda como filtro
+
+### Auditoria
+
+Registrar mudanças nas novas flags com `logAuditEvent`.
+
+### Checklist
+- [ ] Migration: 4 colunas em seller_profiles
+- [ ] types/permissions.ts: módulo "vendas"
+- [ ] ColaboradorFormDialog: seção Acesso Comercial
+- [ ] VendasDashboard: filtros por flags
+- [ ] commissionService: respeitar commission_enabled
+- [ ] teamPerformanceService: respeitar target_enabled
+- [ ] Auditoria integrada
 - [ ] TypeScript sem erros
-- [ ] Funcional nas duas empresas
