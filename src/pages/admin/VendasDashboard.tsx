@@ -453,7 +453,8 @@ function TargetsView({
   const [formSaleType, setFormSaleType] = useState("total");
   const [targetSort, setTargetSort] = useState<"progress" | "revenue" | "gap">("progress");
 
-  const sellersWithTargets = data.filter((r) => r.target_value !== null && r.target_value > 0);
+  // Only show target-enabled sellers in targets view
+  const sellersWithTargets = data.filter((r) => r.target_enabled && r.target_value !== null && r.target_value > 0);
 
   // Forecast calculation
   const now = new Date();
