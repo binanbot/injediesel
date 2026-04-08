@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { logAuditEvent } from "@/services/auditService";
+import { SERVICES_ELIGIBLE, EXCLUDED_STATUS_FILTER } from "@/services/commercialEligibilityService";
 
 export type CommissionClosingRow = {
   id: string;
@@ -92,16 +93,16 @@ export async function generateClosing(
     throw new Error("Vendedor não tem comissão habilitada. Não é possível gerar fechamento.");
   }
 
-  // Aggregate orders
+  // Aggregate orders (always eligible)
   const { data: orders = [] } = await supabase
     .from("orders")
     .select("total_amount, items_count")
     .eq("seller_profile_id", sellerId)
     .gte("created_at", periodStart)
     .lte("created_at", periodEnd)
-    .not("status", "in", '("cancelado","reembolsado")');
+    .not("status", "in", EXCLUDED_STATUS_FILTER);
 
-  // Aggregate files
+  // Aggregate files (always eligible)
   const { data: files = [] } = await supabase
     .from("received_files")
     .select("valor_brl")
@@ -109,20 +110,24 @@ export async function generateClosing(
     .gte("created_at", periodStart)
     .lte("created_at", periodEnd);
 
-  // Aggregate services
-  const { data: svcRows = [] } = await supabase
-    .from("services")
-    .select("amount_brl")
-    .eq("seller_profile_id", sellerId)
-    .gte("created_at", periodStart)
-    .lte("created_at", periodEnd);
+  // Aggregate services (gated by SERVICES_ELIGIBLE flag)
+  let svcRows: any[] = [];
+  if (SERVICES_ELIGIBLE) {
+    const { data } = await supabase
+      .from("services")
+      .select("amount_brl")
+      .eq("seller_profile_id", sellerId)
+      .gte("created_at", periodStart)
+      .lte("created_at", periodEnd);
+    svcRows = data || [];
+  }
 
   const ordersRevenue = (orders as any[]).reduce((s, o) => s + Number(o.total_amount || 0), 0);
   const ordersCount = (orders as any[]).length;
   const filesRevenue = (files as any[]).reduce((s, f) => s + Number(f.valor_brl || 0), 0);
   const filesCount = (files as any[]).length;
-  const servicesRevenue = (svcRows as any[]).reduce((s, sv) => s + Number(sv.amount_brl || 0), 0);
-  const servicesCount = (svcRows as any[]).length;
+  const servicesRevenue = svcRows.reduce((s: number, sv: any) => s + Number(sv.amount_brl || 0), 0);
+  const servicesCount = svcRows.length;
   const totalRevenue = ordersRevenue + filesRevenue + servicesRevenue;
   const totalCount = ordersCount + filesCount + servicesCount;
 
