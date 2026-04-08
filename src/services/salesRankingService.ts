@@ -46,7 +46,7 @@ type DateRange = { startDate: string; endDate: string };
  * Works across companies (for master/ceo) or scoped to one company (admin).
  */
 export async function getSellerRanking(
-  opts: DateRange & { companyId?: string; saleType?: string }
+  opts: DateRange & { companyId?: string; saleType?: string; commissionEnabled?: boolean; targetEnabled?: boolean; channelMode?: string; canSellServices?: boolean }
 ): Promise<SellerRankingRow[]> {
   // 1. Fetch active sellers with their profiles
   let sellerQuery = supabase
@@ -73,10 +73,23 @@ export async function getSellerRanking(
   if (sellersErr) throw sellersErr;
   if (!sellers?.length) return [];
 
-  // Filter by company if needed
-  const filteredSellers = opts.companyId
+  // Filter by company and commercial access flags
+  let filteredSellers = opts.companyId
     ? sellers.filter((s: any) => s.employee_profiles?.company_id === opts.companyId)
     : sellers;
+
+  if (opts.commissionEnabled !== undefined) {
+    filteredSellers = filteredSellers.filter((s: any) => (s.commission_enabled ?? true) === opts.commissionEnabled);
+  }
+  if (opts.targetEnabled !== undefined) {
+    filteredSellers = filteredSellers.filter((s: any) => (s.target_enabled ?? true) === opts.targetEnabled);
+  }
+  if (opts.channelMode && opts.channelMode !== "all") {
+    filteredSellers = filteredSellers.filter((s: any) => (s.sales_channel_mode || "both") === opts.channelMode);
+  }
+  if (opts.canSellServices !== undefined) {
+    filteredSellers = filteredSellers.filter((s: any) => (s.can_sell_services ?? true) === opts.canSellServices);
+  }
 
   if (!filteredSellers.length) return [];
 

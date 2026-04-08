@@ -85,6 +85,11 @@ export async function generateClosing(
 
   if (!seller) throw new Error("Vendedor não encontrado");
 
+  // Skip commission generation for sellers without commission enabled
+  if ((seller as any).commission_enabled === false) {
+    throw new Error("Vendedor não tem comissão habilitada. Não é possível gerar fechamento.");
+  }
+
   // Aggregate orders
   const { data: orders = [] } = await supabase
     .from("orders")

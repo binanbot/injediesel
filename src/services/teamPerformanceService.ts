@@ -30,8 +30,9 @@ export function buildTeamSummaries(ranking: SellerRankingRow[]): TeamSummary[] {
       ? (topSeller.total_revenue / totalRevenue) * 100
       : 0;
 
+    // Only count target-enabled sellers as "at risk"
     const atRiskCount = sorted.filter(
-      (r) => r.target_value && r.target_value > 0 && (r.target_progress || 0) < 50
+      (r) => r.target_enabled && r.target_value && r.target_value > 0 && (r.target_progress || 0) < 50
     ).length;
 
     const byMode: Record<string, { count: number; revenue: number }> = {};

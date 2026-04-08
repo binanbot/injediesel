@@ -94,6 +94,10 @@ export default function VendasDashboard() {
   });
   const [saleTypeFilter, setSaleTypeFilter] = useState("total");
   const [modeFilter, setModeFilter] = useState("all");
+  const [channelFilter, setChannelFilter] = useState("all");
+  const [commissionFilter, setCommissionFilter] = useState("all");
+  const [targetFilter, setTargetFilter] = useState("all");
+  const [servicesFilter, setServicesFilter] = useState("all");
 
   const companyId = isMaster ? undefined : company?.id;
 
@@ -144,9 +148,14 @@ export default function VendasDashboard() {
   }, [discountData]);
 
   const filteredRanking = useMemo(() => {
-    if (modeFilter === "all") return ranking;
-    return ranking.filter((r) => r.seller_mode === modeFilter);
-  }, [ranking, modeFilter]);
+    let result = ranking;
+    if (modeFilter !== "all") result = result.filter((r) => r.seller_mode === modeFilter);
+    if (channelFilter !== "all") result = result.filter((r) => r.sales_channel_mode === channelFilter);
+    if (commissionFilter !== "all") result = result.filter((r) => r.commission_enabled === (commissionFilter === "yes"));
+    if (targetFilter !== "all") result = result.filter((r) => r.target_enabled === (targetFilter === "yes"));
+    if (servicesFilter !== "all") result = result.filter((r) => r.can_sell_services === (servicesFilter === "yes"));
+    return result;
+  }, [ranking, modeFilter, channelFilter, commissionFilter, targetFilter, servicesFilter]);
 
   const kpis = useMemo(() => {
     const totalRevenue = filteredRanking.reduce((s, r) => s + r.total_revenue, 0);
@@ -169,20 +178,61 @@ export default function VendasDashboard() {
           </h1>
           <p className="text-muted-foreground text-sm capitalize">{periodLabel}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Select value={modeFilter} onValueChange={setModeFilter}>
-            <SelectTrigger className="w-36">
-              <SelectValue />
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Modalidade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="all">Modalidade</SelectItem>
               <SelectItem value="ecu">ECU</SelectItem>
               <SelectItem value="parts">Peças</SelectItem>
               <SelectItem value="both">Misto</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={channelFilter} onValueChange={setChannelFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Canal" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Canal</SelectItem>
+              <SelectItem value="counter">Balcão</SelectItem>
+              <SelectItem value="phone">Telefone</SelectItem>
+              <SelectItem value="both">Ambos</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={commissionFilter} onValueChange={setCommissionFilter}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Comissão" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Comissão</SelectItem>
+              <SelectItem value="yes">Com comissão</SelectItem>
+              <SelectItem value="no">Sem comissão</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={targetFilter} onValueChange={setTargetFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Meta" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Meta</SelectItem>
+              <SelectItem value="yes">Com meta</SelectItem>
+              <SelectItem value="no">Sem meta</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={servicesFilter} onValueChange={setServicesFilter}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Serviços" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Serviços</SelectItem>
+              <SelectItem value="yes">Vende serviços</SelectItem>
+              <SelectItem value="no">Não vende</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={saleTypeFilter} onValueChange={setSaleTypeFilter}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -403,7 +453,8 @@ function TargetsView({
   const [formSaleType, setFormSaleType] = useState("total");
   const [targetSort, setTargetSort] = useState<"progress" | "revenue" | "gap">("progress");
 
-  const sellersWithTargets = data.filter((r) => r.target_value !== null && r.target_value > 0);
+  // Only show target-enabled sellers in targets view
+  const sellersWithTargets = data.filter((r) => r.target_enabled && r.target_value !== null && r.target_value > 0);
 
   // Forecast calculation
   const now = new Date();
