@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { PaymentStatus, FulfillmentStatus } from "@/utils/orderAdminStatus";
+import { logAuditEvent } from "@/services/auditService";
 
 type UpdateOrderAdminStatusesParams = {
   orderId: string;
@@ -73,6 +74,17 @@ export async function updateOrderAdminStatuses({
       .insert(historyPayloads);
 
     if (historyError) console.warn("History insert error:", historyError.message);
+
+    // Audit each status change
+    for (const h of historyPayloads) {
+      logAuditEvent({
+        action: h.new_status.startsWith("pagamento:") ? "order.payment_status_changed" : "order.status_changed",
+        module: "pedidos",
+        targetType: "order",
+        targetId: orderId,
+        details: { previous_status: h.previous_status, new_status: h.new_status },
+      });
+    }
   }
 
   return { success: true, updated: true };
