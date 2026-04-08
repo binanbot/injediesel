@@ -9,9 +9,11 @@ export type CommissionClosingRow = {
   period_end: string;
   orders_revenue: number;
   files_revenue: number;
+  services_revenue: number;
   total_revenue: number;
   orders_count: number;
   files_count: number;
+  services_count: number;
   commission_type: string;
   commission_value: number;
   estimated_commission: number;
