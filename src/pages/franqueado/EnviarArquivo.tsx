@@ -60,6 +60,8 @@ import { CommercialAttributionSection, type CommercialAttributionData } from "@/
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, isCompanyAdminLevel } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
+import { logAuditEvent } from "@/services/auditService";
+import { getWalletStatus } from "@/services/commercialEligibilityService";
 
 const MAX_FILES = 2;
 
