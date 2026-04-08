@@ -289,14 +289,18 @@ export default function Clientes() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowExportModal(true)}>
-            <Download className="h-4 w-4 mr-2" />
-            Exportar CSV
-          </Button>
-          <Button variant="hero" onClick={() => setShowNovoClienteDrawer(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Cliente
-          </Button>
+          <PermissionGuard module="clientes" action="export">
+            <Button variant="outline" onClick={() => setShowExportModal(true)}>
+              <Download className="h-4 w-4 mr-2" />
+              Exportar CSV
+            </Button>
+          </PermissionGuard>
+          <PermissionGuard module="clientes" action="create">
+            <Button variant="hero" onClick={() => setShowNovoClienteDrawer(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Cliente
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 
