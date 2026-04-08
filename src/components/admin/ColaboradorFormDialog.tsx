@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ShoppingCart } from "lucide-react";
 import { logAuditEvent } from "@/services/auditService";
+import { EmployeeCostsPanel } from "@/components/admin/EmployeeCostsPanel";
 
 interface Props {
   open: boolean;
@@ -549,6 +550,18 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
                 <p className="text-xs text-muted-foreground">Limite máximo de desconto que este vendedor pode aplicar.</p>
               </div>
             </div>
+          )}
+
+          {/* Custos do colaborador — só mostra em edição */}
+          {isEditing && employee && (
+            <>
+              <Separator />
+              <EmployeeCostsPanel
+                employeeProfileId={employee.id}
+                companyId={companyId}
+                employeeName={employee.display_name || undefined}
+              />
+            </>
           )}
 
           <Separator />
