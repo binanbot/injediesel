@@ -107,12 +107,22 @@ export async function generateClosing(
     .gte("created_at", periodStart)
     .lte("created_at", periodEnd);
 
+  // Aggregate services
+  const { data: svcRows = [] } = await supabase
+    .from("services")
+    .select("amount_brl")
+    .eq("seller_profile_id", sellerId)
+    .gte("created_at", periodStart)
+    .lte("created_at", periodEnd);
+
   const ordersRevenue = (orders as any[]).reduce((s, o) => s + Number(o.total_amount || 0), 0);
   const ordersCount = (orders as any[]).length;
   const filesRevenue = (files as any[]).reduce((s, f) => s + Number(f.valor_brl || 0), 0);
   const filesCount = (files as any[]).length;
-  const totalRevenue = ordersRevenue + filesRevenue;
-  const totalCount = ordersCount + filesCount;
+  const servicesRevenue = (svcRows as any[]).reduce((s, sv) => s + Number(sv.amount_brl || 0), 0);
+  const servicesCount = (svcRows as any[]).length;
+  const totalRevenue = ordersRevenue + filesRevenue + servicesRevenue;
+  const totalCount = ordersCount + filesCount + servicesCount;
 
   let realized = 0;
   const commEnabled = (seller as any).commission_enabled !== false;
@@ -132,9 +142,11 @@ export async function generateClosing(
       period_end: periodEnd,
       orders_revenue: ordersRevenue,
       files_revenue: filesRevenue,
+      services_revenue: servicesRevenue,
       total_revenue: totalRevenue,
       orders_count: ordersCount,
       files_count: filesCount,
+      services_count: servicesCount,
       commission_type: seller.commission_type,
       commission_value: Number(seller.commission_value || 0),
       estimated_commission: realized,
