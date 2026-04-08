@@ -37,7 +37,9 @@ export type AuditModule =
   | "metas"
   | "pedidos"
   | "exportacoes"
-  | "vendas";
+  | "vendas"
+  | "arquivos"
+  | "servicos";
 
 export interface AuditLogEntry {
   id: string;
