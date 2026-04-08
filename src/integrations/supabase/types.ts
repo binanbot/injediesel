@@ -562,6 +562,69 @@ export type Database = {
           },
         ]
       }
+      employee_costs: {
+        Row: {
+          amount_brl: number
+          company_id: string
+          cost_category: string
+          cost_type: string
+          created_at: string
+          effective_from: string
+          effective_until: string | null
+          employee_profile_id: string
+          id: string
+          is_recurring: boolean
+          label: string | null
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_brl?: number
+          company_id: string
+          cost_category?: string
+          cost_type?: string
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          employee_profile_id: string
+          id?: string
+          is_recurring?: boolean
+          label?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_brl?: number
+          company_id?: string
+          cost_category?: string
+          cost_type?: string
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          employee_profile_id?: string
+          id?: string
+          is_recurring?: boolean
+          label?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_costs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_costs_employee_profile_id_fkey"
+            columns: ["employee_profile_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_profiles: {
         Row: {
           company_id: string
@@ -904,6 +967,53 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operational_costs: {
+        Row: {
+          amount_brl: number
+          company_id: string
+          competency_month: string
+          cost_category: string
+          created_at: string
+          description: string
+          id: string
+          is_recurring: boolean
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_brl?: number
+          company_id: string
+          competency_month?: string
+          cost_category?: string
+          created_at?: string
+          description: string
+          id?: string
+          is_recurring?: boolean
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_brl?: number
+          company_id?: string
+          competency_month?: string
+          cost_category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_recurring?: boolean
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operational_costs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]

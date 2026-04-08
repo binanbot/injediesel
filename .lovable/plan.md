@@ -1,46 +1,72 @@
-## Venda Manual Assistida — Proposta Técnica
 
-### Modelagem (Migration)
+# CRM + Custos + Rentabilidade — Fase 1: Base de Custos
 
-**Tabela `orders`** — 2 novas colunas:
-- `customer_id uuid` (nullable, FK → customers)
-- `operator_user_id uuid` (nullable) — quem lançou
+## Proposta Técnica
 
-Campos já existentes reutilizados:
-- `seller_profile_id` → vendedor atribuído (comissão/meta/ranking)
-- `sale_channel` → canal real (whatsapp/telefone/balcao) — já criado na migração anterior
+### Modelagem Sugerida
 
-**Permissão**: adicionar ação `assign_seller` ao módulo `vendas` no PermissionModule type.
+**Tabela `employee_costs`** — custos recorrentes por colaborador/mês:
+- `employee_profile_id` (FK → employee_profiles)
+- `company_id` (FK → companies, company scope)
+- `cost_type`: enum — `salario_base`, `comissao_estimada`, `vale_transporte`, `vale_alimentacao`, `ajuda_custo`, `bonus`, `encargos`, `outro`
+- `cost_category`: enum — `pessoal_fixo`, `pessoal_variavel`
+- `label`: texto livre para "outro"
+- `amount_brl`: valor mensal
+- `is_recurring`: boolean (fixo vs pontual)
+- `effective_from` / `effective_until`: vigência
+- `notes`
 
-### Página Nova
-`/admin/vendas/nova` — Venda Manual Assistida
+**Tabela `operational_costs`** — custos operacionais/infraestrutura por empresa:
+- `company_id` (FK → companies)
+- `cost_category`: `comercial`, `logistica`, `frota`, `infraestrutura`, `administrativo`, `marketing`, `suporte`, `financeiro`
+- `description`: texto livre
+- `amount_brl`
+- `is_recurring`
+- `competency_month`: date (mês de competência)
+- `notes`
 
-### Componentes
-1. `ManualSaleForm.tsx` — formulário completo com blocos:
-   - Cliente (busca + cadastro inline via NovoClienteDrawer existente)
-   - Atribuição comercial (vendedor, canal, operador automático)
-   - Itens (produtos do catálogo, qtd, preço, desconto)
-   - Resumo comercial
+### Relação com `financial_entries`
 
-### Services
-- `manualSaleService.ts` — `createManualSale()` encapsula criação do pedido manual com operator_user_id, customer_id, sale_channel, auditoria
-- Reutiliza `fetchActiveSellers` para filtrar vendedores elegíveis
+- **Não duplicar**: `financial_entries` continua sendo o registro financeiro oficial (receitas + despesas contábeis)
+- `employee_costs` e `operational_costs` são tabelas **gerenciais/analíticas** para calcular rentabilidade
+- Futuramente, um service pode cruzar: `financial_entries` (receita) × `employee_costs + operational_costs` (custo) = margem
+- Ambas respeitam `company_id` para isolamento multi-tenant
 
-### Regras de Negócio
-1. `operator_user_id` = auth.uid() automático
-2. `seller_profile_id` = vendedor selecionado (padrão: próprio)
-3. Sem permissão `vendas.assign_seller` → só pode selecionar a si mesmo
-4. Desconto limitado ao `max_discount_pct` do vendedor atribuído
-5. Comissão, meta e ranking contam para `seller_profile_id`
-6. Canal obrigatório
-7. Auditoria registra operator + seller + canal
+### Plano Incremental
 
-### Checklist
-- [ ] Migration: customer_id e operator_user_id em orders
-- [ ] PermissionAction: assign_seller
-- [ ] manualSaleService.ts
-- [ ] ManualSaleForm.tsx
-- [ ] Rota /admin/vendas/nova
-- [ ] Sidebar link
-- [ ] Auditoria integrada
+| Bloco | Escopo | Entregável |
+|-------|--------|------------|
+| 1 | Migração: criar `employee_costs` + `operational_costs` com RLS | Tabelas + políticas |
+| 2 | Service: `costService.ts` — CRUD de custos | Leitura/escrita |
+| 3 | UI Admin: aba "Custos" no detalhe do colaborador | Formulário + listagem |
+| 4 | UI Admin: página "Custos Operacionais" | Gestão de despesas por empresa |
+| 5 | Service: `profitabilityService.ts` — cruzamento custo × receita | Resultado por colaborador |
+| 6 | Dashboard: cards de rentabilidade em /admin, /master, /ceo | Visualização |
+
+### Fase 1 (esta implementação)
+
+Blocos 1 + 2 + 3: migração + service + UI base de custos por colaborador
+
+### RLS
+
+- `employee_costs`: company admins da mesma empresa + master/ceo
+- `operational_costs`: company admins da mesma empresa + master/ceo
+- Sellers podem ver seus próprios custos (somente leitura)
+
+### Categorias de Custo
+
+**Por colaborador (`cost_type`):**
+- salario_base, comissao_estimada, vale_transporte, vale_alimentacao, ajuda_custo, bonus, encargos, outro
+
+**Operacionais (`cost_category`):**
+- comercial, logistica, frota, infraestrutura, administrativo, marketing, suporte, financeiro
+
+### Checklist de Validação
+
+- [ ] Tabelas criadas com company_id e RLS
+- [ ] costService.ts com CRUD funcional
+- [ ] UI de custos no colaborador
+- [ ] Company scope respeitado
+- [ ] Compatível com financial_entries
 - [ ] TypeScript sem erros
+- [ ] Funciona em Injediesel e PROMAX
