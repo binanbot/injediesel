@@ -1,56 +1,45 @@
+## Proposta Técnica
 
-## Acesso Comercial — Proposta Técnica
+### Problema
+O campo `sales_channel_mode` (text: counter/phone/both) não suporta os canais reais (whatsapp, telefone, balcão) e não diferencia canal permitido do colaborador vs canal real da venda.
 
-### Modelagem
+### Solução
 
-Evoluir `seller_profiles` com 4 novas colunas (em vez de criar tabela separada, já que seller_profile É a camada comercial):
+**BLOCO 1 — Migração de canais**
+- Adicionar `allowed_sales_channels text[] DEFAULT '{whatsapp,telefone,balcao}'` em `seller_profiles`
+- Adicionar `sale_channel text` em `orders` e `received_files` (canal real da venda)
+- Manter `sales_channel_mode` temporariamente para compatibilidade, migrar dados existentes
 
-| Coluna | Tipo | Default | Descrição |
-|---|---|---|---|
-| `sales_channel_mode` | text | `'both'` | `counter`, `phone`, `both` |
-| `can_sell_services` | boolean | `true` | Pode vender serviços ECU/mapa |
-| `commission_enabled` | boolean | `true` | Tem direito a comissão |
-| `target_enabled` | boolean | `true` | Participa de metas |
+**BLOCO 2 — Serviços e regras operacionais**
+- `employeeService.ts`: filtrar por `allowed_sales_channels` no `fetchActiveSellers`
+- `salesRankingService.ts`: suportar filtro por canal real (`sale_channel`)
+- `commissionService.ts`: já respeita `commission_enabled` — sem mudança
+- `teamPerformanceService.ts`: já respeita `target_enabled` — sem mudança
+- `orderService.ts`: receber e gravar `sale_channel`
 
-Campos já existentes que cobrem o resto:
-- `is_active` → equivale a `sales_access_enabled`
-- `can_sell_ecu` / `can_sell_parts` → tipos de produto
-- `seller_mode` → modalidade
-- `commission_type` / `commission_value` → comissão
-- `max_discount_pct` → desconto
-- `can_bill` → pode faturar
+**BLOCO 3 — Formulário e UI**
+- `ColaboradorFormDialog`: trocar select único por checkboxes de canais permitidos
+- `VendasDashboard`: adicionar filtro por canal real (whatsapp/telefone/balcão)
+- Seletores de vendedor: filtrar por canais permitidos
+- Checkout/pedido: campo de canal real da venda
 
-### Novo módulo de permissão: `vendas`
+**BLOCO 4 — Auditoria**
+- Registrar mudanças em `allowed_sales_channels` no evento `seller.commercial_access_changed`
 
-Adicionar `"vendas"` ao `PermissionModule` type com ações: view, create, manage, export.
-
-### Ajustes no formulário (ColaboradorFormDialog)
-
-Seção "Acesso Comercial" reorganizada:
-1. Toggle "Habilitar vendas" (cria/ativa seller_profile)
-2. Canal de venda (balcão / telefone / ambos)
-3. Pode vender serviços / Pode vender produtos (ECU/Peças)
-4. Participa de metas / Tem comissão
-5. Configuração de comissão (condicional)
-6. Desconto máximo
-
-### Integração com painéis
-
-- Ranking: filtrar por `is_active AND target_enabled`
-- Metas: filtrar por `target_enabled = true`
-- Comissão: filtrar por `commission_enabled = true`
-- Filtros: adicionar canal de venda como filtro
-
-### Auditoria
-
-Registrar mudanças nas novas flags com `logAuditEvent`.
+### Regras de negócio
+1. Colaborador sem `is_active` no seller_profile → não aparece em seletores
+2. `can_sell_services = false` → excluído de vendas ECU
+3. `commission_enabled = false` → excluído de fechamentos
+4. `target_enabled = false` → excluído de rankings de atingimento
+5. `allowed_sales_channels` → filtra quais vendedores podem atuar em cada canal
+6. `sale_channel` → registra canal real por venda para relatórios
 
 ### Checklist
-- [ ] Migration: 4 colunas em seller_profiles
-- [ ] types/permissions.ts: módulo "vendas"
-- [ ] ColaboradorFormDialog: seção Acesso Comercial
-- [ ] VendasDashboard: filtros por flags
-- [ ] commissionService: respeitar commission_enabled
-- [ ] teamPerformanceService: respeitar target_enabled
+- [ ] Migration: allowed_sales_channels + sale_channel
+- [ ] employeeService: filtro por canal
+- [ ] salesRankingService: filtro por sale_channel
+- [ ] orderService: gravar sale_channel
+- [ ] ColaboradorFormDialog: checkboxes de canais
+- [ ] VendasDashboard: filtros por canal real
 - [ ] Auditoria integrada
 - [ ] TypeScript sem erros

@@ -998,6 +998,7 @@ export type Database = {
           payment_method: string | null
           payment_note: string | null
           payment_status: string
+          sale_channel: string | null
           sale_type: string | null
           seller_profile_id: string | null
           shipping_amount: number
@@ -1020,6 +1021,7 @@ export type Database = {
           payment_method?: string | null
           payment_note?: string | null
           payment_status?: string
+          sale_channel?: string | null
           sale_type?: string | null
           seller_profile_id?: string | null
           shipping_amount?: number
@@ -1042,6 +1044,7 @@ export type Database = {
           payment_method?: string | null
           payment_note?: string | null
           payment_status?: string
+          sale_channel?: string | null
           sale_type?: string | null
           seller_profile_id?: string | null
           shipping_amount?: number
@@ -1370,6 +1373,7 @@ export type Database = {
           plate_lookup_success: boolean | null
           plate_lookup_unit_id: string | null
           plate_lookup_user_id: string | null
+          sale_channel: string | null
           seller_profile_id: string | null
           servico: string
           status: string
@@ -1398,6 +1402,7 @@ export type Database = {
           plate_lookup_success?: boolean | null
           plate_lookup_unit_id?: string | null
           plate_lookup_user_id?: string | null
+          sale_channel?: string | null
           seller_profile_id?: string | null
           servico: string
           status?: string
@@ -1426,6 +1431,7 @@ export type Database = {
           plate_lookup_success?: boolean | null
           plate_lookup_unit_id?: string | null
           plate_lookup_user_id?: string | null
+          sale_channel?: string | null
           seller_profile_id?: string | null
           servico?: string
           status?: string
@@ -1524,6 +1530,7 @@ export type Database = {
       }
       seller_profiles: {
         Row: {
+          allowed_sales_channels: string[]
           can_bill: boolean
           can_sell_ecu: boolean
           can_sell_parts: boolean
@@ -1544,6 +1551,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allowed_sales_channels?: string[]
           can_bill?: boolean
           can_sell_ecu?: boolean
           can_sell_parts?: boolean
@@ -1564,6 +1572,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allowed_sales_channels?: string[]
           can_bill?: boolean
           can_sell_ecu?: boolean
           can_sell_parts?: boolean
