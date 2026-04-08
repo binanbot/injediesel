@@ -151,6 +151,16 @@ export async function createManualSale(payload: ManualSalePayload) {
 
   const isOutOfWallet = !!payload.customer_primary_seller_id && payload.customer_primary_seller_id !== payload.seller_profile_id;
 
+  // Check if operator is different from seller (third-party attribution)
+  const sellerUserId = seller ? (await supabase
+    .from("seller_profiles")
+    .select("employee_profiles!seller_profiles_employee_profile_id_fkey(user_id)")
+    .eq("id", payload.seller_profile_id)
+    .single()
+  ).data : null;
+  const isThirdParty = !!(sellerUserId as any)?.employee_profiles?.user_id
+    && (sellerUserId as any).employee_profiles.user_id !== user.id;
+
   // Audit
   await logAuditEvent({
     action: "order.manual_sale_created",
@@ -166,7 +176,7 @@ export async function createManualSale(payload: ManualSalePayload) {
       sale_channel: payload.sale_channel,
       total_amount: totalAmount,
       items_count: itemsCount,
-      is_third_party_attribution: true,
+      is_third_party_attribution: isThirdParty,
       is_out_of_wallet: isOutOfWallet,
       customer_primary_seller_id: payload.customer_primary_seller_id || null,
     },
