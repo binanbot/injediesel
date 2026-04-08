@@ -402,6 +402,7 @@ export function LegacyCombinedRoutes() {
           <Route path="loja-dashboard" element={<PromaxDashboard />} />
           <Route path="colaboradores" element={<Colaboradores />} />
           <Route path="vendas" element={<VendasDashboard />} />
+          <Route path="vendas/nova" element={<VendaManual />} />
           <Route path="permissoes" element={<Permissoes />} />
           <Route path="auditoria" element={<Auditoria />} />
         </Route>
