@@ -400,6 +400,7 @@ export function LegacyCombinedRoutes() {
           <Route path="colaboradores" element={<Colaboradores />} />
           <Route path="vendas" element={<VendasDashboard />} />
           <Route path="permissoes" element={<Permissoes />} />
+          <Route path="auditoria" element={<Auditoria />} />
         </Route>
 
         {/* Master Admin Routes */}
@@ -415,6 +416,7 @@ export function LegacyCombinedRoutes() {
           <Route path="empresas/:companyId" element={<MasterCompanyDetail />} />
           <Route path="colaboradores" element={<Colaboradores />} />
           <Route path="vendas" element={<VendasDashboard />} />
+          <Route path="auditoria" element={<Auditoria />} />
         </Route>
 
         {/* CEO Routes */}
