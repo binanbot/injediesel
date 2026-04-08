@@ -110,7 +110,7 @@ export async function getSellerRanking(
     .in("seller_profile_id", sellerIds)
     .gte("created_at", opts.startDate)
     .lte("created_at", opts.endDate)
-    .not("status", "in", '("cancelado","reembolsado")');
+    .not("status", "in", EXCLUDED_STATUS_FILTER);
 
   if (opts.saleType && opts.saleType !== "total") {
     ordersQuery = ordersQuery.eq("sale_type", opts.saleType);
@@ -119,22 +119,24 @@ export async function getSellerRanking(
   const { data: orders = [] } = await ordersQuery;
 
   // 3. Aggregate received_files (ECU) by seller
-  let filesQuery = supabase
+  const { data: files = [] } = await supabase
     .from("received_files")
     .select("seller_profile_id, valor_brl")
     .in("seller_profile_id", sellerIds)
     .gte("created_at", opts.startDate)
     .lte("created_at", opts.endDate);
 
-  const { data: files = [] } = await filesQuery;
-
-  // 3b. Aggregate services by seller
-  const { data: svcRows = [] } = await supabase
-    .from("services")
-    .select("seller_profile_id, amount_brl")
-    .in("seller_profile_id", sellerIds)
-    .gte("created_at", opts.startDate)
-    .lte("created_at", opts.endDate);
+  // 3b. Aggregate services by seller (gated by SERVICES_ELIGIBLE)
+  let svcRows: any[] = [];
+  if (SERVICES_ELIGIBLE) {
+    const { data } = await supabase
+      .from("services")
+      .select("seller_profile_id, amount_brl")
+      .in("seller_profile_id", sellerIds)
+      .gte("created_at", opts.startDate)
+      .lte("created_at", opts.endDate);
+    svcRows = data || [];
+  }
 
   // 4. Fetch active targets for period
   const { data: targets = [] } = await supabase
