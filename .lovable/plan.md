@@ -1,72 +1,56 @@
 
-# CRM + Custos + Rentabilidade — Fase 1: Base de Custos
+# Evolução Financeira Operacional — Lançamentos + Categorias
 
 ## Proposta Técnica
 
-### Modelagem Sugerida
+A tabela `financial_entries` já existe com: `entry_type`, `category`, `scope`, `franchise_profile_id`, `order_id`, `amount`, `competency_date`, `description`. Porém faltam dimensões analíticas essenciais.
 
-**Tabela `employee_costs`** — custos recorrentes por colaborador/mês:
-- `employee_profile_id` (FK → employee_profiles)
-- `company_id` (FK → companies, company scope)
-- `cost_type`: enum — `salario_base`, `comissao_estimada`, `vale_transporte`, `vale_alimentacao`, `ajuda_custo`, `bonus`, `encargos`, `outro`
-- `cost_category`: enum — `pessoal_fixo`, `pessoal_variavel`
-- `label`: texto livre para "outro"
-- `amount_brl`: valor mensal
-- `is_recurring`: boolean (fixo vs pontual)
-- `effective_from` / `effective_until`: vigência
-- `notes`
+### Estratégia: Evoluir `financial_entries` (não criar tabela nova)
 
-**Tabela `operational_costs`** — custos operacionais/infraestrutura por empresa:
-- `company_id` (FK → companies)
-- `cost_category`: `comercial`, `logistica`, `frota`, `infraestrutura`, `administrativo`, `marketing`, `suporte`, `financeiro`
-- `description`: texto livre
-- `amount_brl`
-- `is_recurring`
-- `competency_month`: date (mês de competência)
-- `notes`
+Adicionar colunas à tabela existente para suportar os novos requisitos sem quebrar o que já funciona.
 
-### Relação com `financial_entries`
+### Migração — Novas colunas em `financial_entries`
 
-- **Não duplicar**: `financial_entries` continua sendo o registro financeiro oficial (receitas + despesas contábeis)
-- `employee_costs` e `operational_costs` são tabelas **gerenciais/analíticas** para calcular rentabilidade
-- Futuramente, um service pode cruzar: `financial_entries` (receita) × `employee_costs + operational_costs` (custo) = margem
-- Ambas respeitam `company_id` para isolamento multi-tenant
+| Coluna | Tipo | Propósito |
+|--------|------|-----------|
+| `company_id` | UUID FK → companies | Company scope direto (hoje depende de franchise_profile_id) |
+| `unit_id` | UUID FK → units | Vínculo com unidade |
+| `employee_profile_id` | UUID FK → employee_profiles | Despesa vinculada a colaborador |
+| `seller_profile_id` | UUID FK → seller_profiles | Despesa vinculada a vendedor |
+| `subcategory` | TEXT | Subcategoria (ex: "combustível", "uniforme") |
+| `cost_center` | TEXT | Centro de custo livre |
+| `is_recurring` | BOOLEAN | Fixo vs variável |
+| `reference_month` | DATE | Mês de referência (complementa competency_date) |
+| `created_by` | UUID | Quem lançou |
 
-### Plano Incremental
+### Categorias padronizadas
 
-| Bloco | Escopo | Entregável |
-|-------|--------|------------|
-| 1 | Migração: criar `employee_costs` + `operational_costs` com RLS | Tabelas + políticas |
-| 2 | Service: `costService.ts` — CRUD de custos | Leitura/escrita |
-| 3 | UI Admin: aba "Custos" no detalhe do colaborador | Formulário + listagem |
-| 4 | UI Admin: página "Custos Operacionais" | Gestão de despesas por empresa |
-| 5 | Service: `profitabilityService.ts` — cruzamento custo × receita | Resultado por colaborador |
-| 6 | Dashboard: cards de rentabilidade em /admin, /master, /ceo | Visualização |
+**entry_type** (já existe): `receita`, `despesa`, `ajuste`
 
-### Fase 1 (esta implementação)
+**category** (evoluir): `pessoal_fixo`, `pessoal_variavel`, `comercial`, `logistica`, `frota`, `infraestrutura`, `administrativo`, `marketing`, `suporte`, `financeiro`, `operacional`, `receita_manual`, `receita_pedido`, `receita_arquivo`
 
-Blocos 1 + 2 + 3: migração + service + UI base de custos por colaborador
+**subcategory** (novo): texto livre para detalhar (salário, VT, VA, combustível, etc.)
 
 ### RLS
 
-- `employee_costs`: company admins da mesma empresa + master/ceo
-- `operational_costs`: company admins da mesma empresa + master/ceo
-- Sellers podem ver seus próprios custos (somente leitura)
+- Manter policies existentes
+- Adicionar policy para company scope via `company_id`
 
-### Categorias de Custo
+### Telas
 
-**Por colaborador (`cost_type`):**
-- salario_base, comissao_estimada, vale_transporte, vale_alimentacao, ajuda_custo, bonus, encargos, outro
+1. **Nova página `/admin/financeiro`** — Listagem + filtros + resumo
+2. **Dialog de lançamento** — Formulário completo com todas as dimensões
+3. **Link na sidebar** — Item "Financeiro" no AdminSidebar
 
-**Operacionais (`cost_category`):**
-- comercial, logistica, frota, infraestrutura, administrativo, marketing, suporte, financeiro
+### Service
 
-### Checklist de Validação
+- `financialService.ts` — CRUD + agregações + filtros
 
-- [ ] Tabelas criadas com company_id e RLS
-- [ ] costService.ts com CRUD funcional
-- [ ] UI de custos no colaborador
-- [ ] Company scope respeitado
-- [ ] Compatível com financial_entries
-- [ ] TypeScript sem erros
-- [ ] Funciona em Injediesel e PROMAX
+### Plano de Execução
+
+| Bloco | Entregável |
+|-------|-----------|
+| 1 | Migração: novas colunas + RLS atualizada |
+| 2 | financialService.ts |
+| 3 | Página /admin/financeiro + dialog de lançamento |
+| 4 | Link na sidebar |
