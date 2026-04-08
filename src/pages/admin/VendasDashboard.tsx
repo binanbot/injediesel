@@ -1277,7 +1277,7 @@ function AttributionView({ companyId, dateRange }: { companyId?: string; dateRan
               <div key={ch} className="flex items-center justify-between text-sm">
                 <span>{channelLabels[ch] || ch}</span>
                 <div className="flex items-center gap-2">
-                  <Progress value={(count / stats.totalOrders) * 100} className="w-24 h-2" />
+                  <Progress value={(count / stats.totalItems) * 100} className="w-24 h-2" />
                   <span className="text-muted-foreground w-12 text-right">{count}</span>
                 </div>
               </div>
