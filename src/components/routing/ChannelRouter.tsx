@@ -420,6 +420,7 @@ export function LegacyCombinedRoutes() {
           <Route path="empresas/:companyId" element={<MasterCompanyDetail />} />
           <Route path="colaboradores" element={<Colaboradores />} />
           <Route path="vendas" element={<VendasDashboard />} />
+          <Route path="vendas/nova" element={<VendaManual />} />
           <Route path="auditoria" element={<Auditoria />} />
         </Route>
 
