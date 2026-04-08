@@ -21,6 +21,8 @@ export interface ManualSalePayload {
   payment_method?: string;
   payment_note?: string;
   notes?: string;
+  /** The customer's primary_seller_id, if any — used for audit */
+  customer_primary_seller_id?: string | null;
 }
 
 const generateOrderNumber = () => {
@@ -147,6 +149,8 @@ export async function createManualSale(payload: ManualSalePayload) {
     },
   ]);
 
+  const isOutOfWallet = !!payload.customer_primary_seller_id && payload.customer_primary_seller_id !== payload.seller_profile_id;
+
   // Audit
   await logAuditEvent({
     action: "order.manual_sale_created",
@@ -163,6 +167,8 @@ export async function createManualSale(payload: ManualSalePayload) {
       total_amount: totalAmount,
       items_count: itemsCount,
       is_third_party_attribution: true,
+      is_out_of_wallet: isOutOfWallet,
+      customer_primary_seller_id: payload.customer_primary_seller_id || null,
     },
   });
 
