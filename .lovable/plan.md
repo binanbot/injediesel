@@ -1,41 +1,33 @@
 
-## Bloco 1 — PermissionGuard em páginas críticas
+## Bloco 1 — PermissionGuard nas páginas restantes
 
-Aplicar `<PermissionGuard>` em botões/ações sensíveis nas páginas:
-- **Produtos** (`/admin/produtos`): criar, editar, excluir → módulo `catalogo`
-- **Pedidos** (`/admin/compras-franqueados`): aprovar, editar status → módulo `pedidos`
-- **Relatórios** (`/admin/relatorios`): exportar → módulo `relatorios`
-- **Suporte** (`/admin/suporte`): gerenciar tickets → módulo `suporte`
+Aplicar `<PermissionGuard>` em ações sensíveis:
+- **Relatórios** (`Relatorios.tsx`): exportar → `relatorios.export`
+- **Suporte** (`Suporte.tsx`): gerenciar tickets → `suporte.manage`
+- **Clientes** (`Clientes.tsx`): criar, editar, excluir → `clientes.create/edit/delete`
+- **Financeiro**: exportar → `financeiro.export`
 
-Arquivos a editar: ~4-5 páginas admin existentes.
+Arquivos: ~4 páginas admin existentes
 
-## Bloco 2 — Página /admin/permissoes
+## Bloco 2 — Evolução /admin/permissoes
 
-Criar página de gestão de perfis de permissão:
-- Listagem de perfis da empresa (cards ou tabela)
-- Visualização da matriz módulo×ação (checkbox grid)
-- Edição inline dos perfis
-- Clonagem de perfil
-- Indicação de quais cargos usam cada perfil
-- Rota nova: `/admin/permissoes` (já existe no sidebar?)
+Melhorar a página existente com:
+- Listar colaboradores vinculados a cada perfil (query employee_profiles + seller_profiles)
+- Listar cargos vinculados (query job_positions.default_permission_profile_id)
+- Botão "Clonar perfil" (já parcialmente implementado)
+- Suporte a override por usuário (employee_profiles.permission_profile_id)
+- Exibir contagem de usuários por perfil
 
-Arquivos novos:
-- `src/pages/admin/Permissoes.tsx`
-- Reutilizar `permissionService.ts` existente
+Arquivo: `src/pages/admin/Permissoes.tsx`
 
-## Bloco 3 — Painel comercial (metas + ranking)
+## Bloco 3 — Painel comercial aprofundado
 
-Criar dashboard de vendas com:
-- Página `/admin/vendas` — ranking de vendedores, metas, comissão
-- Página `/master/vendas` — visão consolidada cross-company
-- Reutilizar `salesRankingService.ts` existente
-- Componentes: tabela de ranking, barra de progresso de meta, filtros
+Evoluir VendasDashboard com:
+- Barra de progresso meta vs realizado por vendedor
+- Comissão estimada calculada (já existe no service)
+- Ranking filtrável por modalidade (ECU/Peças/Misto)
+- Coluna de desconto médio concedido vs max_discount_pct
+- Alerta visual quando desconto > política
+- Manter visão /admin scoped e /master consolidada
 
-Arquivos novos:
-- `src/pages/admin/VendasDashboard.tsx` (pode já existir)
-- `src/pages/master/VendasDashboard.tsx` ou similar
-
-## Ordem de implementação
-1. Bloco 1 (PermissionGuard) — menor risco, maior impacto de segurança
-2. Bloco 2 (Permissões UI) — depende apenas do service existente
-3. Bloco 3 (Painel comercial) — mais complexo, usa services existentes
+Arquivos: `VendasDashboard.tsx`, `salesRankingService.ts`
