@@ -16,6 +16,9 @@ import {
   Percent,
   AlertTriangle,
   Plus,
+  CheckCircle,
+  Banknote,
+  BarChart3,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -47,6 +50,8 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getSellerRanking, upsertSalesTarget, type SellerRankingRow } from "@/services/salesRankingService";
+import { getCommissionClosings, generateClosing, updateClosingStatus, type CommissionClosingRow } from "@/services/commissionService";
+import { buildTeamSummaries } from "@/services/teamPerformanceService";
 import { logAuditEvent } from "@/services/auditService";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompany } from "@/hooks/useCompany";
