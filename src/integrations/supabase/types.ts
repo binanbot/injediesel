@@ -987,6 +987,7 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          customer_id: string | null
           delivery_address: Json | null
           discount_amount: number
           franchise_profile_id: string
@@ -994,6 +995,7 @@ export type Database = {
           id: string
           items_count: number
           notes: string | null
+          operator_user_id: string | null
           order_number: string
           payment_method: string | null
           payment_note: string | null
@@ -1010,6 +1012,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_id?: string | null
           delivery_address?: Json | null
           discount_amount?: number
           franchise_profile_id: string
@@ -1017,6 +1020,7 @@ export type Database = {
           id?: string
           items_count?: number
           notes?: string | null
+          operator_user_id?: string | null
           order_number: string
           payment_method?: string | null
           payment_note?: string | null
@@ -1033,6 +1037,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_id?: string | null
           delivery_address?: Json | null
           discount_amount?: number
           franchise_profile_id?: string
@@ -1040,6 +1045,7 @@ export type Database = {
           id?: string
           items_count?: number
           notes?: string | null
+          operator_user_id?: string | null
           order_number?: string
           payment_method?: string | null
           payment_note?: string | null
@@ -1055,6 +1061,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_franchise_profile_id_fkey"
             columns: ["franchise_profile_id"]
