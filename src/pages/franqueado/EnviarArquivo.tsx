@@ -61,7 +61,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, isCompanyAdminLevel } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { logAuditEvent } from "@/services/auditService";
-import { getWalletStatus } from "@/services/commercialEligibilityService";
+import { getWalletStatus, validateSellerForAttribution } from "@/services/commercialEligibilityService";
+import { useCompany } from "@/hooks/useCompany";
 
 const MAX_FILES = 2;
 
