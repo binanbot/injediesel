@@ -182,6 +182,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
           can_sell_parts: canSellParts,
           is_active: sellerActive,
           target_monthly: targetMonthly || null,
+          max_discount_pct: maxDiscountPct,
         });
       } else if (employee?.seller_profile) {
         await deleteSellerProfile(empId);
