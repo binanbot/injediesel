@@ -415,16 +415,30 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
             <div className="space-y-4 pl-2 border-l-2 border-primary/20">
               {/* Configurações gerais */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label>Canal de venda</Label>
-                  <Select value={salesChannelMode} onValueChange={setSalesChannelMode}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="counter">Balcão</SelectItem>
-                      <SelectItem value="phone">Telefone</SelectItem>
-                      <SelectItem value="both">Ambos</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-2">
+                  <Label>Canais de venda permitidos</Label>
+                  <div className="space-y-2">
+                    {[
+                      { value: "whatsapp", label: "WhatsApp" },
+                      { value: "telefone", label: "Telefone" },
+                      { value: "balcao", label: "Balcão" },
+                    ].map((ch) => (
+                      <div key={ch.value} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`ch-${ch.value}`}
+                          checked={allowedSalesChannels.includes(ch.value)}
+                          onCheckedChange={(checked) => {
+                            setAllowedSalesChannels((prev) =>
+                              checked
+                                ? [...prev, ch.value]
+                                : prev.filter((c) => c !== ch.value)
+                            );
+                          }}
+                        />
+                        <label htmlFor={`ch-${ch.value}`} className="text-sm cursor-pointer">{ch.label}</label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 pt-6">
                   <Switch checked={sellerActive} onCheckedChange={setSellerActive} />
