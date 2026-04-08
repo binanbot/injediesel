@@ -11,6 +11,7 @@ export type AuditAction =
   | "seller.deactivated"
   | "seller.commission_changed"
   | "seller.mode_changed"
+  | "seller.commercial_access_changed"
   | "permission_override.set"
   | "permission_override.removed"
   | "ticket.status_changed"
