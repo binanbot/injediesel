@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ShoppingCart } from "lucide-react";
+import { logAuditEvent } from "@/services/auditService";
 
 interface Props {
   open: boolean;
@@ -170,10 +171,21 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
         notes: notes.trim() || undefined,
       });
 
+      // Audit: employee created/updated
+      logAuditEvent({
+        action: isEditing ? "employee.updated" : "employee.created",
+        module: "colaboradores",
+        companyId,
+        targetType: "employee_profile",
+        targetId: empId,
+        details: { display_name: displayName.trim(), is_active: isActive },
+      });
+
       // Handle seller profile
       if (isSeller) {
+        const prevSeller = employee?.seller_profile;
         await upsertSellerProfile({
-          id: employee?.seller_profile?.id,
+          id: prevSeller?.id,
           employee_profile_id: empId,
           seller_mode: sellerMode,
           commission_type: commissionType,
@@ -184,8 +196,62 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
           target_monthly: targetMonthly || null,
           max_discount_pct: maxDiscountPct,
         });
+
+        // Audit seller-specific changes
+        if (prevSeller) {
+          if (prevSeller.is_active !== sellerActive) {
+            logAuditEvent({
+              action: sellerActive ? "seller.activated" : "seller.deactivated",
+              module: "vendedores",
+              companyId,
+              targetType: "seller_profile",
+              targetId: prevSeller.id,
+              details: { display_name: displayName.trim() },
+            });
+          }
+          if (prevSeller.commission_value !== commissionValue || prevSeller.commission_type !== commissionType) {
+            logAuditEvent({
+              action: "seller.commission_changed",
+              module: "vendedores",
+              companyId,
+              targetType: "seller_profile",
+              targetId: prevSeller.id,
+              details: {
+                previous: { type: prevSeller.commission_type, value: prevSeller.commission_value },
+                current: { type: commissionType, value: commissionValue },
+              },
+            });
+          }
+          if (prevSeller.seller_mode !== sellerMode) {
+            logAuditEvent({
+              action: "seller.mode_changed",
+              module: "vendedores",
+              companyId,
+              targetType: "seller_profile",
+              targetId: prevSeller.id,
+              details: { previous: prevSeller.seller_mode, current: sellerMode },
+            });
+          }
+        } else {
+          logAuditEvent({
+            action: "seller.activated",
+            module: "vendedores",
+            companyId,
+            targetType: "seller_profile",
+            targetId: empId,
+            details: { display_name: displayName.trim(), seller_mode: sellerMode },
+          });
+        }
       } else if (employee?.seller_profile) {
         await deleteSellerProfile(empId);
+        logAuditEvent({
+          action: "seller.deactivated",
+          module: "vendedores",
+          companyId,
+          targetType: "seller_profile",
+          targetId: employee.seller_profile.id,
+          details: { display_name: displayName.trim(), reason: "seller_removed" },
+        });
       }
     },
     onSuccess: () => {

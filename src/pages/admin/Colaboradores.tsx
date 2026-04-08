@@ -22,6 +22,8 @@ import { toast } from "sonner";
 import { ColaboradorFormDialog } from "@/components/admin/ColaboradorFormDialog";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { supabase } from "@/integrations/supabase/client";
+import { logAuditEvent } from "@/services/auditService";
+import { useCompany as useCompanyCtx } from "@/hooks/useCompany";
 
 export default function Colaboradores() {
   const { userRole } = useAuth();
@@ -70,7 +72,17 @@ export default function Colaboradores() {
   });
 
   const toggleMutation = useMutation({
-    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => toggleEmployeeActive(id, isActive),
+    mutationFn: async ({ id, isActive, name }: { id: string; isActive: boolean; name?: string }) => {
+      await toggleEmployeeActive(id, isActive);
+      logAuditEvent({
+        action: isActive ? "employee.created" : "employee.deactivated",
+        module: "colaboradores",
+        companyId: scopedCompanyId,
+        targetType: "employee_profile",
+        targetId: id,
+        details: { is_active: isActive, display_name: name },
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       toast.success("Status atualizado");
@@ -238,7 +250,7 @@ export default function Colaboradores() {
                         }>
                           <Switch
                             checked={emp.is_active}
-                            onCheckedChange={(checked) => toggleMutation.mutate({ id: emp.id, isActive: checked })}
+                            onCheckedChange={(checked) => toggleMutation.mutate({ id: emp.id, isActive: checked, name: emp.display_name || undefined })}
                           />
                         </PermissionGuard>
                       </TableCell>

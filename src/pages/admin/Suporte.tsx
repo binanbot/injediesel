@@ -337,6 +337,7 @@ export default function AdminSuporte() {
 
   const handleUpdateStatus = async (ticketId: string, newStatus: string) => {
     try {
+      const oldStatus = tickets.find(t => t.id === ticketId)?.status;
       const { error } = await supabase
         .from("support_conversations")
         .update({ status: newStatus })
@@ -348,6 +349,16 @@ export default function AdminSuporte() {
       if (selectedTicket?.id === ticketId) {
         setSelectedTicket(prev => prev ? { ...prev, status: newStatus } : null);
       }
+
+      // Audit ticket status change
+      const { logAuditEvent } = await import("@/services/auditService");
+      logAuditEvent({
+        action: "ticket.status_changed",
+        module: "suporte",
+        targetType: "support_conversation",
+        targetId: ticketId,
+        details: { previous_status: oldStatus, new_status: newStatus },
+      });
 
       toast({
         title: "Status atualizado!",

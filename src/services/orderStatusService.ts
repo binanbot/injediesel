@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { OrderStatus } from "@/utils/orderStatus";
+import { logAuditEvent } from "@/services/auditService";
 
 export async function updateOrderStatus(
   orderId: string,
@@ -37,4 +38,12 @@ export async function updateOrderStatus(
     });
 
   if (historyError) throw historyError;
+
+  logAuditEvent({
+    action: "order.status_changed",
+    module: "pedidos",
+    targetType: "order",
+    targetId: orderId,
+    details: { previous_status: currentOrder.status, new_status: newStatus },
+  });
 }
