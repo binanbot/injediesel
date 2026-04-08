@@ -21,7 +21,8 @@ export type AuditAction =
   | "discount_policy.violated"
   | "sales_target.created"
   | "sales_target.updated"
-  | "export.executed";
+  | "export.executed"
+  | "customer.primary_seller_changed";
 
 export type AuditModule =
   | "permissoes"

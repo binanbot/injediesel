@@ -28,7 +28,8 @@ export type PermissionAction =
   | "approve"
   | "export"
   | "manage"
-  | "assign_seller";
+  | "assign_seller"
+  | "assign_primary_seller";
 
 /** Permissions matrix: module → actions[] */
 export type PermissionsMatrix = Partial<Record<PermissionModule, PermissionAction[]>>;
