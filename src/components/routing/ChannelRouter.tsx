@@ -210,6 +210,7 @@ function AdminRoutes() {
         <Route path="vendas/nova" element={<VendaManual />} />
         <Route path="permissoes" element={<Permissoes />} />
         <Route path="auditoria" element={<Auditoria />} />
+        <Route path="financeiro" element={<Financeiro />} />
       </Route>
       {/* Legacy redirect */}
       <Route path="/admin/*" element={<Navigate to="/" replace />} />
@@ -406,6 +407,7 @@ export function LegacyCombinedRoutes() {
           <Route path="vendas/nova" element={<VendaManual />} />
           <Route path="permissoes" element={<Permissoes />} />
           <Route path="auditoria" element={<Auditoria />} />
+          <Route path="financeiro" element={<Financeiro />} />
         </Route>
 
         {/* Master Admin Routes */}
