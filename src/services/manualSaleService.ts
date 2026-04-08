@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { logAuditEvent } from "@/services/auditService";
+import { validateSellerForAttribution, getWalletStatus, isThirdPartyAttribution } from "@/services/commercialEligibilityService";
 
 export interface ManualSaleItem {
   product_id: string;
