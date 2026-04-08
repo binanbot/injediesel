@@ -433,8 +433,8 @@ export default function ClienteForm() {
               <div className="space-y-1.5">
                 <Label htmlFor="primary_seller">Vendedor principal</Label>
                 <Select
-                  value={primarySellerId}
-                  onValueChange={setPrimarySellerId}
+                  value={primarySellerId || "none"}
+                  onValueChange={(v) => setPrimarySellerId(v === "none" ? "" : v)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Nenhum vendedor vinculado" />
