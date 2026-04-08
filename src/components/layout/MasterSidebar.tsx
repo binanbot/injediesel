@@ -12,6 +12,7 @@ import {
   BarChart3,
   UsersRound,
   TrendingUp,
+  ClipboardList,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -30,6 +31,7 @@ const RAW_MENU_ITEMS = [
   { icon: BarChart3, label: "Relatórios Globais", path: "/master/relatorios" },
   { icon: UsersRound, label: "Colaboradores", path: "/master/colaboradores" },
   { icon: TrendingUp, label: "Painel Comercial", path: "/master/vendas" },
+  { icon: ClipboardList, label: "Auditoria", path: "/master/auditoria" },
   { icon: Settings, label: "Configurações", path: "/master/configuracoes" },
   { icon: FileText, label: "Documentação", path: "/master/documentacao" },
 ];
