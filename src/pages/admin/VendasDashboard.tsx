@@ -14,6 +14,7 @@ import {
   FileText,
   Users,
   Percent,
+  AlertTriangle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,11 +28,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getSellerRanking, type SellerRankingRow } from "@/services/salesRankingService";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompany } from "@/hooks/useCompany";
 import { useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const fmtCurrency = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -67,6 +75,7 @@ export default function VendasDashboard() {
     to: endOfMonth(now),
   });
   const [saleTypeFilter, setSaleTypeFilter] = useState("total");
+  const [modeFilter, setModeFilter] = useState("all");
 
   const companyId = isMaster ? undefined : company?.id;
 
@@ -87,14 +96,48 @@ export default function VendasDashboard() {
       }),
   });
 
+  // Fetch avg discount given by sellers in orders this period
+  const { data: discountData = [] } = useQuery({
+    queryKey: ["seller-discounts", dateRange.from.toISOString(), dateRange.to.toISOString(), companyId],
+    queryFn: async () => {
+      let q = supabase
+        .from("orders")
+        .select("seller_profile_id, discount_amount, subtotal")
+        .gte("created_at", format(dateRange.from, "yyyy-MM-dd"))
+        .lte("created_at", format(dateRange.to, "yyyy-MM-dd"))
+        .not("status", "in", '("cancelado","reembolsado")')
+        .not("seller_profile_id", "is", null);
+      const { data } = await q;
+      return (data || []) as { seller_profile_id: string; discount_amount: number; subtotal: number }[];
+    },
+  });
+
+  const discountBySeller = useMemo(() => {
+    const map = new Map<string, { totalDiscount: number; totalSubtotal: number; count: number }>();
+    for (const o of discountData) {
+      if (!o.seller_profile_id) continue;
+      const cur = map.get(o.seller_profile_id) || { totalDiscount: 0, totalSubtotal: 0, count: 0 };
+      cur.totalDiscount += Number(o.discount_amount || 0);
+      cur.totalSubtotal += Number(o.subtotal || 0);
+      cur.count += 1;
+      map.set(o.seller_profile_id, cur);
+    }
+    return map;
+  }, [discountData]);
+
+  const filteredRanking = useMemo(() => {
+    if (modeFilter === "all") return ranking;
+    return ranking.filter((r) => r.seller_mode === modeFilter);
+  }, [ranking, modeFilter]);
+
   const kpis = useMemo(() => {
-    const totalRevenue = ranking.reduce((s, r) => s + r.total_revenue, 0);
-    const totalOrders = ranking.reduce((s, r) => s + r.orders_count, 0);
-    const totalFiles = ranking.reduce((s, r) => s + r.files_count, 0);
-    const totalCommission = ranking.reduce((s, r) => s + r.estimated_commission, 0);
+    const totalRevenue = filteredRanking.reduce((s, r) => s + r.total_revenue, 0);
+    const totalOrders = filteredRanking.reduce((s, r) => s + r.orders_count, 0);
+    const totalFiles = filteredRanking.reduce((s, r) => s + r.files_count, 0);
+    const totalCommission = filteredRanking.reduce((s, r) => s + r.estimated_commission, 0);
     const avgTicket = (totalOrders + totalFiles) > 0 ? totalRevenue / (totalOrders + totalFiles) : 0;
-    return { totalRevenue, totalOrders, totalFiles, totalCommission, avgTicket, sellersCount: ranking.length };
-  }, [ranking]);
+    return { totalRevenue, totalOrders, totalFiles, totalCommission, avgTicket, sellersCount: filteredRanking.length };
+  }, [filteredRanking]);
 
   const periodLabel = format(dateRange.from, "MMMM yyyy", { locale: ptBR });
 
@@ -108,16 +151,29 @@ export default function VendasDashboard() {
           </h1>
           <p className="text-muted-foreground text-sm capitalize">{periodLabel}</p>
         </div>
-        <Select value={saleTypeFilter} onValueChange={setSaleTypeFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="total">Consolidado</SelectItem>
-            <SelectItem value="ecu">Serviços ECU</SelectItem>
-            <SelectItem value="parts">Peças / Produtos</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={modeFilter} onValueChange={setModeFilter}>
+            <SelectTrigger className="w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="ecu">ECU</SelectItem>
+              <SelectItem value="parts">Peças</SelectItem>
+              <SelectItem value="both">Misto</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={saleTypeFilter} onValueChange={setSaleTypeFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="total">Consolidado</SelectItem>
+              <SelectItem value="ecu">Serviços ECU</SelectItem>
+              <SelectItem value="parts">Peças / Produtos</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -150,11 +206,12 @@ export default function VendasDashboard() {
           <TabsTrigger value="orders">Volume</TabsTrigger>
           <TabsTrigger value="ticket">Ticket Médio</TabsTrigger>
           <TabsTrigger value="targets">Metas</TabsTrigger>
+          <TabsTrigger value="discounts">Descontos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="revenue">
           <RankingList
-            data={[...ranking].sort((a, b) => b.total_revenue - a.total_revenue)}
+            data={[...filteredRanking].sort((a, b) => b.total_revenue - a.total_revenue)}
             isLoading={isLoading}
             renderValue={(r) => fmtCurrency(r.total_revenue)}
             renderSub={(r) => `${r.orders_count} pedidos • ${r.files_count} arquivos`}
@@ -164,7 +221,7 @@ export default function VendasDashboard() {
 
         <TabsContent value="orders">
           <RankingList
-            data={[...ranking].sort((a, b) => (b.orders_count + b.files_count) - (a.orders_count + a.files_count))}
+            data={[...filteredRanking].sort((a, b) => (b.orders_count + b.files_count) - (a.orders_count + a.files_count))}
             isLoading={isLoading}
             renderValue={(r) => `${r.orders_count + r.files_count} vendas`}
             renderSub={(r) => fmtCurrency(r.total_revenue)}
@@ -174,7 +231,7 @@ export default function VendasDashboard() {
 
         <TabsContent value="ticket">
           <RankingList
-            data={[...ranking].sort((a, b) => b.avg_ticket - a.avg_ticket)}
+            data={[...filteredRanking].sort((a, b) => b.avg_ticket - a.avg_ticket)}
             isLoading={isLoading}
             renderValue={(r) => fmtCurrency(r.avg_ticket)}
             renderSub={(r) => `${r.orders_count + r.files_count} vendas`}
@@ -183,7 +240,11 @@ export default function VendasDashboard() {
         </TabsContent>
 
         <TabsContent value="targets">
-          <TargetsView data={ranking} isLoading={isLoading} />
+          <TargetsView data={filteredRanking} isLoading={isLoading} />
+        </TabsContent>
+
+        <TabsContent value="discounts">
+          <DiscountAnalysis data={filteredRanking} discountBySeller={discountBySeller} isLoading={isLoading} />
         </TabsContent>
       </Tabs>
     </div>
@@ -357,6 +418,116 @@ function TargetsView({ data, isLoading }: { data: SellerRankingRow[]; isLoading:
                     Comissão est.: {fmtCurrency(row.estimated_commission)}
                   </span>
                 </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DiscountAnalysis({
+  data,
+  discountBySeller,
+  isLoading,
+}: {
+  data: SellerRankingRow[];
+  discountBySeller: Map<string, { totalDiscount: number; totalSubtotal: number; count: number }>;
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-muted-foreground">
+          Carregando análise de descontos...
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const sellersWithOrders = data.filter((r) => r.orders_count > 0);
+
+  if (!sellersWithOrders.length) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-muted-foreground">
+          Nenhum vendedor com pedidos no período.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Percent className="h-5 w-5 text-primary" />
+          Análise de Descontos
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {sellersWithOrders.map((row) => {
+            const disc = discountBySeller.get(row.seller_profile_id);
+            const avgDiscountPct = disc && disc.totalSubtotal > 0
+              ? (disc.totalDiscount / disc.totalSubtotal) * 100
+              : 0;
+            const maxAllowed = row.commission_value > 0 ? row.commission_value : 0;
+            // Use max_discount_pct from ranking (we pass it through)
+            // For now approximate: if commission_type is percentage, max_discount is separate
+            const exceedsPolicy = avgDiscountPct > 0 && avgDiscountPct > 15; // default threshold
+
+            return (
+              <div
+                key={row.seller_profile_id}
+                className={cn(
+                  "p-4 rounded-xl border transition-colors",
+                  exceedsPolicy
+                    ? "border-destructive/50 bg-destructive/5"
+                    : "border-border/50 bg-secondary/10"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{row.seller_name}</p>
+                      {exceedsPolicy && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <AlertTriangle className="h-4 w-4 text-destructive" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">Desconto médio acima da política comercial</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {row.company_name} • {modeLabel[row.seller_mode] || row.seller_mode} • {disc?.count || 0} pedidos
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className={cn("font-bold text-sm", exceedsPolicy ? "text-destructive" : "text-foreground")}>
+                      {avgDiscountPct.toFixed(1)}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {fmtCurrency(disc?.totalDiscount || 0)} em descontos
+                    </p>
+                  </div>
+                </div>
+                {avgDiscountPct > 0 && (
+                  <div className="mt-2">
+                    <div className="h-2 rounded-full bg-secondary/50 overflow-hidden">
+                      <div
+                        className={cn("h-full rounded-full", exceedsPolicy ? "bg-destructive" : "bg-primary")}
+                        style={{ width: `${Math.min(avgDiscountPct * 5, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

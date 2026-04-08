@@ -791,27 +791,31 @@ export default function AdminSuporte() {
                     <Separator />
 
                     {/* Status Management */}
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        Alterar Status
-                      </Label>
-                      <Select
-                        value={selectedTicket.status}
-                        onValueChange={(value) => handleUpdateStatus(selectedTicket.id, value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(statusConfig).map(([key, config]) => (
-                            <SelectItem key={key} value={key}>
-                              <span className={config.color.split(" ")[1]}>{config.label}</span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <PermissionGuard module="suporte" action="manage" fallback={
+                      <div className="text-sm text-muted-foreground">Sem permissão para alterar status.</div>
+                    }>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Alterar Status
+                        </Label>
+                        <Select
+                          value={selectedTicket.status}
+                          onValueChange={(value) => handleUpdateStatus(selectedTicket.id, value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(statusConfig).map(([key, config]) => (
+                              <SelectItem key={key} value={key}>
+                                <span className={config.color.split(" ")[1]}>{config.label}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </PermissionGuard>
 
                     <Separator />
 
