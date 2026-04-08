@@ -21,7 +21,7 @@ import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/useAuth";
 import { useChannelPaths } from "@/hooks/useChannelPaths";
 
-const menuItems = [
+const RAW_MENU_ITEMS = [
   { icon: LayoutDashboard, label: "Visão Geral", path: "/master" },
   { icon: Building2, label: "Empresas", path: "/master/empresas" },
   { icon: Globe, label: "Domínios", path: "/master/dominios" },
@@ -45,6 +45,12 @@ export function MasterSidebar({ isOpen = true, onClose, collapsed = false, onTog
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { resolve } = useChannelPaths();
+
+  const menuItems = RAW_MENU_ITEMS.map((item) => ({
+    ...item,
+    path: resolve(item.path, "/master"),
+  }));
 
   const handleLogout = async () => {
     await signOut();
