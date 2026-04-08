@@ -29,6 +29,7 @@ export interface CustomerOption {
   address_state: string | null;
   type: string;
   is_active: boolean;
+  primary_seller_id: string | null;
 }
 
 interface ClienteSelectProps {
@@ -56,7 +57,7 @@ export function ClienteSelect({ value, onChange, onAddNew, refreshSignal }: Clie
     setIsLoading(true);
     const { data, error } = await supabase
       .from("customers")
-      .select("id, full_name, cpf, cnpj, phone, address_city, address_state, type, is_active")
+      .select("id, full_name, cpf, cnpj, phone, address_city, address_state, type, is_active, primary_seller_id")
       .eq("is_active", true)
       .order("full_name");
 

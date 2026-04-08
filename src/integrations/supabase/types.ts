@@ -433,6 +433,7 @@ export type Database = {
           is_active: boolean
           notes: string | null
           phone: string | null
+          primary_seller_id: string | null
           type: string
           unit_id: string
           updated_at: string | null
@@ -459,6 +460,7 @@ export type Database = {
           is_active?: boolean
           notes?: string | null
           phone?: string | null
+          primary_seller_id?: string | null
           type?: string
           unit_id: string
           updated_at?: string | null
@@ -485,6 +487,7 @@ export type Database = {
           is_active?: boolean
           notes?: string | null
           phone?: string | null
+          primary_seller_id?: string | null
           type?: string
           unit_id?: string
           updated_at?: string | null
@@ -493,6 +496,13 @@ export type Database = {
           zip_code?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "customers_primary_seller_id_fkey"
+            columns: ["primary_seller_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "customers_unit_id_fkey"
             columns: ["unit_id"]

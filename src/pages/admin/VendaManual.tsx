@@ -64,6 +64,7 @@ export default function VendaManual() {
   const [customerSearch, setCustomerSearch] = useState("");
   const debouncedSearch = useDebounce(customerSearch, 400);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [sellerAutoSuggested, setSellerAutoSuggested] = useState(false);
 
   const { data: customers = [] } = useQuery({
     queryKey: ["customer-search", debouncedSearch, companyId],
@@ -71,7 +72,7 @@ export default function VendaManual() {
       if (!debouncedSearch || debouncedSearch.length < 2) return [];
       const { data } = await supabase
         .from("customers")
-        .select("id, full_name, cpf, cnpj, phone, email, unit_id")
+        .select("id, full_name, cpf, cnpj, phone, email, unit_id, primary_seller_id")
         .or(
           `full_name.ilike.%${debouncedSearch}%,cpf.ilike.%${debouncedSearch}%,cnpj.ilike.%${debouncedSearch}%,phone.ilike.%${debouncedSearch}%`
         )
@@ -203,6 +204,7 @@ export default function VendaManual() {
         items: lines.map(({ _key, ...rest }) => rest),
         payment_method: paymentMethod || undefined,
         notes: notes || undefined,
+        customer_primary_seller_id: selectedCustomer.primary_seller_id || null,
       });
     },
     onSuccess: () => {
@@ -268,7 +270,7 @@ export default function VendaManual() {
                   {selectedCustomer.cpf || selectedCustomer.cnpj} • {selectedCustomer.phone || selectedCustomer.email || ""}
                 </p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedCustomer(null)}>
+              <Button variant="ghost" size="sm" onClick={() => { setSelectedCustomer(null); setSellerAutoSuggested(false); setSelectedSellerId(""); }}>
                 Trocar
               </Button>
             </div>
@@ -289,9 +291,19 @@ export default function VendaManual() {
                     <button
                       key={c.id}
                       className="w-full text-left px-3 py-2 hover:bg-secondary/50 border-b last:border-b-0 transition-colors"
-                      onClick={() => {
+                     onClick={() => {
                         setSelectedCustomer(c);
                         setCustomerSearch("");
+                        // Auto-suggest primary seller
+                        if (c.primary_seller_id) {
+                          const match = sellers.find((s) => s.seller_profile?.id === c.primary_seller_id);
+                          if (match) {
+                            setSelectedSellerId(c.primary_seller_id);
+                            setSellerAutoSuggested(true);
+                          }
+                        } else {
+                          setSellerAutoSuggested(false);
+                        }
                       }}
                     >
                       <p className="text-sm font-medium">{c.full_name}</p>
@@ -357,13 +369,25 @@ export default function VendaManual() {
           </div>
 
           {/* Operator info */}
-          <div className="flex items-center gap-4 text-sm text-muted-foreground bg-secondary/30 rounded-lg p-3">
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground bg-secondary/30 rounded-lg p-3">
             <User className="h-4 w-4" />
             <span>Operador: <strong>{user?.email}</strong></span>
             {selectedSellerId && ownSeller?.seller_profile?.id !== selectedSellerId && (
               <Badge variant="outline" className="text-xs">
                 <AlertTriangle className="h-3 w-3 mr-1" />
                 Atribuída a terceiro
+              </Badge>
+            )}
+            {sellerAutoSuggested && selectedCustomer?.primary_seller_id === selectedSellerId && (
+              <Badge variant="secondary" className="text-xs">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Vendedor da carteira
+              </Badge>
+            )}
+            {selectedCustomer?.primary_seller_id && selectedSellerId && selectedCustomer.primary_seller_id !== selectedSellerId && (
+              <Badge variant="outline" className="text-xs text-destructive border-destructive/40">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                Fora da carteira
               </Badge>
             )}
           </div>
