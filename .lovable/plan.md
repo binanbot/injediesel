@@ -1,51 +1,58 @@
 
-## Bloco 1 — Auditoria e Compliance
+## ✅ Bloco 1 — PermissionGuard em páginas críticas (concluído)
 
-### Modelagem
-- Tabela `audit_logs` com: `id`, `company_id`, `user_id`, `action` (enum text), `module`, `target_type`, `target_id`, `details` (jsonb), `created_at`
-- RLS: company admins veem da própria empresa, master/ceo veem tudo
-- Sem UPDATE/DELETE (append-only)
+Aplicado `<PermissionGuard>` em:
+- **Produtos** (`catalogo.export`, `catalogo.create`)
+- **Pedidos** (`pedidos.export`)
+- **Colaboradores** (`usuarios.create`, `usuarios.edit`, `usuarios.manage`)
+- **Clientes** (`clientes.export`, `clientes.create`)
+- **Suporte** (`suporte.manage` para alterar status)
 
-### Ações rastreadas
-- `permission_profile.updated` / `permission_profile.cloned`
-- `employee.created` / `employee.updated` / `employee.deactivated`
-- `seller.activated` / `seller.deactivated` / `seller.commission_changed` / `seller.mode_changed`
-- `permission_override.set` / `permission_override.removed`
-- `ticket.status_changed`
-- `discount_policy.violated`
+## ✅ Bloco 2 — Página /admin/permissoes (concluído)
 
-### Frontend
+- Listagem de perfis com contagem de permissões
+- Cargos vinculados exibidos
+- Colaboradores vinculados exibidos (via posição + overrides)
+- Badge de override com tooltip
+- Clonagem de perfil
+- Matriz módulo×ação expandível com checkboxes
+- Toggle "Todos" por módulo
+
+## ✅ Bloco 3 — Painel comercial (concluído)
+
+- KPIs: faturamento, pedidos, arquivos ECU, vendedores, ticket médio, comissão
+- Ranking por faturamento, volume, ticket médio
+- Aba de Metas com progresso (atingida/saudável/em risco/crítica)
+- Aba de Descontos com análise vs política comercial (`max_discount_pct`)
+- Filtro por modalidade (ECU/Peças/Misto)
+- Filtro por tipo de venda (consolidado/ECU/peças)
+- Alertas visuais para desconto acima da política (com tooltip mostrando limite)
+- Funcional em /admin/vendas e /master/vendas
+
+## ✅ Bloco 4 — Auditoria e Compliance (concluído)
+
+- Tabela `audit_logs` (append-only, sem UPDATE/DELETE)
+- RLS: company admins veem própria empresa, master/ceo veem tudo
 - Service `auditService.ts` com `logAuditEvent()` e `getAuditLogs()`
-- Página `/admin/auditoria` com tabela filtrada por período, módulo, usuário e ação
-- Rota também em `/master/auditoria` com visão consolidada
+- Audit integrado em:
+  - Criação/edição/clonagem de perfil de permissão
+  - Criação de metas de vendas
+- Página `/admin/auditoria` com filtros por módulo e busca
+- Página `/master/auditoria` com visão consolidada
+- Paginação e labels humanizados
+- Sidebar atualizada em Admin e Master
 
-## Bloco 2 — Metas comerciais formais
+## ✅ Bloco 5 — Metas comerciais formais (concluído)
 
-### Modelagem
-- Tabela `sales_targets` já existe com `seller_profile_id`, `company_id`, `sale_type`, `metric_key`, `target_value`, `period_start`, `period_end`, `is_active`
-- Já é suficiente para metas por vendedor e por modalidade — não precisa de nova tabela
+- Formulário de criação de meta por vendedor no painel comercial
+- Seleção de vendedor, tipo de venda e valor
+- Período automático baseado no filtro ativo
+- Comissão prevista (meta) vs comissão realizada
+- Status: atingida / saudável / em risco / crítica
+- Integrado com audit trail
 
-### Frontend
-- Evoluir `salesRankingService.ts` para cruzar targets com realizado por modalidade
-- Aba "Metas" no VendasDashboard já existe — evoluir com:
-  - Progresso por modalidade (ECU/Peças/Total)
-  - Status: Atingida (≥100%), Saudável (≥70%), Em risco (≥40%), Crítica (<40%)
-  - Comissão prevista (meta) vs comissão realizada
-  - Alertas para vendedor abaixo da meta
-- Formulário de criação/edição de meta por vendedor no painel
-
-## Plano incremental
-1. Migration: criar `audit_logs`
-2. Service + inserções de auditoria nos pontos críticos
-3. Página de auditoria admin/master
-4. Evolução das metas no VendasDashboard
-5. Formulário de gestão de metas
-
-## Checklist
-- [ ] audit_logs criada com RLS
-- [ ] logAuditEvent() chamado em permissões, colaboradores, vendedores
-- [ ] Página /admin/auditoria funcional
-- [ ] Metas por modalidade no VendasDashboard
-- [ ] Formulário de meta por vendedor
-- [ ] TypeScript sem erros
-- [ ] Funciona em Injediesel e PROMAX
+## Próximos passos sugeridos
+1. Integrar audit em mais pontos (colaboradores, vendedores, tickets)
+2. Painel do vendedor individual (visão própria de desempenho)
+3. Edição/exclusão de metas existentes
+4. Relatório de auditoria exportável
