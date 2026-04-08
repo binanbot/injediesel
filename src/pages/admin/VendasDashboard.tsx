@@ -51,6 +51,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getSellerRanking, upsertSalesTarget, type SellerRankingRow } from "@/services/salesRankingService";
 import { getCommissionClosings, generateClosing, updateClosingStatus, reopenClosing, updateClosingNotes, getCommissionSummary, type CommissionClosingRow } from "@/services/commissionService";
+import { getAttributionStats, type AttributionStats } from "@/services/saleAttributionService";
 import { buildTeamSummaries } from "@/services/teamPerformanceService";
 import { logAuditEvent } from "@/services/auditService";
 import { useAuth } from "@/hooks/useAuth";
@@ -276,6 +277,7 @@ export default function VendasDashboard() {
           <TabsTrigger value="targets">Metas</TabsTrigger>
           <TabsTrigger value="discounts">Descontos</TabsTrigger>
           <TabsTrigger value="commissions">Comissões</TabsTrigger>
+          <TabsTrigger value="attribution">Atribuição</TabsTrigger>
           <TabsTrigger value="team">Equipe</TabsTrigger>
         </TabsList>
 
@@ -328,6 +330,10 @@ export default function VendasDashboard() {
             companyId={companyId}
             dateRange={dateRange}
           />
+        </TabsContent>
+
+        <TabsContent value="attribution">
+          <AttributionView companyId={companyId} dateRange={dateRange} />
         </TabsContent>
 
         <TabsContent value="team">
