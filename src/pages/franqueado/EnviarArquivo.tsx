@@ -489,6 +489,10 @@ export default function EnviarArquivo() {
         arquivo_original_url: arquivoOriginalUrl,
         arquivo_original_nome: arquivoOriginalNome,
         status: "pending",
+        // Atribuição comercial
+        operator_user_id: userData.user.id,
+        seller_profile_id: sellerProfileId || null,
+        sale_channel: saleChannel || null,
         // Campos de auditoria de busca de placa
         plate_lookup_success: plateLookupSuccess,
         manual_vehicle_data: dadosManuais,
