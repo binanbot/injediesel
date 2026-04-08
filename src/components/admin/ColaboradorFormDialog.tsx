@@ -82,6 +82,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
         setCanSellParts(employee.seller_profile.can_sell_parts);
         setSellerActive(employee.seller_profile.is_active);
         setTargetMonthly(employee.seller_profile.target_monthly || 0);
+        setMaxDiscountPct(employee.seller_profile.max_discount_pct || 0);
       } else {
         setIsSeller(false);
         resetSellerFields();
@@ -99,6 +100,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
     setCanSellParts(true);
     setSellerActive(true);
     setTargetMonthly(0);
+    setMaxDiscountPct(0);
   };
 
   const resetForm = () => {
