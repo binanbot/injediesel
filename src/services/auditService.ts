@@ -54,7 +54,7 @@ export async function logAuditEvent(params: {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    await supabase.from("audit_logs").insert({
+    await supabase.from("audit_logs").insert([{
       user_id: user.id,
       user_email: user.email || null,
       company_id: params.companyId || null,
@@ -62,8 +62,8 @@ export async function logAuditEvent(params: {
       module: params.module,
       target_type: params.targetType || null,
       target_id: params.targetId || null,
-      details: params.details || {},
-    });
+      details: (params.details || {}) as Record<string, unknown>,
+    }] as any);
   } catch (err) {
     console.warn("[audit] Failed to log event:", err);
   }
