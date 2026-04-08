@@ -28,6 +28,9 @@ const MODULE_LABELS: Record<string, string> = {
   metas: "Metas",
   pedidos: "Pedidos",
   exportacoes: "Exportações",
+  vendas: "Vendas",
+  arquivos: "Arquivos ECU",
+  servicos: "Serviços",
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -41,15 +44,22 @@ const ACTION_LABELS: Record<string, string> = {
   "seller.deactivated": "Vendedor desativado",
   "seller.commission_changed": "Comissão alterada",
   "seller.mode_changed": "Modalidade alterada",
+  "seller.commercial_access_changed": "Acesso comercial alterado",
   "permission_override.set": "Override aplicado",
   "permission_override.removed": "Override removido",
   "ticket.status_changed": "Status do ticket alterado",
   "order.status_changed": "Status do pedido alterado",
   "order.payment_status_changed": "Pagamento alterado",
+  "order.manual_sale_created": "Venda manual criada",
   "discount_policy.violated": "Violação de desconto",
   "sales_target.created": "Meta criada",
   "sales_target.updated": "Meta atualizada",
   "export.executed": "Exportação realizada",
+  "customer.primary_seller_changed": "Carteira alterada",
+  "file.attribution_set": "Atribuição de arquivo",
+  "file.attribution_changed": "Atribuição de arquivo alterada",
+  "service.attribution_set": "Atribuição de serviço",
+  "service.attribution_changed": "Atribuição de serviço alterada",
 };
 
 const ACTION_COLORS: Record<string, string> = {
