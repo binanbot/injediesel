@@ -824,40 +824,81 @@ export type Database = {
         Row: {
           amount: number
           category: string
+          company_id: string | null
           competency_date: string
+          cost_center: string | null
           created_at: string
+          created_by: string | null
           description: string | null
+          employee_profile_id: string | null
           entry_type: string
           franchise_profile_id: string | null
           id: string
+          is_recurring: boolean
           order_id: string | null
+          reference_month: string | null
           scope: string
+          seller_profile_id: string | null
+          subcategory: string | null
+          unit_id: string | null
         }
         Insert: {
           amount?: number
           category: string
+          company_id?: string | null
           competency_date?: string
+          cost_center?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
+          employee_profile_id?: string | null
           entry_type: string
           franchise_profile_id?: string | null
           id?: string
+          is_recurring?: boolean
           order_id?: string | null
+          reference_month?: string | null
           scope: string
+          seller_profile_id?: string | null
+          subcategory?: string | null
+          unit_id?: string | null
         }
         Update: {
           amount?: number
           category?: string
+          company_id?: string | null
           competency_date?: string
+          cost_center?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
+          employee_profile_id?: string | null
           entry_type?: string
           franchise_profile_id?: string | null
           id?: string
+          is_recurring?: boolean
           order_id?: string | null
+          reference_month?: string | null
           scope?: string
+          seller_profile_id?: string | null
+          subcategory?: string | null
+          unit_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "financial_entries_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_entries_employee_profile_id_fkey"
+            columns: ["employee_profile_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "financial_entries_franchise_profile_id_fkey"
             columns: ["franchise_profile_id"]
@@ -870,6 +911,20 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_entries_seller_profile_id_fkey"
+            columns: ["seller_profile_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_entries_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
             referencedColumns: ["id"]
           },
         ]
