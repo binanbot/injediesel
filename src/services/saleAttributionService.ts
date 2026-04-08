@@ -144,28 +144,19 @@ export async function getAttributionStats(opts: {
     const sellerUserId = item.seller_profile_id ? sellerUserMap.get(item.seller_profile_id) : null;
     const operatorId = item.operator_user_id;
 
-    // Self vs third-party
-    if (operatorId && sellerUserId && operatorId === sellerUserId) {
-      selfAttributed++;
-    } else if (operatorId && sellerUserId) {
+    // Self vs third-party (using centralized logic)
+    if (isThirdPartyAttribution(operatorId, sellerUserId ?? null)) {
       thirdPartyAttributed++;
     } else {
       selfAttributed++;
     }
 
-    // Wallet analysis
-    if (item.customer_id) {
-      const primarySeller = customerWalletMap.get(item.customer_id);
-      if (!primarySeller) {
-        noWallet++;
-      } else if (primarySeller === item.seller_profile_id) {
-        walletMatch++;
-      } else {
-        walletMismatch++;
-      }
-    } else {
-      noWallet++;
-    }
+    // Wallet analysis (using centralized logic)
+    const primarySeller = item.customer_id ? customerWalletMap.get(item.customer_id) ?? null : null;
+    const ws = getWalletStatus(item.seller_profile_id, primarySeller);
+    if (ws === "in_wallet") walletMatch++;
+    else if (ws === "out_of_wallet") walletMismatch++;
+    else noWallet++;
 
     // By channel
     const ch = item.sale_channel || "loja";
