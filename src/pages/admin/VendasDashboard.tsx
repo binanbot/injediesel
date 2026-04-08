@@ -50,7 +50,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getSellerRanking, upsertSalesTarget, type SellerRankingRow } from "@/services/salesRankingService";
-import { getCommissionClosings, generateClosing, updateClosingStatus, type CommissionClosingRow } from "@/services/commissionService";
+import { getCommissionClosings, generateClosing, updateClosingStatus, reopenClosing, updateClosingNotes, getCommissionSummary, type CommissionClosingRow } from "@/services/commissionService";
 import { buildTeamSummaries } from "@/services/teamPerformanceService";
 import { logAuditEvent } from "@/services/auditService";
 import { useAuth } from "@/hooks/useAuth";
