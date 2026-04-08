@@ -16,7 +16,7 @@ import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/useAuth";
 import { useChannelPaths } from "@/hooks/useChannelPaths";
 
-const menuItems = [
+const RAW_MENU_ITEMS = [
   { icon: LayoutDashboard, label: "Painel Executivo", path: "/ceo", badge: null },
   { icon: TrendingUp, label: "Receita & Crescimento", path: "/ceo/receita", badge: null },
   { icon: PieChart, label: "Market Share", path: "/ceo/market-share", badge: null },
@@ -35,6 +35,12 @@ export function CeoSidebar({ isOpen = true, onClose, collapsed = false, onToggle
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { resolve } = useChannelPaths();
+
+  const menuItems = RAW_MENU_ITEMS.map((item) => ({
+    ...item,
+    path: resolve(item.path, "/ceo"),
+  }));
 
   const handleLogout = async () => {
     await signOut();
