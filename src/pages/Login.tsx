@@ -11,6 +11,7 @@ import { useAuth, getHomeRouteForRole } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCompany } from "@/hooks/useCompany";
+import { useChannel } from "@/hooks/useChannel";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -31,12 +32,24 @@ export default function Login() {
   const [telefone, setTelefone] = useState("");
   const [tipoRepresentante, setTipoRepresentante] = useState<"existente" | "novo">("existente");
 
+  const { channel } = useChannel();
+
+  // Determine if we're in channel mode (hostname-based routing)
+  const hasExplicitChannel = new URLSearchParams(window.location.search).has("channel");
+  const hasHostnameChannel = !!(company as any)?.channel_type;
+  const isChannelMode = hasExplicitChannel || hasHostnameChannel;
+
   // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading) {
-      navigate(getHomeRouteForRole(userRole));
+      if (isChannelMode) {
+        // In channel mode, all panels mount at "/"
+        navigate("/");
+      } else {
+        navigate(getHomeRouteForRole(userRole));
+      }
     }
-  }, [user, userRole, authLoading, navigate]);
+  }, [user, userRole, authLoading, navigate, isChannelMode]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
