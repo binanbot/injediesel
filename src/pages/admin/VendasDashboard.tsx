@@ -94,6 +94,10 @@ export default function VendasDashboard() {
   });
   const [saleTypeFilter, setSaleTypeFilter] = useState("total");
   const [modeFilter, setModeFilter] = useState("all");
+  const [channelFilter, setChannelFilter] = useState("all");
+  const [commissionFilter, setCommissionFilter] = useState("all");
+  const [targetFilter, setTargetFilter] = useState("all");
+  const [servicesFilter, setServicesFilter] = useState("all");
 
   const companyId = isMaster ? undefined : company?.id;
 
@@ -144,9 +148,14 @@ export default function VendasDashboard() {
   }, [discountData]);
 
   const filteredRanking = useMemo(() => {
-    if (modeFilter === "all") return ranking;
-    return ranking.filter((r) => r.seller_mode === modeFilter);
-  }, [ranking, modeFilter]);
+    let result = ranking;
+    if (modeFilter !== "all") result = result.filter((r) => r.seller_mode === modeFilter);
+    if (channelFilter !== "all") result = result.filter((r) => r.sales_channel_mode === channelFilter);
+    if (commissionFilter !== "all") result = result.filter((r) => r.commission_enabled === (commissionFilter === "yes"));
+    if (targetFilter !== "all") result = result.filter((r) => r.target_enabled === (targetFilter === "yes"));
+    if (servicesFilter !== "all") result = result.filter((r) => r.can_sell_services === (servicesFilter === "yes"));
+    return result;
+  }, [ranking, modeFilter, channelFilter, commissionFilter, targetFilter, servicesFilter]);
 
   const kpis = useMemo(() => {
     const totalRevenue = filteredRanking.reduce((s, r) => s + r.total_revenue, 0);
