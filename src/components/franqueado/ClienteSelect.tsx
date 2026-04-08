@@ -29,6 +29,7 @@ export interface CustomerOption {
   address_state: string | null;
   type: string;
   is_active: boolean;
+  primary_seller_id: string | null;
 }
 
 interface ClienteSelectProps {
