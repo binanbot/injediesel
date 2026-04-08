@@ -476,6 +476,14 @@ export default function EnviarArquivo() {
       // Converte valor para número
       const valorNumerico = parseFloat(valor.replace(/\./g, "").replace(",", "."));
 
+      // Validate seller attribution via centralized eligibility service
+      if (sellerProfileId && company?.id) {
+        const sellerValidation = await validateSellerForAttribution(sellerProfileId, company.id);
+        if (!sellerValidation.valid) {
+          throw new Error(`Vendedor inválido para atribuição: ${sellerValidation.reason}`);
+        }
+      }
+
       // Insere o registro no banco com campos de auditoria de placa
       // Nota: Campos de auditoria adicionados via migração - cast para any para evitar erro de tipo
       const insertData: Record<string, unknown> = {
