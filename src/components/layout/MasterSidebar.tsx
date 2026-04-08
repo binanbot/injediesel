@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/useAuth";
+import { useChannelPaths } from "@/hooks/useChannelPaths";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Visão Geral", path: "/master" },
