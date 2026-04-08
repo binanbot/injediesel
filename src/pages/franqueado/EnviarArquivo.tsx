@@ -686,7 +686,7 @@ export default function EnviarArquivo() {
               if (data.sale_channel !== undefined) setSaleChannel(data.sale_channel);
             }}
           />
-        )
+        )}
 
         {/* Categoria e Serviço */}
         <Card className="glass-card">
