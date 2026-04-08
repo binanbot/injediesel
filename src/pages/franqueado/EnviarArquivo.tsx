@@ -61,7 +61,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, isCompanyAdminLevel } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { logAuditEvent } from "@/services/auditService";
-import { getWalletStatus } from "@/services/commercialEligibilityService";
+import { getWalletStatus, validateSellerForAttribution } from "@/services/commercialEligibilityService";
+import { useCompany } from "@/hooks/useCompany";
 
 const MAX_FILES = 2;
 
@@ -89,6 +90,7 @@ type IncompleteField = "motor" | "transmissao";
 export default function EnviarArquivo() {
   const { user, userRole } = useAuth();
   const { can } = usePermissions();
+  const { company } = useCompany();
   const showCommercialSection = isCompanyAdminLevel(userRole);
   const canAssignSeller = can("vendas", "assign_seller");
   const { toast } = useToast();
@@ -473,6 +475,14 @@ export default function EnviarArquivo() {
 
       // Converte valor para número
       const valorNumerico = parseFloat(valor.replace(/\./g, "").replace(",", "."));
+
+      // Validate seller attribution via centralized eligibility service
+      if (sellerProfileId && company?.id) {
+        const sellerValidation = await validateSellerForAttribution(sellerProfileId, company.id);
+        if (!sellerValidation.valid) {
+          throw new Error(`Vendedor inválido para atribuição: ${sellerValidation.reason}`);
+        }
+      }
 
       // Insere o registro no banco com campos de auditoria de placa
       // Nota: Campos de auditoria adicionados via migração - cast para any para evitar erro de tipo
