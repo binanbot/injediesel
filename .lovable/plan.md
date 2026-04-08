@@ -51,8 +51,27 @@ Aplicado `<PermissionGuard>` em:
 - Status: atingida / saudável / em risco / crítica
 - Integrado com audit trail
 
+## ✅ Bloco 6 — Expansão de auditoria e painel de metas (concluído)
+
+- Audit integrado em:
+  - Ativação/desativação de colaborador (Colaboradores.tsx)
+  - Criação/edição de colaborador (ColaboradorFormDialog)
+  - Ativação/desativação de vendedor
+  - Alteração de comissão, modalidade, max_discount_pct
+  - Alteração de status de ticket (Suporte.tsx)
+  - Alteração de status de pedido (orderStatusService, orderAdminStatusService)
+- Novos tipos de audit: order.status_changed, order.payment_status_changed, export.executed
+- Novos módulos de audit: pedidos, exportacoes
+- Labels atualizados em Auditoria.tsx
+- Painel de metas evoluído com:
+  - Ranking por atingimento, faturamento ou gap
+  - Forecast de fechamento baseado em dias transcorridos
+  - Alerta de risco para forecast < 80%
+  - Contadores de metas atingidas/críticas
+  - Indicador de progresso do período
+
 ## Próximos passos sugeridos
-1. Integrar audit em mais pontos (colaboradores, vendedores, tickets)
-2. Painel do vendedor individual (visão própria de desempenho)
-3. Edição/exclusão de metas existentes
-4. Relatório de auditoria exportável
+1. Painel do vendedor individual (visão própria de desempenho)
+2. Edição/exclusão de metas existentes
+3. Relatório de auditoria exportável
+4. Histórico de metas por vendedor (períodos anteriores)
