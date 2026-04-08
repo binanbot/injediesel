@@ -26,6 +26,8 @@ const MODULE_LABELS: Record<string, string> = {
   suporte: "Suporte",
   comercial: "Comercial",
   metas: "Metas",
+  pedidos: "Pedidos",
+  exportacoes: "Exportações",
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -42,9 +44,12 @@ const ACTION_LABELS: Record<string, string> = {
   "permission_override.set": "Override aplicado",
   "permission_override.removed": "Override removido",
   "ticket.status_changed": "Status do ticket alterado",
+  "order.status_changed": "Status do pedido alterado",
+  "order.payment_status_changed": "Pagamento alterado",
   "discount_policy.violated": "Violação de desconto",
   "sales_target.created": "Meta criada",
   "sales_target.updated": "Meta atualizada",
+  "export.executed": "Exportação realizada",
 };
 
 const ACTION_COLORS: Record<string, string> = {
