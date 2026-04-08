@@ -22,7 +22,11 @@ export type AuditAction =
   | "sales_target.created"
   | "sales_target.updated"
   | "export.executed"
-  | "customer.primary_seller_changed";
+  | "customer.primary_seller_changed"
+  | "file.attribution_set"
+  | "file.attribution_changed"
+  | "service.attribution_set"
+  | "service.attribution_changed";
 
 export type AuditModule =
   | "permissoes"
