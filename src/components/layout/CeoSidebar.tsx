@@ -14,8 +14,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/useAuth";
+import { useChannelPaths } from "@/hooks/useChannelPaths";
 
-const menuItems = [
+const RAW_MENU_ITEMS = [
   { icon: LayoutDashboard, label: "Painel Executivo", path: "/ceo", badge: null },
   { icon: TrendingUp, label: "Receita & Crescimento", path: "/ceo/receita", badge: null },
   { icon: PieChart, label: "Market Share", path: "/ceo/market-share", badge: null },
@@ -34,6 +35,12 @@ export function CeoSidebar({ isOpen = true, onClose, collapsed = false, onToggle
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { resolve } = useChannelPaths();
+
+  const menuItems = RAW_MENU_ITEMS.map((item) => ({
+    ...item,
+    path: resolve(item.path, "/ceo"),
+  }));
 
   const handleLogout = async () => {
     await signOut();
@@ -55,7 +62,7 @@ export function CeoSidebar({ isOpen = true, onClose, collapsed = false, onToggle
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
           {!collapsed && (
-            <Link to="/ceo" className="flex items-center gap-2">
+            <Link to={resolve("/ceo", "/ceo")} className="flex items-center gap-2">
               <Logo size="md" />
               <span className="text-xs font-semibold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">CEO</span>
             </Link>

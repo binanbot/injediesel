@@ -10,7 +10,11 @@ export function useChannelPaths() {
   const { channel, company } = useChannel();
   
   // Check if we're in channel mode (hostname resolved a channel_type)
-  const hasExplicitChannel = new URLSearchParams(window.location.search).has("channel");
+  const hostname = window.location.hostname;
+  const isDevOrPreview = hostname === "localhost"
+    || hostname.endsWith(".lovable.app")
+    || hostname.includes("127.0.0.1");
+  const hasExplicitChannel = isDevOrPreview && new URLSearchParams(window.location.search).has("channel");
   const hasHostnameChannel = !!(company as any)?.channel_type;
   const isChannelMode = hasExplicitChannel || hasHostnameChannel;
 

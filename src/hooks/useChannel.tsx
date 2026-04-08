@@ -36,11 +36,18 @@ const ChannelContext = createContext<ChannelContextType>({
  * 4. Default: "public"
  */
 function resolveChannel(company: Company | null): ChannelType {
-  // 1. Explicit query param (dev/preview)
-  const params = new URLSearchParams(window.location.search);
-  const channelParam = params.get("channel");
-  if (channelParam && isValidChannel(channelParam)) {
-    return channelParam;
+  // 1. Explicit query param (dev/preview only — ignored on production hostnames)
+  const hostname = window.location.hostname;
+  const isDevOrPreview = hostname === "localhost" 
+    || hostname.endsWith(".lovable.app")
+    || hostname.includes("127.0.0.1");
+
+  if (isDevOrPreview) {
+    const params = new URLSearchParams(window.location.search);
+    const channelParam = params.get("channel");
+    if (channelParam && isValidChannel(channelParam)) {
+      return channelParam;
+    }
   }
 
   // 2. channel_type from company_domains RPC (stored on company object)

@@ -19,8 +19,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/hooks/useAuth";
+import { useChannelPaths } from "@/hooks/useChannelPaths";
 
-const menuItems = [
+const RAW_MENU_ITEMS = [
   { icon: LayoutDashboard, label: "Visão Geral", path: "/master" },
   { icon: Building2, label: "Empresas", path: "/master/empresas" },
   { icon: Globe, label: "Domínios", path: "/master/dominios" },
@@ -44,6 +45,12 @@ export function MasterSidebar({ isOpen = true, onClose, collapsed = false, onTog
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { resolve } = useChannelPaths();
+
+  const menuItems = RAW_MENU_ITEMS.map((item) => ({
+    ...item,
+    path: resolve(item.path, "/master"),
+  }));
 
   const handleLogout = async () => {
     await signOut();
@@ -65,7 +72,7 @@ export function MasterSidebar({ isOpen = true, onClose, collapsed = false, onTog
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
           {!collapsed && (
-            <Link to="/master" className="flex items-center gap-2">
+            <Link to={resolve("/master", "/master")} className="flex items-center gap-2">
               <Logo size="md" />
               <span className="text-xs font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded">MASTER</span>
             </Link>

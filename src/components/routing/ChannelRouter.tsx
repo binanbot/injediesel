@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Loader2 } from "lucide-react";
+import { ChannelGuard } from "@/components/auth/ChannelGuard";
 import NotFound from "@/pages/NotFound";
 
 const PageLoader = () => (
@@ -289,9 +290,11 @@ export function ChannelRouter() {
   const ChannelRouteSet = CHANNEL_ROUTES[channel];
 
   return (
-    <Suspense fallback={<PageLoader />}>
-      <ChannelRouteSet />
-    </Suspense>
+    <ChannelGuard>
+      <Suspense fallback={<PageLoader />}>
+        <ChannelRouteSet />
+      </Suspense>
+    </ChannelGuard>
   );
 }
 
