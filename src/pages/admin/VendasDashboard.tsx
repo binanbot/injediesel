@@ -178,20 +178,61 @@ export default function VendasDashboard() {
           </h1>
           <p className="text-muted-foreground text-sm capitalize">{periodLabel}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Select value={modeFilter} onValueChange={setModeFilter}>
-            <SelectTrigger className="w-36">
-              <SelectValue />
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Modalidade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="all">Modalidade</SelectItem>
               <SelectItem value="ecu">ECU</SelectItem>
               <SelectItem value="parts">Peças</SelectItem>
               <SelectItem value="both">Misto</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={channelFilter} onValueChange={setChannelFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Canal" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Canal</SelectItem>
+              <SelectItem value="counter">Balcão</SelectItem>
+              <SelectItem value="phone">Telefone</SelectItem>
+              <SelectItem value="both">Ambos</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={commissionFilter} onValueChange={setCommissionFilter}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Comissão" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Comissão</SelectItem>
+              <SelectItem value="yes">Com comissão</SelectItem>
+              <SelectItem value="no">Sem comissão</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={targetFilter} onValueChange={setTargetFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Meta" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Meta</SelectItem>
+              <SelectItem value="yes">Com meta</SelectItem>
+              <SelectItem value="no">Sem meta</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={servicesFilter} onValueChange={setServicesFilter}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Serviços" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Serviços</SelectItem>
+              <SelectItem value="yes">Vende serviços</SelectItem>
+              <SelectItem value="no">Não vende</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={saleTypeFilter} onValueChange={setSaleTypeFilter}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
