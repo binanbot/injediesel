@@ -362,6 +362,19 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
                 />
               </div>
 
+              <div className="space-y-1.5">
+                <Label>Desconto máximo (%)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={maxDiscountPct}
+                  onChange={(e) => setMaxDiscountPct(parseFloat(e.target.value) || 0)}
+                />
+                <p className="text-xs text-muted-foreground">Limite máximo de desconto que este vendedor pode aplicar.</p>
+              </div>
+
               <div className="flex gap-4">
                 <Badge variant={canSellEcu ? "default" : "outline"} className="text-xs">
                   {canSellEcu ? "✓" : "✗"} ECU/Mapa

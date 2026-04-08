@@ -187,6 +187,7 @@ export async function upsertSellerProfile(payload: {
   can_sell_parts: boolean;
   is_active: boolean;
   target_monthly?: number | null;
+  max_discount_pct?: number;
   notes?: string;
 }) {
   if (payload.id) {
