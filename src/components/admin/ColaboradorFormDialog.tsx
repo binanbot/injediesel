@@ -248,6 +248,22 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
               details: { previous: prevSeller.seller_mode, current: sellerMode },
             });
           }
+          // Audit commercial access flags
+          const flagChanges: Record<string, { prev: any; curr: any }> = {};
+          if (prevSeller.commission_enabled !== commissionEnabled) flagChanges.commission_enabled = { prev: prevSeller.commission_enabled, curr: commissionEnabled };
+          if (prevSeller.target_enabled !== targetEnabled) flagChanges.target_enabled = { prev: prevSeller.target_enabled, curr: targetEnabled };
+          if (prevSeller.can_sell_services !== canSellServices) flagChanges.can_sell_services = { prev: prevSeller.can_sell_services, curr: canSellServices };
+          if (prevSeller.sales_channel_mode !== salesChannelMode) flagChanges.sales_channel_mode = { prev: prevSeller.sales_channel_mode, curr: salesChannelMode };
+          if (Object.keys(flagChanges).length > 0) {
+            logAuditEvent({
+              action: "seller.commercial_access_changed",
+              module: "vendedores",
+              companyId,
+              targetType: "seller_profile",
+              targetId: prevSeller.id,
+              details: { display_name: displayName.trim(), changes: flagChanges },
+            });
+          }
         } else {
           logAuditEvent({
             action: "seller.activated",
