@@ -666,11 +666,27 @@ export default function EnviarArquivo() {
             <ClienteSelect
               value={clienteId}
               onChange={setClienteId}
+              onCustomerSelect={(c) => setClientePrimarySellerId(c?.primary_seller_id ?? null)}
               onAddNew={() => setNovoClienteDrawerOpen(true)}
               refreshSignal={clienteRefreshSignal}
             />
           </CardContent>
         </Card>
+
+        {/* Atribuição Comercial — visível apenas para admins/operadores */}
+        {showCommercialSection && (
+          <CommercialAttributionSection
+            primarySellerId={clientePrimarySellerId}
+            sellerProfileId={sellerProfileId}
+            saleChannel={saleChannel}
+            filterCanSellEcu
+            canAssignSeller={canAssignSeller}
+            onChange={(data) => {
+              if (data.seller_profile_id !== undefined) setSellerProfileId(data.seller_profile_id);
+              if (data.sale_channel !== undefined) setSaleChannel(data.sale_channel);
+            }}
+          />
+        )
 
         {/* Categoria e Serviço */}
         <Card className="glass-card">
