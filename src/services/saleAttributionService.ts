@@ -42,7 +42,7 @@ export async function getAttributionStats(opts: {
     .select("id, operator_user_id, seller_profile_id, customer_id, sale_channel, total_amount")
     .gte("created_at", opts.startDate)
     .lte("created_at", opts.endDate)
-    .not("status", "in", '("cancelado","reembolsado")');
+    .not("status", "in", EXCLUDED_STATUS_FILTER);
 
   for (const o of orders as any[]) {
     items.push({
