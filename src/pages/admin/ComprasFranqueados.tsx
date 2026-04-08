@@ -53,6 +53,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getOrderStatus, orderStatusList } from "@/utils/orderStatus";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
 
 interface Order {
   id: string;
@@ -244,17 +245,19 @@ export default function ComprasFranqueados() {
           <h1 className="text-2xl font-bold">Pedidos da Loja Promax</h1>
           <p className="text-muted-foreground">Gerencie todos os pedidos dos franqueados</p>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Exportar
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={exportCSV}>Exportar CSV</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <PermissionGuard module="pedidos" action="export">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={exportCSV}>Exportar CSV</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </PermissionGuard>
       </div>
 
       {/* Stats */}

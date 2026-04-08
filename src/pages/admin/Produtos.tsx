@@ -63,6 +63,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
 
 interface Product {
   id: string;
@@ -455,18 +456,22 @@ export default function Produtos() {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={handleExport} disabled={isExporting}>
-            {isExporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-            Exportar
-          </Button>
-          <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
-            <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Importar
-          </Button>
-          <Button onClick={openCreateDialog}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Produto
-          </Button>
+          <PermissionGuard module="catalogo" action="export">
+            <Button variant="outline" onClick={handleExport} disabled={isExporting}>
+              {isExporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+              Exportar
+            </Button>
+          </PermissionGuard>
+          <PermissionGuard module="catalogo" action="create">
+            <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Importar
+            </Button>
+            <Button onClick={openCreateDialog}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Produto
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 
