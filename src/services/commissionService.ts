@@ -17,8 +17,10 @@ export type CommissionClosingRow = {
   estimated_commission: number;
   realized_commission: number;
   status: string;
+  period_status: string;
   approved_by: string | null;
   approved_at: string | null;
+  paid_by: string | null;
   paid_at: string | null;
   notes: string | null;
   created_at: string;
@@ -63,6 +65,7 @@ export async function getCommissionClosings(
 
   return (data as any[]).map((row) => ({
     ...row,
+    period_status: row.period_status || "aberto",
     seller_name: nameMap.get(row.seller_profile_id)?.seller || "Sem nome",
     company_name: nameMap.get(row.seller_profile_id)?.company || "",
   }));
@@ -74,10 +77,9 @@ export async function generateClosing(
   periodStart: string,
   periodEnd: string
 ): Promise<void> {
-  // Fetch seller config
   const { data: seller } = await supabase
     .from("seller_profiles")
-    .select("id, commission_type, commission_value")
+    .select("id, commission_type, commission_value, commission_enabled")
     .eq("id", sellerId)
     .single();
 
@@ -108,10 +110,13 @@ export async function generateClosing(
   const totalCount = ordersCount + filesCount;
 
   let realized = 0;
-  if (seller.commission_type === "percentage") {
-    realized = totalRevenue * (Number(seller.commission_value || 0) / 100);
-  } else {
-    realized = totalCount * Number(seller.commission_value || 0);
+  const commEnabled = (seller as any).commission_enabled !== false;
+  if (commEnabled) {
+    if (seller.commission_type === "percentage") {
+      realized = totalRevenue * (Number(seller.commission_value || 0) / 100);
+    } else {
+      realized = totalCount * Number(seller.commission_value || 0);
+    }
   }
 
   const { error } = await supabase.from("commission_closings").upsert(
@@ -130,6 +135,7 @@ export async function generateClosing(
       estimated_commission: realized,
       realized_commission: realized,
       status: "apurada",
+      period_status: "em_apuracao",
     } as any,
     { onConflict: "seller_profile_id,period_start,period_end" }
   );
@@ -140,17 +146,35 @@ export async function generateClosing(
 export async function updateClosingStatus(
   id: string,
   newStatus: "aprovada" | "paga",
-  companyId?: string
+  companyId?: string,
+  notes?: string
 ): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Check if closing is locked
+  const { data: closing } = await supabase
+    .from("commission_closings")
+    .select("status, period_status")
+    .eq("id", id)
+    .single();
+
+  if (closing && (closing as any).period_status === "pago" && newStatus !== "paga") {
+    throw new Error("Período já pago. Reabra o período antes de alterar.");
+  }
+
   const updates: Record<string, unknown> = { status: newStatus };
 
   if (newStatus === "aprovada") {
     updates.approved_by = user?.id;
     updates.approved_at = new Date().toISOString();
+    updates.period_status = "fechado";
   } else if (newStatus === "paga") {
+    updates.paid_by = user?.id;
     updates.paid_at = new Date().toISOString();
+    updates.period_status = "pago";
   }
+
+  if (notes !== undefined) updates.notes = notes;
 
   const { error } = await supabase
     .from("commission_closings")
@@ -165,6 +189,59 @@ export async function updateClosingStatus(
     companyId,
     targetType: "commission_closing",
     targetId: id,
-    details: { new_status: newStatus },
+    details: { new_status: newStatus, notes },
   });
+}
+
+export async function reopenClosing(id: string, companyId?: string): Promise<void> {
+  const { error } = await supabase
+    .from("commission_closings")
+    .update({ period_status: "em_apuracao", status: "apurada", approved_by: null, approved_at: null, paid_by: null, paid_at: null } as any)
+    .eq("id", id);
+
+  if (error) throw error;
+
+  await logAuditEvent({
+    action: "sales_target.updated",
+    module: "comercial",
+    companyId,
+    targetType: "commission_closing",
+    targetId: id,
+    details: { action: "reopened" },
+  });
+}
+
+export async function updateClosingNotes(id: string, notes: string): Promise<void> {
+  const { error } = await supabase
+    .from("commission_closings")
+    .update({ notes } as any)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+/** Summary stats for the commissions view */
+export function getCommissionSummary(closings: CommissionClosingRow[]) {
+  let totalEstimated = 0;
+  let totalRealized = 0;
+  let totalPaid = 0;
+  let totalApproved = 0;
+  let totalPending = 0;
+
+  for (const c of closings) {
+    totalEstimated += c.estimated_commission;
+    totalRealized += c.realized_commission;
+    if (c.status === "paga") totalPaid += c.realized_commission;
+    else if (c.status === "aprovada") totalApproved += c.realized_commission;
+    else totalPending += c.realized_commission;
+  }
+
+  return {
+    totalEstimated,
+    totalRealized,
+    totalPaid,
+    totalApproved,
+    totalPending,
+    divergence: totalEstimated - totalRealized,
+    count: closings.length,
+  };
 }

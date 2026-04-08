@@ -50,7 +50,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getSellerRanking, upsertSalesTarget, type SellerRankingRow } from "@/services/salesRankingService";
-import { getCommissionClosings, generateClosing, updateClosingStatus, type CommissionClosingRow } from "@/services/commissionService";
+import { getCommissionClosings, generateClosing, updateClosingStatus, reopenClosing, updateClosingNotes, getCommissionSummary, type CommissionClosingRow } from "@/services/commissionService";
 import { buildTeamSummaries } from "@/services/teamPerformanceService";
 import { logAuditEvent } from "@/services/auditService";
 import { useAuth } from "@/hooks/useAuth";
@@ -797,11 +797,15 @@ function CommissionsView({
   const queryClient = useQueryClient();
   const periodStart = format(dateRange.from, "yyyy-MM-dd");
   const periodEnd = format(dateRange.to, "yyyy-MM-dd");
+  const [editingNotes, setEditingNotes] = useState<string | null>(null);
+  const [notesText, setNotesText] = useState("");
 
   const { data: closings = [], isLoading } = useQuery({
     queryKey: ["commission-closings", periodStart, periodEnd, companyId],
     queryFn: () => getCommissionClosings({ startDate: periodStart, endDate: periodEnd, companyId }),
   });
+
+  const summary = useMemo(() => getCommissionSummary(closings), [closings]);
 
   const generateMutation = useMutation({
     mutationFn: async (seller: SellerRankingRow) => {
@@ -825,23 +829,80 @@ function CommissionsView({
     onError: (err: any) => toast.error(err.message),
   });
 
+  const reopenMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await reopenClosing(id, companyId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["commission-closings"] });
+      toast.success("Fechamento reaberto");
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const notesMutation = useMutation({
+    mutationFn: async ({ id, notes }: { id: string; notes: string }) => {
+      await updateClosingNotes(id, notes);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["commission-closings"] });
+      setEditingNotes(null);
+      toast.success("Observações salvas");
+    },
+  });
+
+  const handleExport = () => {
+    if (!closings.length) return;
+    const header = "Vendedor,Empresa,Receita,Comissão Est.,Comissão Real.,Status,Período,Aprovação,Pagamento\n";
+    const rows = closings.map((c) =>
+      [c.seller_name, c.company_name, c.total_revenue.toFixed(2), c.estimated_commission.toFixed(2), c.realized_commission.toFixed(2), c.status, `${c.period_start} a ${c.period_end}`, c.approved_at ? new Date(c.approved_at).toLocaleDateString("pt-BR") : "-", c.paid_at ? new Date(c.paid_at).toLocaleDateString("pt-BR") : "-"].join(",")
+    ).join("\n");
+    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `comissoes_${periodStart}_${periodEnd}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    logAuditEvent({ action: "export.executed", module: "comercial", companyId, details: { type: "commission_closings", period: `${periodStart}..${periodEnd}`, count: closings.length } });
+  };
+
   const statusBadge: Record<string, { label: string; className: string }> = {
     apurada: { label: "Apurada", className: "bg-amber-500/20 text-amber-600 border-amber-500/30" },
     aprovada: { label: "Aprovada", className: "bg-blue-500/20 text-blue-600 border-blue-500/30" },
     paga: { label: "Paga", className: "bg-emerald-500/20 text-emerald-600 border-emerald-500/30" },
   };
 
+  const periodBadge: Record<string, { label: string; className: string }> = {
+    aberto: { label: "Aberto", className: "bg-secondary text-muted-foreground" },
+    em_apuracao: { label: "Em apuração", className: "bg-amber-500/20 text-amber-600" },
+    fechado: { label: "Fechado", className: "bg-blue-500/20 text-blue-600" },
+    pago: { label: "Pago", className: "bg-emerald-500/20 text-emerald-600" },
+  };
+
   const sellersWithoutClosing = sellers.filter(
-    (s) => !closings.some((c) => c.seller_profile_id === s.seller_profile_id)
+    (s) => s.commission_enabled && !closings.some((c) => c.seller_profile_id === s.seller_profile_id)
   );
 
   return (
     <div className="space-y-4">
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">Estimada</p><p className="text-lg font-bold">{fmtCurrency(summary.totalEstimated)}</p></CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">Realizada</p><p className="text-lg font-bold">{fmtCurrency(summary.totalRealized)}</p></CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">Pendente</p><p className="text-lg font-bold text-amber-600">{fmtCurrency(summary.totalPending)}</p></CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">Aprovada</p><p className="text-lg font-bold text-blue-600">{fmtCurrency(summary.totalApproved)}</p></CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3"><p className="text-xs text-muted-foreground">Paga</p><p className="text-lg font-bold text-emerald-600">{fmtCurrency(summary.totalPaid)}</p></CardContent></Card>
+      </div>
+
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Banknote className="h-5 w-5 text-primary" />
           Comissões do Período
         </h3>
+        {closings.length > 0 && (
+          <Button size="sm" variant="outline" onClick={handleExport}>Exportar CSV</Button>
+        )}
       </div>
 
       {sellersWithoutClosing.length > 0 && (
@@ -852,15 +913,8 @@ function CommissionsView({
           <CardContent>
             <div className="flex flex-wrap gap-2">
               {sellersWithoutClosing.map((s) => (
-                <Button
-                  key={s.seller_profile_id}
-                  size="sm"
-                  variant="outline"
-                  onClick={() => generateMutation.mutate(s)}
-                  disabled={generateMutation.isPending}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  {s.seller_name}
+                <Button key={s.seller_profile_id} size="sm" variant="outline" onClick={() => generateMutation.mutate(s)} disabled={generateMutation.isPending}>
+                  <Plus className="h-3 w-3 mr-1" />{s.seller_name}
                 </Button>
               ))}
             </div>
@@ -878,43 +932,64 @@ function CommissionsView({
             <div className="space-y-3">
               {closings.map((c) => {
                 const badge = statusBadge[c.status] || statusBadge.apurada;
+                const pBadge = periodBadge[c.period_status] || periodBadge.aberto;
+                const divergence = c.estimated_commission - c.realized_commission;
+                const isLocked = c.period_status === "pago";
+
                 return (
-                  <div key={c.id} className="p-4 rounded-xl border border-border/50 bg-secondary/10">
+                  <div key={c.id} className={cn("p-4 rounded-xl border transition-colors", isLocked ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/50 bg-secondary/10")}>
                     <div className="flex items-center justify-between mb-2">
                       <div>
                         <p className="font-medium">{c.seller_name}</p>
                         <p className="text-xs text-muted-foreground">{c.company_name}</p>
                       </div>
-                      <Badge variant="outline" className={badge.className}>{badge.label}</Badge>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-2">
-                      <div>
-                        <span className="text-muted-foreground">Receita</span>
-                        <p className="font-semibold">{fmtCurrency(c.total_revenue)}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Comissão est.</span>
-                        <p className="font-semibold">{fmtCurrency(c.estimated_commission)}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Comissão real.</span>
-                        <p className="font-semibold">{fmtCurrency(c.realized_commission)}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Vendas</span>
-                        <p className="font-semibold">{c.orders_count} ped. + {c.files_count} arq.</p>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className={pBadge.className}>{pBadge.label}</Badge>
+                        <Badge variant="outline" className={badge.className}>{badge.label}</Badge>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      {c.status === "apurada" && (
-                        <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: c.id, status: "aprovada" })}>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs mb-2">
+                      <div><span className="text-muted-foreground">Receita</span><p className="font-semibold">{fmtCurrency(c.total_revenue)}</p></div>
+                      <div><span className="text-muted-foreground">Comissão est.</span><p className="font-semibold">{fmtCurrency(c.estimated_commission)}</p></div>
+                      <div><span className="text-muted-foreground">Comissão real.</span><p className="font-semibold">{fmtCurrency(c.realized_commission)}</p></div>
+                      <div><span className="text-muted-foreground">Vendas</span><p className="font-semibold">{c.orders_count} ped. + {c.files_count} arq.</p></div>
+                      {divergence !== 0 && (
+                        <div><span className="text-muted-foreground">Divergência</span><p className={cn("font-semibold", divergence > 0 ? "text-amber-600" : "text-destructive")}>{fmtCurrency(Math.abs(divergence))}</p></div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-4 text-[10px] text-muted-foreground mb-2">
+                      {c.approved_at && <span>Aprovada: {new Date(c.approved_at).toLocaleDateString("pt-BR")}</span>}
+                      {c.paid_at && <span>Paga: {new Date(c.paid_at).toLocaleDateString("pt-BR")}</span>}
+                    </div>
+
+                    {editingNotes === c.id ? (
+                      <div className="flex gap-2 mb-2">
+                        <Input value={notesText} onChange={(e) => setNotesText(e.target.value)} placeholder="Observações..." className="text-xs h-8" />
+                        <Button size="sm" variant="outline" className="h-8" onClick={() => notesMutation.mutate({ id: c.id, notes: notesText })}>Salvar</Button>
+                        <Button size="sm" variant="ghost" className="h-8" onClick={() => setEditingNotes(null)}>✗</Button>
+                      </div>
+                    ) : c.notes ? (
+                      <p className="text-xs text-muted-foreground mb-2 cursor-pointer hover:text-foreground" onClick={() => { setEditingNotes(c.id); setNotesText(c.notes || ""); }}>📝 {c.notes}</p>
+                    ) : null}
+
+                    <div className="flex gap-2 flex-wrap">
+                      {!c.notes && editingNotes !== c.id && (
+                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setEditingNotes(c.id); setNotesText(""); }}>Obs.</Button>
+                      )}
+                      {c.status === "apurada" && !isLocked && (
+                        <Button size="sm" variant="outline" className="h-7" onClick={() => statusMutation.mutate({ id: c.id, status: "aprovada" })}>
                           <CheckCircle className="h-3 w-3 mr-1" /> Aprovar
                         </Button>
                       )}
-                      {c.status === "aprovada" && (
-                        <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: c.id, status: "paga" })}>
+                      {c.status === "aprovada" && !isLocked && (
+                        <Button size="sm" variant="outline" className="h-7" onClick={() => statusMutation.mutate({ id: c.id, status: "paga" })}>
                           <Banknote className="h-3 w-3 mr-1" /> Marcar Paga
                         </Button>
+                      )}
+                      {isLocked && (
+                        <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground" onClick={() => reopenMutation.mutate(c.id)}>Reabrir</Button>
                       )}
                     </div>
                   </div>

@@ -167,8 +167,10 @@ export type Database = {
           orders_count: number
           orders_revenue: number
           paid_at: string | null
+          paid_by: string | null
           period_end: string
           period_start: string
+          period_status: string
           realized_commission: number
           seller_profile_id: string
           status: string
@@ -190,8 +192,10 @@ export type Database = {
           orders_count?: number
           orders_revenue?: number
           paid_at?: string | null
+          paid_by?: string | null
           period_end: string
           period_start: string
+          period_status?: string
           realized_commission?: number
           seller_profile_id: string
           status?: string
@@ -213,8 +217,10 @@ export type Database = {
           orders_count?: number
           orders_revenue?: number
           paid_at?: string | null
+          paid_by?: string | null
           period_end?: string
           period_start?: string
+          period_status?: string
           realized_commission?: number
           seller_profile_id?: string
           status?: string
