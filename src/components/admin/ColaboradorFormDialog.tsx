@@ -551,6 +551,18 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
             </div>
           )}
 
+          {/* Custos do colaborador — só mostra em edição */}
+          {isEditing && employee && (
+            <>
+              <Separator />
+              <EmployeeCostsPanel
+                employeeProfileId={employee.id}
+                companyId={companyId}
+                employeeName={employee.display_name || undefined}
+              />
+            </>
+          )}
+
           <Separator />
 
           <div className="flex justify-end gap-3">
