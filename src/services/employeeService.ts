@@ -32,10 +32,11 @@ export interface SellerRow {
   target_monthly: number | null;
   notes: string | null;
   max_discount_pct: number;
-  sales_channel_mode: "counter" | "phone" | "both";
+  sales_channel_mode: string;
   can_sell_services: boolean;
   commission_enabled: boolean;
   target_enabled: boolean;
+  allowed_sales_channels: string[];
 }
 
 /** Fetch active sellers for a company (for use in dropdowns/selectors) */
@@ -43,13 +44,17 @@ export interface SellerRow {
  *  Optionally filter by what the seller is allowed to sell. */
 export async function fetchActiveSellers(
   companyId: string,
-  opts?: { canSellServices?: boolean; canSellProducts?: boolean }
+  opts?: { canSellServices?: boolean; canSellProducts?: boolean; saleChannel?: string }
 ): Promise<(EmployeeRow & { seller_profile: SellerRow })[]> {
   const employees = await fetchEmployees({ companyId, isActive: true, isSeller: true });
   return employees.filter((e): e is EmployeeRow & { seller_profile: SellerRow } => {
     if (!e.seller_profile || !e.seller_profile.is_active) return false;
     if (opts?.canSellServices && !e.seller_profile.can_sell_services) return false;
     if (opts?.canSellProducts && !(e.seller_profile.can_sell_ecu || e.seller_profile.can_sell_parts)) return false;
+    if (opts?.saleChannel) {
+      const channels = e.seller_profile.allowed_sales_channels || ["whatsapp", "telefone", "balcao"];
+      if (!channels.includes(opts.saleChannel)) return false;
+    }
     return true;
   });
 }
