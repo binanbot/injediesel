@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { SERVICES_ELIGIBLE, EXCLUDED_STATUS_FILTER } from "@/services/commercialEligibilityService";
 
 export type SellerRankingRow = {
   seller_profile_id: string;
