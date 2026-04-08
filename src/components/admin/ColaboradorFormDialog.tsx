@@ -60,6 +60,10 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
   const [sellerActive, setSellerActive] = useState(true);
   const [targetMonthly, setTargetMonthly] = useState<number>(0);
   const [maxDiscountPct, setMaxDiscountPct] = useState<number>(0);
+  const [salesChannelMode, setSalesChannelMode] = useState<string>("both");
+  const [canSellServices, setCanSellServices] = useState(true);
+  const [commissionEnabled, setCommissionEnabled] = useState(true);
+  const [targetEnabled, setTargetEnabled] = useState(true);
 
   // Populate on edit
   useEffect(() => {
@@ -84,6 +88,10 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
         setSellerActive(employee.seller_profile.is_active);
         setTargetMonthly(employee.seller_profile.target_monthly || 0);
         setMaxDiscountPct(employee.seller_profile.max_discount_pct || 0);
+        setSalesChannelMode(employee.seller_profile.sales_channel_mode || "both");
+        setCanSellServices(employee.seller_profile.can_sell_services ?? true);
+        setCommissionEnabled(employee.seller_profile.commission_enabled ?? true);
+        setTargetEnabled(employee.seller_profile.target_enabled ?? true);
       } else {
         setIsSeller(false);
         resetSellerFields();
@@ -102,6 +110,10 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
     setSellerActive(true);
     setTargetMonthly(0);
     setMaxDiscountPct(0);
+    setSalesChannelMode("both");
+    setCanSellServices(true);
+    setCommissionEnabled(true);
+    setTargetEnabled(true);
   };
 
   const resetForm = () => {
@@ -195,6 +207,10 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
           is_active: sellerActive,
           target_monthly: targetMonthly || null,
           max_discount_pct: maxDiscountPct,
+          sales_channel_mode: salesChannelMode,
+          can_sell_services: canSellServices,
+          commission_enabled: commissionEnabled,
+          target_enabled: targetEnabled,
         });
 
         // Audit seller-specific changes
@@ -230,6 +246,22 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
               targetType: "seller_profile",
               targetId: prevSeller.id,
               details: { previous: prevSeller.seller_mode, current: sellerMode },
+            });
+          }
+          // Audit commercial access flags
+          const flagChanges: Record<string, { prev: any; curr: any }> = {};
+          if (prevSeller.commission_enabled !== commissionEnabled) flagChanges.commission_enabled = { prev: prevSeller.commission_enabled, curr: commissionEnabled };
+          if (prevSeller.target_enabled !== targetEnabled) flagChanges.target_enabled = { prev: prevSeller.target_enabled, curr: targetEnabled };
+          if (prevSeller.can_sell_services !== canSellServices) flagChanges.can_sell_services = { prev: prevSeller.can_sell_services, curr: canSellServices };
+          if (prevSeller.sales_channel_mode !== salesChannelMode) flagChanges.sales_channel_mode = { prev: prevSeller.sales_channel_mode, curr: salesChannelMode };
+          if (Object.keys(flagChanges).length > 0) {
+            logAuditEvent({
+              action: "seller.commercial_access_changed",
+              module: "vendedores",
+              companyId,
+              targetType: "seller_profile",
+              targetId: prevSeller.id,
+              details: { display_name: displayName.trim(), changes: flagChanges },
             });
           }
         } else {
@@ -361,18 +393,41 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
           </div>
 
-          {/* Seller section */}
+          {/* Acesso Comercial section */}
           <Separator />
           <div className="flex items-center gap-3">
             <Switch checked={isSeller} onCheckedChange={setIsSeller} />
             <Label className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4" />
-              Este colaborador é vendedor
+              Acesso Comercial
             </Label>
+            {isSeller && (
+              <Badge variant="secondary" className="text-xs">Habilitado</Badge>
+            )}
           </div>
 
           {isSeller && (
             <div className="space-y-4 pl-2 border-l-2 border-primary/20">
+              {/* Configurações gerais */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Canal de venda</Label>
+                  <Select value={salesChannelMode} onValueChange={setSalesChannelMode}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="counter">Balcão</SelectItem>
+                      <SelectItem value="phone">Telefone</SelectItem>
+                      <SelectItem value="both">Ambos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-3 pt-6">
+                  <Switch checked={sellerActive} onCheckedChange={setSellerActive} />
+                  <Label>Vendedor ativo</Label>
+                </div>
+              </div>
+
+              {/* O que pode vender */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label>Modalidade de venda</Label>
@@ -386,47 +441,79 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
                   </Select>
                 </div>
                 <div className="flex items-center gap-3 pt-6">
-                  <Switch checked={sellerActive} onCheckedChange={setSellerActive} />
-                  <Label>Vendedor ativo</Label>
+                  <Switch checked={canSellServices} onCheckedChange={setCanSellServices} />
+                  <Label>Pode vender serviços</Label>
                 </div>
               </div>
 
+              <div className="flex gap-4">
+                <Badge variant={canSellEcu ? "default" : "outline"} className="text-xs">
+                  {canSellEcu ? "✓" : "✗"} ECU/Mapa
+                </Badge>
+                <Badge variant={canSellParts ? "default" : "outline"} className="text-xs">
+                  {canSellParts ? "✓" : "✗"} Peças
+                </Badge>
+                <Badge variant={canSellServices ? "default" : "outline"} className="text-xs">
+                  {canSellServices ? "✓" : "✗"} Serviços
+                </Badge>
+              </div>
+
+              <Separator className="my-2" />
+
+              {/* Participação em metas e comissão */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label>Tipo de comissão</Label>
-                  <Select value={commissionType} onValueChange={setCommissionType}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="percentage">Percentual (%)</SelectItem>
-                      <SelectItem value="fixed">Valor fixo (R$)</SelectItem>
-                      <SelectItem value="tiered">Escalonada</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="flex items-center gap-3">
+                  <Switch checked={targetEnabled} onCheckedChange={setTargetEnabled} />
+                  <Label>Participa de metas</Label>
                 </div>
+                <div className="flex items-center gap-3">
+                  <Switch checked={commissionEnabled} onCheckedChange={setCommissionEnabled} />
+                  <Label>Tem direito a comissão</Label>
+                </div>
+              </div>
+
+              {/* Comissão - condicional */}
+              {commissionEnabled && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Tipo de comissão</Label>
+                    <Select value={commissionType} onValueChange={setCommissionType}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="percentage">Percentual (%)</SelectItem>
+                        <SelectItem value="fixed">Valor fixo (R$)</SelectItem>
+                        <SelectItem value="tiered">Escalonada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>
+                      {commissionType === "percentage" ? "Percentual (%)" : "Valor (R$)"}
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={commissionType === "percentage" ? 0.5 : 0.01}
+                      value={commissionValue}
+                      onChange={(e) => setCommissionValue(parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Meta mensal - condicional */}
+              {targetEnabled && (
                 <div className="space-y-1.5">
-                  <Label>
-                    {commissionType === "percentage" ? "Percentual (%)" : "Valor (R$)"}
-                  </Label>
+                  <Label>Meta mensal (R$)</Label>
                   <Input
                     type="number"
                     min={0}
-                    step={commissionType === "percentage" ? 0.5 : 0.01}
-                    value={commissionValue}
-                    onChange={(e) => setCommissionValue(parseFloat(e.target.value) || 0)}
+                    step={100}
+                    value={targetMonthly}
+                    onChange={(e) => setTargetMonthly(parseFloat(e.target.value) || 0)}
                   />
                 </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>Meta mensal (R$)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  step={100}
-                  value={targetMonthly}
-                  onChange={(e) => setTargetMonthly(parseFloat(e.target.value) || 0)}
-                />
-              </div>
+              )}
 
               <div className="space-y-1.5">
                 <Label>Desconto máximo (%)</Label>
@@ -439,15 +526,6 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
                   onChange={(e) => setMaxDiscountPct(parseFloat(e.target.value) || 0)}
                 />
                 <p className="text-xs text-muted-foreground">Limite máximo de desconto que este vendedor pode aplicar.</p>
-              </div>
-
-              <div className="flex gap-4">
-                <Badge variant={canSellEcu ? "default" : "outline"} className="text-xs">
-                  {canSellEcu ? "✓" : "✗"} ECU/Mapa
-                </Badge>
-                <Badge variant={canSellParts ? "default" : "outline"} className="text-xs">
-                  {canSellParts ? "✓" : "✗"} Peças
-                </Badge>
               </div>
             </div>
           )}

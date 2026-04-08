@@ -32,6 +32,10 @@ export interface SellerRow {
   target_monthly: number | null;
   notes: string | null;
   max_discount_pct: number;
+  sales_channel_mode: "counter" | "phone" | "both";
+  can_sell_services: boolean;
+  commission_enabled: boolean;
+  target_enabled: boolean;
 }
 
 /** Fetch active sellers for a company (for use in dropdowns/selectors) */
@@ -189,6 +193,10 @@ export async function upsertSellerProfile(payload: {
   target_monthly?: number | null;
   max_discount_pct?: number;
   notes?: string;
+  sales_channel_mode?: string;
+  can_sell_services?: boolean;
+  commission_enabled?: boolean;
+  target_enabled?: boolean;
 }) {
   if (payload.id) {
     const { id, ...rest } = payload;

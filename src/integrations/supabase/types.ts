@@ -1521,6 +1521,8 @@ export type Database = {
           can_bill: boolean
           can_sell_ecu: boolean
           can_sell_parts: boolean
+          can_sell_services: boolean
+          commission_enabled: boolean
           commission_type: string
           commission_value: number
           created_at: string
@@ -1529,7 +1531,9 @@ export type Database = {
           is_active: boolean
           max_discount_pct: number
           notes: string | null
+          sales_channel_mode: string
           seller_mode: string
+          target_enabled: boolean
           target_monthly: number | null
           updated_at: string
         }
@@ -1537,6 +1541,8 @@ export type Database = {
           can_bill?: boolean
           can_sell_ecu?: boolean
           can_sell_parts?: boolean
+          can_sell_services?: boolean
+          commission_enabled?: boolean
           commission_type?: string
           commission_value?: number
           created_at?: string
@@ -1545,7 +1551,9 @@ export type Database = {
           is_active?: boolean
           max_discount_pct?: number
           notes?: string | null
+          sales_channel_mode?: string
           seller_mode?: string
+          target_enabled?: boolean
           target_monthly?: number | null
           updated_at?: string
         }
@@ -1553,6 +1561,8 @@ export type Database = {
           can_bill?: boolean
           can_sell_ecu?: boolean
           can_sell_parts?: boolean
+          can_sell_services?: boolean
+          commission_enabled?: boolean
           commission_type?: string
           commission_value?: number
           created_at?: string
@@ -1561,7 +1571,9 @@ export type Database = {
           is_active?: boolean
           max_discount_pct?: number
           notes?: string | null
+          sales_channel_mode?: string
           seller_mode?: string
+          target_enabled?: boolean
           target_monthly?: number | null
           updated_at?: string
         }

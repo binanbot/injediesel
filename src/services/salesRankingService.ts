@@ -19,6 +19,11 @@ export type SellerRankingRow = {
   max_discount_pct: number;
   target_value: number | null;
   target_progress: number | null;
+  // Commercial access flags
+  sales_channel_mode: string;
+  can_sell_services: boolean;
+  commission_enabled: boolean;
+  target_enabled: boolean;
 };
 
 export type SalesTargetRow = {
@@ -52,6 +57,10 @@ export async function getSellerRanking(
       commission_type,
       commission_value,
       max_discount_pct,
+      sales_channel_mode,
+      can_sell_services,
+      commission_enabled,
+      target_enabled,
       employee_profiles!seller_profiles_employee_profile_id_fkey (
         display_name,
         company_id,
@@ -172,6 +181,10 @@ export async function getSellerRanking(
       estimated_commission: estComm,
       target_value: target,
       target_progress: target && target > 0 ? (totalRevenue / target) * 100 : null,
+      sales_channel_mode: s.sales_channel_mode || "both",
+      can_sell_services: s.can_sell_services ?? true,
+      commission_enabled: s.commission_enabled ?? true,
+      target_enabled: s.target_enabled ?? true,
     };
   });
 

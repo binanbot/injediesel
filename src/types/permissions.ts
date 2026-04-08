@@ -16,7 +16,8 @@ export type PermissionModule =
   | "rankings"
   | "catalogo"
   | "loja"
-  | "marketing";
+  | "marketing"
+  | "vendas";
 
 /** All possible actions within a module */
 export type PermissionAction =
@@ -46,7 +47,7 @@ export interface PermissionProfile {
 export const FULL_ACCESS_MODULES: PermissionModule[] = [
   "usuarios", "permissoes", "clientes", "veiculos", "arquivos_ecu",
   "servicos", "pedidos", "financeiro", "suporte", "mensagens",
-  "relatorios", "dashboards", "metas", "rankings", "catalogo", "loja", "marketing",
+  "relatorios", "dashboards", "metas", "rankings", "catalogo", "loja", "marketing", "vendas",
 ];
 
 export const ALL_ACTIONS: PermissionAction[] = [

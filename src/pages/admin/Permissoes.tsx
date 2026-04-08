@@ -80,6 +80,7 @@ const MODULE_LABELS: Record<PermissionModule, string> = {
   catalogo: "Catálogo",
   loja: "Loja",
   marketing: "Marketing",
+  vendas: "Vendas",
 };
 
 const ACTION_LABELS: Record<PermissionAction, string> = {
