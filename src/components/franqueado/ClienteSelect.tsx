@@ -35,12 +35,14 @@ export interface CustomerOption {
 interface ClienteSelectProps {
   value: string;
   onChange: (clienteId: string) => void;
+  /** Called with full customer data when a customer is selected */
+  onCustomerSelect?: (customer: CustomerOption | null) => void;
   onAddNew: () => void;
   /** Called after a new customer is created inline, so parent can auto-select */
   refreshSignal?: number;
 }
 
-export function ClienteSelect({ value, onChange, onAddNew, refreshSignal }: ClienteSelectProps) {
+export function ClienteSelect({ value, onChange, onCustomerSelect, onAddNew, refreshSignal }: ClienteSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
@@ -138,6 +140,7 @@ export function ClienteSelect({ value, onChange, onAddNew, refreshSignal }: Clie
                           value={`${c.full_name} ${c.cpf || ""} ${c.cnpj || ""} ${c.phone || ""}`}
                           onSelect={() => {
                             onChange(c.id);
+                            onCustomerSelect?.(c);
                             setOpen(false);
                           }}
                           className="flex items-center justify-between py-3 cursor-pointer"

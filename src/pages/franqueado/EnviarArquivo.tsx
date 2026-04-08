@@ -56,7 +56,10 @@ import {
 } from "@/data/servicos-categorias";
 import { ClienteSelect } from "@/components/franqueado/ClienteSelect";
 import { NovoClienteDrawer } from "@/components/franqueado/NovoClienteDrawer";
+import { CommercialAttributionSection, type CommercialAttributionData } from "@/components/admin/CommercialAttributionSection";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth, isCompanyAdminLevel } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const MAX_FILES = 2;
 
@@ -82,6 +85,10 @@ interface PlateData {
 type IncompleteField = "motor" | "transmissao";
 
 export default function EnviarArquivo() {
+  const { user, userRole } = useAuth();
+  const { can } = usePermissions();
+  const showCommercialSection = isCompanyAdminLevel(userRole);
+  const canAssignSeller = can("vendas", "assign_seller");
   const { toast } = useToast();
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -122,8 +129,13 @@ export default function EnviarArquivo() {
 
   // Cliente
   const [clienteId, setClienteId] = useState<string>("");
+  const [clientePrimarySellerId, setClientePrimarySellerId] = useState<string | null>(null);
   const [novoClienteDrawerOpen, setNovoClienteDrawerOpen] = useState(false);
   const [clienteRefreshSignal, setClienteRefreshSignal] = useState(0);
+
+  // Atribuição comercial
+  const [sellerProfileId, setSellerProfileId] = useState<string>("");
+  const [saleChannel, setSaleChannel] = useState<string>("");
 
   // Valor
   const [valor, setValor] = useState<string>("");
@@ -477,6 +489,10 @@ export default function EnviarArquivo() {
         arquivo_original_url: arquivoOriginalUrl,
         arquivo_original_nome: arquivoOriginalNome,
         status: "pending",
+        // Atribuição comercial
+        operator_user_id: userData.user.id,
+        seller_profile_id: sellerProfileId || null,
+        sale_channel: saleChannel || null,
         // Campos de auditoria de busca de placa
         plate_lookup_success: plateLookupSuccess,
         manual_vehicle_data: dadosManuais,
@@ -529,6 +545,9 @@ export default function EnviarArquivo() {
     setDadosManuais(false);
     setAceitouTermoPlaca(false);
     setClienteId("");
+    setClientePrimarySellerId(null);
+    setSellerProfileId("");
+    setSaleChannel("");
     setValor("");
     setFiles([]);
     setAceitouResponsabilidade(false);
@@ -647,11 +666,27 @@ export default function EnviarArquivo() {
             <ClienteSelect
               value={clienteId}
               onChange={setClienteId}
+              onCustomerSelect={(c) => setClientePrimarySellerId(c?.primary_seller_id ?? null)}
               onAddNew={() => setNovoClienteDrawerOpen(true)}
               refreshSignal={clienteRefreshSignal}
             />
           </CardContent>
         </Card>
+
+        {/* Atribuição Comercial — visível apenas para admins/operadores */}
+        {showCommercialSection && (
+          <CommercialAttributionSection
+            primarySellerId={clientePrimarySellerId}
+            sellerProfileId={sellerProfileId}
+            saleChannel={saleChannel}
+            filterCanSellEcu
+            canAssignSeller={canAssignSeller}
+            onChange={(data) => {
+              if (data.seller_profile_id !== undefined) setSellerProfileId(data.seller_profile_id);
+              if (data.sale_channel !== undefined) setSaleChannel(data.sale_channel);
+            }}
+          />
+        )}
 
         {/* Categoria e Serviço */}
         <Card className="glass-card">
