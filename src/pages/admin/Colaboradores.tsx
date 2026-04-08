@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Search, Users, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { ColaboradorFormDialog } from "@/components/admin/ColaboradorFormDialog";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Colaboradores() {
@@ -103,10 +104,12 @@ export default function Colaboradores() {
             {isGlobal ? "Visão global de todas as empresas" : `Equipe da ${company?.brand_name || company?.name || "empresa"}`}
           </p>
         </div>
-        <Button onClick={() => { setEditingEmployee(null); setDialogOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Colaborador
-        </Button>
+        <PermissionGuard module="usuarios" action={["create", "manage"]}>
+          <Button onClick={() => { setEditingEmployee(null); setDialogOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Colaborador
+          </Button>
+        </PermissionGuard>
       </div>
 
       {/* Filters */}
