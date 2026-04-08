@@ -1,77 +1,54 @@
 
-## ✅ Bloco 1 — PermissionGuard em páginas críticas (concluído)
+## Bloco 1 — Fechamento comercial e comissão
 
-Aplicado `<PermissionGuard>` em:
-- **Produtos** (`catalogo.export`, `catalogo.create`)
-- **Pedidos** (`pedidos.export`)
-- **Colaboradores** (`usuarios.create`, `usuarios.edit`, `usuarios.manage`)
-- **Clientes** (`clientes.export`, `clientes.create`)
-- **Suporte** (`suporte.manage` para alterar status)
+### Modelagem
+Nova tabela `commission_closings` para registrar fechamentos mensais:
+- `id`, `seller_profile_id`, `company_id`
+- `period_start`, `period_end`
+- `orders_revenue`, `files_revenue`, `total_revenue`
+- `commission_type`, `commission_value`, `estimated_commission`, `realized_commission`
+- `status`: `apurada` → `aprovada` → `paga`
+- `approved_by`, `approved_at`, `paid_at`
+- `notes`
+- RLS: company admins da própria empresa + master global
+- Audit trail integrado para mudanças de status
 
-## ✅ Bloco 2 — Página /admin/permissoes (concluído)
+### Service
+- `commissionService.ts`:
+  - `generateClosing(sellerId, period)` — calcula e insere fechamento
+  - `getClosings(filters)` — lista com filtros
+  - `updateClosingStatus(id, newStatus)` — com audit log
+  - `getClosingHistory(sellerId)` — histórico
 
-- Listagem de perfis com contagem de permissões
-- Cargos vinculados exibidos
-- Colaboradores vinculados exibidos (via posição + overrides)
-- Badge de override com tooltip
-- Clonagem de perfil
-- Matriz módulo×ação expandível com checkboxes
-- Toggle "Todos" por módulo
+### UI
+- Nova aba "Comissões" no `VendasDashboard`
+- Tabela com vendedor, período, prevista vs realizada, status, ações
+- Botões de aprovação/pagamento com confirmação
+- Badges de status coloridos
 
-## ✅ Bloco 3 — Painel comercial (concluído)
+## Bloco 2 — Painel gerencial por equipe
 
-- KPIs: faturamento, pedidos, arquivos ECU, vendedores, ticket médio, comissão
-- Ranking por faturamento, volume, ticket médio
-- Aba de Metas com progresso (atingida/saudável/em risco/crítica)
-- Aba de Descontos com análise vs política comercial (`max_discount_pct`)
-- Filtro por modalidade (ECU/Peças/Misto)
-- Filtro por tipo de venda (consolidado/ECU/peças)
-- Alertas visuais para desconto acima da política (com tooltip mostrando limite)
-- Funcional em /admin/vendas e /master/vendas
+### Service
+- `teamPerformanceService.ts`:
+  - Agrupa sellers por empresa
+  - Calcula concentração (% do top seller no total)
+  - Top performers e vendedores em risco
+  - Evolução mensal da equipe
 
-## ✅ Bloco 4 — Auditoria e Compliance (concluído)
+### UI
+- Nova aba "Equipe" no `VendasDashboard`
+- Cards: total equipe, concentração, em risco, top performer
+- Mini-ranking por modalidade
+- No `/master/vendas`: comparativo entre empresas
+- Sem alteração no `/ceo`
 
-- Tabela `audit_logs` (append-only, sem UPDATE/DELETE)
-- RLS: company admins veem própria empresa, master/ceo veem tudo
-- Service `auditService.ts` com `logAuditEvent()` e `getAuditLogs()`
-- Audit integrado em:
-  - Criação/edição/clonagem de perfil de permissão
-  - Criação de metas de vendas
-- Página `/admin/auditoria` com filtros por módulo e busca
-- Página `/master/auditoria` com visão consolidada
-- Paginação e labels humanizados
-- Sidebar atualizada em Admin e Master
-
-## ✅ Bloco 5 — Metas comerciais formais (concluído)
-
-- Formulário de criação de meta por vendedor no painel comercial
-- Seleção de vendedor, tipo de venda e valor
-- Período automático baseado no filtro ativo
-- Comissão prevista (meta) vs comissão realizada
-- Status: atingida / saudável / em risco / crítica
-- Integrado com audit trail
-
-## ✅ Bloco 6 — Expansão de auditoria e painel de metas (concluído)
-
-- Audit integrado em:
-  - Ativação/desativação de colaborador (Colaboradores.tsx)
-  - Criação/edição de colaborador (ColaboradorFormDialog)
-  - Ativação/desativação de vendedor
-  - Alteração de comissão, modalidade, max_discount_pct
-  - Alteração de status de ticket (Suporte.tsx)
-  - Alteração de status de pedido (orderStatusService, orderAdminStatusService)
-- Novos tipos de audit: order.status_changed, order.payment_status_changed, export.executed
-- Novos módulos de audit: pedidos, exportacoes
-- Labels atualizados em Auditoria.tsx
-- Painel de metas evoluído com:
-  - Ranking por atingimento, faturamento ou gap
-  - Forecast de fechamento baseado em dias transcorridos
-  - Alerta de risco para forecast < 80%
-  - Contadores de metas atingidas/críticas
-  - Indicador de progresso do período
-
-## Próximos passos sugeridos
-1. Painel do vendedor individual (visão própria de desempenho)
-2. Edição/exclusão de metas existentes
-3. Relatório de auditoria exportável
-4. Histórico de metas por vendedor (períodos anteriores)
+## Checklist
+- [ ] Migration commission_closings
+- [ ] commissionService.ts
+- [ ] teamPerformanceService.ts
+- [ ] Aba Comissões no VendasDashboard
+- [ ] Aba Equipe no VendasDashboard
+- [ ] Audit integrado em aprovação/pagamento
+- [ ] Filtros por empresa/vendedor/período
+- [ ] TypeScript sem erros
+- [ ] Funcional nas duas empresas
