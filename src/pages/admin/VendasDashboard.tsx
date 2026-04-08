@@ -382,8 +382,38 @@ function TargetsView({
   const [formSellerId, setFormSellerId] = useState("");
   const [formValue, setFormValue] = useState("");
   const [formSaleType, setFormSaleType] = useState("total");
+  const [targetSort, setTargetSort] = useState<"progress" | "revenue" | "gap">("progress");
 
   const sellersWithTargets = data.filter((r) => r.target_value !== null && r.target_value > 0);
+
+  // Forecast calculation
+  const now = new Date();
+  const daysElapsed = Math.max(1, differenceInCalendarDays(now, dateRange.from) + 1);
+  const totalDays = Math.max(1, differenceInCalendarDays(dateRange.to, dateRange.from) + 1);
+  const daysFraction = daysElapsed / totalDays;
+
+  const enriched = useMemo(() => {
+    return sellersWithTargets.map((row) => {
+      const progress = Math.min(row.target_progress || 0, 150);
+      const status = progress >= 100 ? "atingida" : progress >= 75 ? "saudável" : progress >= 50 ? "em risco" : "crítica";
+      const forecast = daysFraction > 0 ? row.total_revenue / daysFraction : 0;
+      const forecastProgress = row.target_value ? (forecast / row.target_value) * 100 : 0;
+      const gap = (row.target_value || 0) - row.total_revenue;
+      const commOnTarget = row.commission_type === "percentage"
+        ? (row.target_value || 0) * (row.commission_value / 100)
+        : 0;
+
+      return { ...row, progress, status, forecast, forecastProgress, gap, commOnTarget };
+    });
+  }, [sellersWithTargets, daysFraction]);
+
+  const sortedTargets = useMemo(() => {
+    const sorted = [...enriched];
+    if (targetSort === "progress") sorted.sort((a, b) => b.progress - a.progress);
+    else if (targetSort === "revenue") sorted.sort((a, b) => b.total_revenue - a.total_revenue);
+    else sorted.sort((a, b) => a.gap - b.gap);
+    return sorted;
+  }, [enriched, targetSort]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -427,17 +457,47 @@ function TargetsView({
     );
   }
 
+  const statusColor: Record<string, string> = {
+    atingida: "text-emerald-500",
+    "saudável": "text-emerald-400",
+    "em risco": "text-amber-500",
+    "crítica": "text-destructive",
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" />
           Progresso de Metas
         </h3>
-        <Button size="sm" onClick={() => setShowForm(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          Nova Meta
-        </Button>
+        <div className="flex gap-2">
+          <Select value={targetSort} onValueChange={(v) => setTargetSort(v as any)}>
+            <SelectTrigger className="w-40 h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="progress">% Atingimento</SelectItem>
+              <SelectItem value="revenue">Faturamento</SelectItem>
+              <SelectItem value="gap">Gap p/ Meta</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" onClick={() => setShowForm(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Nova Meta
+          </Button>
+        </div>
+      </div>
+
+      {/* Period info */}
+      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <span>Dia {daysElapsed} de {totalDays} ({(daysFraction * 100).toFixed(0)}% do período)</span>
+        {enriched.length > 0 && (
+          <span>
+            {enriched.filter(e => e.status === "atingida").length} atingida(s) •{" "}
+            {enriched.filter(e => e.status === "crítica").length} crítica(s)
+          </span>
+        )}
       </div>
 
       {/* Target creation dialog */}
@@ -497,7 +557,7 @@ function TargetsView({
         </DialogContent>
       </Dialog>
 
-      {sellersWithTargets.length === 0 ? (
+      {sortedTargets.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             Nenhuma meta configurada para o período. Clique em "Nova Meta" para começar.
@@ -507,58 +567,87 @@ function TargetsView({
         <Card>
           <CardContent className="pt-4">
             <div className="space-y-4">
-              {sellersWithTargets.map((row) => {
-                const progress = Math.min(row.target_progress || 0, 100);
-                const status = progress >= 100 ? "atingida" : progress >= 75 ? "saudável" : progress >= 50 ? "em risco" : "crítica";
-                const statusColor = {
-                  atingida: "text-emerald-500",
-                  "saudável": "text-emerald-400",
-                  "em risco": "text-amber-500",
-                  "crítica": "text-destructive",
-                }[status];
-
-                // Calculate expected commission on target vs actual
-                const commOnTarget = row.commission_type === "percentage"
-                  ? (row.target_value || 0) * (row.commission_value / 100)
-                  : 0;
-
-                return (
-                  <div key={row.seller_profile_id} className="p-4 rounded-xl border border-border/50 bg-secondary/10">
-                    <div className="flex items-center justify-between mb-2">
+              {sortedTargets.map((row, index) => (
+                <motion.div
+                  key={row.seller_profile_id}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                  className={cn(
+                    "p-4 rounded-xl border transition-colors",
+                    row.status === "crítica" ? "border-destructive/40 bg-destructive/5" :
+                    row.status === "atingida" ? "border-emerald-500/40 bg-emerald-500/5" :
+                    "border-border/50 bg-secondary/10"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-muted-foreground w-5">#{index + 1}</span>
                       <div>
                         <p className="font-medium">{row.seller_name}</p>
                         <p className="text-xs text-muted-foreground">
                           {row.company_name} • {modeLabel[row.seller_mode] || row.seller_mode}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className={cn("font-bold text-sm", statusColor)}>
-                          {progress.toFixed(0)}%
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {fmtCurrency(row.total_revenue)} / {fmtCurrency(row.target_value!)}
-                        </p>
-                      </div>
                     </div>
-                    <Progress value={progress} className="h-2" />
-                    <div className="flex items-center justify-between mt-1">
-                      <Badge variant="outline" className={cn("text-[10px]", statusColor)}>
-                        {status}
-                      </Badge>
-                      <div className="flex gap-3">
-                        <span className="text-[10px] text-muted-foreground">
-                          Comissão est.: {fmtCurrency(row.estimated_commission)}
-                        </span>
-                        {commOnTarget > 0 && (
-                          <span className="text-[10px] text-muted-foreground">
-                            Comissão meta: {fmtCurrency(commOnTarget)}
-                          </span>
-                        )}
-                      </div>
+                    <div className="text-right">
+                      <p className={cn("font-bold text-sm", statusColor[row.status])}>
+                        {row.progress.toFixed(0)}%
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {fmtCurrency(row.total_revenue)} / {fmtCurrency(row.target_value!)}
+                      </p>
                     </div>
                   </div>
-                );
-              })}
+                  <Progress value={Math.min(row.progress, 100)} className="h-2" />
+                  <div className="flex items-center justify-between mt-2 flex-wrap gap-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={cn("text-[10px]", statusColor[row.status])}>
+                        {row.status}
+                      </Badge>
+                      {row.gap > 0 && (
+                        <span className="text-[10px] text-muted-foreground">
+                          Faltam {fmtCurrency(row.gap)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-3 flex-wrap">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <span className={cn(
+                              "text-[10px] font-medium",
+                              row.forecastProgress >= 100 ? "text-emerald-500" : row.forecastProgress >= 75 ? "text-amber-500" : "text-destructive"
+                            )}>
+                              Forecast: {fmtCurrency(row.forecast)}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs">
+                              Projeção de fechamento: {row.forecastProgress.toFixed(0)}% da meta
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <span className="text-[10px] text-muted-foreground">
+                        Comissão est.: {fmtCurrency(row.estimated_commission)}
+                      </span>
+                      {row.commOnTarget > 0 && (
+                        <span className="text-[10px] text-muted-foreground">
+                          Comissão meta: {fmtCurrency(row.commOnTarget)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Alert for critical forecast */}
+                  {row.forecastProgress < 80 && row.forecastProgress > 0 && row.status !== "atingida" && (
+                    <div className="mt-2 flex items-center gap-1 text-[10px] text-destructive">
+                      <AlertTriangle className="h-3 w-3" />
+                      Projeção abaixo de 80% da meta — risco de não atingir
+                    </div>
+                  )}
+                </motion.div>
+              ))}
             </div>
           </CardContent>
         </Card>
