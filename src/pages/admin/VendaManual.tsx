@@ -204,6 +204,7 @@ export default function VendaManual() {
         items: lines.map(({ _key, ...rest }) => rest),
         payment_method: paymentMethod || undefined,
         notes: notes || undefined,
+        customer_primary_seller_id: selectedCustomer.primary_seller_id || null,
       });
     },
     onSuccess: () => {
