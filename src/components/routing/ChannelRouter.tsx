@@ -75,6 +75,7 @@ const VendasDashboard = lazy(() => import("@/pages/admin/VendasDashboard"));
 const VendaManual = lazy(() => import("@/pages/admin/VendaManual"));
 const Permissoes = lazy(() => import("@/pages/admin/Permissoes"));
 const Auditoria = lazy(() => import("@/pages/admin/Auditoria"));
+const Financeiro = lazy(() => import("@/pages/admin/Financeiro"));
 
 // Master pages
 const MasterDashboard = lazy(() => import("@/pages/master/Dashboard"));
@@ -209,6 +210,7 @@ function AdminRoutes() {
         <Route path="vendas/nova" element={<VendaManual />} />
         <Route path="permissoes" element={<Permissoes />} />
         <Route path="auditoria" element={<Auditoria />} />
+        <Route path="financeiro" element={<Financeiro />} />
       </Route>
       {/* Legacy redirect */}
       <Route path="/admin/*" element={<Navigate to="/" replace />} />
@@ -405,6 +407,7 @@ export function LegacyCombinedRoutes() {
           <Route path="vendas/nova" element={<VendaManual />} />
           <Route path="permissoes" element={<Permissoes />} />
           <Route path="auditoria" element={<Auditoria />} />
+          <Route path="financeiro" element={<Financeiro />} />
         </Route>
 
         {/* Master Admin Routes */}
