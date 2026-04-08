@@ -22,6 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ShoppingCart } from "lucide-react";
@@ -61,6 +62,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
   const [targetMonthly, setTargetMonthly] = useState<number>(0);
   const [maxDiscountPct, setMaxDiscountPct] = useState<number>(0);
   const [salesChannelMode, setSalesChannelMode] = useState<string>("both");
+  const [allowedSalesChannels, setAllowedSalesChannels] = useState<string[]>(["whatsapp", "telefone", "balcao"]);
   const [canSellServices, setCanSellServices] = useState(true);
   const [commissionEnabled, setCommissionEnabled] = useState(true);
   const [targetEnabled, setTargetEnabled] = useState(true);
@@ -89,6 +91,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
         setTargetMonthly(employee.seller_profile.target_monthly || 0);
         setMaxDiscountPct(employee.seller_profile.max_discount_pct || 0);
         setSalesChannelMode(employee.seller_profile.sales_channel_mode || "both");
+        setAllowedSalesChannels((employee.seller_profile as any).allowed_sales_channels || ["whatsapp", "telefone", "balcao"]);
         setCanSellServices(employee.seller_profile.can_sell_services ?? true);
         setCommissionEnabled(employee.seller_profile.commission_enabled ?? true);
         setTargetEnabled(employee.seller_profile.target_enabled ?? true);
@@ -111,6 +114,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
     setTargetMonthly(0);
     setMaxDiscountPct(0);
     setSalesChannelMode("both");
+    setAllowedSalesChannels(["whatsapp", "telefone", "balcao"]);
     setCanSellServices(true);
     setCommissionEnabled(true);
     setTargetEnabled(true);
@@ -211,6 +215,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
           can_sell_services: canSellServices,
           commission_enabled: commissionEnabled,
           target_enabled: targetEnabled,
+          allowed_sales_channels: allowedSalesChannels,
         });
 
         // Audit seller-specific changes
@@ -254,6 +259,8 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
           if (prevSeller.target_enabled !== targetEnabled) flagChanges.target_enabled = { prev: prevSeller.target_enabled, curr: targetEnabled };
           if (prevSeller.can_sell_services !== canSellServices) flagChanges.can_sell_services = { prev: prevSeller.can_sell_services, curr: canSellServices };
           if (prevSeller.sales_channel_mode !== salesChannelMode) flagChanges.sales_channel_mode = { prev: prevSeller.sales_channel_mode, curr: salesChannelMode };
+          const prevChannels = (prevSeller as any).allowed_sales_channels || ["whatsapp", "telefone", "balcao"];
+          if (JSON.stringify(prevChannels.sort()) !== JSON.stringify([...allowedSalesChannels].sort())) flagChanges.allowed_sales_channels = { prev: prevChannels, curr: allowedSalesChannels };
           if (Object.keys(flagChanges).length > 0) {
             logAuditEvent({
               action: "seller.commercial_access_changed",
@@ -410,16 +417,30 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
             <div className="space-y-4 pl-2 border-l-2 border-primary/20">
               {/* Configurações gerais */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label>Canal de venda</Label>
-                  <Select value={salesChannelMode} onValueChange={setSalesChannelMode}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="counter">Balcão</SelectItem>
-                      <SelectItem value="phone">Telefone</SelectItem>
-                      <SelectItem value="both">Ambos</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-2">
+                  <Label>Canais de venda permitidos</Label>
+                  <div className="space-y-2">
+                    {[
+                      { value: "whatsapp", label: "WhatsApp" },
+                      { value: "telefone", label: "Telefone" },
+                      { value: "balcao", label: "Balcão" },
+                    ].map((ch) => (
+                      <div key={ch.value} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`ch-${ch.value}`}
+                          checked={allowedSalesChannels.includes(ch.value)}
+                          onCheckedChange={(checked) => {
+                            setAllowedSalesChannels((prev) =>
+                              checked
+                                ? [...prev, ch.value]
+                                : prev.filter((c) => c !== ch.value)
+                            );
+                          }}
+                        />
+                        <label htmlFor={`ch-${ch.value}`} className="text-sm cursor-pointer">{ch.label}</label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 pt-6">
                   <Switch checked={sellerActive} onCheckedChange={setSellerActive} />

@@ -150,7 +150,7 @@ export default function VendasDashboard() {
   const filteredRanking = useMemo(() => {
     let result = ranking;
     if (modeFilter !== "all") result = result.filter((r) => r.seller_mode === modeFilter);
-    if (channelFilter !== "all") result = result.filter((r) => r.sales_channel_mode === channelFilter);
+    if (channelFilter !== "all") result = result.filter((r) => (r.allowed_sales_channels || []).includes(channelFilter));
     if (commissionFilter !== "all") result = result.filter((r) => r.commission_enabled === (commissionFilter === "yes"));
     if (targetFilter !== "all") result = result.filter((r) => r.target_enabled === (targetFilter === "yes"));
     if (servicesFilter !== "all") result = result.filter((r) => r.can_sell_services === (servicesFilter === "yes"));
@@ -196,9 +196,9 @@ export default function VendasDashboard() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Canal</SelectItem>
-              <SelectItem value="counter">Balcão</SelectItem>
-              <SelectItem value="phone">Telefone</SelectItem>
-              <SelectItem value="both">Ambos</SelectItem>
+              <SelectItem value="whatsapp">WhatsApp</SelectItem>
+              <SelectItem value="telefone">Telefone</SelectItem>
+              <SelectItem value="balcao">Balcão</SelectItem>
             </SelectContent>
           </Select>
           <Select value={commissionFilter} onValueChange={setCommissionFilter}>

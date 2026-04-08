@@ -24,6 +24,7 @@ export type SellerRankingRow = {
   can_sell_services: boolean;
   commission_enabled: boolean;
   target_enabled: boolean;
+  allowed_sales_channels: string[];
 };
 
 export type SalesTargetRow = {
@@ -46,7 +47,7 @@ type DateRange = { startDate: string; endDate: string };
  * Works across companies (for master/ceo) or scoped to one company (admin).
  */
 export async function getSellerRanking(
-  opts: DateRange & { companyId?: string; saleType?: string; commissionEnabled?: boolean; targetEnabled?: boolean; channelMode?: string; canSellServices?: boolean }
+  opts: DateRange & { companyId?: string; saleType?: string; commissionEnabled?: boolean; targetEnabled?: boolean; channelMode?: string; canSellServices?: boolean; saleChannel?: string }
 ): Promise<SellerRankingRow[]> {
   // 1. Fetch active sellers with their profiles
   let sellerQuery = supabase
@@ -61,6 +62,7 @@ export async function getSellerRanking(
       can_sell_services,
       commission_enabled,
       target_enabled,
+      allowed_sales_channels,
       employee_profiles!seller_profiles_employee_profile_id_fkey (
         display_name,
         company_id,
@@ -85,7 +87,10 @@ export async function getSellerRanking(
     filteredSellers = filteredSellers.filter((s: any) => (s.target_enabled ?? true) === opts.targetEnabled);
   }
   if (opts.channelMode && opts.channelMode !== "all") {
-    filteredSellers = filteredSellers.filter((s: any) => (s.sales_channel_mode || "both") === opts.channelMode);
+    filteredSellers = filteredSellers.filter((s: any) => {
+      const channels: string[] = s.allowed_sales_channels || ["whatsapp", "telefone", "balcao"];
+      return channels.includes(opts.channelMode!);
+    });
   }
   if (opts.canSellServices !== undefined) {
     filteredSellers = filteredSellers.filter((s: any) => (s.can_sell_services ?? true) === opts.canSellServices);
@@ -198,6 +203,7 @@ export async function getSellerRanking(
       can_sell_services: s.can_sell_services ?? true,
       commission_enabled: s.commission_enabled ?? true,
       target_enabled: s.target_enabled ?? true,
+      allowed_sales_channels: s.allowed_sales_channels || ["whatsapp", "telefone", "balcao"],
     };
   });
 

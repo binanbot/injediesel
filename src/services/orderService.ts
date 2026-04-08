@@ -20,6 +20,7 @@ export async function createOrderFromCart(
   paymentNote?: string,
   sellerProfileId?: string,
   saleType: "parts" | "ecu" | "mixed" = "parts",
+  saleChannel?: string,
 ) {
   if (!items.length) {
     throw new Error("Carrinho vazio");
@@ -49,6 +50,7 @@ export async function createOrderFromCart(
       payment_note: paymentNote || null,
       seller_profile_id: sellerProfileId || null,
       sale_type: saleType,
+      sale_channel: saleChannel || null,
     })
     .select()
     .single();
