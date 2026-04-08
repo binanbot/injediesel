@@ -90,6 +90,7 @@ type IncompleteField = "motor" | "transmissao";
 export default function EnviarArquivo() {
   const { user, userRole } = useAuth();
   const { can } = usePermissions();
+  const { company } = useCompany();
   const showCommercialSection = isCompanyAdminLevel(userRole);
   const canAssignSeller = can("vendas", "assign_seller");
   const { toast } = useToast();
