@@ -91,6 +91,7 @@ const ACTION_LABELS: Record<PermissionAction, string> = {
   approve: "Aprovar",
   export: "Exportar",
   manage: "Gerenciar",
+  assign_seller: "Atribuir vendedor",
 };
 
 export default function Permissoes() {

@@ -17,6 +17,7 @@ export type AuditAction =
   | "ticket.status_changed"
   | "order.status_changed"
   | "order.payment_status_changed"
+  | "order.manual_sale_created"
   | "discount_policy.violated"
   | "sales_target.created"
   | "sales_target.updated"
@@ -30,7 +31,8 @@ export type AuditModule =
   | "comercial"
   | "metas"
   | "pedidos"
-  | "exportacoes";
+  | "exportacoes"
+  | "vendas";
 
 export interface AuditLogEntry {
   id: string;
