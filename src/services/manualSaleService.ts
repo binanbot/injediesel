@@ -41,6 +41,14 @@ export async function createManualSale(payload: ManualSalePayload) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Usuário não autenticado");
 
+  // Validate seller is eligible for commercial attribution
+  if (payload.company_id) {
+    const validation = await validateSellerForAttribution(payload.seller_profile_id, payload.company_id);
+    if (!validation.valid) {
+      throw new Error(`Vendedor inválido para atribuição: ${validation.reason}`);
+    }
+  }
+
   const subtotal = payload.items.reduce(
     (sum, item) => sum + item.unit_price * item.quantity,
     0
@@ -150,7 +158,7 @@ export async function createManualSale(payload: ManualSalePayload) {
     },
   ]);
 
-  const isOutOfWallet = !!payload.customer_primary_seller_id && payload.customer_primary_seller_id !== payload.seller_profile_id;
+  const isOutOfWallet = getWalletStatus(payload.seller_profile_id, payload.customer_primary_seller_id ?? null) === "out_of_wallet";
 
   // Check if operator is different from seller (third-party attribution)
   const sellerUserId = seller ? (await supabase
@@ -159,8 +167,10 @@ export async function createManualSale(payload: ManualSalePayload) {
     .eq("id", payload.seller_profile_id)
     .single()
   ).data : null;
-  const isThirdParty = !!(sellerUserId as any)?.employee_profiles?.user_id
-    && (sellerUserId as any).employee_profiles.user_id !== user.id;
+  const isThirdParty = isThirdPartyAttribution(
+    user.id,
+    (sellerUserId as any)?.employee_profiles?.user_id ?? null
+  );
 
   // Audit
   await logAuditEvent({
