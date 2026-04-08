@@ -39,11 +39,19 @@ export interface SellerRow {
 }
 
 /** Fetch active sellers for a company (for use in dropdowns/selectors) */
-export async function fetchActiveSellers(companyId: string): Promise<(EmployeeRow & { seller_profile: SellerRow })[]> {
+/** Fetch active sellers for a company (for use in dropdowns/selectors).
+ *  Optionally filter by what the seller is allowed to sell. */
+export async function fetchActiveSellers(
+  companyId: string,
+  opts?: { canSellServices?: boolean; canSellProducts?: boolean }
+): Promise<(EmployeeRow & { seller_profile: SellerRow })[]> {
   const employees = await fetchEmployees({ companyId, isActive: true, isSeller: true });
-  return employees.filter((e): e is EmployeeRow & { seller_profile: SellerRow } => 
-    e.seller_profile !== null && e.seller_profile.is_active
-  );
+  return employees.filter((e): e is EmployeeRow & { seller_profile: SellerRow } => {
+    if (!e.seller_profile || !e.seller_profile.is_active) return false;
+    if (opts?.canSellServices && !e.seller_profile.can_sell_services) return false;
+    if (opts?.canSellProducts && !(e.seller_profile.can_sell_ecu || e.seller_profile.can_sell_parts)) return false;
+    return true;
+  });
 }
 
 export interface DepartmentRow {
