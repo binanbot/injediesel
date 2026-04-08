@@ -31,7 +31,11 @@ function SmartRouter() {
   // Use channel routing when:
   // 1. An explicit ?channel= param is set (dev testing), OR
   // 2. The company has a channel_type from hostname resolution
-  const hasExplicitChannel = new URLSearchParams(window.location.search).has("channel");
+  const hostname = window.location.hostname;
+  const isDevOrPreview = hostname === "localhost"
+    || hostname.endsWith(".lovable.app")
+    || hostname.includes("127.0.0.1");
+  const hasExplicitChannel = isDevOrPreview && new URLSearchParams(window.location.search).has("channel");
   const hasHostnameChannel = !!(company as any)?.channel_type;
 
   if (hasExplicitChannel || hasHostnameChannel) {
