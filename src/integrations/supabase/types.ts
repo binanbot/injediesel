@@ -1390,6 +1390,7 @@ export type Database = {
           manual_vehicle_data: boolean | null
           marca: string | null
           modelo: string | null
+          operator_user_id: string | null
           placa: string
           plate_lookup_at: string | null
           plate_lookup_payload: Json | null
@@ -1419,6 +1420,7 @@ export type Database = {
           manual_vehicle_data?: boolean | null
           marca?: string | null
           modelo?: string | null
+          operator_user_id?: string | null
           placa: string
           plate_lookup_at?: string | null
           plate_lookup_payload?: Json | null
@@ -1448,6 +1450,7 @@ export type Database = {
           manual_vehicle_data?: boolean | null
           marca?: string | null
           modelo?: string | null
+          operator_user_id?: string | null
           placa?: string
           plate_lookup_at?: string | null
           plate_lookup_payload?: Json | null
@@ -1632,7 +1635,9 @@ export type Database = {
           customer_id: string
           description: string | null
           id: string
+          operator_user_id: string | null
           protocol: string | null
+          sale_channel: string | null
           sale_type: string | null
           seller_profile_id: string | null
           service_type: string
@@ -1646,7 +1651,9 @@ export type Database = {
           customer_id: string
           description?: string | null
           id?: string
+          operator_user_id?: string | null
           protocol?: string | null
+          sale_channel?: string | null
           sale_type?: string | null
           seller_profile_id?: string | null
           service_type: string
@@ -1660,7 +1667,9 @@ export type Database = {
           customer_id?: string
           description?: string | null
           id?: string
+          operator_user_id?: string | null
           protocol?: string | null
+          sale_channel?: string | null
           sale_type?: string | null
           seller_profile_id?: string | null
           service_type?: string

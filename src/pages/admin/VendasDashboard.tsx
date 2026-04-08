@@ -1168,18 +1168,18 @@ function AttributionView({ companyId, dateRange }: { companyId?: string; dateRan
     );
   }
 
-  if (!stats || stats.totalOrders === 0) {
+  if (!stats || stats.totalItems === 0) {
     return (
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
-          Nenhum pedido no período.
+          Nenhum registro no período.
         </CardContent>
       </Card>
     );
   }
 
-  const selfPct = stats.totalOrders > 0 ? (stats.selfAttributed / stats.totalOrders * 100) : 0;
-  const thirdPct = stats.totalOrders > 0 ? (stats.thirdPartyAttributed / stats.totalOrders * 100) : 0;
+  const selfPct = stats.totalItems > 0 ? (stats.selfAttributed / stats.totalItems * 100) : 0;
+  const thirdPct = stats.totalItems > 0 ? (stats.thirdPartyAttributed / stats.totalItems * 100) : 0;
   const walletMatchPct = (stats.walletMatch + stats.walletMismatch) > 0
     ? (stats.walletMatch / (stats.walletMatch + stats.walletMismatch) * 100)
     : 0;
@@ -1199,9 +1199,14 @@ function AttributionView({ companyId, dateRange }: { companyId?: string; dateRan
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <Users className="h-4 w-4 text-primary" />
-              <span className="text-xs text-muted-foreground">Total de Pedidos</span>
+              <span className="text-xs text-muted-foreground">Total Registros</span>
             </div>
-            <p className="text-lg font-bold">{stats.totalOrders}</p>
+            <p className="text-lg font-bold">{stats.totalItems}</p>
+            <div className="flex gap-2 mt-1 flex-wrap">
+              {stats.totalOrders > 0 && <Badge variant="outline" className="text-[10px]">Pedidos: {stats.totalOrders}</Badge>}
+              {stats.totalFiles > 0 && <Badge variant="outline" className="text-[10px]">Arquivos: {stats.totalFiles}</Badge>}
+              {stats.totalServices > 0 && <Badge variant="outline" className="text-[10px]">Serviços: {stats.totalServices}</Badge>}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -1236,6 +1241,31 @@ function AttributionView({ companyId, dateRange }: { companyId?: string; dateRan
         </Card>
       </div>
 
+      {/* Type breakdown */}
+      {Object.keys(stats.byType).length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Receita por Tipo</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {Object.entries(stats.byType)
+              .sort((a, b) => b[1].revenue - a[1].revenue)
+              .map(([type, data]) => {
+                const typeLabels: Record<string, string> = { order: "Pedidos", file: "Arquivos ECU", service: "Serviços" };
+                return (
+                  <div key={type} className="flex items-center justify-between text-sm">
+                    <span>{typeLabels[type] || type}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-muted-foreground text-xs">{data.count} itens</span>
+                      <span className="font-medium w-28 text-right">{fmtCurrency(data.revenue)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Channel breakdown + Wallet */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
@@ -1247,7 +1277,7 @@ function AttributionView({ companyId, dateRange }: { companyId?: string; dateRan
               <div key={ch} className="flex items-center justify-between text-sm">
                 <span>{channelLabels[ch] || ch}</span>
                 <div className="flex items-center gap-2">
-                  <Progress value={(count / stats.totalOrders) * 100} className="w-24 h-2" />
+                  <Progress value={(count / stats.totalItems) * 100} className="w-24 h-2" />
                   <span className="text-muted-foreground w-12 text-right">{count}</span>
                 </div>
               </div>
