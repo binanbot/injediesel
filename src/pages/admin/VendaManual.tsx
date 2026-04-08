@@ -303,7 +303,7 @@ export default function VendaManual() {
                         } else {
                           setSellerAutoSuggested(false);
                         }
-                      }
+                      }}
                     >
                       <p className="text-sm font-medium">{c.full_name}</p>
                       <p className="text-xs text-muted-foreground">
