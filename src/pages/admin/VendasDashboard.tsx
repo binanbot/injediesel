@@ -1241,6 +1241,31 @@ function AttributionView({ companyId, dateRange }: { companyId?: string; dateRan
         </Card>
       </div>
 
+      {/* Type breakdown */}
+      {Object.keys(stats.byType).length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Receita por Tipo</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {Object.entries(stats.byType)
+              .sort((a, b) => b[1].revenue - a[1].revenue)
+              .map(([type, data]) => {
+                const typeLabels: Record<string, string> = { order: "Pedidos", file: "Arquivos ECU", service: "Serviços" };
+                return (
+                  <div key={type} className="flex items-center justify-between text-sm">
+                    <span>{typeLabels[type] || type}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-muted-foreground text-xs">{data.count} itens</span>
+                      <span className="font-medium w-28 text-right">{fmtCurrency(data.revenue)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Channel breakdown + Wallet */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
