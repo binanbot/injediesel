@@ -16,6 +16,9 @@ import {
   Percent,
   AlertTriangle,
   Plus,
+  CheckCircle,
+  Banknote,
+  BarChart3,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -47,6 +50,8 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getSellerRanking, upsertSalesTarget, type SellerRankingRow } from "@/services/salesRankingService";
+import { getCommissionClosings, generateClosing, updateClosingStatus, type CommissionClosingRow } from "@/services/commissionService";
+import { buildTeamSummaries } from "@/services/teamPerformanceService";
 import { logAuditEvent } from "@/services/auditService";
 import { useAuth } from "@/hooks/useAuth";
 import { useCompany } from "@/hooks/useCompany";
@@ -214,12 +219,14 @@ export default function VendasDashboard() {
 
       {/* Ranking Tabs */}
       <Tabs defaultValue="revenue" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="revenue">Faturamento</TabsTrigger>
           <TabsTrigger value="orders">Volume</TabsTrigger>
           <TabsTrigger value="ticket">Ticket Médio</TabsTrigger>
           <TabsTrigger value="targets">Metas</TabsTrigger>
           <TabsTrigger value="discounts">Descontos</TabsTrigger>
+          <TabsTrigger value="commissions">Comissões</TabsTrigger>
+          <TabsTrigger value="team">Equipe</TabsTrigger>
         </TabsList>
 
         <TabsContent value="revenue">
@@ -263,6 +270,18 @@ export default function VendasDashboard() {
 
         <TabsContent value="discounts">
           <DiscountAnalysis data={filteredRanking} discountBySeller={discountBySeller} isLoading={isLoading} />
+        </TabsContent>
+
+        <TabsContent value="commissions">
+          <CommissionsView
+            sellers={filteredRanking}
+            companyId={companyId}
+            dateRange={dateRange}
+          />
+        </TabsContent>
+
+        <TabsContent value="team">
+          <TeamView data={filteredRanking} isLoading={isLoading} isMaster={isMaster} />
         </TabsContent>
       </Tabs>
     </div>
@@ -763,5 +782,234 @@ function DiscountAnalysis({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function CommissionsView({
+  sellers,
+  companyId,
+  dateRange,
+}: {
+  sellers: SellerRankingRow[];
+  companyId?: string;
+  dateRange: { from: Date; to: Date };
+}) {
+  const queryClient = useQueryClient();
+  const periodStart = format(dateRange.from, "yyyy-MM-dd");
+  const periodEnd = format(dateRange.to, "yyyy-MM-dd");
+
+  const { data: closings = [], isLoading } = useQuery({
+    queryKey: ["commission-closings", periodStart, periodEnd, companyId],
+    queryFn: () => getCommissionClosings({ startDate: periodStart, endDate: periodEnd, companyId }),
+  });
+
+  const generateMutation = useMutation({
+    mutationFn: async (seller: SellerRankingRow) => {
+      await generateClosing(seller.seller_profile_id, seller.company_id, periodStart, periodEnd);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["commission-closings"] });
+      toast.success("Fechamento gerado!");
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: "aprovada" | "paga" }) => {
+      await updateClosingStatus(id, status, companyId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["commission-closings"] });
+      toast.success("Status atualizado!");
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const statusBadge: Record<string, { label: string; className: string }> = {
+    apurada: { label: "Apurada", className: "bg-amber-500/20 text-amber-600 border-amber-500/30" },
+    aprovada: { label: "Aprovada", className: "bg-blue-500/20 text-blue-600 border-blue-500/30" },
+    paga: { label: "Paga", className: "bg-emerald-500/20 text-emerald-600 border-emerald-500/30" },
+  };
+
+  const sellersWithoutClosing = sellers.filter(
+    (s) => !closings.some((c) => c.seller_profile_id === s.seller_profile_id)
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Banknote className="h-5 w-5 text-primary" />
+          Comissões do Período
+        </h3>
+      </div>
+
+      {sellersWithoutClosing.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Gerar fechamento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {sellersWithoutClosing.map((s) => (
+                <Button
+                  key={s.seller_profile_id}
+                  size="sm"
+                  variant="outline"
+                  onClick={() => generateMutation.mutate(s)}
+                  disabled={generateMutation.isPending}
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  {s.seller_name}
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isLoading ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground">Carregando...</CardContent></Card>
+      ) : closings.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground">Nenhum fechamento gerado para o período.</CardContent></Card>
+      ) : (
+        <Card>
+          <CardContent className="pt-4">
+            <div className="space-y-3">
+              {closings.map((c) => {
+                const badge = statusBadge[c.status] || statusBadge.apurada;
+                return (
+                  <div key={c.id} className="p-4 rounded-xl border border-border/50 bg-secondary/10">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-medium">{c.seller_name}</p>
+                        <p className="text-xs text-muted-foreground">{c.company_name}</p>
+                      </div>
+                      <Badge variant="outline" className={badge.className}>{badge.label}</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-2">
+                      <div>
+                        <span className="text-muted-foreground">Receita</span>
+                        <p className="font-semibold">{fmtCurrency(c.total_revenue)}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Comissão est.</span>
+                        <p className="font-semibold">{fmtCurrency(c.estimated_commission)}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Comissão real.</span>
+                        <p className="font-semibold">{fmtCurrency(c.realized_commission)}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Vendas</span>
+                        <p className="font-semibold">{c.orders_count} ped. + {c.files_count} arq.</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {c.status === "apurada" && (
+                        <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: c.id, status: "aprovada" })}>
+                          <CheckCircle className="h-3 w-3 mr-1" /> Aprovar
+                        </Button>
+                      )}
+                      {c.status === "aprovada" && (
+                        <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: c.id, status: "paga" })}>
+                          <Banknote className="h-3 w-3 mr-1" /> Marcar Paga
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function TeamView({
+  data,
+  isLoading,
+  isMaster,
+}: {
+  data: SellerRankingRow[];
+  isLoading: boolean;
+  isMaster: boolean;
+}) {
+  const summaries = useMemo(() => buildTeamSummaries(data), [data]);
+
+  const modeLabels: Record<string, string> = { ecu: "ECU", parts: "Peças", both: "Misto" };
+
+  if (isLoading) {
+    return <Card><CardContent className="py-12 text-center text-muted-foreground">Carregando...</CardContent></Card>;
+  }
+
+  if (!summaries.length) {
+    return <Card><CardContent className="py-12 text-center text-muted-foreground">Sem dados de equipe no período.</CardContent></Card>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold flex items-center gap-2">
+        <BarChart3 className="h-5 w-5 text-primary" />
+        Performance por Equipe
+      </h3>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {summaries.map((team) => (
+          <Card key={team.companyId}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">{team.companyName}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                <div>
+                  <span className="text-xs text-muted-foreground">Vendedores</span>
+                  <p className="font-bold">{team.sellersCount}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">Faturamento</span>
+                  <p className="font-bold">{fmtCurrency(team.totalRevenue)}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">Média/vendedor</span>
+                  <p className="font-bold">{fmtCurrency(team.avgRevenue)}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">Concentração</span>
+                  <p className={cn("font-bold", team.concentrationPct > 60 ? "text-amber-500" : "text-foreground")}>
+                    {team.concentrationPct.toFixed(0)}%
+                  </p>
+                </div>
+              </div>
+
+              {team.topPerformer && (
+                <div className="flex items-center gap-2 mb-2 text-xs">
+                  <Crown className="h-3.5 w-3.5 text-yellow-500" />
+                  <span className="font-medium">{team.topPerformer.name}</span>
+                  <span className="text-muted-foreground">{fmtCurrency(team.topPerformer.revenue)}</span>
+                </div>
+              )}
+
+              {team.atRiskCount > 0 && (
+                <div className="flex items-center gap-1 text-xs text-destructive mb-2">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  {team.atRiskCount} vendedor(es) em risco
+                </div>
+              )}
+
+              <div className="flex gap-2 flex-wrap">
+                {Object.entries(team.byMode).map(([mode, { count, revenue }]) => (
+                  <Badge key={mode} variant="outline" className="text-[10px]">
+                    {modeLabels[mode] || mode}: {count} • {fmtCurrency(revenue)}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }

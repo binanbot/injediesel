@@ -151,6 +151,93 @@ export type Database = {
         }
         Relationships: []
       }
+      commission_closings: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          commission_type: string
+          commission_value: number
+          company_id: string
+          created_at: string
+          estimated_commission: number
+          files_count: number
+          files_revenue: number
+          id: string
+          notes: string | null
+          orders_count: number
+          orders_revenue: number
+          paid_at: string | null
+          period_end: string
+          period_start: string
+          realized_commission: number
+          seller_profile_id: string
+          status: string
+          total_revenue: number
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          commission_type?: string
+          commission_value?: number
+          company_id: string
+          created_at?: string
+          estimated_commission?: number
+          files_count?: number
+          files_revenue?: number
+          id?: string
+          notes?: string | null
+          orders_count?: number
+          orders_revenue?: number
+          paid_at?: string | null
+          period_end: string
+          period_start: string
+          realized_commission?: number
+          seller_profile_id: string
+          status?: string
+          total_revenue?: number
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          commission_type?: string
+          commission_value?: number
+          company_id?: string
+          created_at?: string
+          estimated_commission?: number
+          files_count?: number
+          files_revenue?: number
+          id?: string
+          notes?: string | null
+          orders_count?: number
+          orders_revenue?: number
+          paid_at?: string | null
+          period_end?: string
+          period_start?: string
+          realized_commission?: number
+          seller_profile_id?: string
+          status?: string
+          total_revenue?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_closings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_closings_seller_profile_id_fkey"
+            columns: ["seller_profile_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           brand_name: string | null
