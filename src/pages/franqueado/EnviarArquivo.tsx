@@ -545,6 +545,9 @@ export default function EnviarArquivo() {
     setDadosManuais(false);
     setAceitouTermoPlaca(false);
     setClienteId("");
+    setClientePrimarySellerId(null);
+    setSellerProfileId("");
+    setSaleChannel("");
     setValor("");
     setFiles([]);
     setAceitouResponsabilidade(false);
