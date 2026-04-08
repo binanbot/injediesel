@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { motion } from "framer-motion";
 import {
   Headphones,

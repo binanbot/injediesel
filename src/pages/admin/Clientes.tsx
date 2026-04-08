@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import {
   Search,
   Filter,
