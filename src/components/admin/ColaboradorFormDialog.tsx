@@ -259,6 +259,8 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
           if (prevSeller.target_enabled !== targetEnabled) flagChanges.target_enabled = { prev: prevSeller.target_enabled, curr: targetEnabled };
           if (prevSeller.can_sell_services !== canSellServices) flagChanges.can_sell_services = { prev: prevSeller.can_sell_services, curr: canSellServices };
           if (prevSeller.sales_channel_mode !== salesChannelMode) flagChanges.sales_channel_mode = { prev: prevSeller.sales_channel_mode, curr: salesChannelMode };
+          const prevChannels = (prevSeller as any).allowed_sales_channels || ["whatsapp", "telefone", "balcao"];
+          if (JSON.stringify(prevChannels.sort()) !== JSON.stringify([...allowedSalesChannels].sort())) flagChanges.allowed_sales_channels = { prev: prevChannels, curr: allowedSalesChannels };
           if (Object.keys(flagChanges).length > 0) {
             logAuditEvent({
               action: "seller.commercial_access_changed",
