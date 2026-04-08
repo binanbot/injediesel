@@ -58,6 +58,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
   const [canSellParts, setCanSellParts] = useState(true);
   const [sellerActive, setSellerActive] = useState(true);
   const [targetMonthly, setTargetMonthly] = useState<number>(0);
+  const [maxDiscountPct, setMaxDiscountPct] = useState<number>(0);
 
   // Populate on edit
   useEffect(() => {
@@ -81,6 +82,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
         setCanSellParts(employee.seller_profile.can_sell_parts);
         setSellerActive(employee.seller_profile.is_active);
         setTargetMonthly(employee.seller_profile.target_monthly || 0);
+        setMaxDiscountPct(employee.seller_profile.max_discount_pct || 0);
       } else {
         setIsSeller(false);
         resetSellerFields();
@@ -98,6 +100,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
     setCanSellParts(true);
     setSellerActive(true);
     setTargetMonthly(0);
+    setMaxDiscountPct(0);
   };
 
   const resetForm = () => {
@@ -179,6 +182,7 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
           can_sell_parts: canSellParts,
           is_active: sellerActive,
           target_monthly: targetMonthly || null,
+          max_discount_pct: maxDiscountPct,
         });
       } else if (employee?.seller_profile) {
         await deleteSellerProfile(empId);
@@ -356,6 +360,19 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
                   value={targetMonthly}
                   onChange={(e) => setTargetMonthly(parseFloat(e.target.value) || 0)}
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Desconto máximo (%)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={maxDiscountPct}
+                  onChange={(e) => setMaxDiscountPct(parseFloat(e.target.value) || 0)}
+                />
+                <p className="text-xs text-muted-foreground">Limite máximo de desconto que este vendedor pode aplicar.</p>
               </div>
 
               <div className="flex gap-4">

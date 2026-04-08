@@ -1390,6 +1390,7 @@ export type Database = {
           employee_profile_id: string
           id: string
           is_active: boolean
+          max_discount_pct: number
           notes: string | null
           seller_mode: string
           target_monthly: number | null
@@ -1405,6 +1406,7 @@ export type Database = {
           employee_profile_id: string
           id?: string
           is_active?: boolean
+          max_discount_pct?: number
           notes?: string | null
           seller_mode?: string
           target_monthly?: number | null
@@ -1420,6 +1422,7 @@ export type Database = {
           employee_profile_id?: string
           id?: string
           is_active?: boolean
+          max_discount_pct?: number
           notes?: string | null
           seller_mode?: string
           target_monthly?: number | null
