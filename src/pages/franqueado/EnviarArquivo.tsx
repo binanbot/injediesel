@@ -56,7 +56,10 @@ import {
 } from "@/data/servicos-categorias";
 import { ClienteSelect } from "@/components/franqueado/ClienteSelect";
 import { NovoClienteDrawer } from "@/components/franqueado/NovoClienteDrawer";
+import { CommercialAttributionSection, type CommercialAttributionData } from "@/components/admin/CommercialAttributionSection";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth, isCompanyAdminLevel } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const MAX_FILES = 2;
 
@@ -82,6 +85,10 @@ interface PlateData {
 type IncompleteField = "motor" | "transmissao";
 
 export default function EnviarArquivo() {
+  const { user, userRole } = useAuth();
+  const { can } = usePermissions();
+  const showCommercialSection = isCompanyAdminLevel(userRole);
+  const canAssignSeller = can("vendas", "assign_seller");
   const { toast } = useToast();
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
