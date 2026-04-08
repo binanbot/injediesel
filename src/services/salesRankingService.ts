@@ -10,6 +10,8 @@ export type SellerRankingRow = {
   orders_revenue: number;
   files_count: number;
   files_revenue: number;
+  services_count: number;
+  services_revenue: number;
   total_revenue: number;
   total_items: number;
   avg_ticket: number;
@@ -125,6 +127,14 @@ export async function getSellerRanking(
 
   const { data: files = [] } = await filesQuery;
 
+  // 3b. Aggregate services by seller
+  const { data: svcRows = [] } = await supabase
+    .from("services")
+    .select("seller_profile_id, amount_brl")
+    .in("seller_profile_id", sellerIds)
+    .gte("created_at", opts.startDate)
+    .lte("created_at", opts.endDate);
+
   // 4. Fetch active targets for period
   const { data: targets = [] } = await supabase
     .from("sales_targets")
@@ -154,6 +164,15 @@ export async function getSellerRanking(
     filesBySeller.set(f.seller_profile_id, cur);
   }
 
+  const servicesBySeller = new Map<string, { count: number; revenue: number }>();
+  for (const sv of svcRows as any[]) {
+    if (!sv.seller_profile_id) continue;
+    const cur = servicesBySeller.get(sv.seller_profile_id) || { count: 0, revenue: 0 };
+    cur.count += 1;
+    cur.revenue += Number(sv.amount_brl || 0);
+    servicesBySeller.set(sv.seller_profile_id, cur);
+  }
+
   const targetBySeller = new Map<string, number>();
   for (const t of targets as any[]) {
     if (!t.seller_profile_id) continue;
@@ -169,8 +188,9 @@ export async function getSellerRanking(
     const ep = s.employee_profiles;
     const oData = ordersBySeller.get(s.id) || { count: 0, revenue: 0, items: 0 };
     const fData = filesBySeller.get(s.id) || { count: 0, revenue: 0 };
-    const totalRevenue = oData.revenue + fData.revenue;
-    const totalCount = oData.count + fData.count;
+    const svData = servicesBySeller.get(s.id) || { count: 0, revenue: 0 };
+    const totalRevenue = oData.revenue + fData.revenue + svData.revenue;
+    const totalCount = oData.count + fData.count + svData.count;
     const target = targetBySeller.get(s.id) ?? null;
 
     let estComm = 0;
@@ -190,6 +210,8 @@ export async function getSellerRanking(
       orders_revenue: oData.revenue,
       files_count: fData.count,
       files_revenue: fData.revenue,
+      services_count: svData.count,
+      services_revenue: svData.revenue,
       total_revenue: totalRevenue,
       total_items: oData.items,
       avg_ticket: totalCount > 0 ? totalRevenue / totalCount : 0,
