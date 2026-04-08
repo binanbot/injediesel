@@ -260,6 +260,7 @@ function MasterRoutes() {
         <Route path="empresas/:companyId" element={<MasterCompanyDetail />} />
         <Route path="colaboradores" element={<Colaboradores />} />
         <Route path="vendas" element={<VendasDashboard />} />
+        <Route path="vendas/nova" element={<VendaManual />} />
         <Route path="auditoria" element={<Auditoria />} />
       </Route>
       <Route path="/master/*" element={<Navigate to="/" replace />} />
