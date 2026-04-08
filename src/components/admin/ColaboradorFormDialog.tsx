@@ -207,6 +207,10 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
           is_active: sellerActive,
           target_monthly: targetMonthly || null,
           max_discount_pct: maxDiscountPct,
+          sales_channel_mode: salesChannelMode,
+          can_sell_services: canSellServices,
+          commission_enabled: commissionEnabled,
+          target_enabled: targetEnabled,
         });
 
         // Audit seller-specific changes
