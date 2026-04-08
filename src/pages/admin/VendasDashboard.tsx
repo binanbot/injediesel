@@ -613,10 +613,8 @@ function DiscountAnalysis({
             const avgDiscountPct = disc && disc.totalSubtotal > 0
               ? (disc.totalDiscount / disc.totalSubtotal) * 100
               : 0;
-            const maxAllowed = row.commission_value > 0 ? row.commission_value : 0;
-            // Use max_discount_pct from ranking (we pass it through)
-            // For now approximate: if commission_type is percentage, max_discount is separate
-            const exceedsPolicy = avgDiscountPct > 0 && avgDiscountPct > 15; // default threshold
+            const maxAllowed = row.max_discount_pct > 0 ? row.max_discount_pct : 15;
+            const exceedsPolicy = avgDiscountPct > 0 && avgDiscountPct > maxAllowed;
 
             return (
               <div
