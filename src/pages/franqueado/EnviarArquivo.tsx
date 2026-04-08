@@ -129,8 +129,13 @@ export default function EnviarArquivo() {
 
   // Cliente
   const [clienteId, setClienteId] = useState<string>("");
+  const [clientePrimarySellerId, setClientePrimarySellerId] = useState<string | null>(null);
   const [novoClienteDrawerOpen, setNovoClienteDrawerOpen] = useState(false);
   const [clienteRefreshSignal, setClienteRefreshSignal] = useState(0);
+
+  // Atribuição comercial
+  const [sellerProfileId, setSellerProfileId] = useState<string>("");
+  const [saleChannel, setSaleChannel] = useState<string>("");
 
   // Valor
   const [valor, setValor] = useState<string>("");
