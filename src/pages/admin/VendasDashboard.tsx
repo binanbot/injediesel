@@ -1199,9 +1199,14 @@ function AttributionView({ companyId, dateRange }: { companyId?: string; dateRan
           <CardContent className="pt-5 pb-4">
             <div className="flex items-center gap-2 mb-1">
               <Users className="h-4 w-4 text-primary" />
-              <span className="text-xs text-muted-foreground">Total de Pedidos</span>
+              <span className="text-xs text-muted-foreground">Total Registros</span>
             </div>
-            <p className="text-lg font-bold">{stats.totalOrders}</p>
+            <p className="text-lg font-bold">{stats.totalItems}</p>
+            <div className="flex gap-2 mt-1 flex-wrap">
+              {stats.totalOrders > 0 && <Badge variant="outline" className="text-[10px]">Pedidos: {stats.totalOrders}</Badge>}
+              {stats.totalFiles > 0 && <Badge variant="outline" className="text-[10px]">Arquivos: {stats.totalFiles}</Badge>}
+              {stats.totalServices > 0 && <Badge variant="outline" className="text-[10px]">Serviços: {stats.totalServices}</Badge>}
+            </div>
           </CardContent>
         </Card>
         <Card>
