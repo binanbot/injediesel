@@ -60,6 +60,10 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
   const [sellerActive, setSellerActive] = useState(true);
   const [targetMonthly, setTargetMonthly] = useState<number>(0);
   const [maxDiscountPct, setMaxDiscountPct] = useState<number>(0);
+  const [salesChannelMode, setSalesChannelMode] = useState<string>("both");
+  const [canSellServices, setCanSellServices] = useState(true);
+  const [commissionEnabled, setCommissionEnabled] = useState(true);
+  const [targetEnabled, setTargetEnabled] = useState(true);
 
   // Populate on edit
   useEffect(() => {
@@ -84,6 +88,10 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
         setSellerActive(employee.seller_profile.is_active);
         setTargetMonthly(employee.seller_profile.target_monthly || 0);
         setMaxDiscountPct(employee.seller_profile.max_discount_pct || 0);
+        setSalesChannelMode(employee.seller_profile.sales_channel_mode || "both");
+        setCanSellServices(employee.seller_profile.can_sell_services ?? true);
+        setCommissionEnabled(employee.seller_profile.commission_enabled ?? true);
+        setTargetEnabled(employee.seller_profile.target_enabled ?? true);
       } else {
         setIsSeller(false);
         resetSellerFields();
@@ -102,6 +110,10 @@ export function ColaboradorFormDialog({ open, onOpenChange, employee, defaultCom
     setSellerActive(true);
     setTargetMonthly(0);
     setMaxDiscountPct(0);
+    setSalesChannelMode("both");
+    setCanSellServices(true);
+    setCommissionEnabled(true);
+    setTargetEnabled(true);
   };
 
   const resetForm = () => {
