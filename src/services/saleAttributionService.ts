@@ -2,43 +2,108 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface AttributionStats {
   totalOrders: number;
-  selfAttributed: number;       // operator = seller
-  thirdPartyAttributed: number; // operator ≠ seller
-  walletMatch: number;          // seller = customer's primary_seller
-  walletMismatch: number;       // seller ≠ customer's primary_seller
-  noWallet: number;             // customer has no primary_seller
+  totalFiles: number;
+  totalServices: number;
+  totalItems: number;
+  selfAttributed: number;
+  thirdPartyAttributed: number;
+  walletMatch: number;
+  walletMismatch: number;
+  noWallet: number;
   byChannel: Record<string, number>;
+  byType: Record<string, { count: number; revenue: number }>;
   byOperator: Record<string, { count: number; revenue: number; email?: string }>;
 }
 
+type ItemRow = {
+  id: string;
+  operator_user_id: string | null;
+  seller_profile_id: string | null;
+  customer_id: string | null;
+  sale_channel: string | null;
+  amount: number;
+  type: "order" | "file" | "service";
+};
+
 /**
- * Fetches attribution breakdown for orders in a period.
- * Respects company scope via RLS.
+ * Fetches attribution breakdown for orders + files + services in a period.
  */
 export async function getAttributionStats(opts: {
   startDate: string;
   endDate: string;
   companyId?: string;
 }): Promise<AttributionStats> {
-  // Fetch orders with operator, seller, customer primary_seller
-  let q = supabase
+  const items: ItemRow[] = [];
+
+  // 1. Orders
+  const { data: orders = [] } = await supabase
     .from("orders")
     .select("id, operator_user_id, seller_profile_id, customer_id, sale_channel, total_amount")
     .gte("created_at", opts.startDate)
     .lte("created_at", opts.endDate)
     .not("status", "in", '("cancelado","reembolsado")');
 
-  const { data: orders = [] } = await q;
-  if (!orders?.length) {
+  for (const o of orders as any[]) {
+    items.push({
+      id: o.id,
+      operator_user_id: o.operator_user_id,
+      seller_profile_id: o.seller_profile_id,
+      customer_id: o.customer_id,
+      sale_channel: o.sale_channel,
+      amount: Number(o.total_amount || 0),
+      type: "order",
+    });
+  }
+
+  // 2. Received files (ECU)
+  const { data: files = [] } = await supabase
+    .from("received_files")
+    .select("id, operator_user_id, seller_profile_id, customer_id, sale_channel, valor_brl")
+    .gte("created_at", opts.startDate)
+    .lte("created_at", opts.endDate);
+
+  for (const f of files as any[]) {
+    items.push({
+      id: f.id,
+      operator_user_id: f.operator_user_id,
+      seller_profile_id: f.seller_profile_id,
+      customer_id: f.customer_id,
+      sale_channel: f.sale_channel,
+      amount: Number(f.valor_brl || 0),
+      type: "file",
+    });
+  }
+
+  // 3. Services
+  const { data: services = [] } = await supabase
+    .from("services")
+    .select("id, operator_user_id, seller_profile_id, customer_id, sale_channel, amount_brl")
+    .gte("created_at", opts.startDate)
+    .lte("created_at", opts.endDate);
+
+  for (const s of services as any[]) {
+    items.push({
+      id: s.id,
+      operator_user_id: s.operator_user_id,
+      seller_profile_id: s.seller_profile_id,
+      customer_id: s.customer_id,
+      sale_channel: s.sale_channel,
+      amount: Number(s.amount_brl || 0),
+      type: "service",
+    });
+  }
+
+  if (!items.length) {
     return {
-      totalOrders: 0, selfAttributed: 0, thirdPartyAttributed: 0,
+      totalOrders: 0, totalFiles: 0, totalServices: 0, totalItems: 0,
+      selfAttributed: 0, thirdPartyAttributed: 0,
       walletMatch: 0, walletMismatch: 0, noWallet: 0,
-      byChannel: {}, byOperator: {},
+      byChannel: {}, byType: {}, byOperator: {},
     };
   }
 
-  // Get seller → user_id mapping
-  const sellerIds = [...new Set((orders as any[]).map((o) => o.seller_profile_id).filter(Boolean))];
+  // Seller → user_id mapping
+  const sellerIds = [...new Set(items.map((i) => i.seller_profile_id).filter(Boolean))] as string[];
   const sellerUserMap = new Map<string, string>();
   if (sellerIds.length) {
     const { data: sellers } = await supabase
@@ -52,8 +117,8 @@ export async function getAttributionStats(opts: {
     }
   }
 
-  // Get customer primary_seller_id for relevant customers
-  const customerIds = [...new Set((orders as any[]).map((o) => o.customer_id).filter(Boolean))];
+  // Customer wallet mapping
+  const customerIds = [...new Set(items.map((i) => i.customer_id).filter(Boolean))] as string[];
   const customerWalletMap = new Map<string, string | null>();
   if (customerIds.length) {
     const { data: customers } = await supabase
@@ -71,11 +136,12 @@ export async function getAttributionStats(opts: {
   let walletMismatch = 0;
   let noWallet = 0;
   const byChannel: Record<string, number> = {};
+  const byType: Record<string, { count: number; revenue: number }> = {};
   const byOperator: Record<string, { count: number; revenue: number }> = {};
 
-  for (const o of orders as any[]) {
-    const sellerUserId = o.seller_profile_id ? sellerUserMap.get(o.seller_profile_id) : null;
-    const operatorId = o.operator_user_id;
+  for (const item of items) {
+    const sellerUserId = item.seller_profile_id ? sellerUserMap.get(item.seller_profile_id) : null;
+    const operatorId = item.operator_user_id;
 
     // Self vs third-party
     if (operatorId && sellerUserId && operatorId === sellerUserId) {
@@ -83,15 +149,15 @@ export async function getAttributionStats(opts: {
     } else if (operatorId && sellerUserId) {
       thirdPartyAttributed++;
     } else {
-      selfAttributed++; // no operator means old order or self
+      selfAttributed++;
     }
 
     // Wallet analysis
-    if (o.customer_id) {
-      const primarySeller = customerWalletMap.get(o.customer_id);
+    if (item.customer_id) {
+      const primarySeller = customerWalletMap.get(item.customer_id);
       if (!primarySeller) {
         noWallet++;
-      } else if (primarySeller === o.seller_profile_id) {
+      } else if (primarySeller === item.seller_profile_id) {
         walletMatch++;
       } else {
         walletMismatch++;
@@ -101,25 +167,34 @@ export async function getAttributionStats(opts: {
     }
 
     // By channel
-    const ch = o.sale_channel || "loja";
+    const ch = item.sale_channel || "loja";
     byChannel[ch] = (byChannel[ch] || 0) + 1;
+
+    // By type
+    if (!byType[item.type]) byType[item.type] = { count: 0, revenue: 0 };
+    byType[item.type].count++;
+    byType[item.type].revenue += item.amount;
 
     // By operator
     if (operatorId) {
       if (!byOperator[operatorId]) byOperator[operatorId] = { count: 0, revenue: 0 };
       byOperator[operatorId].count++;
-      byOperator[operatorId].revenue += Number(o.total_amount || 0);
+      byOperator[operatorId].revenue += item.amount;
     }
   }
 
   return {
     totalOrders: (orders as any[]).length,
+    totalFiles: (files as any[]).length,
+    totalServices: (services as any[]).length,
+    totalItems: items.length,
     selfAttributed,
     thirdPartyAttributed,
     walletMatch,
     walletMismatch,
     noWallet,
     byChannel,
+    byType,
     byOperator,
   };
 }
