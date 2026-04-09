@@ -494,6 +494,22 @@ export default function CrmPage() {
     enabled: !!companyId,
   });
 
+  const crmConfig = useMemo(() => getCrmConfig(company?.settings as any), [company?.settings]);
+
+  const { data: taskSuggestions = [] } = useQuery({
+    queryKey: ["crm-suggestions", companyId],
+    queryFn: () => generateTaskSuggestions(companyId!, crmConfig),
+    enabled: !!companyId,
+    staleTime: 60_000,
+  });
+
+  const { data: slaMetrics } = useQuery({
+    queryKey: ["crm-sla", companyId],
+    queryFn: () => calcCommercialSla(companyId!),
+    enabled: !!companyId,
+    staleTime: 60_000,
+  });
+
   const reactivationMutation = useMutation({
     mutationFn: async (params: { customerId: string; sellerId: string | null; type: "reativacao" | "retorno" | "perda"; summary: string }) => {
       return registerReactivationAttempt(companyId!, params.customerId, params.sellerId, params.type, params.summary, user?.id || null);
