@@ -43,10 +43,14 @@ interface FranchiseeProfile {
   kess_expires_at: string | null;
   ktag_serial: string | null;
   ktag_expires_at: string | null;
-  legacy_user_login: string | null;
-  legacy_source_user_id: string | null;
-  legacy_role: string | null;
-  legacy_user_registered_at: string | null;
+  phone: string | null;
+  state: string | null;
+  district: string | null;
+  street: string | null;
+  address_number: string | null;
+  complement: string | null;
+  zip_code: string | null;
+  delivery_address: unknown;
   requires_password_reset: boolean;
   contract_type: string | null;
   contract_expiration_date: string | null;
@@ -83,7 +87,7 @@ export default function FranqueadoDetalhe() {
       // Load franchisee profile
       const { data, error } = await supabase
         .from("profiles_franchisees")
-        .select("*")
+        .select("id, user_id, email, display_name, first_name, last_name, phone, cpf, cnpj, cidade, state, district, street, address_number, complement, zip_code, delivery_address, service_areas, contract_expiration_date, contract_type, equipment_type, kess_serial, kess_expires_at, ktag_serial, ktag_expires_at, is_prepaid, rental_value_brl, start_date, allow_manual_credits, requires_password_reset, created_at, updated_at")
         .eq("id", id)
         .single();
 
@@ -471,25 +475,9 @@ export default function FranqueadoDetalhe() {
                 <History className="h-5 w-5" />
                 Dados de Auditoria
               </CardTitle>
-              <CardDescription>Informações do sistema legado</CardDescription>
+              <CardDescription>Informações do sistema</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Login Legado</Label>
-                <Input value={profile.legacy_user_login || "-"} disabled className="bg-muted" />
-              </div>
-              <div className="space-y-2">
-                <Label>ID Fonte Legado</Label>
-                <Input value={profile.legacy_source_user_id || "-"} disabled className="bg-muted" />
-              </div>
-              <div className="space-y-2">
-                <Label>Role Legado</Label>
-                <Input value={profile.legacy_role || "-"} disabled className="bg-muted" />
-              </div>
-              <div className="space-y-2">
-                <Label>Data Registro Legado</Label>
-                <Input value={profile.legacy_user_registered_at || "-"} disabled className="bg-muted" />
-              </div>
               <div className="space-y-2">
                 <Label>Criado em</Label>
                 <Input 
