@@ -428,8 +428,11 @@ export type Database = {
           created_at: string
           created_by: string | null
           customer_id: string
+          due_date: string | null
           id: string
           opportunity_id: string | null
+          priority: string
+          reminder_at: string | null
           scheduled_at: string | null
           seller_profile_id: string | null
           status: string
@@ -444,8 +447,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_id: string
+          due_date?: string | null
           id?: string
           opportunity_id?: string | null
+          priority?: string
+          reminder_at?: string | null
           scheduled_at?: string | null
           seller_profile_id?: string | null
           status?: string
@@ -460,8 +466,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_id?: string
+          due_date?: string | null
           id?: string
           opportunity_id?: string | null
+          priority?: string
+          reminder_at?: string | null
           scheduled_at?: string | null
           seller_profile_id?: string | null
           status?: string
@@ -617,6 +626,7 @@ export type Database = {
           unit_id: string
           updated_at: string | null
           updated_by: string | null
+          wallet_status: string
           whatsapp: string | null
           zip_code: string | null
         }
@@ -644,6 +654,7 @@ export type Database = {
           unit_id: string
           updated_at?: string | null
           updated_by?: string | null
+          wallet_status?: string
           whatsapp?: string | null
           zip_code?: string | null
         }
@@ -671,6 +682,7 @@ export type Database = {
           unit_id?: string
           updated_at?: string | null
           updated_by?: string | null
+          wallet_status?: string
           whatsapp?: string | null
           zip_code?: string | null
         }
@@ -993,9 +1005,56 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_closing_periods: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          company_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          reference_month: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reference_month: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reference_month?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_closing_periods_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_entries: {
         Row: {
           amount: number
+          approved_at: string | null
+          approved_by: string | null
+          attachment_url: string | null
           category: string
           company_id: string | null
           competency_date: string
@@ -1012,11 +1071,15 @@ export type Database = {
           reference_month: string | null
           scope: string
           seller_profile_id: string | null
+          status: string
           subcategory: string | null
           unit_id: string | null
         }
         Insert: {
           amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          attachment_url?: string | null
           category: string
           company_id?: string | null
           competency_date?: string
@@ -1033,11 +1096,15 @@ export type Database = {
           reference_month?: string | null
           scope: string
           seller_profile_id?: string | null
+          status?: string
           subcategory?: string | null
           unit_id?: string | null
         }
         Update: {
           amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          attachment_url?: string | null
           category?: string
           company_id?: string | null
           competency_date?: string
@@ -1054,6 +1121,7 @@ export type Database = {
           reference_month?: string | null
           scope?: string
           seller_profile_id?: string | null
+          status?: string
           subcategory?: string | null
           unit_id?: string | null
         }

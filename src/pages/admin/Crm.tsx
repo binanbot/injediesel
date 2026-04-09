@@ -1,9 +1,9 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Users, Activity, Target, Plus, Search, Phone,
-  MessageSquare, Store, Mail, Clock, CheckCircle,
-  AlertTriangle, XCircle, Filter,
+  Users, Activity, Target, Plus, Search,
+  Clock, CheckCircle, AlertTriangle, XCircle,
+  Shield, TrendingUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,9 +29,11 @@ import {
   fetchActivities, createActivity, updateActivity,
   fetchOpportunities, createOpportunity, updateOpportunity,
   fetchCustomersWithoutRecentPurchase, fetchCustomersWithoutSeller,
-  fetchOverdueActivities, calcFunnelSummary,
-  ACTIVITY_TYPES, ACTIVITY_STATUSES, OPPORTUNITY_STAGES, CHANNELS,
-  type CrmActivity, type CrmOpportunity,
+  fetchOverdueActivities, fetchWalletHealth, calcFunnelSummary,
+  ACTIVITY_TYPES, ACTIVITY_STATUSES, ACTIVITY_PRIORITIES,
+  OPPORTUNITY_STAGES, CHANNELS, WALLET_STATUSES,
+  getPriorityColor, getWalletStatusLabel, getWalletStatusColor,
+  type CrmActivity, type CrmOpportunity, type WalletCustomer,
 } from "@/services/crmService";
 import { fetchActiveSellers } from "@/services/employeeService";
 import { format } from "date-fns";
@@ -57,10 +59,11 @@ function ActivityDialog({
     seller_profile_id: existing?.seller_profile_id || "",
     customer_id: existing?.customer_id || "",
     scheduled_at: existing?.scheduled_at ? existing.scheduled_at.slice(0, 16) : "",
+    due_date: existing?.due_date ? existing.due_date.slice(0, 16) : "",
+    priority: existing?.priority || "media",
     status: existing?.status || "pendente",
   });
 
-  // Simple customer search
   const [customerSearch, setCustomerSearch] = useState("");
   const { data: customers = [] } = useQuery({
     queryKey: ["crm-customers-search", companyId, customerSearch],
@@ -91,6 +94,8 @@ function ActivityDialog({
         channel: form.channel || null,
         summary: form.summary || null,
         scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : null,
+        due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
+        priority: form.priority,
         status: form.status,
         created_by: user?.id || null,
       };
@@ -126,22 +131,11 @@ function ActivityDialog({
               </div>
             ) : (
               <>
-                <Input
-                  placeholder="Buscar cliente por nome..."
-                  value={customerSearch}
-                  onChange={(e) => setCustomerSearch(e.target.value)}
-                />
+                <Input placeholder="Buscar cliente por nome..." value={customerSearch} onChange={(e) => setCustomerSearch(e.target.value)} />
                 {customers.length > 0 && (
                   <div className="border rounded-md max-h-32 overflow-y-auto">
                     {customers.map((c) => (
-                      <button
-                        key={c.id}
-                        className="w-full text-left px-3 py-2 hover:bg-muted text-sm"
-                        onClick={() => {
-                          setForm((f) => ({ ...f, customer_id: c.id }));
-                          setCustomerSearch("");
-                        }}
-                      >
+                      <button key={c.id} className="w-full text-left px-3 py-2 hover:bg-muted text-sm" onClick={() => { setForm(f => ({ ...f, customer_id: c.id })); setCustomerSearch(""); }}>
                         {c.full_name} {c.phone && <span className="text-muted-foreground ml-2">{c.phone}</span>}
                       </button>
                     ))}
@@ -154,23 +148,40 @@ function ActivityDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Tipo</Label>
-              <Select value={form.activity_type} onValueChange={(v) => setForm((f) => ({ ...f, activity_type: v }))}>
+              <Select value={form.activity_type} onValueChange={(v) => setForm(f => ({ ...f, activity_type: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {ACTIVITY_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                  ))}
+                  {ACTIVITY_TYPES.map((t) => (<SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
+              <Label>Prioridade</Label>
+              <Select value={form.priority} onValueChange={(v) => setForm(f => ({ ...f, priority: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ACTIVITY_PRIORITIES.map((p) => (<SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label>Canal</Label>
-              <Select value={form.channel} onValueChange={(v) => setForm((f) => ({ ...f, channel: v }))}>
+              <Select value={form.channel} onValueChange={(v) => setForm(f => ({ ...f, channel: v }))}>
                 <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
                 <SelectContent>
-                  {CHANNELS.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                  ))}
+                  {CHANNELS.map((c) => (<SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={(v) => setForm(f => ({ ...f, status: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ACTIVITY_STATUSES.map((s) => (<SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
@@ -178,14 +189,10 @@ function ActivityDialog({
 
           <div className="space-y-2">
             <Label>Vendedor</Label>
-            <Select value={form.seller_profile_id} onValueChange={(v) => setForm((f) => ({ ...f, seller_profile_id: v }))}>
+            <Select value={form.seller_profile_id} onValueChange={(v) => setForm(f => ({ ...f, seller_profile_id: v }))}>
               <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
               <SelectContent>
-                {sellers.map((s) => (
-                  <SelectItem key={s.seller_profile.id} value={s.seller_profile.id}>
-                    {s.display_name || "Sem nome"}
-                  </SelectItem>
-                ))}
+                {sellers.map((s) => (<SelectItem key={s.seller_profile.id} value={s.seller_profile.id}>{s.display_name || "Sem nome"}</SelectItem>))}
               </SelectContent>
             </Select>
           </div>
@@ -193,32 +200,17 @@ function ActivityDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Agendamento</Label>
-              <Input
-                type="datetime-local"
-                value={form.scheduled_at}
-                onChange={(e) => setForm((f) => ({ ...f, scheduled_at: e.target.value }))}
-              />
+              <Input type="datetime-local" value={form.scheduled_at} onChange={(e) => setForm(f => ({ ...f, scheduled_at: e.target.value }))} />
             </div>
             <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {ACTIVITY_STATUSES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Vencimento</Label>
+              <Input type="datetime-local" value={form.due_date} onChange={(e) => setForm(f => ({ ...f, due_date: e.target.value }))} />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label>Resumo</Label>
-            <Textarea
-              value={form.summary}
-              onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
-              placeholder="Detalhes da atividade..."
-            />
+            <Textarea value={form.summary} onChange={(e) => setForm(f => ({ ...f, summary: e.target.value }))} placeholder="Detalhes da atividade..." />
           </div>
         </div>
         <DialogFooter>
@@ -264,13 +256,7 @@ function OpportunityDialog({
       const { data: units } = await supabase.from("units").select("id").eq("company_id", companyId);
       const unitIds = (units || []).map((u) => u.id);
       if (unitIds.length === 0) return [];
-      const { data } = await supabase
-        .from("customers")
-        .select("id, full_name")
-        .in("unit_id", unitIds)
-        .ilike("full_name", `%${customerSearch}%`)
-        .eq("is_active", true)
-        .limit(10);
+      const { data } = await supabase.from("customers").select("id, full_name").in("unit_id", unitIds).ilike("full_name", `%${customerSearch}%`).eq("is_active", true).limit(10);
       return data || [];
     },
     enabled: customerSearch.length >= 2,
@@ -292,11 +278,8 @@ function OpportunityDialog({
         closed_at: isClosed ? new Date().toISOString() : null,
         created_by: user?.id || null,
       };
-      if (existing) {
-        await updateOpportunity(existing.id, payload as any);
-      } else {
-        await createOpportunity(payload as any);
-      }
+      if (existing) await updateOpportunity(existing.id, payload as any);
+      else await createOpportunity(payload as any);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["crm-opportunities"] });
@@ -326,31 +309,23 @@ function OpportunityDialog({
                 {customers.length > 0 && (
                   <div className="border rounded-md max-h-32 overflow-y-auto">
                     {customers.map((c) => (
-                      <button key={c.id} className="w-full text-left px-3 py-2 hover:bg-muted text-sm" onClick={() => { setForm(f => ({ ...f, customer_id: c.id })); setCustomerSearch(""); }}>
-                        {c.full_name}
-                      </button>
+                      <button key={c.id} className="w-full text-left px-3 py-2 hover:bg-muted text-sm" onClick={() => { setForm(f => ({ ...f, customer_id: c.id })); setCustomerSearch(""); }}>{c.full_name}</button>
                     ))}
                   </div>
                 )}
               </>
             )}
           </div>
-
           <div className="space-y-2">
             <Label>Título *</Label>
             <Input value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Proposta de chiptuning" />
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Estágio</Label>
               <Select value={form.stage} onValueChange={(v) => setForm(f => ({ ...f, stage: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {OPPORTUNITY_STAGES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectContent>{OPPORTUNITY_STAGES.map((s) => (<SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>))}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
@@ -358,39 +333,28 @@ function OpportunityDialog({
               <Input type="number" value={form.estimated_value} onChange={(e) => setForm(f => ({ ...f, estimated_value: e.target.value }))} />
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Canal</Label>
               <Select value={form.sale_channel} onValueChange={(v) => setForm(f => ({ ...f, sale_channel: v }))}>
                 <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                <SelectContent>
-                  {CHANNELS.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectContent>{CHANNELS.map((c) => (<SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>))}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Vendedor</Label>
               <Select value={form.seller_profile_id} onValueChange={(v) => setForm(f => ({ ...f, seller_profile_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
-                <SelectContent>
-                  {sellers.map((s) => (
-                    <SelectItem key={s.seller_profile.id} value={s.seller_profile.id}>{s.display_name || "Sem nome"}</SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectContent>{sellers.map((s) => (<SelectItem key={s.seller_profile.id} value={s.seller_profile.id}>{s.display_name || "Sem nome"}</SelectItem>))}</SelectContent>
               </Select>
             </div>
           </div>
-
           {form.stage === "fechado_perdido" && (
             <div className="space-y-2">
               <Label>Motivo da perda</Label>
               <Input value={form.lost_reason} onChange={(e) => setForm(f => ({ ...f, lost_reason: e.target.value }))} placeholder="Ex: Preço, concorrência..." />
             </div>
           )}
-
           <div className="space-y-2">
             <Label>Observações</Label>
             <Textarea value={form.notes} onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))} />
@@ -407,7 +371,7 @@ function OpportunityDialog({
   );
 }
 
-// ─── Status icon helper ──────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────
 
 function StatusIcon({ status }: { status: string }) {
   switch (status) {
@@ -417,6 +381,23 @@ function StatusIcon({ status }: { status: string }) {
     case "cancelada": return <XCircle className="h-4 w-4 text-muted-foreground" />;
     default: return null;
   }
+}
+
+function PriorityBadge({ priority }: { priority: string }) {
+  const p = ACTIVITY_PRIORITIES.find((x) => x.value === priority);
+  return (
+    <Badge variant="outline" className={`text-xs ${getPriorityColor(priority)}`}>
+      {p?.label || priority}
+    </Badge>
+  );
+}
+
+function WalletStatusBadge({ status }: { status: string }) {
+  return (
+    <Badge variant="outline" className={`text-xs ${getWalletStatusColor(status)}`}>
+      {getWalletStatusLabel(status)}
+    </Badge>
+  );
 }
 
 const stageBadgeMap: Record<string, string> = {
@@ -437,32 +418,29 @@ export default function CrmPage() {
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
   const [oppDialogOpen, setOppDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [walletFilter, setWalletFilter] = useState("all");
 
-  // Sellers
   const { data: sellers = [] } = useQuery({
     queryKey: ["crm-sellers", companyId],
     queryFn: () => fetchActiveSellers(companyId!),
     enabled: !!companyId,
   });
 
-  // Activities
   const { data: activities = [] } = useQuery({
     queryKey: ["crm-activities", companyId],
     queryFn: () => fetchActivities(companyId!),
     enabled: !!companyId,
   });
 
-  // Opportunities
   const { data: opportunities = [] } = useQuery({
     queryKey: ["crm-opportunities", companyId],
     queryFn: () => fetchOpportunities(companyId!),
     enabled: !!companyId,
   });
 
-  // Wallet analytics
-  const { data: noRecentPurchase = [] } = useQuery({
-    queryKey: ["crm-no-purchase", companyId],
-    queryFn: () => fetchCustomersWithoutRecentPurchase(companyId!, 60),
+  const { data: walletCustomers = [] } = useQuery({
+    queryKey: ["crm-wallet-health", companyId],
+    queryFn: () => fetchWalletHealth(companyId!),
     enabled: !!companyId,
   });
 
@@ -479,14 +457,29 @@ export default function CrmPage() {
   });
 
   const funnel = useMemo(() => calcFunnelSummary(opportunities), [opportunities]);
-
-  const activeOpps = opportunities.filter(
-    (o) => o.stage !== "fechado_ganho" && o.stage !== "fechado_perdido"
-  );
+  const activeOpps = opportunities.filter(o => o.stage !== "fechado_ganho" && o.stage !== "fechado_perdido");
   const pipelineValue = activeOpps.reduce((s, o) => s + Number(o.estimated_value), 0);
 
+  // Wallet stats
+  const walletStats = useMemo(() => {
+    const ativa = walletCustomers.filter(c => c.wallet_status === "ativa").length;
+    const em_risco = walletCustomers.filter(c => c.wallet_status === "em_risco").length;
+    const inativa = walletCustomers.filter(c => c.wallet_status === "inativa").length;
+    return { ativa, em_risco, inativa, total: walletCustomers.length };
+  }, [walletCustomers]);
+
+  const filteredWallet = useMemo(() => {
+    let list = walletCustomers;
+    if (walletFilter !== "all") list = list.filter(c => c.wallet_status === walletFilter);
+    if (search && tab === "carteira") {
+      const q = search.toLowerCase();
+      list = list.filter(c => c.full_name.toLowerCase().includes(q));
+    }
+    return list;
+  }, [walletCustomers, walletFilter, search, tab]);
+
   const filteredActivities = useMemo(() => {
-    if (!search) return activities;
+    if (!search || tab !== "atividades") return activities;
     const q = search.toLowerCase();
     return activities.filter(
       (a) =>
@@ -494,7 +487,7 @@ export default function CrmPage() {
         a.summary?.toLowerCase().includes(q) ||
         a.activity_type?.toLowerCase().includes(q)
     );
-  }, [activities, search]);
+  }, [activities, search, tab]);
 
   if (!companyId) return null;
 
@@ -508,30 +501,35 @@ export default function CrmPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="glass-card">
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <AlertTriangle className="h-4 w-4" />
-              Sem recompra (60d)
+              <TrendingUp className="h-4 w-4 text-emerald-400" /> Ativas
             </div>
-            <p className="text-2xl font-bold">{noRecentPurchase.length}</p>
+            <p className="text-2xl font-bold text-emerald-400">{walletStats.ativa}</p>
           </CardContent>
         </Card>
         <Card className="glass-card">
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <Users className="h-4 w-4" />
-              Sem vendedor
+              <AlertTriangle className="h-4 w-4 text-amber-400" /> Em risco
             </div>
-            <p className="text-2xl font-bold">{noSeller.length}</p>
+            <p className="text-2xl font-bold text-amber-400">{walletStats.em_risco}</p>
           </CardContent>
         </Card>
         <Card className="glass-card">
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <Clock className="h-4 w-4" />
-              Follow-ups atrasados
+              <Users className="h-4 w-4 text-muted-foreground" /> Inativas
+            </div>
+            <p className="text-2xl font-bold">{walletStats.inativa}</p>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+              <Clock className="h-4 w-4 text-destructive" /> Atrasados
             </div>
             <p className="text-2xl font-bold text-destructive">{overdueActivities.length}</p>
           </CardContent>
@@ -539,10 +537,9 @@ export default function CrmPage() {
         <Card className="glass-card">
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <Target className="h-4 w-4" />
-              Pipeline ativo
+              <Target className="h-4 w-4" /> Pipeline
             </div>
-            <p className="text-2xl font-bold">
+            <p className="text-xl font-bold">
               {pipelineValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
             </p>
           </CardContent>
@@ -551,92 +548,84 @@ export default function CrmPage() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="carteira">
-            <Users className="h-4 w-4 mr-1" /> Carteira
-          </TabsTrigger>
-          <TabsTrigger value="atividades">
-            <Activity className="h-4 w-4 mr-1" /> Atividades
-          </TabsTrigger>
-          <TabsTrigger value="funil">
-            <Target className="h-4 w-4 mr-1" /> Funil
-          </TabsTrigger>
+          <TabsTrigger value="carteira"><Users className="h-4 w-4 mr-1" /> Carteira</TabsTrigger>
+          <TabsTrigger value="atividades"><Activity className="h-4 w-4 mr-1" /> Atividades</TabsTrigger>
+          <TabsTrigger value="funil"><Target className="h-4 w-4 mr-1" /> Funil</TabsTrigger>
         </TabsList>
 
         {/* ─── Carteira Tab ───────────────────────────── */}
         <TabsContent value="carteira" className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            {/* Sem recompra */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                  Clientes sem recompra ({noRecentPurchase.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {noRecentPurchase.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Todos os clientes compraram recentemente.</p>
-                ) : (
-                  <div className="max-h-64 overflow-y-auto space-y-2">
-                    {noRecentPurchase.slice(0, 20).map((c) => (
-                      <div key={c.id} className="flex items-center justify-between text-sm border-b pb-1">
-                        <span className="font-medium">{c.full_name}</span>
-                        <span className="text-muted-foreground text-xs">
-                          {c.last_order_at ? format(new Date(c.last_order_at), "dd/MM/yyyy") : "Nunca comprou"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Sem vendedor */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="h-4 w-4 text-info" />
-                  Clientes sem vendedor ({noSeller.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {noSeller.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Todos os clientes possuem vendedor na carteira.</p>
-                ) : (
-                  <div className="max-h-64 overflow-y-auto space-y-2">
-                    {noSeller.slice(0, 20).map((c) => (
-                      <div key={c.id} className="flex items-center justify-between text-sm border-b pb-1">
-                        <span className="font-medium">{c.full_name}</span>
-                        <Badge variant="outline" className="text-xs">sem carteira</Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar cliente..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+            </div>
+            <Select value={walletFilter} onValueChange={setWalletFilter}>
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas ({walletStats.total})</SelectItem>
+                {WALLET_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Overdue */}
-          {overdueActivities.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Última compra</TableHead>
+                    <TableHead>Dias</TableHead>
+                    <TableHead>Vendedor</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredWallet.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum cliente encontrado</TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredWallet.slice(0, 100).map((c) => (
+                      <TableRow key={c.id}>
+                        <TableCell className="font-medium">{c.full_name}</TableCell>
+                        <TableCell><WalletStatusBadge status={c.wallet_status} /></TableCell>
+                        <TableCell className="text-sm">
+                          {c.last_order_at ? format(new Date(c.last_order_at), "dd/MM/yyyy") : "Nunca"}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {c.days_since_purchase !== null ? `${c.days_since_purchase}d` : "—"}
+                        </TableCell>
+                        <TableCell>
+                          {c.primary_seller_id ? (
+                            <Badge variant="outline" className="text-xs"><Shield className="h-3 w-3 mr-1" />Atribuído</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs text-muted-foreground">Sem vendedor</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Alerts */}
+          {noSeller.length > 0 && (
+            <Card className="border-warning/30">
+              <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-destructive" />
-                  Follow-ups atrasados ({overdueActivities.length})
+                  <AlertTriangle className="h-4 w-4 text-warning" /> {noSeller.length} clientes sem vendedor atribuído
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="max-h-48 overflow-y-auto space-y-2">
-                  {overdueActivities.slice(0, 10).map((a) => (
-                    <div key={a.id} className="flex items-center justify-between text-sm border-b pb-1">
-                      <div>
-                        <span className="font-medium">{a.customer?.full_name}</span>
-                        <span className="text-muted-foreground ml-2">{a.summary?.slice(0, 40)}</span>
-                      </div>
-                      <span className="text-xs text-destructive">
-                        {a.scheduled_at && format(new Date(a.scheduled_at), "dd/MM HH:mm")}
-                      </span>
-                    </div>
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {noSeller.slice(0, 10).map((c) => (
+                    <p key={c.id} className="text-sm">{c.full_name}</p>
                   ))}
                 </div>
               </CardContent>
@@ -649,17 +638,33 @@ export default function CrmPage() {
           <div className="flex items-center gap-3">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar atividade..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
+              <Input placeholder="Buscar atividade..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
             </div>
             <Button onClick={() => setActivityDialogOpen(true)} size="sm">
               <Plus className="h-4 w-4 mr-1" /> Nova Atividade
             </Button>
           </div>
+
+          {/* Overdue alert */}
+          {overdueActivities.length > 0 && (
+            <Card className="border-destructive/30">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-destructive" /> {overdueActivities.length} follow-ups atrasados
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="max-h-24 overflow-y-auto space-y-1">
+                  {overdueActivities.slice(0, 5).map((a) => (
+                    <div key={a.id} className="flex items-center justify-between text-sm">
+                      <span>{a.customer?.full_name}</span>
+                      <span className="text-xs text-destructive">{a.scheduled_at && format(new Date(a.scheduled_at), "dd/MM HH:mm")}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardContent className="p-0">
@@ -667,37 +672,35 @@ export default function CrmPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Status</TableHead>
+                    <TableHead>Prioridade</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Canal</TableHead>
-                    <TableHead>Agendamento</TableHead>
+                    <TableHead>Vencimento</TableHead>
                     <TableHead>Resumo</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredActivities.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                        Nenhuma atividade registrada
-                      </TableCell>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhuma atividade registrada</TableCell>
                     </TableRow>
                   ) : (
                     filteredActivities.slice(0, 50).map((a) => (
                       <TableRow key={a.id}>
                         <TableCell><StatusIcon status={a.status} /></TableCell>
+                        <TableCell><PriorityBadge priority={a.priority} /></TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
-                            {ACTIVITY_TYPES.find((t) => t.value === a.activity_type)?.label || a.activity_type}
+                            {ACTIVITY_TYPES.find(t => t.value === a.activity_type)?.label || a.activity_type}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">{a.customer?.full_name || "—"}</TableCell>
-                        <TableCell>{CHANNELS.find((c) => c.value === a.channel)?.label || a.channel || "—"}</TableCell>
+                        <TableCell>{CHANNELS.find(c => c.value === a.channel)?.label || a.channel || "—"}</TableCell>
                         <TableCell className="text-sm">
-                          {a.scheduled_at ? format(new Date(a.scheduled_at), "dd/MM/yyyy HH:mm") : "—"}
+                          {a.due_date ? format(new Date(a.due_date), "dd/MM/yyyy HH:mm") : a.scheduled_at ? format(new Date(a.scheduled_at), "dd/MM/yyyy HH:mm") : "—"}
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
-                          {a.summary || "—"}
-                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">{a.summary || "—"}</TableCell>
                       </TableRow>
                     ))
                   )}
@@ -715,7 +718,6 @@ export default function CrmPage() {
             </Button>
           </div>
 
-          {/* Funnel summary */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {funnel.map((s) => (
               <Card key={s.stage} className="glass-card">
@@ -730,7 +732,6 @@ export default function CrmPage() {
             ))}
           </div>
 
-          {/* Opportunities table */}
           <Card>
             <CardContent className="p-0">
               <Table>
@@ -747,24 +748,20 @@ export default function CrmPage() {
                 <TableBody>
                   {opportunities.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                        Nenhuma oportunidade registrada
-                      </TableCell>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhuma oportunidade registrada</TableCell>
                     </TableRow>
                   ) : (
                     opportunities.slice(0, 50).map((o) => (
                       <TableRow key={o.id}>
                         <TableCell>
                           <Badge variant={(stageBadgeMap[o.stage] as any) || "outline"} className="text-xs">
-                            {OPPORTUNITY_STAGES.find((s) => s.value === o.stage)?.label || o.stage}
+                            {OPPORTUNITY_STAGES.find(s => s.value === o.stage)?.label || o.stage}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">{o.title}</TableCell>
                         <TableCell>{o.customer?.full_name || "—"}</TableCell>
-                        <TableCell>
-                          {Number(o.estimated_value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                        </TableCell>
-                        <TableCell>{CHANNELS.find((c) => c.value === o.sale_channel)?.label || o.sale_channel || "—"}</TableCell>
+                        <TableCell>{Number(o.estimated_value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</TableCell>
+                        <TableCell>{CHANNELS.find(c => c.value === o.sale_channel)?.label || o.sale_channel || "—"}</TableCell>
                         <TableCell className="text-sm">{format(new Date(o.created_at), "dd/MM/yyyy")}</TableCell>
                       </TableRow>
                     ))
@@ -778,20 +775,10 @@ export default function CrmPage() {
 
       {/* Dialogs */}
       {activityDialogOpen && (
-        <ActivityDialog
-          open={activityDialogOpen}
-          onOpenChange={setActivityDialogOpen}
-          companyId={companyId}
-          sellers={sellers}
-        />
+        <ActivityDialog open={activityDialogOpen} onOpenChange={setActivityDialogOpen} companyId={companyId} sellers={sellers} />
       )}
       {oppDialogOpen && (
-        <OpportunityDialog
-          open={oppDialogOpen}
-          onOpenChange={setOppDialogOpen}
-          companyId={companyId}
-          sellers={sellers}
-        />
+        <OpportunityDialog open={oppDialogOpen} onOpenChange={setOppDialogOpen} companyId={companyId} sellers={sellers} />
       )}
     </div>
   );
