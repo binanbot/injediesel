@@ -25,6 +25,7 @@ import {
   ClipboardList,
   ShoppingCart,
   Wallet,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,7 @@ const allMenuItems: MenuItem[] = [
   { icon: Wallet, label: "Financeiro", path: "/admin/financeiro", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
   { icon: Users, label: "CRM", path: "/admin/crm", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
   { icon: FileText, label: "Documentação", path: "/admin/documentacao" },
+  { icon: BookOpen, label: "Guia do Sistema", path: "/admin/guia" },
 ];
 
 interface AdminSidebarProps {
