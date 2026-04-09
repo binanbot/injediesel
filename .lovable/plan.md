@@ -1,54 +1,45 @@
 
-# CRM: Automação Leve + Inteligência Operacional
+# Playbook Comercial Estruturado
 
 ## Análise
-- Base CRM completa com 8 tabs, reativação, agenda, tarefas
-- operationalAlertsService já gera alertas CRM/financeiro/comercial
-- crmService já tem wallet health, productivity, reactivation
-- companies.settings (JSONB) já suporta config por empresa
-- Nenhuma migração necessária — evolução 100% em services + UI
+- CRM já possui ACTIVITY_TYPES, OPPORTUNITY_STAGES, CHANNELS em crmService.ts
+- crm_activities e crm_opportunities já têm campos de texto flexíveis (activity_type, stage, channel, summary)
+- companies.settings.crm_config já suporta configuração por empresa
+- Nenhuma migração necessária: os campos existentes (stage, activity_type, summary, notes, lost_reason) já cobrem os dados do playbook
+- Enriquecimento via constantes tipadas + UI + configuração JSONB
 
 ## Plano por Blocos
 
-### Bloco 1 — Sugestões automáticas de tarefa (novo service)
-Criar `src/services/crmAutomationService.ts`:
-- `generateTaskSuggestions(companyId, config)` → lista de sugestões
-- Regras: cliente em risco sem contato 7d, inativo sem reativação, oportunidade parada 15d, follow-up vencido 3d, cliente sem vendedor
-- Cada sugestão: { type, customerId, sellerId, reason, priority, suggestedAction }
-- Usa dados já carregados (wallet, activities, opportunities)
+### Bloco 1 — Novo service: crmPlaybookService.ts
+Criar `src/services/crmPlaybookService.ts`:
+- Constantes padronizadas: LOSS_REASONS, REACTIVATION_REASONS, CONTACT_RESULTS, OPPORTUNITY_TEMPERATURES, CONTACT_ORIGINS
+- Etapas comerciais expandidas com metadata (SLA por etapa, transições permitidas)
+- Helpers: getStageLabel, getTemperatureColor, isTransitionAllowed, getStageMetrics
+- Integração com getCrmConfig para config por empresa (etapas habilitadas, motivos customizados)
 
-### Bloco 2 — SLA Comercial (novo service)
-Criar `src/services/crmSlaService.ts`:
-- `calcCommercialSla(companyId)` → métricas SLA
-- Tempo médio até primeiro contato (1ª atividade após criação do cliente)
-- Tempo médio até retorno (atividades tipo retorno)
-- Taxa de follow-up no prazo (% atividades concluídas antes do due_date)
-- Atividades concluídas vs atrasadas por vendedor
-- Retorna objeto com métricas globais + por vendedor
+### Bloco 2 — Expandir crmService.ts
+- Adicionar CONTACT_RESULTS ao ACTIVITY_TYPES ou como campo separado
+- Adicionar temperatura às oportunidades (via stage metadata, sem novo campo DB)
 
-### Bloco 3 — Regras configuráveis por empresa
-Usar `companies.settings.crm_config`:
-- `days_at_risk`: 45 (default)
-- `days_inactive`: 90 (default)
-- `default_followup_days`: 7 (default)
-- `stale_opportunity_days`: 15 (default)
-- Helper `getCrmConfig(settings)` com defaults
-- Integrar no walletHealth e alerts existentes
+### Bloco 3 — UI: Enriquecer formulários do CRM
+- ActivityDialog: adicionar campo "resultado do contato" e "origem"
+- OpportunityDialog: adicionar campo "temperatura" e "motivo de perda" padronizado
+- ReactivationTab: adicionar motivo de reativação/não interesse
 
-### Bloco 4 — Nova tab "Inteligência" no CRM
-Adicionar tab no Crm.tsx com:
-- Cards de sugestões automáticas com ação rápida "Criar tarefa"
-- Painel SLA com métricas de tempo e taxa
-- Seção de regras configuráveis (somente leitura ou edição inline)
+### Bloco 4 — UI: Nova sub-aba "Playbook" na tab Inteligência
+- Visualização das etapas comerciais como pipeline
+- Tempo médio por etapa
+- Oportunidades paradas por etapa
+- Configuração visual das regras por empresa
 
 ### Bloco 5 — Segurança
-- Manter company scope em todos os services
+- Sem nova tabela = sem nova superfície RLS
+- Dados fluem pelos campos existentes com RLS já aplicado
 - Verificar scan de segurança
-- Nenhuma nova tabela = sem nova superfície RLS
 
 ## Implementação
-1. crmAutomationService.ts
-2. crmSlaService.ts  
-3. getCrmConfig helper
-4. Tab "Inteligência" no Crm.tsx
+1. crmPlaybookService.ts (constantes + helpers + config)
+2. Atualizar crmService.ts (contact results)
+3. Atualizar ActivityDialog e OpportunityDialog no Crm.tsx
+4. Adicionar seção Playbook na tab Inteligência
 5. Security check
