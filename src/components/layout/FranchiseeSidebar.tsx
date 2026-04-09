@@ -31,6 +31,7 @@ import { useCartStore } from "@/stores/useCartStore";
 import { useSocialLinks } from "@/hooks/useSocialLinks";
 import { useCompany } from "@/hooks/useCompany";
 import { useChannelPaths } from "@/hooks/useChannelPaths";
+import { useSidebarNotifications } from "@/hooks/useSidebarNotifications";
 
 // TikTok icon component
 const TikTokIcon = ({ className }: { className?: string }) => (
