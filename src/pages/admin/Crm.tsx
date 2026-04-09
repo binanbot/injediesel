@@ -6,6 +6,7 @@ import {
   Shield, TrendingUp, CalendarDays, RefreshCw,
   ListChecks, Phone, MessageSquare, ThumbsDown,
   Filter, Lightbulb, UserX, Zap, Settings2,
+  Thermometer, ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,15 @@ import {
   type TaskSuggestion, type CrmConfig,
 } from "@/services/crmAutomationService";
 import { calcCommercialSla, type CommercialSla } from "@/services/crmSlaService";
+import {
+  CONTACT_RESULTS, CONTACT_ORIGINS, LOSS_REASONS,
+  OPPORTUNITY_TEMPERATURES, REACTIVATION_REASONS,
+  PLAYBOOK_STAGES, calcStageMetrics, getPlaybookConfig,
+  getTemperatureColor, getTemperatureBg, getTemperatureLabel,
+  getLossReasonLabel, getContactResultLabel, getContactOriginLabel,
+  isTransitionAllowed, getStageLabel,
+  type PlaybookConfig,
+} from "@/services/crmPlaybookService";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { OperationalAlertsPanel } from "@/components/admin/OperationalAlertsPanel";
@@ -77,6 +87,8 @@ function ActivityDialog({
     due_date: existing?.due_date ? existing.due_date.slice(0, 16) : "",
     priority: existing?.priority || "media",
     status: existing?.status || "pendente",
+    contact_result: "",
+    contact_origin: "",
   });
 
   const [customerSearch, setCustomerSearch] = useState("");
@@ -101,13 +113,24 @@ function ActivityDialog({
 
   const mutation = useMutation({
     mutationFn: async () => {
+      // Enrich summary with playbook fields
+      let enrichedSummary = form.summary || "";
+      const prefixParts: string[] = [];
+      if (form.contact_result) prefixParts.push(`Resultado: ${getContactResultLabel(form.contact_result)}`);
+      if (form.contact_origin) prefixParts.push(`Origem: ${getContactOriginLabel(form.contact_origin)}`);
+      if (prefixParts.length > 0 && enrichedSummary) {
+        enrichedSummary = `[${prefixParts.join(" | ")}] ${enrichedSummary}`;
+      } else if (prefixParts.length > 0) {
+        enrichedSummary = `[${prefixParts.join(" | ")}]`;
+      }
+
       const payload = {
         company_id: companyId,
         customer_id: form.customer_id,
         seller_profile_id: form.seller_profile_id || null,
         activity_type: form.activity_type,
         channel: form.channel || null,
-        summary: form.summary || null,
+        summary: enrichedSummary || null,
         scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : null,
         due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
         priority: form.priority,
@@ -202,6 +225,27 @@ function ActivityDialog({
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Resultado do contato</Label>
+              <Select value={form.contact_result} onValueChange={(v) => setForm(f => ({ ...f, contact_result: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                <SelectContent>
+                  {CONTACT_RESULTS.map((r) => (<SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Origem</Label>
+              <Select value={form.contact_origin} onValueChange={(v) => setForm(f => ({ ...f, contact_origin: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                <SelectContent>
+                  {CONTACT_ORIGINS.map((o) => (<SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label>Vendedor</Label>
             <Select value={form.seller_profile_id} onValueChange={(v) => setForm(f => ({ ...f, seller_profile_id: v }))}>
@@ -261,6 +305,8 @@ function OpportunityDialog({
     customer_id: existing?.customer_id || "",
     notes: existing?.notes || "",
     lost_reason: existing?.lost_reason || "",
+    temperature: "",
+    contact_origin: "",
   });
 
   const [customerSearch, setCustomerSearch] = useState("");
@@ -280,6 +326,17 @@ function OpportunityDialog({
   const mutation = useMutation({
     mutationFn: async () => {
       const isClosed = form.stage === "fechado_ganho" || form.stage === "fechado_perdido";
+      // Enrich notes with temperature and origin
+      let enrichedNotes = form.notes || "";
+      const metaParts: string[] = [];
+      if (form.temperature) metaParts.push(`Temperatura: ${getTemperatureLabel(form.temperature)}`);
+      if (form.contact_origin) metaParts.push(`Origem: ${getContactOriginLabel(form.contact_origin)}`);
+      if (metaParts.length > 0 && enrichedNotes) {
+        enrichedNotes = `[${metaParts.join(" | ")}] ${enrichedNotes}`;
+      } else if (metaParts.length > 0) {
+        enrichedNotes = `[${metaParts.join(" | ")}]`;
+      }
+
       const payload = {
         company_id: companyId,
         customer_id: form.customer_id,
@@ -288,7 +345,7 @@ function OpportunityDialog({
         stage: form.stage,
         estimated_value: Number(form.estimated_value) || 0,
         sale_channel: form.sale_channel || null,
-        notes: form.notes || null,
+        notes: enrichedNotes || null,
         lost_reason: form.stage === "fechado_perdido" ? form.lost_reason || null : null,
         closed_at: isClosed ? new Date().toISOString() : null,
         created_by: user?.id || null,
@@ -364,10 +421,39 @@ function OpportunityDialog({
               </Select>
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Temperatura</Label>
+              <Select value={form.temperature} onValueChange={(v) => setForm(f => ({ ...f, temperature: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                <SelectContent>
+                  {OPPORTUNITY_TEMPERATURES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      <span className={t.color}>{t.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Origem</Label>
+              <Select value={form.contact_origin} onValueChange={(v) => setForm(f => ({ ...f, contact_origin: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                <SelectContent>
+                  {CONTACT_ORIGINS.map((o) => (<SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           {form.stage === "fechado_perdido" && (
             <div className="space-y-2">
               <Label>Motivo da perda</Label>
-              <Input value={form.lost_reason} onChange={(e) => setForm(f => ({ ...f, lost_reason: e.target.value }))} placeholder="Ex: Preço, concorrência..." />
+              <Select value={form.lost_reason} onValueChange={(v) => setForm(f => ({ ...f, lost_reason: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecionar motivo" /></SelectTrigger>
+                <SelectContent>
+                  {LOSS_REASONS.map((r) => (<SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>))}
+                </SelectContent>
+              </Select>
             </div>
           )}
           <div className="space-y-2">
@@ -509,6 +595,9 @@ export default function CrmPage() {
     enabled: !!companyId,
     staleTime: 60_000,
   });
+
+  const playbookConfig = useMemo(() => getPlaybookConfig(company?.settings as any), [company?.settings]);
+  const stageMetrics = useMemo(() => calcStageMetrics(opportunities), [opportunities]);
 
   const reactivationMutation = useMutation({
     mutationFn: async (params: { customerId: string; sellerId: string | null; type: "reativacao" | "retorno" | "perda"; summary: string }) => {
@@ -1294,6 +1383,40 @@ export default function CrmPage() {
               )}
             </div>
           )}
+
+          {/* Playbook Pipeline */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <ArrowRight className="h-5 w-5 text-primary" /> Pipeline Comercial
+            </h3>
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+              {stageMetrics.map((sm, i) => (
+                <div key={sm.stage} className="flex items-center gap-2 shrink-0">
+                  <Card className={`glass-card min-w-[140px] ${sm.stale_count > 0 ? "border-destructive/30" : ""}`}>
+                    <CardContent className="pt-3 pb-2 text-center">
+                      <p className="text-xs text-muted-foreground font-medium">{sm.label}</p>
+                      <p className="text-xl font-bold">{sm.count}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {sm.total_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 })}
+                      </p>
+                      {sm.avg_hours !== null && (
+                        <p className="text-xs mt-1">
+                          <span className="text-muted-foreground">Média: </span>
+                          <span className={sm.avg_hours > 96 ? "text-destructive" : "text-primary"}>
+                            {Math.round(sm.avg_hours)}h
+                          </span>
+                        </p>
+                      )}
+                      {sm.stale_count > 0 && (
+                        <Badge variant="destructive" className="text-xs mt-1">{sm.stale_count} paradas</Badge>
+                      )}
+                    </CardContent>
+                  </Card>
+                  {i < stageMetrics.length - 1 && <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />}
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Task Suggestions */}
           <div className="space-y-4">
