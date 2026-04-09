@@ -6,29 +6,38 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Normalização de texto: capitalização correta
+// --- Rate limiting (in-memory, per-user) ---
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 15; // requests per window
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(userId);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false;
+  entry.count++;
+  return true;
+}
+
+// --- Text normalization ---
 function normalizeText(text: string | null | undefined): string {
   if (!text) return "";
-  
-  // Remove espaços duplicados
   let normalized = text.replace(/\s+/g, " ").trim();
-  
-  // Capitalização correta (primeira letra maiúscula de cada palavra)
   normalized = normalized
     .toLowerCase()
     .split(" ")
     .map(word => {
-      // Palavras pequenas que não devem ser capitalizadas (exceto no início)
       const lowercaseWords = ["de", "do", "da", "dos", "das", "e", "ou"];
       if (lowercaseWords.includes(word)) return word;
       return word.charAt(0).toUpperCase() + word.slice(1);
     })
     .join(" ");
-  
-  // Garantir primeira letra maiúscula
   normalized = normalized.charAt(0).toUpperCase() + normalized.slice(1);
-  
-  // Padronizações específicas de marcas
+
   const brandMappings: Record<string, string> = {
     "volvo do brasil": "Volvo",
     "volkswagen do brasil": "Volkswagen",
@@ -42,18 +51,15 @@ function normalizeText(text: string | null | undefined): string {
     "honda automóveis": "Honda",
     "hyundai motor": "Hyundai",
   };
-  
+
   const lowerNormalized = normalized.toLowerCase();
   for (const [key, value] of Object.entries(brandMappings)) {
-    if (lowerNormalized.includes(key)) {
-      return value;
-    }
+    if (lowerNormalized.includes(key)) return value;
   }
-  
   return normalized;
 }
 
-// Interface para payload da API wdapi2
+// --- API response interface ---
 interface PlateApiResponse {
   placa?: string;
   MARCA?: string;
@@ -78,12 +84,10 @@ interface PlateApiResponse {
     tipo_veiculo?: string;
     especie?: string;
   };
-  // Error response
   error?: boolean;
   message?: string;
 }
 
-// Extrai valor do primeiro campo disponível
 function extractField(data: PlateApiResponse, ...paths: string[]): string {
   for (const path of paths) {
     const parts = path.split(".");
@@ -99,14 +103,16 @@ function extractField(data: PlateApiResponse, ...paths: string[]): string {
   return "";
 }
 
+// --- Allowed roles for plate lookup ---
+const ALLOWED_ROLES = ["admin", "suporte", "admin_empresa", "suporte_empresa", "franqueado", "master_admin", "ceo"];
+
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Validar autenticação manualmente
+    // 1. Validate JWT and extract user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -115,73 +121,107 @@ serve(async (req) => {
       );
     }
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // Validate token and get user claims
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(
+        JSON.stringify({ error: "Token inválido", code: "INVALID_TOKEN" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub as string;
+
+    // 2. Verify user role
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: roleData } = await serviceClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .single();
+
+    if (!roleData || !ALLOWED_ROLES.includes(roleData.role)) {
+      return new Response(
+        JSON.stringify({ error: "Sem permissão para consultar placas", code: "FORBIDDEN" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 3. Rate limiting
+    if (!checkRateLimit(userId)) {
+      return new Response(
+        JSON.stringify({ error: "Limite de consultas atingido. Tente novamente em 1 minuto.", code: "RATE_LIMITED" }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "60" } }
+      );
+    }
+
+    // 4. Validate input
     const { plate, country = "BR" } = await req.json();
 
-    if (!plate || plate.length < 7) {
+    if (!plate || typeof plate !== "string" || plate.length < 7 || plate.length > 10) {
       return new Response(
         JSON.stringify({ error: "Placa inválida", code: "INVALID_PLATE" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    // Sanitize plate: only allow alphanumeric and hyphens
+    const sanitizedPlate = plate.toUpperCase().replace(/[^A-Z0-9-]/g, "");
+    if (sanitizedPlate.length < 7) {
+      return new Response(
+        JSON.stringify({ error: "Placa inválida", code: "INVALID_PLATE" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const placasApiToken = Deno.env.get("PLACAS_API_TOKEN");
     const placasApiUrl = Deno.env.get("PLACAS_API_URL");
 
     if (!placasApiToken || !placasApiUrl) {
       return new Response(
-        JSON.stringify({ 
-          error: "API de placas não configurada. Configure PLACAS_API_TOKEN e PLACAS_API_URL.", 
-          code: "API_NOT_CONFIGURED" 
-        }),
+        JSON.stringify({ error: "API de placas não configurada", code: "API_NOT_CONFIGURED" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // 1. Verificar cache (válido por 7 dias)
-    const { data: cacheData } = await supabase
+    // 5. Check cache
+    const { data: cacheData } = await serviceClient
       .from("plate_lookup_cache")
       .select("payload, expires_at")
-      .eq("plate", plate.toUpperCase())
+      .eq("plate", sanitizedPlate)
       .eq("country", country)
       .gt("expires_at", new Date().toISOString())
       .maybeSingle();
 
     if (cacheData?.payload) {
-      console.log(`Cache hit para placa ${plate}`);
+      console.log(`Cache hit for plate ${sanitizedPlate} by user ${userId}`);
       return new Response(
-        JSON.stringify({
-          success: true,
-          fromCache: true,
-          data: cacheData.payload,
-        }),
+        JSON.stringify({ success: true, fromCache: true, data: cacheData.payload }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 2. Consultar API externa (wdapi2.com.br)
-    // URL format: https://wdapi2.com.br/consulta/{placa}/{token}
-    const apiUrl = `https://wdapi2.com.br/consulta/${plate.toUpperCase()}/${placasApiToken}`;
-    console.log(`Consultando API para placa ${plate}`);
-    
+    // 6. Query external API
+    const apiUrl = `https://wdapi2.com.br/consulta/${sanitizedPlate}/${placasApiToken}`;
+    console.log(`API lookup for plate ${sanitizedPlate} by user ${userId} (role: ${roleData.role})`);
+
     const apiResponse = await fetch(apiUrl, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
 
-    // Placa não encontrada
     if (apiResponse.status === 406) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Placa não encontrada", 
-          code: "PLATE_NOT_FOUND" 
-        }),
+        JSON.stringify({ success: false, error: "Placa não encontrada", code: "PLATE_NOT_FOUND" }),
         { status: 406, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -189,37 +229,28 @@ serve(async (req) => {
     if (!apiResponse.ok) {
       console.error(`API error: ${apiResponse.status}`);
       return new Response(
-        JSON.stringify({ 
-          error: "Erro ao consultar API de placas", 
-          code: "API_ERROR",
-          details: apiResponse.statusText 
-        }),
+        JSON.stringify({ error: "Erro ao consultar API de placas", code: "API_ERROR" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const rawData: PlateApiResponse = await apiResponse.json();
 
-    // Check for API error response
     if (rawData.error) {
-      console.error(`API error: ${rawData.message}`);
+      console.error(`API returned error for plate ${sanitizedPlate}`);
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: rawData.message || "Erro na consulta", 
-          code: "API_ERROR" 
-        }),
+        JSON.stringify({ success: false, error: "Erro na consulta", code: "API_ERROR" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 3. Mapear e normalizar campos conforme especificação wdapi2
+    // 7. Map and normalize fields
     const cilindradas = extractField(rawData, "extra.cilindradas");
     const combustivel = extractField(rawData, "extra.combustivel");
     const motorInfo = cilindradas ? `${cilindradas}cc${combustivel ? ` - ${combustivel}` : ""}` : "";
-    
+
     const mappedData = {
-      placa: extractField(rawData, "placa", "extra.placa_modelo_novo", "extra.placa_modelo_antigo") || plate.toUpperCase(),
+      placa: extractField(rawData, "placa", "extra.placa_modelo_novo", "extra.placa_modelo_antigo") || sanitizedPlate,
       marca: normalizeText(extractField(rawData, "MARCA", "marca")),
       modelo: normalizeText(extractField(rawData, "MODELO", "modelo", "extra.modelo")),
       anoModelo: extractField(rawData, "anoModelo", "ano", "extra.ano_modelo"),
@@ -229,26 +260,24 @@ serve(async (req) => {
       municipio: extractField(rawData, "municipio", "extra.municipio"),
       uf: extractField(rawData, "uf", "extra.uf"),
       tipoVeiculo: extractField(rawData, "extra.tipo_veiculo", "extra.especie"),
-      // Payload bruto para auditoria
       rawPayload: rawData,
     };
 
-    // 4. Salvar no cache
+    // 8. Save to cache
     try {
-      await supabase
+      await serviceClient
         .from("plate_lookup_cache")
         .upsert({
-          plate: plate.toUpperCase(),
+          plate: sanitizedPlate,
           country,
           payload: mappedData,
           expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         }, { onConflict: "plate,country" });
     } catch (cacheError) {
-      console.error("Erro ao salvar cache:", cacheError);
-      // Não falha a requisição por erro de cache
+      console.error("Cache save error:", cacheError);
     }
 
-    // 5. Verificar campos incompletos (P2)
+    // 9. Check incomplete fields
     const incompleteFields: string[] = [];
     if (!mappedData.motor) incompleteFields.push("motor");
     if (!mappedData.transmissao) incompleteFields.push("transmissao");
@@ -264,12 +293,9 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("Erro na função lookup-plate:", error);
+    console.error("lookup-plate error:", error instanceof Error ? error.message : "Unknown");
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Erro desconhecido", 
-        code: "INTERNAL_ERROR" 
-      }),
+      JSON.stringify({ error: "Erro interno", code: "INTERNAL_ERROR" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
