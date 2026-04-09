@@ -6,6 +6,7 @@ import {
   Shield, TrendingUp, CalendarDays, RefreshCw,
   ListChecks, Phone, MessageSquare, ThumbsDown,
   Filter, Lightbulb, UserX, Zap, Settings2,
+  Thermometer, ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,15 @@ import {
   type TaskSuggestion, type CrmConfig,
 } from "@/services/crmAutomationService";
 import { calcCommercialSla, type CommercialSla } from "@/services/crmSlaService";
+import {
+  CONTACT_RESULTS, CONTACT_ORIGINS, LOSS_REASONS,
+  OPPORTUNITY_TEMPERATURES, REACTIVATION_REASONS,
+  PLAYBOOK_STAGES, calcStageMetrics, getPlaybookConfig,
+  getTemperatureColor, getTemperatureBg, getTemperatureLabel,
+  getLossReasonLabel, getContactResultLabel, getContactOriginLabel,
+  isTransitionAllowed, getStageLabel,
+  type PlaybookConfig,
+} from "@/services/crmPlaybookService";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { OperationalAlertsPanel } from "@/components/admin/OperationalAlertsPanel";
