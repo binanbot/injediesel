@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, TrendingUp, Users, DollarSign, Building2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -11,7 +12,9 @@ import {
   type SellerProfitability, type CompanyProfitability, type ProfitabilityAlert,
 } from "@/services/profitabilityService";
 import { useCompany } from "@/hooks/useCompany";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { WalletProfitabilityPanel } from "@/components/admin/WalletProfitabilityPanel";
+import { OperationalAlertsPanel } from "@/components/admin/OperationalAlertsPanel";
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -43,6 +46,7 @@ function AlertCard({ alerts }: { alerts: ProfitabilityAlert[] }) {
 
 export default function MasterRentabilidade() {
   const { company } = useCompany();
+  const [tab, setTab] = useState("geral");
 
   const { data: sellers = [], isLoading: loadingSellers } = useQuery({
     queryKey: ["profitability-sellers", company?.id],
@@ -70,6 +74,15 @@ export default function MasterRentabilidade() {
         <h1 className="text-2xl font-bold">Rentabilidade Operacional</h1>
         <p className="text-muted-foreground">Visão consolidada: colaboradores, equipes e empresas</p>
       </div>
+
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="geral"><TrendingUp className="h-4 w-4 mr-1" /> Geral</TabsTrigger>
+          <TabsTrigger value="carteira"><Users className="h-4 w-4 mr-1" /> Carteira</TabsTrigger>
+          <TabsTrigger value="alertas"><AlertTriangle className="h-4 w-4 mr-1" /> Alertas</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="geral" className="space-y-6">
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -236,6 +249,16 @@ export default function MasterRentabilidade() {
           </Table>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="carteira" className="space-y-6">
+          {company?.id && <WalletProfitabilityPanel companyId={company.id} />}
+        </TabsContent>
+
+        <TabsContent value="alertas" className="space-y-6">
+          {company?.id && <OperationalAlertsPanel companyId={company.id} maxAlerts={20} />}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -38,6 +38,8 @@ import {
 import { fetchActiveSellers } from "@/services/employeeService";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { OperationalAlertsPanel } from "@/components/admin/OperationalAlertsPanel";
+import { WalletProfitabilityPanel } from "@/components/admin/WalletProfitabilityPanel";
 
 // ─── Activity Dialog ─────────────────────────────────────────
 
@@ -551,6 +553,8 @@ export default function CrmPage() {
           <TabsTrigger value="carteira"><Users className="h-4 w-4 mr-1" /> Carteira</TabsTrigger>
           <TabsTrigger value="atividades"><Activity className="h-4 w-4 mr-1" /> Atividades</TabsTrigger>
           <TabsTrigger value="funil"><Target className="h-4 w-4 mr-1" /> Funil</TabsTrigger>
+          <TabsTrigger value="rentabilidade"><TrendingUp className="h-4 w-4 mr-1" /> Rentabilidade</TabsTrigger>
+          <TabsTrigger value="alertas"><Shield className="h-4 w-4 mr-1" /> Alertas</TabsTrigger>
         </TabsList>
 
         {/* ─── Carteira Tab ───────────────────────────── */}
@@ -770,6 +774,17 @@ export default function CrmPage() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ─── Rentabilidade Tab ─────────────────────── */}
+        <TabsContent value="rentabilidade" className="space-y-4">
+          <WalletProfitabilityPanel companyId={companyId} />
+        </TabsContent>
+
+        {/* ─── Alertas Tab ────────────────────────────── */}
+        <TabsContent value="alertas" className="space-y-4">
+          <OperationalAlertsPanel companyId={companyId} filterCategory="crm" showSummary={true} maxAlerts={20} />
+          <OperationalAlertsPanel companyId={companyId} filterCategory="comercial" showSummary={false} maxAlerts={10} />
         </TabsContent>
       </Tabs>
 
