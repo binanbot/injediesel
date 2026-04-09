@@ -241,6 +241,7 @@ function CeoRoutes() {
         <Route path="market-share" element={<CeoMarketShare />} />
         <Route path="metas" element={<CeoMetasOkrs />} />
         <Route path="relatorios" element={<CeoRelatorios />} />
+        <Route path="rentabilidade" element={<CeoRentabilidade />} />
         <Route path="empresas/:companyId" element={<CeoCompanyDetail />} />
       </Route>
       <Route path="/ceo/*" element={<Navigate to="/" replace />} />
@@ -268,6 +269,7 @@ function MasterRoutes() {
         <Route path="vendas" element={<VendasDashboard />} />
         <Route path="vendas/nova" element={<VendaManual />} />
         <Route path="auditoria" element={<Auditoria />} />
+        <Route path="rentabilidade" element={<MasterRentabilidade />} />
       </Route>
       <Route path="/master/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
