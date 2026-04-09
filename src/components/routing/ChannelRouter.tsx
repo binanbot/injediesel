@@ -81,6 +81,7 @@ const CrmPage = lazy(() => import("@/pages/admin/Crm"));
 // Master pages
 const MasterDashboard = lazy(() => import("@/pages/master/Dashboard"));
 const MasterCompanyDetail = lazy(() => import("@/pages/master/CompanyDetail"));
+const MasterRentabilidade = lazy(() => import("@/pages/master/Rentabilidade"));
 
 // CEO pages
 const CeoDashboard = lazy(() => import("@/pages/ceo/Dashboard"));
