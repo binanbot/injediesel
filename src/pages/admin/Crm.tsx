@@ -41,6 +41,12 @@ import {
   type ReactivationCandidate,
 } from "@/services/crmService";
 import { fetchActiveSellers } from "@/services/employeeService";
+import {
+  generateTaskSuggestions, getCrmConfig,
+  SUGGESTION_TYPE_LABELS,
+  type TaskSuggestion, type CrmConfig,
+} from "@/services/crmAutomationService";
+import { calcCommercialSla, type CommercialSla } from "@/services/crmSlaService";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { OperationalAlertsPanel } from "@/components/admin/OperationalAlertsPanel";
