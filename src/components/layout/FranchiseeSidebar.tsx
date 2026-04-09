@@ -79,6 +79,13 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
   const itemCount = useCartStore((s) => s.getItemCount());
   const { isModuleEnabled } = useCompany();
   const { resolve } = useChannelPaths();
+  const sidebarCounts = useSidebarNotifications();
+
+  // Build a map from resolved paths to real notification counts
+  const notifications: Record<string, number> = {
+    [resolve(notificationPaths.arquivos, "/franqueado")]: sidebarCounts.arquivos,
+    [resolve(notificationPaths.mensagens, "/franqueado")]: sidebarCounts.mensagens,
+  };
 
   const menuItems = allMenuItems
     .filter((item) => item.module === null || isModuleEnabled(item.module))
