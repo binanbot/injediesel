@@ -1708,7 +1708,6 @@ export type Database = {
           legacy_role: string | null
           legacy_source_user_id: string | null
           legacy_user_login: string | null
-          legacy_user_pass_hash: string | null
           legacy_user_registered_at: string | null
           phone: string | null
           rental_value_brl: number | null
@@ -1747,7 +1746,6 @@ export type Database = {
           legacy_role?: string | null
           legacy_source_user_id?: string | null
           legacy_user_login?: string | null
-          legacy_user_pass_hash?: string | null
           legacy_user_registered_at?: string | null
           phone?: string | null
           rental_value_brl?: number | null
@@ -1786,7 +1784,6 @@ export type Database = {
           legacy_role?: string | null
           legacy_source_user_id?: string | null
           legacy_user_login?: string | null
-          legacy_user_pass_hash?: string | null
           legacy_user_registered_at?: string | null
           phone?: string | null
           rental_value_brl?: number | null
