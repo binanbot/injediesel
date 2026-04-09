@@ -1,21 +1,15 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
-  Building2, Target,
-  Globe,
-  Users,
-  Shield,
-  Settings,
-  LogOut,
-  X,
-  FileText,
-  BarChart3,
+  Target,
   UsersRound,
   TrendingUp,
   ClipboardList,
+  Wallet,
+  LogOut,
+  X,
   PanelLeftClose,
   PanelLeftOpen,
-  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
