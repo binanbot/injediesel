@@ -449,6 +449,7 @@ export function LegacyCombinedRoutes() {
           <Route path="market-share" element={<CeoMarketShare />} />
           <Route path="metas" element={<CeoMetasOkrs />} />
           <Route path="relatorios" element={<CeoRelatorios />} />
+          <Route path="rentabilidade" element={<CeoRentabilidade />} />
           <Route path="empresas/:companyId" element={<CeoCompanyDetail />} />
         </Route>
 
