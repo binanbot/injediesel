@@ -87,6 +87,8 @@ function ActivityDialog({
     due_date: existing?.due_date ? existing.due_date.slice(0, 16) : "",
     priority: existing?.priority || "media",
     status: existing?.status || "pendente",
+    contact_result: "",
+    contact_origin: "",
   });
 
   const [customerSearch, setCustomerSearch] = useState("");
