@@ -419,6 +419,179 @@ export type Database = {
           },
         ]
       }
+      crm_activities: {
+        Row: {
+          activity_type: string
+          channel: string | null
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          opportunity_id: string | null
+          scheduled_at: string | null
+          seller_profile_id: string | null
+          status: string
+          summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          activity_type?: string
+          channel?: string | null
+          company_id: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          opportunity_id?: string | null
+          scheduled_at?: string | null
+          seller_profile_id?: string | null
+          status?: string
+          summary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activity_type?: string
+          channel?: string | null
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          opportunity_id?: string | null
+          scheduled_at?: string | null
+          seller_profile_id?: string | null
+          status?: string
+          summary?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_activities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_activities_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_activities_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "crm_opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_activities_seller_profile_id_fkey"
+            columns: ["seller_profile_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_opportunities: {
+        Row: {
+          closed_at: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          estimated_value: number
+          file_id: string | null
+          id: string
+          lost_reason: string | null
+          notes: string | null
+          order_id: string | null
+          sale_channel: string | null
+          seller_profile_id: string | null
+          stage: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          estimated_value?: number
+          file_id?: string | null
+          id?: string
+          lost_reason?: string | null
+          notes?: string | null
+          order_id?: string | null
+          sale_channel?: string | null
+          seller_profile_id?: string | null
+          stage?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          estimated_value?: number
+          file_id?: string | null
+          id?: string
+          lost_reason?: string | null
+          notes?: string | null
+          order_id?: string | null
+          sale_channel?: string | null
+          seller_profile_id?: string | null
+          stage?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_opportunities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_opportunities_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_opportunities_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "received_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_opportunities_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_opportunities_seller_profile_id_fkey"
+            columns: ["seller_profile_id"]
+            isOneToOne: false
+            referencedRelation: "seller_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           active_city: string | null

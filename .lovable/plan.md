@@ -1,56 +1,78 @@
 
-# Evolução Financeira Operacional — Lançamentos + Categorias
+# CRM Gerencial/Comercial — Estrutura Incremental
 
 ## Proposta Técnica
 
-A tabela `financial_entries` já existe com: `entry_type`, `category`, `scope`, `franchise_profile_id`, `order_id`, `amount`, `competency_date`, `description`. Porém faltam dimensões analíticas essenciais.
+Construir sobre a base comercial existente (customers, seller_profiles, orders, received_files) sem duplicar dados, adicionando apenas as dimensões que faltam: atividades comerciais e funil de oportunidades.
 
-### Estratégia: Evoluir `financial_entries` (não criar tabela nova)
+---
 
-Adicionar colunas à tabela existente para suportar os novos requisitos sem quebrar o que já funciona.
+## Modelagem Incremental
 
-### Migração — Novas colunas em `financial_entries`
+### Tabela 1: `crm_activities` — Registro de atividades comerciais
 
 | Coluna | Tipo | Propósito |
 |--------|------|-----------|
-| `company_id` | UUID FK → companies | Company scope direto (hoje depende de franchise_profile_id) |
-| `unit_id` | UUID FK → units | Vínculo com unidade |
-| `employee_profile_id` | UUID FK → employee_profiles | Despesa vinculada a colaborador |
-| `seller_profile_id` | UUID FK → seller_profiles | Despesa vinculada a vendedor |
-| `subcategory` | TEXT | Subcategoria (ex: "combustível", "uniforme") |
-| `cost_center` | TEXT | Centro de custo livre |
-| `is_recurring` | BOOLEAN | Fixo vs variável |
-| `reference_month` | DATE | Mês de referência (complementa competency_date) |
-| `created_by` | UUID | Quem lançou |
+| `company_id` | UUID FK → companies | Isolamento multi-tenant |
+| `customer_id` | UUID FK → customers | Cliente alvo |
+| `seller_profile_id` | UUID FK → seller_profiles | Vendedor responsável |
+| `activity_type` | TEXT | contato, followup, retorno, observacao, reativacao, negociacao, perda |
+| `channel` | TEXT | whatsapp, telefone, balcao, email |
+| `summary` | TEXT | Resumo da atividade |
+| `scheduled_at` | TIMESTAMPTZ | Data agendada (follow-ups) |
+| `completed_at` | TIMESTAMPTZ | Quando foi realizada |
+| `status` | TEXT | pendente, realizada, atrasada, cancelada |
+| `created_by` | UUID | Quem registrou |
+| `opportunity_id` | UUID FK → crm_opportunities | Vínculo opcional com oportunidade |
 
-### Categorias padronizadas
+### Tabela 2: `crm_opportunities` — Funil comercial simplificado
 
-**entry_type** (já existe): `receita`, `despesa`, `ajuste`
+| Coluna | Tipo | Propósito |
+|--------|------|-----------|
+| `company_id` | UUID FK → companies | Isolamento multi-tenant |
+| `customer_id` | UUID FK → customers | Cliente da oportunidade |
+| `seller_profile_id` | UUID FK → seller_profiles | Vendedor responsável |
+| `title` | TEXT | Descrição curta da oportunidade |
+| `stage` | TEXT | lead, em_contato, proposta, negociacao, fechado_ganho, fechado_perdido |
+| `estimated_value` | NUMERIC | Valor estimado da oportunidade |
+| `sale_channel` | TEXT | Canal de origem |
+| `order_id` | UUID FK → orders | Pedido vinculado (quando fechado) |
+| `file_id` | UUID FK → received_files | Arquivo vinculado (quando fechado) |
+| `lost_reason` | TEXT | Motivo da perda |
+| `notes` | TEXT | Observações |
+| `closed_at` | TIMESTAMPTZ | Data de fechamento |
+| `created_by` | UUID | Quem criou |
 
-**category** (evoluir): `pessoal_fixo`, `pessoal_variavel`, `comercial`, `logistica`, `frota`, `infraestrutura`, `administrativo`, `marketing`, `suporte`, `financeiro`, `operacional`, `receita_manual`, `receita_pedido`, `receita_arquivo`
+---
 
-**subcategory** (novo): texto livre para detalhar (salário, VT, VA, combustível, etc.)
+## RLS
 
-### RLS
+- Company admins: CRUD na própria empresa
+- Master/CEO: acesso global
+- Vendedores: CRUD apenas nos próprios registros (via seller_profile_id)
 
-- Manter policies existentes
-- Adicionar policy para company scope via `company_id`
+---
 
-### Telas
+## Código
 
-1. **Nova página `/admin/financeiro`** — Listagem + filtros + resumo
-2. **Dialog de lançamento** — Formulário completo com todas as dimensões
-3. **Link na sidebar** — Item "Financeiro" no AdminSidebar
+### Services
+- `crmService.ts` — CRUD de atividades e oportunidades + queries analíticas (carteira inteligente, follow-ups atrasados, clientes sem recompra)
 
-### Service
+### Páginas
+- `/admin/crm` — Painel CRM com abas: Carteira | Atividades | Funil | Desempenho
+- Dialog de nova atividade
+- Dialog de nova oportunidade
 
-- `financialService.ts` — CRUD + agregações + filtros
+### Sidebar
+- Item "CRM" no AdminSidebar
 
-### Plano de Execução
+---
+
+## Plano de Execução
 
 | Bloco | Entregável |
 |-------|-----------|
-| 1 | Migração: novas colunas + RLS atualizada |
-| 2 | financialService.ts |
-| 3 | Página /admin/financeiro + dialog de lançamento |
+| 1 | Migração: crm_activities + crm_opportunities + RLS + índices |
+| 2 | crmService.ts |
+| 3 | Página /admin/crm (Carteira + Atividades + Funil) |
 | 4 | Link na sidebar |
