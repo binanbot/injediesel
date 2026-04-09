@@ -25,18 +25,11 @@ import { useChannelPaths } from "@/hooks/useChannelPaths";
 
 const RAW_MENU_ITEMS = [
   { icon: LayoutDashboard, label: "Visão Geral", path: "/master" },
-  { icon: Building2, label: "Empresas", path: "/master/empresas" },
-  { icon: Globe, label: "Domínios", path: "/master/dominios" },
-  { icon: Users, label: "Usuários", path: "/master/usuarios" },
-  { icon: Shield, label: "Permissões", path: "/master/permissoes" },
-  { icon: BarChart3, label: "Relatórios Globais", path: "/master/relatorios" },
   { icon: UsersRound, label: "Colaboradores", path: "/master/colaboradores" },
   { icon: TrendingUp, label: "Painel Comercial", path: "/master/vendas" },
   { icon: ClipboardList, label: "Auditoria", path: "/master/auditoria" },
   { icon: Wallet, label: "Rentabilidade", path: "/master/rentabilidade" },
   { icon: Target, label: "Inteligência CRM", path: "/master/crm" },
-  { icon: Settings, label: "Configurações", path: "/master/configuracoes" },
-  { icon: FileText, label: "Documentação", path: "/master/documentacao" },
 ];
 
 interface MasterSidebarProps {

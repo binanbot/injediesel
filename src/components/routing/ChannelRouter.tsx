@@ -437,6 +437,7 @@ export function LegacyCombinedRoutes() {
           <Route path="vendas/nova" element={<VendaManual />} />
           <Route path="auditoria" element={<Auditoria />} />
           <Route path="rentabilidade" element={<MasterRentabilidade />} />
+          <Route path="crm" element={<MasterCrmIntelligence />} />
         </Route>
 
         {/* CEO Routes */}
@@ -454,6 +455,7 @@ export function LegacyCombinedRoutes() {
           <Route path="metas" element={<CeoMetasOkrs />} />
           <Route path="relatorios" element={<CeoRelatorios />} />
           <Route path="rentabilidade" element={<CeoRentabilidade />} />
+          <Route path="comercial" element={<CeoComercialIntelligence />} />
           <Route path="empresas/:companyId" element={<CeoCompanyDetail />} />
         </Route>
 
