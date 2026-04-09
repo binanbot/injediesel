@@ -1,78 +1,60 @@
 
-# CRM Gerencial/Comercial — Estrutura Incremental
+# Rentabilidade Operacional — Visão por Colaborador, Equipe e Empresa
 
-## Proposta Técnica
+## Modelo de Cálculo
 
-Construir sobre a base comercial existente (customers, seller_profiles, orders, received_files) sem duplicar dados, adicionando apenas as dimensões que faltam: atividades comerciais e funil de oportunidades.
+### Por Colaborador (seller/employee)
+| Métrica | Fonte | Fórmula |
+|---------|-------|---------|
+| Faturamento | orders.total_amount + received_files.valor_brl | Σ onde seller_profile_id = X |
+| Comissão | commission_closings.realized_commission | Σ onde seller_profile_id = X |
+| Custo Fixo | employee_costs (is_recurring=true) | Σ amount_brl |
+| Custo Variável | employee_costs (is_recurring=false) | Σ amount_brl |
+| Custo Total | Fixo + Variável + Comissão | — |
+| Margem | Faturamento - Custo Total | — |
+| ROI | (Faturamento / Custo Total) × 100 | — |
 
----
+### Por Equipe (department)
+Agregação dos colaboradores do departamento.
 
-## Modelagem Incremental
-
-### Tabela 1: `crm_activities` — Registro de atividades comerciais
-
-| Coluna | Tipo | Propósito |
-|--------|------|-----------|
-| `company_id` | UUID FK → companies | Isolamento multi-tenant |
-| `customer_id` | UUID FK → customers | Cliente alvo |
-| `seller_profile_id` | UUID FK → seller_profiles | Vendedor responsável |
-| `activity_type` | TEXT | contato, followup, retorno, observacao, reativacao, negociacao, perda |
-| `channel` | TEXT | whatsapp, telefone, balcao, email |
-| `summary` | TEXT | Resumo da atividade |
-| `scheduled_at` | TIMESTAMPTZ | Data agendada (follow-ups) |
-| `completed_at` | TIMESTAMPTZ | Quando foi realizada |
-| `status` | TEXT | pendente, realizada, atrasada, cancelada |
-| `created_by` | UUID | Quem registrou |
-| `opportunity_id` | UUID FK → crm_opportunities | Vínculo opcional com oportunidade |
-
-### Tabela 2: `crm_opportunities` — Funil comercial simplificado
-
-| Coluna | Tipo | Propósito |
-|--------|------|-----------|
-| `company_id` | UUID FK → companies | Isolamento multi-tenant |
-| `customer_id` | UUID FK → customers | Cliente da oportunidade |
-| `seller_profile_id` | UUID FK → seller_profiles | Vendedor responsável |
-| `title` | TEXT | Descrição curta da oportunidade |
-| `stage` | TEXT | lead, em_contato, proposta, negociacao, fechado_ganho, fechado_perdido |
-| `estimated_value` | NUMERIC | Valor estimado da oportunidade |
-| `sale_channel` | TEXT | Canal de origem |
-| `order_id` | UUID FK → orders | Pedido vinculado (quando fechado) |
-| `file_id` | UUID FK → received_files | Arquivo vinculado (quando fechado) |
-| `lost_reason` | TEXT | Motivo da perda |
-| `notes` | TEXT | Observações |
-| `closed_at` | TIMESTAMPTZ | Data de fechamento |
-| `created_by` | UUID | Quem criou |
+### Por Empresa
+| Métrica | Fonte |
+|---------|-------|
+| Faturamento | orders + received_files (via unit_id → company_id) |
+| Custo Pessoal | Σ employee_costs por company_id |
+| Custo Operacional | Σ operational_costs por company_id |
+| Despesas | financial_entries (entry_type=despesa) por company_id |
+| Receitas Extra | financial_entries (entry_type=receita) por company_id |
+| Margem Operacional | Faturamento + Receitas Extra - Custo Pessoal - Custo Op - Despesas |
 
 ---
 
-## RLS
+## Implementação
 
-- Company admins: CRUD na própria empresa
-- Master/CEO: acesso global
-- Vendedores: CRUD apenas nos próprios registros (via seller_profile_id)
+### 1. Service: `profitabilityService.ts`
+- `fetchSellerProfitability(companyId, period)` — por vendedor
+- `fetchDepartmentProfitability(companyId, period)` — por departamento
+- `fetchCompanyProfitability(period)` — comparativo entre empresas
+- Todas as queries usam dados existentes (sem migração)
+
+### 2. Página `/master/rentabilidade`
+- Ranking de rentabilidade por colaborador
+- Ranking de custo por equipe/departamento
+- Comparativo entre empresas (cards lado a lado)
+- Alertas: alto custo + baixa geração
+
+### 3. Página `/ceo/rentabilidade`
+- KPIs executivos: Custo Pessoal, Custo Operacional, Margem Operacional
+- Comparativo Injediesel vs PROMAX (cards)
+- Eficiência Comercial (faturamento por R$ de custo)
+- Alertas executivos (margem < 20%, custo crescendo > receita)
+
+### 4. Sidebar + Rotas
+- MasterSidebar: "Rentabilidade" 
+- CeoSidebar: "Rentabilidade"
+- ChannelRouter: rotas lazy
 
 ---
 
-## Código
-
-### Services
-- `crmService.ts` — CRUD de atividades e oportunidades + queries analíticas (carteira inteligente, follow-ups atrasados, clientes sem recompra)
-
-### Páginas
-- `/admin/crm` — Painel CRM com abas: Carteira | Atividades | Funil | Desempenho
-- Dialog de nova atividade
-- Dialog de nova oportunidade
-
-### Sidebar
-- Item "CRM" no AdminSidebar
-
----
-
-## Plano de Execução
-
-| Bloco | Entregável |
-|-------|-----------|
-| 1 | Migração: crm_activities + crm_opportunities + RLS + índices |
-| 2 | crmService.ts |
-| 3 | Página /admin/crm (Carteira + Atividades + Funil) |
-| 4 | Link na sidebar |
+## Sem Migração
+Todos os dados já existem nas tabelas atuais. O service faz agregação client-side.

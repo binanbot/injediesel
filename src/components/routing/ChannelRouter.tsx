@@ -81,6 +81,7 @@ const CrmPage = lazy(() => import("@/pages/admin/Crm"));
 // Master pages
 const MasterDashboard = lazy(() => import("@/pages/master/Dashboard"));
 const MasterCompanyDetail = lazy(() => import("@/pages/master/CompanyDetail"));
+const MasterRentabilidade = lazy(() => import("@/pages/master/Rentabilidade"));
 
 // CEO pages
 const CeoDashboard = lazy(() => import("@/pages/ceo/Dashboard"));
@@ -89,6 +90,7 @@ const CeoReceitaCrescimento = lazy(() => import("@/pages/ceo/ReceitaCrescimento"
 const CeoMarketShare = lazy(() => import("@/pages/ceo/MarketShare"));
 const CeoMetasOkrs = lazy(() => import("@/pages/ceo/MetasOkrs"));
 const CeoRelatorios = lazy(() => import("@/pages/ceo/Relatorios"));
+const CeoRentabilidade = lazy(() => import("@/pages/ceo/Rentabilidade"));
 
 // Layouts
 import { FranchiseeLayout } from "@/components/layout/FranchiseeLayout";
@@ -239,6 +241,7 @@ function CeoRoutes() {
         <Route path="market-share" element={<CeoMarketShare />} />
         <Route path="metas" element={<CeoMetasOkrs />} />
         <Route path="relatorios" element={<CeoRelatorios />} />
+        <Route path="rentabilidade" element={<CeoRentabilidade />} />
         <Route path="empresas/:companyId" element={<CeoCompanyDetail />} />
       </Route>
       <Route path="/ceo/*" element={<Navigate to="/" replace />} />
@@ -266,6 +269,7 @@ function MasterRoutes() {
         <Route path="vendas" element={<VendasDashboard />} />
         <Route path="vendas/nova" element={<VendaManual />} />
         <Route path="auditoria" element={<Auditoria />} />
+        <Route path="rentabilidade" element={<MasterRentabilidade />} />
       </Route>
       <Route path="/master/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
@@ -428,6 +432,7 @@ export function LegacyCombinedRoutes() {
           <Route path="vendas" element={<VendasDashboard />} />
           <Route path="vendas/nova" element={<VendaManual />} />
           <Route path="auditoria" element={<Auditoria />} />
+          <Route path="rentabilidade" element={<MasterRentabilidade />} />
         </Route>
 
         {/* CEO Routes */}
@@ -444,6 +449,7 @@ export function LegacyCombinedRoutes() {
           <Route path="market-share" element={<CeoMarketShare />} />
           <Route path="metas" element={<CeoMetasOkrs />} />
           <Route path="relatorios" element={<CeoRelatorios />} />
+          <Route path="rentabilidade" element={<CeoRentabilidade />} />
           <Route path="empresas/:companyId" element={<CeoCompanyDetail />} />
         </Route>
 
