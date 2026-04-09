@@ -244,6 +244,8 @@ function ActivityDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
           <div className="space-y-2">
             <Label>Vendedor</Label>
             <Select value={form.seller_profile_id} onValueChange={(v) => setForm(f => ({ ...f, seller_profile_id: v }))}>
