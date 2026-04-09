@@ -43,10 +43,14 @@ interface FranchiseeProfile {
   kess_expires_at: string | null;
   ktag_serial: string | null;
   ktag_expires_at: string | null;
-  legacy_user_login: string | null;
-  legacy_source_user_id: string | null;
-  legacy_role: string | null;
-  legacy_user_registered_at: string | null;
+  phone: string | null;
+  state: string | null;
+  district: string | null;
+  street: string | null;
+  address_number: string | null;
+  complement: string | null;
+  zip_code: string | null;
+  delivery_address: unknown;
   requires_password_reset: boolean;
   contract_type: string | null;
   contract_expiration_date: string | null;
