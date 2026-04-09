@@ -14,6 +14,9 @@ import {
   BarChart3,
   ArrowUpRight,
   ArrowDownRight,
+  ShieldAlert,
+  Crosshair,
+  Activity,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,6 +48,15 @@ import {
   type CompanyMonthlyTrend,
   type TrendComparison,
 } from "@/services/ceoCommercialTrendsService";
+import {
+  calcCompanyForecasts,
+  detectExecutiveRisks,
+  calcTrendDeviations,
+  type CompanyForecast,
+  type ExecutiveRisk,
+  type TrendDeviation,
+  type RiskLevel,
+} from "@/services/ceoCommercialForecastService";
 import { fmtCurrency, fmtPercent } from "@/utils/ceoFormatters";
 
 // ─── Combined company data ──────────────────────────────────
@@ -161,6 +173,22 @@ export default function ComercialIntelligence() {
     [trendsData]
   );
 
+  // ── Predictive layer
+  const forecasts = useMemo(
+    () => calcCompanyForecasts(trendsData),
+    [trendsData]
+  );
+
+  const executiveRisks = useMemo(
+    () => detectExecutiveRisks(trendComparisons, trendsData),
+    [trendComparisons, trendsData]
+  );
+
+  const trendDeviations = useMemo(
+    () => calcTrendDeviations(trendsData),
+    [trendsData]
+  );
+
   // ── Global KPIs
   const totals = useMemo(() => {
     const avgConversion =
@@ -195,7 +223,7 @@ export default function ComercialIntelligence() {
     return { bestEfficiency, worstLoss, bestRoi, costConversionAlert };
   }, [companies]);
 
-  // ── Trend insights (enhanced)
+  // ── Trend insights
   const trendInsights = useMemo(() => {
     if (trendComparisons.length === 0) return null;
     const bestImprover = [...trendComparisons].sort((a, b) => b.conversion_delta - a.conversion_delta)[0];
@@ -226,7 +254,7 @@ export default function ComercialIntelligence() {
       <ExecutivePageHeader
         icon={Target}
         title="Inteligência Comercial"
-        subtitle="Visão executiva integrada: playbook, custos, rentabilidade e tendências"
+        subtitle="Visão executiva integrada: playbook, custos, rentabilidade, tendências e projeções"
       />
 
       {/* ── KPI Rows ─────────────────────────────────────────── */}
@@ -243,7 +271,68 @@ export default function ComercialIntelligence() {
         <MiniKpi label="Margem Abs." value={isLoading ? null : fmtCurrency(totals.totalMargin)} icon={TrendingUp} accent={totals.totalMargin >= 0 ? "text-emerald-400" : "text-rose-400"} loading={isLoading} />
       </div>
 
-      {/* ── Trend Charts (expanded) ──────────────────────────── */}
+      {/* ── PREDICTIVE: Executive Risks ──────────────────────── */}
+      {!loadingTrends && executiveRisks.length > 0 && (
+        <Card className="glass-card border border-rose-500/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <ShieldAlert className="h-5 w-5 text-rose-400" />
+              Riscos Executivos Identificados
+              <Badge variant="destructive" className="ml-2 text-xs">{executiveRisks.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {executiveRisks.slice(0, 6).map((risk, i) => (
+                <RiskCard key={`${risk.company_id}-${risk.risk_type}-${i}`} risk={risk} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── PREDICTIVE: Forecast Cards ───────────────────────── */}
+      {!loadingTrends && forecasts.length > 0 && (
+        <Card className="glass-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Crosshair className="h-5 w-5 text-primary" />
+              Projeções de Fechamento — Mês Atual
+              <Badge variant="outline" className="ml-2 text-xs">
+                {Math.round(forecasts[0]?.month_progress * 100 || 0)}% do mês
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {forecasts.map((fc) => (
+                <ForecastCard key={fc.company_id} forecast={fc} comparison={trendComparisons.find((tc) => tc.company_id === fc.company_id)} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── PREDICTIVE: Trend Deviations ─────────────────────── */}
+      {!loadingTrends && trendDeviations.length > 0 && (
+        <Card className="glass-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Activity className="h-5 w-5 text-amber-400" />
+              Desvios Contra Tendência
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {trendDeviations.slice(0, 6).map((dev, i) => (
+                <DeviationCard key={`${dev.company_id}-${dev.metric}-${i}`} deviation={dev} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Trend Charts ─────────────────────────────────────── */}
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -296,7 +385,7 @@ export default function ComercialIntelligence() {
         </CardContent>
       </Card>
 
-      {/* ── MoM Comparison Cards (enhanced) ──────────────────── */}
+      {/* ── MoM Comparison Cards ─────────────────────────────── */}
       {trendComparisons.length > 0 && !loadingTrends && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {trendComparisons.map((tc) => (
@@ -305,7 +394,7 @@ export default function ComercialIntelligence() {
         </div>
       )}
 
-      {/* ── Trend Insights (enhanced) ────────────────────────── */}
+      {/* ── Trend Insights ───────────────────────────────────── */}
       {trendInsights && !loadingTrends && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <InsightCard
@@ -606,6 +695,117 @@ function MoMCard({ data: tc }: { data: TrendComparison }) {
             </p>
           </div>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ForecastCard({ forecast: fc, comparison: tc }: { forecast: CompanyForecast; comparison?: TrendComparison }) {
+  const progressPct = Math.round(fc.month_progress * 100);
+  return (
+    <Card className="border border-primary/20 bg-card/50">
+      <CardContent className="pt-4 pb-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-sm flex items-center gap-1.5">
+            <Crosshair className="h-3.5 w-3.5 text-primary" />
+            {fc.company_name}
+          </h3>
+          <Badge variant="outline" className="text-[10px]">{progressPct}% do mês</Badge>
+        </div>
+        <Progress value={progressPct} className="h-1.5" />
+        <div className="grid grid-cols-3 gap-3 text-center">
+          <div>
+            <p className="text-[11px] text-muted-foreground">Receita Proj.</p>
+            <p className="text-sm font-bold text-emerald-400">{fmtCurrency(fc.projected_revenue)}</p>
+            {tc && tc.prev_revenue > 0 && (
+              <p className={`text-[10px] ${fc.projected_revenue >= tc.prev_revenue ? "text-emerald-400/60" : "text-rose-400/60"}`}>
+                vs ant: {fc.projected_revenue >= tc.prev_revenue ? "↑" : "↓"} {Math.abs(((fc.projected_revenue - tc.prev_revenue) / tc.prev_revenue) * 100).toFixed(0)}%
+              </p>
+            )}
+          </div>
+          <div>
+            <p className="text-[11px] text-muted-foreground">Margem Proj.</p>
+            <p className={`text-sm font-bold ${fc.projected_margin_pct >= 20 ? "text-emerald-400" : "text-amber-400"}`}>{fmtPercent(fc.projected_margin_pct)}</p>
+          </div>
+          <div>
+            <p className="text-[11px] text-muted-foreground">ROI Proj.</p>
+            <p className={`text-sm font-bold ${fc.projected_roi >= 300 ? "text-emerald-400" : "text-amber-400"}`}>{fmtPercent(fc.projected_roi, 0)}</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-3 text-center border-t border-border/30 pt-2">
+          <div>
+            <p className="text-[11px] text-muted-foreground">Custo Proj.</p>
+            <p className="text-sm font-bold text-rose-400">{fmtCurrency(fc.projected_cost_personnel)}</p>
+          </div>
+          <div>
+            <p className="text-[11px] text-muted-foreground">Perda Proj.</p>
+            <p className="text-sm font-bold text-rose-400">{fmtCurrency(fc.projected_loss_value)}</p>
+          </div>
+          <div>
+            <p className="text-[11px] text-muted-foreground">Volume Proj.</p>
+            <p className="text-sm font-bold">{fc.projected_volume}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RiskCard({ risk }: { risk: ExecutiveRisk }) {
+  const levelStyles: Record<RiskLevel, string> = {
+    critical: "border-rose-500/40 bg-rose-500/5",
+    high: "border-rose-500/20 bg-rose-500/5",
+    moderate: "border-amber-500/20 bg-amber-500/5",
+    low: "border-border/50",
+  };
+  const levelBadge: Record<RiskLevel, string> = {
+    critical: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+    high: "bg-rose-500/15 text-rose-400 border-rose-500/20",
+    moderate: "bg-amber-500/15 text-amber-400 border-amber-500/20",
+    low: "bg-muted text-muted-foreground",
+  };
+  const levelLabels: Record<RiskLevel, string> = {
+    critical: "Crítico",
+    high: "Alto",
+    moderate: "Moderado",
+    low: "Baixo",
+  };
+  return (
+    <Card className={`border ${levelStyles[risk.level]}`}>
+      <CardContent className="pt-3 pb-3 space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-muted-foreground">{risk.company_name}</span>
+          <Badge variant="outline" className={`text-[10px] ${levelBadge[risk.level]}`}>{levelLabels[risk.level]}</Badge>
+        </div>
+        <p className="text-sm font-semibold flex items-center gap-1.5">
+          <ShieldAlert className="h-3.5 w-3.5 text-rose-400 shrink-0" />
+          {risk.label}
+        </p>
+        <p className="text-[11px] text-muted-foreground">{risk.description}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DeviationCard({ deviation: dev }: { deviation: TrendDeviation }) {
+  const isPositive = dev.direction === "above";
+  // For losses, above = bad; for others, above = good
+  const isLoss = dev.metric === "estimated_loss_value";
+  const isGood = isLoss ? !isPositive : isPositive;
+
+  return (
+    <Card className={`border ${isGood ? "border-emerald-500/20" : "border-amber-500/20"}`}>
+      <CardContent className="pt-3 pb-3 space-y-1">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">{dev.company_name}</span>
+          <Badge variant="outline" className={`text-[10px] ${isGood ? "text-emerald-400 border-emerald-500/20" : "text-amber-400 border-amber-500/20"}`}>
+            {isPositive ? "↑" : "↓"} {Math.abs(dev.deviation_pct).toFixed(0)}%
+          </Badge>
+        </div>
+        <p className="text-sm font-semibold">{dev.label}</p>
+        <p className="text-[11px] text-muted-foreground">
+          Atual vs média histórica: {isPositive ? "acima" : "abaixo"} da tendência
+        </p>
       </CardContent>
     </Card>
   );
