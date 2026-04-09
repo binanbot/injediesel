@@ -113,13 +113,24 @@ function ActivityDialog({
 
   const mutation = useMutation({
     mutationFn: async () => {
+      // Enrich summary with playbook fields
+      let enrichedSummary = form.summary || "";
+      const prefixParts: string[] = [];
+      if (form.contact_result) prefixParts.push(`Resultado: ${getContactResultLabel(form.contact_result)}`);
+      if (form.contact_origin) prefixParts.push(`Origem: ${getContactOriginLabel(form.contact_origin)}`);
+      if (prefixParts.length > 0 && enrichedSummary) {
+        enrichedSummary = `[${prefixParts.join(" | ")}] ${enrichedSummary}`;
+      } else if (prefixParts.length > 0) {
+        enrichedSummary = `[${prefixParts.join(" | ")}]`;
+      }
+
       const payload = {
         company_id: companyId,
         customer_id: form.customer_id,
         seller_profile_id: form.seller_profile_id || null,
         activity_type: form.activity_type,
         channel: form.channel || null,
-        summary: form.summary || null,
+        summary: enrichedSummary || null,
         scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : null,
         due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
         priority: form.priority,
