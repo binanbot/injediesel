@@ -666,6 +666,7 @@ export default function CrmPage() {
           <TabsTrigger value="atividades"><Activity className="h-4 w-4 mr-1" /> Atividades</TabsTrigger>
           <TabsTrigger value="funil"><Target className="h-4 w-4 mr-1" /> Funil</TabsTrigger>
           <TabsTrigger value="rentabilidade"><TrendingUp className="h-4 w-4 mr-1" /> Rentabilidade</TabsTrigger>
+          <TabsTrigger value="inteligencia"><Lightbulb className="h-4 w-4 mr-1" /> Inteligência</TabsTrigger>
           <TabsTrigger value="alertas"><Shield className="h-4 w-4 mr-1" /> Alertas</TabsTrigger>
         </TabsList>
 
