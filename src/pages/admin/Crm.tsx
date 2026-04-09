@@ -421,10 +421,39 @@ function OpportunityDialog({
               </Select>
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Temperatura</Label>
+              <Select value={form.temperature} onValueChange={(v) => setForm(f => ({ ...f, temperature: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                <SelectContent>
+                  {OPPORTUNITY_TEMPERATURES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      <span className={t.color}>{t.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Origem</Label>
+              <Select value={form.contact_origin} onValueChange={(v) => setForm(f => ({ ...f, contact_origin: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                <SelectContent>
+                  {CONTACT_ORIGINS.map((o) => (<SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           {form.stage === "fechado_perdido" && (
             <div className="space-y-2">
               <Label>Motivo da perda</Label>
-              <Input value={form.lost_reason} onChange={(e) => setForm(f => ({ ...f, lost_reason: e.target.value }))} placeholder="Ex: Preço, concorrência..." />
+              <Select value={form.lost_reason} onValueChange={(v) => setForm(f => ({ ...f, lost_reason: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecionar motivo" /></SelectTrigger>
+                <SelectContent>
+                  {LOSS_REASONS.map((r) => (<SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>))}
+                </SelectContent>
+              </Select>
             </div>
           )}
           <div className="space-y-2">
