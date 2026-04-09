@@ -8,6 +8,14 @@ export const ENTRY_TYPES = [
   { value: "ajuste", label: "Ajuste" },
 ] as const;
 
+export const ENTRY_STATUSES = [
+  { value: "rascunho", label: "Rascunho", color: "text-muted-foreground" },
+  { value: "lancado", label: "Lançado", color: "text-blue-400" },
+  { value: "aprovado", label: "Aprovado", color: "text-emerald-400" },
+  { value: "pago", label: "Pago", color: "text-emerald-500" },
+  { value: "cancelado", label: "Cancelado", color: "text-destructive" },
+] as const;
+
 export const FINANCIAL_CATEGORIES = [
   { value: "pessoal_fixo", label: "Pessoal Fixo", entryType: "despesa" },
   { value: "pessoal_variavel", label: "Pessoal Variável", entryType: "despesa" },
@@ -58,6 +66,10 @@ export interface FinancialEntryRow {
   is_recurring: boolean;
   created_by: string | null;
   created_at: string;
+  status: string;
+  approved_by: string | null;
+  approved_at: string | null;
+  attachment_url: string | null;
 }
 
 export interface FinancialFilters {
@@ -68,6 +80,7 @@ export interface FinancialFilters {
   startDate?: string;
   endDate?: string;
   search?: string;
+  status?: string;
 }
 
 export interface FinancialSummary {
@@ -76,6 +89,17 @@ export interface FinancialSummary {
   total_ajustes: number;
   saldo: number;
   count: number;
+}
+
+export interface ClosingPeriod {
+  id: string;
+  company_id: string;
+  reference_month: string;
+  status: string;
+  closed_by: string | null;
+  closed_at: string | null;
+  notes: string | null;
+  created_at: string;
 }
 
 // ─── Queries ─────────────────────────────────────────────────────────
@@ -92,6 +116,7 @@ export async function fetchFinancialEntries(filters?: FinancialFilters): Promise
   if (filters?.employeeProfileId) query = query.eq("employee_profile_id", filters.employeeProfileId);
   if (filters?.startDate) query = query.gte("competency_date", filters.startDate);
   if (filters?.endDate) query = query.lte("competency_date", filters.endDate);
+  if (filters?.status) query = query.eq("status", filters.status);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -118,6 +143,7 @@ export function calcFinancialSummary(entries: FinancialEntryRow[]): FinancialSum
   let total_ajustes = 0;
 
   for (const e of entries) {
+    if (e.status === "cancelado") continue;
     const amt = Number(e.amount);
     if (e.entry_type === "receita") total_receitas += amt;
     else if (e.entry_type === "despesa") total_despesas += amt;
@@ -129,8 +155,57 @@ export function calcFinancialSummary(entries: FinancialEntryRow[]): FinancialSum
     total_despesas,
     total_ajustes,
     saldo: total_receitas - total_despesas + total_ajustes,
-    count: entries.length,
+    count: entries.filter(e => e.status !== "cancelado").length,
   };
+}
+
+// ─── Closing Periods ─────────────────────────────────────────────────
+
+export async function fetchClosingPeriods(companyId: string): Promise<ClosingPeriod[]> {
+  const { data, error } = await supabase
+    .from("financial_closing_periods")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("reference_month", { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as ClosingPeriod[];
+}
+
+export async function isMonthClosed(companyId: string, referenceMonth: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("financial_closing_periods")
+    .select("status")
+    .eq("company_id", companyId)
+    .eq("reference_month", referenceMonth)
+    .maybeSingle();
+
+  return data?.status === "fechado";
+}
+
+export async function closeMonth(companyId: string, referenceMonth: string, userId: string, notes?: string): Promise<void> {
+  const { error } = await supabase
+    .from("financial_closing_periods")
+    .upsert({
+      company_id: companyId,
+      reference_month: referenceMonth,
+      status: "fechado",
+      closed_by: userId,
+      closed_at: new Date().toISOString(),
+      notes: notes || null,
+    }, { onConflict: "company_id,reference_month" });
+
+  if (error) throw error;
+}
+
+export async function reopenMonth(companyId: string, referenceMonth: string): Promise<void> {
+  const { error } = await supabase
+    .from("financial_closing_periods")
+    .update({ status: "aberto", closed_by: null, closed_at: null })
+    .eq("company_id", companyId)
+    .eq("reference_month", referenceMonth);
+
+  if (error) throw error;
 }
 
 // ─── Mutations ───────────────────────────────────────────────────────
@@ -153,11 +228,13 @@ export async function createFinancialEntry(payload: {
   cost_center?: string | null;
   is_recurring?: boolean;
   created_by?: string | null;
+  status?: string;
 }): Promise<string> {
   const insertPayload = {
     ...payload,
     scope: payload.scope || "empresa",
     is_recurring: payload.is_recurring ?? false,
+    status: payload.status || "lancado",
   };
   const { data, error } = await supabase
     .from("financial_entries")
@@ -182,10 +259,29 @@ export async function updateFinancialEntry(
     seller_profile_id: string | null;
     cost_center: string | null;
     is_recurring: boolean;
+    status: string;
+    approved_by: string | null;
+    approved_at: string | null;
   }>
 ): Promise<void> {
   const { error } = await supabase.from("financial_entries").update(payload).eq("id", id);
   if (error) throw error;
+}
+
+export async function approveFinancialEntry(id: string, userId: string): Promise<void> {
+  await updateFinancialEntry(id, {
+    status: "aprovado",
+    approved_by: userId,
+    approved_at: new Date().toISOString(),
+  });
+}
+
+export async function markEntryAsPaid(id: string): Promise<void> {
+  await updateFinancialEntry(id, { status: "pago" });
+}
+
+export async function cancelFinancialEntry(id: string): Promise<void> {
+  await updateFinancialEntry(id, { status: "cancelado" });
 }
 
 export async function deleteFinancialEntry(id: string): Promise<void> {
@@ -201,6 +297,14 @@ export function getCategoryLabel(value: string): string {
 
 export function getEntryTypeLabel(value: string): string {
   return ENTRY_TYPES.find((t) => t.value === value)?.label || value;
+}
+
+export function getStatusLabel(value: string): string {
+  return ENTRY_STATUSES.find((s) => s.value === value)?.label || value;
+}
+
+export function getStatusColor(value: string): string {
+  return ENTRY_STATUSES.find((s) => s.value === value)?.color || "text-muted-foreground";
 }
 
 export function getCategoriesForType(entryType: string) {
