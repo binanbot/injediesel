@@ -71,9 +71,9 @@ function ClosingPanel({ companyId }: { companyId: string }) {
       logAuditEvent({
         action: "financial.month_closed" as any,
         module: "financeiro" as any,
-        target_type: "financial_closing_periods",
-        target_id: currentMonth,
-        company_id: companyId,
+        companyId,
+        targetType: "financial_closing_periods",
+        targetId: currentMonth,
         details: { reference_month: currentMonth },
       });
       toast.success("Mês fechado com sucesso");
@@ -87,9 +87,9 @@ function ClosingPanel({ companyId }: { companyId: string }) {
       logAuditEvent({
         action: "financial.month_reopened" as any,
         module: "financeiro" as any,
-        target_type: "financial_closing_periods",
-        target_id: currentMonth,
-        company_id: companyId,
+        companyId,
+        targetType: "financial_closing_periods",
+        targetId: currentMonth,
         details: { reference_month: currentMonth },
       });
       toast.success("Mês reaberto");
