@@ -225,6 +225,25 @@ function ActivityDialog({
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Resultado do contato</Label>
+              <Select value={form.contact_result} onValueChange={(v) => setForm(f => ({ ...f, contact_result: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                <SelectContent>
+                  {CONTACT_RESULTS.map((r) => (<SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Origem</Label>
+              <Select value={form.contact_origin} onValueChange={(v) => setForm(f => ({ ...f, contact_origin: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                <SelectContent>
+                  {CONTACT_ORIGINS.map((o) => (<SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
           <div className="space-y-2">
             <Label>Vendedor</Label>
             <Select value={form.seller_profile_id} onValueChange={(v) => setForm(f => ({ ...f, seller_profile_id: v }))}>
