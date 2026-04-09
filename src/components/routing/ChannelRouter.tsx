@@ -76,6 +76,7 @@ const VendaManual = lazy(() => import("@/pages/admin/VendaManual"));
 const Permissoes = lazy(() => import("@/pages/admin/Permissoes"));
 const Auditoria = lazy(() => import("@/pages/admin/Auditoria"));
 const Financeiro = lazy(() => import("@/pages/admin/Financeiro"));
+const CrmPage = lazy(() => import("@/pages/admin/Crm"));
 
 // Master pages
 const MasterDashboard = lazy(() => import("@/pages/master/Dashboard"));

@@ -68,6 +68,7 @@ const allMenuItems: MenuItem[] = [
   { icon: Shield, label: "Permissões", path: "/admin/permissoes", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
   { icon: ClipboardList, label: "Auditoria", path: "/admin/auditoria", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
   { icon: Wallet, label: "Financeiro", path: "/admin/financeiro", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
+  { icon: Users, label: "CRM", path: "/admin/crm", roles: ["admin", "admin_empresa", "master_admin", "ceo"] },
   { icon: FileText, label: "Documentação", path: "/admin/documentacao" },
 ];
 
