@@ -596,6 +596,9 @@ export default function CrmPage() {
     staleTime: 60_000,
   });
 
+  const playbookConfig = useMemo(() => getPlaybookConfig(company?.settings as any), [company?.settings]);
+  const stageMetrics = useMemo(() => calcStageMetrics(opportunities), [opportunities]);
+
   const reactivationMutation = useMutation({
     mutationFn: async (params: { customerId: string; sellerId: string | null; type: "reativacao" | "retorno" | "perda"; summary: string }) => {
       return registerReactivationAttempt(companyId!, params.customerId, params.sellerId, params.type, params.summary, user?.id || null);
