@@ -385,6 +385,128 @@ export function calcFunnelSummary(opportunities: CrmOpportunity[]) {
   return stages;
 }
 
+// ─── Seller Agenda ──────────────────────────────────────────
+
+/** Activities for a specific seller or all sellers, upcoming + overdue */
+export async function fetchSellerAgenda(
+  companyId: string,
+  sellerProfileId?: string | null,
+  daysAhead = 14
+) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() + daysAhead);
+
+  let query = supabase
+    .from("crm_activities")
+    .select(`*, customers ( full_name, phone )`)
+    .eq("company_id", companyId)
+    .in("status", ["pendente", "atrasada"])
+    .lte("scheduled_at", cutoff.toISOString())
+    .order("scheduled_at", { ascending: true })
+    .limit(200);
+
+  if (sellerProfileId) {
+    query = query.eq("seller_profile_id", sellerProfileId);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const now = new Date().toISOString();
+  return (data || []).map((a) => ({
+    ...a,
+    is_overdue: a.scheduled_at ? a.scheduled_at < now : false,
+  })) as (CrmActivity & { is_overdue: boolean })[];
+}
+
+// ─── Reactivation ───────────────────────────────────────────
+
+export interface ReactivationCandidate {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  primary_seller_id: string | null;
+  wallet_status: string;
+  last_order_at: string | null;
+  days_since_purchase: number | null;
+  last_activity_at: string | null;
+  last_activity_type: string | null;
+}
+
+/** Candidates for reactivation: inactive or at-risk clients with enriched activity data */
+export async function fetchReactivationCandidates(
+  companyId: string,
+  sellerProfileId?: string | null
+): Promise<ReactivationCandidate[]> {
+  const wallet = await fetchWalletHealth(companyId);
+  let candidates = wallet.filter(
+    (c) => c.wallet_status === "inativa" || c.wallet_status === "em_risco"
+  );
+
+  if (sellerProfileId) {
+    candidates = candidates.filter((c) => c.primary_seller_id === sellerProfileId);
+  }
+
+  if (candidates.length === 0) return [];
+
+  // Enrich with last CRM activity
+  const { data: activities } = await supabase
+    .from("crm_activities")
+    .select("customer_id, activity_type, created_at")
+    .eq("company_id", companyId)
+    .in("customer_id", candidates.map((c) => c.id))
+    .order("created_at", { ascending: false });
+
+  const lastActivityMap = new Map<string, { type: string; at: string }>();
+  for (const a of activities || []) {
+    if (a.customer_id && !lastActivityMap.has(a.customer_id)) {
+      lastActivityMap.set(a.customer_id, { type: a.activity_type, at: a.created_at });
+    }
+  }
+
+  return candidates.map((c) => {
+    const act = lastActivityMap.get(c.id);
+    return {
+      id: c.id,
+      full_name: c.full_name,
+      phone: c.phone,
+      primary_seller_id: c.primary_seller_id,
+      wallet_status: c.wallet_status,
+      last_order_at: c.last_order_at,
+      days_since_purchase: c.days_since_purchase,
+      last_activity_at: act?.at || null,
+      last_activity_type: act?.type || null,
+    };
+  });
+}
+
+/** Quick-register a reactivation attempt as a CRM activity */
+export async function registerReactivationAttempt(
+  companyId: string,
+  customerId: string,
+  sellerProfileId: string | null,
+  type: "reativacao" | "retorno" | "perda",
+  summary: string,
+  createdBy: string | null
+) {
+  return createActivity({
+    company_id: companyId,
+    customer_id: customerId,
+    seller_profile_id: sellerProfileId,
+    activity_type: type,
+    channel: null,
+    summary,
+    scheduled_at: null,
+    completed_at: new Date().toISOString(),
+    status: "realizada",
+    priority: "media",
+    due_date: null,
+    reminder_at: null,
+    created_by: createdBy,
+    opportunity_id: null,
+  });
+}
+
 // ─── Helpers ─────────────────────────────────────────────────
 
 export function getPriorityLabel(value: string): string {

@@ -3,7 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users, Activity, Target, Plus, Search,
   Clock, CheckCircle, AlertTriangle, XCircle,
-  Shield, TrendingUp,
+  Shield, TrendingUp, CalendarDays, RefreshCw,
+  ListChecks, Phone, MessageSquare, ThumbsDown,
+  Filter,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,12 +30,15 @@ import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import {
   fetchActivities, createActivity, updateActivity,
   fetchOpportunities, createOpportunity, updateOpportunity,
-  fetchCustomersWithoutRecentPurchase, fetchCustomersWithoutSeller,
+  fetchCustomersWithoutSeller,
   fetchOverdueActivities, fetchWalletHealth, calcFunnelSummary,
+  fetchSellerAgenda, fetchReactivationCandidates, registerReactivationAttempt,
+  fetchSellerProductivity,
   ACTIVITY_TYPES, ACTIVITY_STATUSES, ACTIVITY_PRIORITIES,
   OPPORTUNITY_STAGES, CHANNELS, WALLET_STATUSES,
   getPriorityColor, getWalletStatusLabel, getWalletStatusColor,
   type CrmActivity, type CrmOpportunity, type WalletCustomer,
+  type ReactivationCandidate,
 } from "@/services/crmService";
 import { fetchActiveSellers } from "@/services/employeeService";
 import { format } from "date-fns";
@@ -44,13 +49,15 @@ import { WalletProfitabilityPanel } from "@/components/admin/WalletProfitability
 // ─── Activity Dialog ─────────────────────────────────────────
 
 function ActivityDialog({
-  open, onOpenChange, companyId, sellers, existing,
+  open, onOpenChange, companyId, sellers, existing, defaultCustomerId, defaultSellerId,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   companyId: string;
   sellers: any[];
   existing?: CrmActivity | null;
+  defaultCustomerId?: string;
+  defaultSellerId?: string;
 }) {
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -58,8 +65,8 @@ function ActivityDialog({
     activity_type: existing?.activity_type || "contato",
     channel: existing?.channel || "",
     summary: existing?.summary || "",
-    seller_profile_id: existing?.seller_profile_id || "",
-    customer_id: existing?.customer_id || "",
+    seller_profile_id: existing?.seller_profile_id || defaultSellerId || "",
+    customer_id: existing?.customer_id || defaultCustomerId || "",
     scheduled_at: existing?.scheduled_at ? existing.scheduled_at.slice(0, 16) : "",
     due_date: existing?.due_date ? existing.due_date.slice(0, 16) : "",
     priority: existing?.priority || "media",
@@ -110,6 +117,7 @@ function ActivityDialog({
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["crm-activities"] });
       qc.invalidateQueries({ queryKey: ["crm-overdue"] });
+      qc.invalidateQueries({ queryKey: ["crm-agenda"] });
       toast.success(existing ? "Atividade atualizada" : "Atividade registrada");
       onOpenChange(false);
     },
@@ -123,7 +131,6 @@ function ActivityDialog({
           <DialogTitle>{existing ? "Editar Atividade" : "Nova Atividade"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          {/* Customer search */}
           <div className="space-y-2">
             <Label>Cliente *</Label>
             {form.customer_id ? (
@@ -416,11 +423,16 @@ const stageBadgeMap: Record<string, string> = {
 export default function CrmPage() {
   const { company } = useCompany();
   const companyId = company?.id;
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const [tab, setTab] = useState("carteira");
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
+  const [activityDialogDefaults, setActivityDialogDefaults] = useState<{ customerId?: string; sellerId?: string }>({});
   const [oppDialogOpen, setOppDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [walletFilter, setWalletFilter] = useState("all");
+  const [sellerFilter, setSellerFilter] = useState("all");
+  const [agendaSellerFilter, setAgendaSellerFilter] = useState("all");
 
   const { data: sellers = [] } = useQuery({
     queryKey: ["crm-sellers", companyId],
@@ -458,11 +470,40 @@ export default function CrmPage() {
     enabled: !!companyId,
   });
 
+  const { data: agendaItems = [] } = useQuery({
+    queryKey: ["crm-agenda", companyId, agendaSellerFilter],
+    queryFn: () => fetchSellerAgenda(companyId!, agendaSellerFilter === "all" ? null : agendaSellerFilter),
+    enabled: !!companyId,
+  });
+
+  const { data: reactivationCandidates = [] } = useQuery({
+    queryKey: ["crm-reactivation", companyId, sellerFilter],
+    queryFn: () => fetchReactivationCandidates(companyId!, sellerFilter === "all" ? null : sellerFilter),
+    enabled: !!companyId,
+  });
+
+  const { data: sellerProductivity = [] } = useQuery({
+    queryKey: ["crm-seller-productivity", companyId],
+    queryFn: () => fetchSellerProductivity(companyId!),
+    enabled: !!companyId,
+  });
+
+  const reactivationMutation = useMutation({
+    mutationFn: async (params: { customerId: string; sellerId: string | null; type: "reativacao" | "retorno" | "perda"; summary: string }) => {
+      return registerReactivationAttempt(companyId!, params.customerId, params.sellerId, params.type, params.summary, user?.id || null);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["crm-reactivation"] });
+      qc.invalidateQueries({ queryKey: ["crm-activities"] });
+      toast.success("Tentativa de contato registrada");
+    },
+    onError: () => toast.error("Erro ao registrar tentativa"),
+  });
+
   const funnel = useMemo(() => calcFunnelSummary(opportunities), [opportunities]);
   const activeOpps = opportunities.filter(o => o.stage !== "fechado_ganho" && o.stage !== "fechado_perdido");
   const pipelineValue = activeOpps.reduce((s, o) => s + Number(o.estimated_value), 0);
 
-  // Wallet stats
   const walletStats = useMemo(() => {
     const ativa = walletCustomers.filter(c => c.wallet_status === "ativa").length;
     const em_risco = walletCustomers.filter(c => c.wallet_status === "em_risco").length;
@@ -473,12 +514,36 @@ export default function CrmPage() {
   const filteredWallet = useMemo(() => {
     let list = walletCustomers;
     if (walletFilter !== "all") list = list.filter(c => c.wallet_status === walletFilter);
+    if (sellerFilter !== "all" && tab === "carteira") {
+      list = list.filter(c => c.primary_seller_id === sellerFilter);
+    }
     if (search && tab === "carteira") {
       const q = search.toLowerCase();
       list = list.filter(c => c.full_name.toLowerCase().includes(q));
     }
     return list;
-  }, [walletCustomers, walletFilter, search, tab]);
+  }, [walletCustomers, walletFilter, sellerFilter, search, tab]);
+
+  // Tasks: activities that are task-like (pendente/atrasada with due_date or scheduled_at)
+  const taskActivities = useMemo(() => {
+    let list = activities.filter(a => a.status === "pendente" || a.status === "atrasada");
+    if (sellerFilter !== "all" && tab === "tarefas") {
+      list = list.filter(a => a.seller_profile_id === sellerFilter);
+    }
+    if (search && tab === "tarefas") {
+      const q = search.toLowerCase();
+      list = list.filter(a => a.customer?.full_name?.toLowerCase().includes(q) || a.summary?.toLowerCase().includes(q));
+    }
+    const now = new Date().toISOString();
+    return list.sort((a, b) => {
+      const aDate = a.due_date || a.scheduled_at || a.created_at;
+      const bDate = b.due_date || b.scheduled_at || b.created_at;
+      return aDate.localeCompare(bDate);
+    }).map(a => ({
+      ...a,
+      is_overdue: (a.due_date && a.due_date < now) || (a.scheduled_at && a.scheduled_at < now),
+    }));
+  }, [activities, sellerFilter, search, tab]);
 
   const filteredActivities = useMemo(() => {
     if (!search || tab !== "atividades") return activities;
@@ -491,6 +556,20 @@ export default function CrmPage() {
     );
   }, [activities, search, tab]);
 
+  const agendaOverdue = useMemo(() => agendaItems.filter(a => a.is_overdue), [agendaItems]);
+  const agendaUpcoming = useMemo(() => agendaItems.filter(a => !a.is_overdue), [agendaItems]);
+
+  const openNewActivityFor = (customerId: string, sellerId?: string | null) => {
+    setActivityDialogDefaults({ customerId, sellerId: sellerId || undefined });
+    setActivityDialogOpen(true);
+  };
+
+  const getSellerName = (sellerId: string | null) => {
+    if (!sellerId) return null;
+    const s = sellers.find((s: any) => s.seller_profile?.id === sellerId);
+    return s?.display_name || null;
+  };
+
   if (!companyId) return null;
 
   return (
@@ -498,13 +577,13 @@ export default function CrmPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">CRM Comercial</h1>
-          <p className="text-muted-foreground">Carteira, atividades e funil de oportunidades</p>
+          <p className="text-muted-foreground">Carteira, tarefas, agenda e funil de oportunidades</p>
         </div>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="glass-card">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <Card className="glass-card cursor-pointer" onClick={() => setTab("carteira")}>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
               <TrendingUp className="h-4 w-4 text-emerald-400" /> Ativas
@@ -512,7 +591,7 @@ export default function CrmPage() {
             <p className="text-2xl font-bold text-emerald-400">{walletStats.ativa}</p>
           </CardContent>
         </Card>
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer" onClick={() => { setTab("carteira"); setWalletFilter("em_risco"); }}>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
               <AlertTriangle className="h-4 w-4 text-amber-400" /> Em risco
@@ -520,15 +599,23 @@ export default function CrmPage() {
             <p className="text-2xl font-bold text-amber-400">{walletStats.em_risco}</p>
           </CardContent>
         </Card>
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer" onClick={() => setTab("reativacao")}>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <Users className="h-4 w-4 text-muted-foreground" /> Inativas
+              <RefreshCw className="h-4 w-4 text-muted-foreground" /> Inativas
             </div>
             <p className="text-2xl font-bold">{walletStats.inativa}</p>
           </CardContent>
         </Card>
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer" onClick={() => setTab("tarefas")}>
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+              <ListChecks className="h-4 w-4 text-primary" /> Tarefas
+            </div>
+            <p className="text-2xl font-bold">{taskActivities.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="glass-card cursor-pointer" onClick={() => setTab("agenda")}>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
               <Clock className="h-4 w-4 text-destructive" /> Atrasados
@@ -536,21 +623,24 @@ export default function CrmPage() {
             <p className="text-2xl font-bold text-destructive">{overdueActivities.length}</p>
           </CardContent>
         </Card>
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer" onClick={() => setTab("funil")}>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
               <Target className="h-4 w-4" /> Pipeline
             </div>
-            <p className="text-xl font-bold">
-              {pipelineValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            <p className="text-lg font-bold">
+              {pipelineValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 })}
             </p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="carteira"><Users className="h-4 w-4 mr-1" /> Carteira</TabsTrigger>
+          <TabsTrigger value="tarefas"><ListChecks className="h-4 w-4 mr-1" /> Tarefas</TabsTrigger>
+          <TabsTrigger value="agenda"><CalendarDays className="h-4 w-4 mr-1" /> Agenda</TabsTrigger>
+          <TabsTrigger value="reativacao"><RefreshCw className="h-4 w-4 mr-1" /> Reativação</TabsTrigger>
           <TabsTrigger value="atividades"><Activity className="h-4 w-4 mr-1" /> Atividades</TabsTrigger>
           <TabsTrigger value="funil"><Target className="h-4 w-4 mr-1" /> Funil</TabsTrigger>
           <TabsTrigger value="rentabilidade"><TrendingUp className="h-4 w-4 mr-1" /> Rentabilidade</TabsTrigger>
@@ -573,6 +663,16 @@ export default function CrmPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={sellerFilter} onValueChange={setSellerFilter}>
+              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Vendedor" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos vendedores</SelectItem>
+                <SelectItem value="__none__">Sem vendedor</SelectItem>
+                {sellers.map((s: any) => (
+                  <SelectItem key={s.seller_profile.id} value={s.seller_profile.id}>{s.display_name || "Sem nome"}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <Card>
@@ -585,12 +685,13 @@ export default function CrmPage() {
                     <TableHead>Última compra</TableHead>
                     <TableHead>Dias</TableHead>
                     <TableHead>Vendedor</TableHead>
+                    <TableHead className="w-[100px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredWallet.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum cliente encontrado</TableCell>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum cliente encontrado</TableCell>
                     </TableRow>
                   ) : (
                     filteredWallet.slice(0, 100).map((c) => (
@@ -605,10 +706,17 @@ export default function CrmPage() {
                         </TableCell>
                         <TableCell>
                           {c.primary_seller_id ? (
-                            <Badge variant="outline" className="text-xs"><Shield className="h-3 w-3 mr-1" />Atribuído</Badge>
+                            <Badge variant="outline" className="text-xs">
+                              <Shield className="h-3 w-3 mr-1" />{getSellerName(c.primary_seller_id) || "Atribuído"}
+                            </Badge>
                           ) : (
                             <Badge variant="outline" className="text-xs text-muted-foreground">Sem vendedor</Badge>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => openNewActivityFor(c.id, c.primary_seller_id)}>
+                            <Phone className="h-3 w-3 mr-1" /> Contato
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
@@ -618,7 +726,6 @@ export default function CrmPage() {
             </CardContent>
           </Card>
 
-          {/* Alerts */}
           {noSeller.length > 0 && (
             <Card className="border-warning/30">
               <CardHeader className="pb-2">
@@ -637,6 +744,323 @@ export default function CrmPage() {
           )}
         </TabsContent>
 
+        {/* ─── Tarefas Tab ────────────────────────────── */}
+        <TabsContent value="tarefas" className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar tarefa..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+            </div>
+            <Select value={sellerFilter} onValueChange={setSellerFilter}>
+              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Vendedor" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos vendedores</SelectItem>
+                {sellers.map((s: any) => (
+                  <SelectItem key={s.seller_profile.id} value={s.seller_profile.id}>{s.display_name || "Sem nome"}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={() => { setActivityDialogDefaults({}); setActivityDialogOpen(true); }} size="sm">
+              <Plus className="h-4 w-4 mr-1" /> Nova Tarefa
+            </Button>
+          </div>
+
+          {/* Summary counters */}
+          <div className="grid grid-cols-3 gap-3">
+            <Card className="glass-card">
+              <CardContent className="pt-3 pb-2 text-center">
+                <p className="text-xs text-muted-foreground">Total pendentes</p>
+                <p className="text-xl font-bold">{taskActivities.length}</p>
+              </CardContent>
+            </Card>
+            <Card className="glass-card border-destructive/30">
+              <CardContent className="pt-3 pb-2 text-center">
+                <p className="text-xs text-destructive">Atrasadas</p>
+                <p className="text-xl font-bold text-destructive">{taskActivities.filter(t => t.is_overdue).length}</p>
+              </CardContent>
+            </Card>
+            <Card className="glass-card">
+              <CardContent className="pt-3 pb-2 text-center">
+                <p className="text-xs text-muted-foreground">Próximas 7 dias</p>
+                <p className="text-xl font-bold">
+                  {taskActivities.filter(t => {
+                    const d = t.due_date || t.scheduled_at;
+                    if (!d || t.is_overdue) return false;
+                    const diff = (new Date(d).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+                    return diff <= 7;
+                  }).length}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-8"></TableHead>
+                    <TableHead>Prioridade</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Vendedor</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Resumo</TableHead>
+                    <TableHead className="w-[80px]">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {taskActivities.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhuma tarefa pendente</TableCell>
+                    </TableRow>
+                  ) : (
+                    taskActivities.slice(0, 50).map((a) => (
+                      <TableRow key={a.id} className={a.is_overdue ? "bg-destructive/5" : ""}>
+                        <TableCell>{a.is_overdue ? <AlertTriangle className="h-4 w-4 text-destructive" /> : <Clock className="h-4 w-4 text-warning" />}</TableCell>
+                        <TableCell><PriorityBadge priority={a.priority} /></TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {ACTIVITY_TYPES.find(t => t.value === a.activity_type)?.label || a.activity_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">{a.customer?.full_name || "—"}</TableCell>
+                        <TableCell className="text-sm">{getSellerName(a.seller_profile_id) || "—"}</TableCell>
+                        <TableCell className="text-sm">
+                          {a.due_date ? format(new Date(a.due_date), "dd/MM HH:mm") : a.scheduled_at ? format(new Date(a.scheduled_at), "dd/MM HH:mm") : "—"}
+                        </TableCell>
+                        <TableCell className="max-w-[150px] truncate text-sm text-muted-foreground">{a.summary || "—"}</TableCell>
+                        <TableCell>
+                          <MarkDoneButton activityId={a.id} />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ─── Agenda Tab ─────────────────────────────── */}
+        <TabsContent value="agenda" className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Select value={agendaSellerFilter} onValueChange={setAgendaSellerFilter}>
+              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Vendedor" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos vendedores</SelectItem>
+                {sellers.map((s: any) => (
+                  <SelectItem key={s.seller_profile.id} value={s.seller_profile.id}>{s.display_name || "Sem nome"}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={() => { setActivityDialogDefaults({}); setActivityDialogOpen(true); }} size="sm">
+              <Plus className="h-4 w-4 mr-1" /> Agendar
+            </Button>
+          </div>
+
+          {/* Seller productivity cards */}
+          {sellerProductivity.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {sellerProductivity.slice(0, 4).map((sp) => (
+                <Card key={sp.seller_profile_id} className="glass-card">
+                  <CardContent className="pt-3 pb-2">
+                    <p className="text-xs text-muted-foreground truncate">{getSellerName(sp.seller_profile_id) || "Vendedor"}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-sm">{sp.completed}/{sp.total}</span>
+                      <Badge variant={sp.overdue > 0 ? "destructive" : "outline"} className="text-xs">
+                        {sp.overdue > 0 ? `${sp.overdue} atrasadas` : `${Math.round(sp.completion_rate)}%`}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Overdue section */}
+          {agendaOverdue.length > 0 && (
+            <Card className="border-destructive/30">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="h-4 w-4" /> {agendaOverdue.length} follow-ups atrasados
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableBody>
+                    {agendaOverdue.slice(0, 10).map((a) => (
+                      <TableRow key={a.id} className="bg-destructive/5">
+                        <TableCell className="font-medium">{a.customer?.full_name || "—"}</TableCell>
+                        <TableCell><PriorityBadge priority={a.priority} /></TableCell>
+                        <TableCell className="text-sm text-destructive">
+                          {a.scheduled_at && format(new Date(a.scheduled_at), "dd/MM HH:mm")}
+                        </TableCell>
+                        <TableCell className="text-sm">{getSellerName(a.seller_profile_id) || "—"}</TableCell>
+                        <TableCell><MarkDoneButton activityId={a.id} /></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Upcoming */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" /> Próximos 14 dias ({agendaUpcoming.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Prioridade</TableHead>
+                    <TableHead>Agendado</TableHead>
+                    <TableHead>Vendedor</TableHead>
+                    <TableHead>Resumo</TableHead>
+                    <TableHead className="w-[80px]">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {agendaUpcoming.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum agendamento próximo</TableCell>
+                    </TableRow>
+                  ) : (
+                    agendaUpcoming.slice(0, 30).map((a) => (
+                      <TableRow key={a.id}>
+                        <TableCell className="font-medium">{a.customer?.full_name || "—"}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {ACTIVITY_TYPES.find(t => t.value === a.activity_type)?.label || a.activity_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell><PriorityBadge priority={a.priority} /></TableCell>
+                        <TableCell className="text-sm">{a.scheduled_at && format(new Date(a.scheduled_at), "dd/MM HH:mm")}</TableCell>
+                        <TableCell className="text-sm">{getSellerName(a.seller_profile_id) || "—"}</TableCell>
+                        <TableCell className="max-w-[150px] truncate text-sm text-muted-foreground">{a.summary || "—"}</TableCell>
+                        <TableCell><MarkDoneButton activityId={a.id} /></TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ─── Reativação Tab ─────────────────────────── */}
+        <TabsContent value="reativacao" className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Select value={sellerFilter} onValueChange={setSellerFilter}>
+              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Vendedor" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos vendedores</SelectItem>
+                {sellers.map((s: any) => (
+                  <SelectItem key={s.seller_profile.id} value={s.seller_profile.id}>{s.display_name || "Sem nome"}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Badge variant="outline">{reactivationCandidates.length} candidatos</Badge>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="glass-card border-amber-500/20">
+              <CardContent className="pt-3 pb-2 text-center">
+                <p className="text-xs text-amber-400">Em Risco</p>
+                <p className="text-xl font-bold text-amber-400">{reactivationCandidates.filter(c => c.wallet_status === "em_risco").length}</p>
+              </CardContent>
+            </Card>
+            <Card className="glass-card">
+              <CardContent className="pt-3 pb-2 text-center">
+                <p className="text-xs text-muted-foreground">Inativas</p>
+                <p className="text-xl font-bold">{reactivationCandidates.filter(c => c.wallet_status === "inativa").length}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Última compra</TableHead>
+                    <TableHead>Dias</TableHead>
+                    <TableHead>Último contato</TableHead>
+                    <TableHead>Vendedor</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reactivationCandidates.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nenhum candidato a reativação</TableCell>
+                    </TableRow>
+                  ) : (
+                    reactivationCandidates.slice(0, 50).map((c) => (
+                      <TableRow key={c.id}>
+                        <TableCell className="font-medium">{c.full_name}</TableCell>
+                        <TableCell><WalletStatusBadge status={c.wallet_status} /></TableCell>
+                        <TableCell className="text-sm">
+                          {c.last_order_at ? format(new Date(c.last_order_at), "dd/MM/yyyy") : "Nunca"}
+                        </TableCell>
+                        <TableCell className="text-sm">{c.days_since_purchase !== null ? `${c.days_since_purchase}d` : "—"}</TableCell>
+                        <TableCell className="text-sm">
+                          {c.last_activity_at ? (
+                            <span>{format(new Date(c.last_activity_at), "dd/MM")} <Badge variant="outline" className="text-xs ml-1">{ACTIVITY_TYPES.find(t => t.value === c.last_activity_type)?.label || c.last_activity_type}</Badge></span>
+                          ) : "Nenhum"}
+                        </TableCell>
+                        <TableCell className="text-sm">{getSellerName(c.primary_seller_id) || "—"}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost" size="sm" className="h-7 px-2 text-xs"
+                              disabled={reactivationMutation.isPending}
+                              onClick={() => reactivationMutation.mutate({
+                                customerId: c.id, sellerId: c.primary_seller_id,
+                                type: "reativacao", summary: "Tentativa de reativação"
+                              })}
+                            >
+                              <Phone className="h-3 w-3 mr-1" /> Contato
+                            </Button>
+                            <Button
+                              variant="ghost" size="sm" className="h-7 px-2 text-xs"
+                              disabled={reactivationMutation.isPending}
+                              onClick={() => reactivationMutation.mutate({
+                                customerId: c.id, sellerId: c.primary_seller_id,
+                                type: "retorno", summary: "Retorno agendado pelo CRM"
+                              })}
+                            >
+                              <CalendarDays className="h-3 w-3 mr-1" /> Retorno
+                            </Button>
+                            <Button
+                              variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground"
+                              disabled={reactivationMutation.isPending}
+                              onClick={() => reactivationMutation.mutate({
+                                customerId: c.id, sellerId: c.primary_seller_id,
+                                type: "perda", summary: "Sem interesse / Perda"
+                              })}
+                            >
+                              <ThumbsDown className="h-3 w-3 mr-1" /> Sem interesse
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* ─── Atividades Tab ─────────────────────────── */}
         <TabsContent value="atividades" className="space-y-4">
           <div className="flex items-center gap-3">
@@ -644,31 +1068,10 @@ export default function CrmPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Buscar atividade..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
             </div>
-            <Button onClick={() => setActivityDialogOpen(true)} size="sm">
+            <Button onClick={() => { setActivityDialogDefaults({}); setActivityDialogOpen(true); }} size="sm">
               <Plus className="h-4 w-4 mr-1" /> Nova Atividade
             </Button>
           </div>
-
-          {/* Overdue alert */}
-          {overdueActivities.length > 0 && (
-            <Card className="border-destructive/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-destructive" /> {overdueActivities.length} follow-ups atrasados
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="max-h-24 overflow-y-auto space-y-1">
-                  {overdueActivities.slice(0, 5).map((a) => (
-                    <div key={a.id} className="flex items-center justify-between text-sm">
-                      <span>{a.customer?.full_name}</span>
-                      <span className="text-xs text-destructive">{a.scheduled_at && format(new Date(a.scheduled_at), "dd/MM HH:mm")}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           <Card>
             <CardContent className="p-0">
@@ -790,11 +1193,44 @@ export default function CrmPage() {
 
       {/* Dialogs */}
       {activityDialogOpen && (
-        <ActivityDialog open={activityDialogOpen} onOpenChange={setActivityDialogOpen} companyId={companyId} sellers={sellers} />
+        <ActivityDialog
+          open={activityDialogOpen}
+          onOpenChange={setActivityDialogOpen}
+          companyId={companyId}
+          sellers={sellers}
+          defaultCustomerId={activityDialogDefaults.customerId}
+          defaultSellerId={activityDialogDefaults.sellerId}
+        />
       )}
       {oppDialogOpen && (
         <OpportunityDialog open={oppDialogOpen} onOpenChange={setOppDialogOpen} companyId={companyId} sellers={sellers} />
       )}
     </div>
+  );
+}
+
+// ─── Sub-components ─────────────────────────────────────────
+
+function MarkDoneButton({ activityId }: { activityId: string }) {
+  const qc = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: async () => {
+      await updateActivity(activityId, {
+        status: "realizada",
+        completed_at: new Date().toISOString(),
+      } as any);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["crm-activities"] });
+      qc.invalidateQueries({ queryKey: ["crm-overdue"] });
+      qc.invalidateQueries({ queryKey: ["crm-agenda"] });
+      toast.success("Atividade concluída");
+    },
+    onError: () => toast.error("Erro ao concluir"),
+  });
+  return (
+    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
+      <CheckCircle className="h-3 w-3 mr-1" /> Concluir
+    </Button>
   );
 }
