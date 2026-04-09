@@ -305,6 +305,8 @@ function OpportunityDialog({
     customer_id: existing?.customer_id || "",
     notes: existing?.notes || "",
     lost_reason: existing?.lost_reason || "",
+    temperature: "",
+    contact_origin: "",
   });
 
   const [customerSearch, setCustomerSearch] = useState("");
