@@ -68,12 +68,12 @@ function ClosingPanel({ companyId }: { companyId: string }) {
     mutationFn: () => closeMonth(companyId, currentMonth, user?.id || ""),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["financial-closing"] });
-      logAudit({
-        action: "financial.month_closed",
-        module: "financeiro",
-        targetType: "financial_closing_periods",
-        targetId: currentMonth,
-        companyId,
+      logAuditEvent({
+        action: "financial.month_closed" as any,
+        module: "financeiro" as any,
+        target_type: "financial_closing_periods",
+        target_id: currentMonth,
+        company_id: companyId,
         details: { reference_month: currentMonth },
       });
       toast.success("Mês fechado com sucesso");
@@ -84,12 +84,12 @@ function ClosingPanel({ companyId }: { companyId: string }) {
     mutationFn: () => reopenMonth(companyId, currentMonth),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["financial-closing"] });
-      logAudit({
-        action: "financial.month_reopened",
-        module: "financeiro",
-        targetType: "financial_closing_periods",
-        targetId: currentMonth,
-        companyId,
+      logAuditEvent({
+        action: "financial.month_reopened" as any,
+        module: "financeiro" as any,
+        target_type: "financial_closing_periods",
+        target_id: currentMonth,
+        company_id: companyId,
         details: { reference_month: currentMonth },
       });
       toast.success("Mês reaberto");
