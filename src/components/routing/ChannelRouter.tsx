@@ -432,6 +432,7 @@ export function LegacyCombinedRoutes() {
           <Route path="vendas" element={<VendasDashboard />} />
           <Route path="vendas/nova" element={<VendaManual />} />
           <Route path="auditoria" element={<Auditoria />} />
+          <Route path="rentabilidade" element={<MasterRentabilidade />} />
         </Route>
 
         {/* CEO Routes */}
