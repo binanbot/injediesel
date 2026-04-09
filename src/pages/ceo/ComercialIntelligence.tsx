@@ -114,6 +114,24 @@ const COMPANY_COLORS = [
   "hsl(30, 80%, 55%)",
 ];
 
+// ─── Chart data builder ─────────────────────────────────────
+
+function buildChartData(
+  trends: CompanyMonthlyTrend[],
+  metric: keyof CompanyMonthlyTrend["months"][0]
+): Record<string, string | number>[] {
+  if (trends.length === 0) return [];
+  const allMonths = trends[0]?.months.map((m) => m.label) || [];
+  return allMonths.map((label, i) => {
+    const point: Record<string, string | number> = { month: label };
+    trends.forEach((t) => {
+      const val = t.months[i]?.[metric];
+      point[t.company_name] = typeof val === "number" ? val : 0;
+    });
+    return point;
+  });
+}
+
 // ─── Main Component ─────────────────────────────────────────
 
 export default function ComercialIntelligence() {
@@ -177,53 +195,29 @@ export default function ComercialIntelligence() {
     return { bestEfficiency, worstLoss, bestRoi, costConversionAlert };
   }, [companies]);
 
-  // ── Trend insights
+  // ── Trend insights (enhanced)
   const trendInsights = useMemo(() => {
     if (trendComparisons.length === 0) return null;
     const bestImprover = [...trendComparisons].sort((a, b) => b.conversion_delta - a.conversion_delta)[0];
     const worstDecline = [...trendComparisons].sort((a, b) => a.conversion_delta - b.conversion_delta)[0];
     const lossAccelerating = trendComparisons.find((t) => t.loss_delta_pct > 50);
-    return { bestImprover, worstDecline, lossAccelerating };
+    const worstMarginDecline = [...trendComparisons].sort((a, b) => a.margin_delta - b.margin_delta)[0];
+    const bestRoiGain = [...trendComparisons].sort((a, b) => b.roi_delta - a.roi_delta)[0];
+    const bestRevenueGrowth = [...trendComparisons].sort((a, b) => b.revenue_delta_pct - a.revenue_delta_pct)[0];
+    return { bestImprover, worstDecline, lossAccelerating, worstMarginDecline, bestRoiGain, bestRevenueGrowth };
   }, [trendComparisons]);
 
-  // ── Chart data: conversion trend
-  const conversionChartData = useMemo(() => {
-    if (trendsData.length === 0) return [];
-    const allMonths = trendsData[0]?.months.map((m) => m.label) || [];
-    return allMonths.map((label, i) => {
-      const point: Record<string, string | number> = { month: label };
-      trendsData.forEach((t) => {
-        point[t.company_name] = t.months[i]?.conversion_rate || 0;
-      });
-      return point;
-    });
-  }, [trendsData]);
-
-  // ── Chart data: loss value trend
-  const lossChartData = useMemo(() => {
-    if (trendsData.length === 0) return [];
-    const allMonths = trendsData[0]?.months.map((m) => m.label) || [];
-    return allMonths.map((label, i) => {
-      const point: Record<string, string | number> = { month: label };
-      trendsData.forEach((t) => {
-        point[t.company_name] = t.months[i]?.estimated_loss_value || 0;
-      });
-      return point;
-    });
-  }, [trendsData]);
-
-  // ── Chart data: opportunities trend
-  const oppsChartData = useMemo(() => {
-    if (trendsData.length === 0) return [];
-    const allMonths = trendsData[0]?.months.map((m) => m.label) || [];
-    return allMonths.map((label, i) => {
-      const point: Record<string, string | number> = { month: label };
-      trendsData.forEach((t) => {
-        point[t.company_name] = t.months[i]?.total_opps || 0;
-      });
-      return point;
-    });
-  }, [trendsData]);
+  // ── Chart datasets
+  const chartDatasets = useMemo(() => ({
+    conversion: buildChartData(trendsData, "conversion_rate"),
+    cycle: buildChartData(trendsData, "avg_cycle_hours"),
+    revenue: buildChartData(trendsData, "revenue"),
+    costPersonnel: buildChartData(trendsData, "cost_personnel"),
+    margin: buildChartData(trendsData, "margin_pct"),
+    roi: buildChartData(trendsData, "commercial_roi"),
+    losses: buildChartData(trendsData, "estimated_loss_value"),
+    volume: buildChartData(trendsData, "total_opps"),
+  }), [trendsData]);
 
   const companyNames = trendsData.map((t) => t.company_name);
 
@@ -249,7 +243,7 @@ export default function ComercialIntelligence() {
         <MiniKpi label="Margem Abs." value={isLoading ? null : fmtCurrency(totals.totalMargin)} icon={TrendingUp} accent={totals.totalMargin >= 0 ? "text-emerald-400" : "text-rose-400"} loading={isLoading} />
       </div>
 
-      {/* ── Trend Charts ─────────────────────────────────────── */}
+      {/* ── Trend Charts (expanded) ──────────────────────────── */}
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -262,42 +256,47 @@ export default function ComercialIntelligence() {
             <Skeleton className="h-64 w-full" />
           ) : (
             <Tabs defaultValue="conversion" className="space-y-4">
-              <TabsList>
+              <TabsList className="flex-wrap h-auto gap-1">
                 <TabsTrigger value="conversion">Conversão</TabsTrigger>
+                <TabsTrigger value="cycle">Ciclo</TabsTrigger>
+                <TabsTrigger value="revenue">Receita</TabsTrigger>
+                <TabsTrigger value="cost">Custo Pessoal</TabsTrigger>
+                <TabsTrigger value="margin">Margem %</TabsTrigger>
+                <TabsTrigger value="roi">ROI Comercial</TabsTrigger>
                 <TabsTrigger value="losses">Perdas (R$)</TabsTrigger>
                 <TabsTrigger value="volume">Volume</TabsTrigger>
               </TabsList>
 
               <TabsContent value="conversion">
-                <TrendChart
-                  data={conversionChartData}
-                  companies={companyNames}
-                  yLabel="%"
-                  tooltipFormatter={(v: number) => `${v.toFixed(1)}%`}
-                />
+                <TrendChart data={chartDatasets.conversion} companies={companyNames} tooltipFormatter={(v: number) => `${v.toFixed(1)}%`} />
+              </TabsContent>
+              <TabsContent value="cycle">
+                <TrendChart data={chartDatasets.cycle} companies={companyNames} tooltipFormatter={(v: number) => `${Math.round(v)}h`} />
+              </TabsContent>
+              <TabsContent value="revenue">
+                <TrendChart data={chartDatasets.revenue} companies={companyNames} tooltipFormatter={(v: number) => fmtCurrency(v)} />
+              </TabsContent>
+              <TabsContent value="cost">
+                <TrendChart data={chartDatasets.costPersonnel} companies={companyNames} tooltipFormatter={(v: number) => fmtCurrency(v)} />
+              </TabsContent>
+              <TabsContent value="margin">
+                <TrendChart data={chartDatasets.margin} companies={companyNames} tooltipFormatter={(v: number) => `${v.toFixed(1)}%`} />
+              </TabsContent>
+              <TabsContent value="roi">
+                <TrendChart data={chartDatasets.roi} companies={companyNames} tooltipFormatter={(v: number) => `${v.toFixed(0)}%`} />
               </TabsContent>
               <TabsContent value="losses">
-                <TrendChart
-                  data={lossChartData}
-                  companies={companyNames}
-                  yLabel="R$"
-                  tooltipFormatter={(v: number) => fmtCurrency(v)}
-                />
+                <TrendChart data={chartDatasets.losses} companies={companyNames} tooltipFormatter={(v: number) => fmtCurrency(v)} />
               </TabsContent>
               <TabsContent value="volume">
-                <TrendChart
-                  data={oppsChartData}
-                  companies={companyNames}
-                  yLabel="Qtd"
-                  tooltipFormatter={(v: number) => String(v)}
-                />
+                <TrendChart data={chartDatasets.volume} companies={companyNames} tooltipFormatter={(v: number) => String(v)} />
               </TabsContent>
             </Tabs>
           )}
         </CardContent>
       </Card>
 
-      {/* ── MoM Comparison Cards ─────────────────────────────── */}
+      {/* ── MoM Comparison Cards (enhanced) ──────────────────── */}
       {trendComparisons.length > 0 && !loadingTrends && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {trendComparisons.map((tc) => (
@@ -306,7 +305,7 @@ export default function ComercialIntelligence() {
         </div>
       )}
 
-      {/* ── Trend Insights ───────────────────────────────────── */}
+      {/* ── Trend Insights (enhanced) ────────────────────────── */}
       {trendInsights && !loadingTrends && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <InsightCard
@@ -322,15 +321,15 @@ export default function ComercialIntelligence() {
             loading={false}
           />
           <InsightCard
-            title="Maior Queda de Conversão"
+            title="Pior Deterioração de Margem"
             icon={<ArrowDownRight className="h-4 w-4 text-rose-400" />}
             content={
-              trendInsights.worstDecline && trendInsights.worstDecline.conversion_delta < 0
-                ? `${trendInsights.worstDecline.company_name}: ${trendInsights.worstDecline.conversion_delta.toFixed(1)}pp`
+              trendInsights.worstMarginDecline && trendInsights.worstMarginDecline.margin_delta < 0
+                ? `${trendInsights.worstMarginDecline.company_name}: ${trendInsights.worstMarginDecline.margin_delta.toFixed(1)}pp`
                 : "Sem deterioração"
             }
-            subtitle="Conversão mês atual vs anterior"
-            variant={trendInsights.worstDecline?.conversion_delta < 0 ? "danger" : "neutral"}
+            subtitle="Margem mês atual vs anterior"
+            variant={trendInsights.worstMarginDecline?.margin_delta < 0 ? "danger" : "neutral"}
             loading={false}
           />
           <InsightCard
@@ -343,6 +342,42 @@ export default function ComercialIntelligence() {
             }
             subtitle="Valor de perdas crescendo >50% MoM"
             variant={trendInsights.lossAccelerating ? "warning" : "neutral"}
+            loading={false}
+          />
+          <InsightCard
+            title="Melhor Ganho de ROI"
+            icon={<Zap className="h-4 w-4 text-emerald-400" />}
+            content={
+              trendInsights.bestRoiGain && trendInsights.bestRoiGain.roi_delta > 0
+                ? `${trendInsights.bestRoiGain.company_name}: +${trendInsights.bestRoiGain.roi_delta.toFixed(0)}pp`
+                : "Sem melhoria de ROI"
+            }
+            subtitle="ROI Comercial mês atual vs anterior"
+            variant={trendInsights.bestRoiGain?.roi_delta > 0 ? "success" : "neutral"}
+            loading={false}
+          />
+          <InsightCard
+            title="Maior Crescimento de Receita"
+            icon={<TrendingUp className="h-4 w-4 text-emerald-400" />}
+            content={
+              trendInsights.bestRevenueGrowth && trendInsights.bestRevenueGrowth.revenue_delta_pct > 0
+                ? `${trendInsights.bestRevenueGrowth.company_name}: +${trendInsights.bestRevenueGrowth.revenue_delta_pct.toFixed(0)}%`
+                : "Sem crescimento"
+            }
+            subtitle="Receita mês atual vs anterior"
+            variant={trendInsights.bestRevenueGrowth?.revenue_delta_pct > 0 ? "success" : "neutral"}
+            loading={false}
+          />
+          <InsightCard
+            title="Maior Queda de Conversão"
+            icon={<ArrowDownRight className="h-4 w-4 text-rose-400" />}
+            content={
+              trendInsights.worstDecline && trendInsights.worstDecline.conversion_delta < 0
+                ? `${trendInsights.worstDecline.company_name}: ${trendInsights.worstDecline.conversion_delta.toFixed(1)}pp`
+                : "Sem deterioração"
+            }
+            subtitle="Conversão mês atual vs anterior"
+            variant={trendInsights.worstDecline?.conversion_delta < 0 ? "danger" : "neutral"}
             loading={false}
           />
         </div>
@@ -468,10 +503,9 @@ function MiniKpi({ label, value, icon: Icon, accent, loading }: {
   );
 }
 
-function TrendChart({ data, companies, yLabel, tooltipFormatter }: {
+function TrendChart({ data, companies, tooltipFormatter }: {
   data: Record<string, string | number>[];
   companies: string[];
-  yLabel: string;
   tooltipFormatter: (v: number) => string;
 }) {
   if (data.length === 0) return <p className="text-sm text-muted-foreground text-center py-8">Sem dados temporais</p>;
@@ -508,6 +542,8 @@ function TrendChart({ data, companies, yLabel, tooltipFormatter }: {
 function MoMCard({ data: tc }: { data: TrendComparison }) {
   const convUp = tc.conversion_delta >= 0;
   const lossUp = tc.loss_delta_pct > 0;
+  const marginUp = tc.margin_delta >= 0;
+  const revUp = tc.revenue_delta_pct >= 0;
   return (
     <Card className="border border-border/50 bg-card/50">
       <CardContent className="pt-4 pb-4 space-y-2">
@@ -523,14 +559,32 @@ function MoMCard({ data: tc }: { data: TrendComparison }) {
             </p>
           </div>
           <div>
+            <p className="text-[11px] text-muted-foreground">Margem</p>
+            <p className={`text-sm font-bold ${marginUp ? "text-emerald-400" : "text-rose-400"}`}>
+              {marginUp ? "+" : ""}{tc.margin_delta.toFixed(1)}pp
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              {fmtPercent(tc.prev_margin_pct)} → {fmtPercent(tc.current_margin_pct)}
+            </p>
+          </div>
+          <div>
+            <p className="text-[11px] text-muted-foreground">Receita</p>
+            <p className={`text-sm font-bold ${revUp ? "text-emerald-400" : "text-rose-400"}`}>
+              {revUp ? "+" : ""}{tc.revenue_delta_pct.toFixed(0)}%
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              {fmtCurrency(tc.current_revenue)}
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-3 text-center border-t border-border/30 pt-2">
+          <div>
             <p className="text-[11px] text-muted-foreground">Ciclo</p>
             <p className="text-sm font-bold">
               {tc.current_cycle !== null ? `${Math.round(tc.current_cycle)}h` : "—"}
             </p>
             {tc.prev_cycle !== null && (
-              <p className="text-[10px] text-muted-foreground">
-                ant: {Math.round(tc.prev_cycle)}h
-              </p>
+              <p className="text-[10px] text-muted-foreground">ant: {Math.round(tc.prev_cycle)}h</p>
             )}
           </div>
           <div>
@@ -540,6 +594,15 @@ function MoMCard({ data: tc }: { data: TrendComparison }) {
             </p>
             <p className="text-[10px] text-muted-foreground">
               {fmtCurrency(tc.current_loss_value)}
+            </p>
+          </div>
+          <div>
+            <p className="text-[11px] text-muted-foreground">ROI Com.</p>
+            <p className={`text-sm font-bold ${tc.roi_delta >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+              {tc.roi_delta >= 0 ? "+" : ""}{tc.roi_delta.toFixed(0)}pp
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              {fmtPercent(tc.current_roi, 0)}
             </p>
           </div>
         </div>
