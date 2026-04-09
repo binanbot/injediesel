@@ -5,7 +5,7 @@ import {
   Clock, CheckCircle, AlertTriangle, XCircle,
   Shield, TrendingUp, CalendarDays, RefreshCw,
   ListChecks, Phone, MessageSquare, ThumbsDown,
-  Filter,
+  Filter, Lightbulb, UserX, Zap, Settings2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,12 @@ import {
   type ReactivationCandidate,
 } from "@/services/crmService";
 import { fetchActiveSellers } from "@/services/employeeService";
+import {
+  generateTaskSuggestions, getCrmConfig,
+  SUGGESTION_TYPE_LABELS,
+  type TaskSuggestion, type CrmConfig,
+} from "@/services/crmAutomationService";
+import { calcCommercialSla, type CommercialSla } from "@/services/crmSlaService";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { OperationalAlertsPanel } from "@/components/admin/OperationalAlertsPanel";
@@ -488,6 +494,22 @@ export default function CrmPage() {
     enabled: !!companyId,
   });
 
+  const crmConfig = useMemo(() => getCrmConfig(company?.settings as any), [company?.settings]);
+
+  const { data: taskSuggestions = [] } = useQuery({
+    queryKey: ["crm-suggestions", companyId],
+    queryFn: () => generateTaskSuggestions(companyId!, crmConfig),
+    enabled: !!companyId,
+    staleTime: 60_000,
+  });
+
+  const { data: slaMetrics } = useQuery({
+    queryKey: ["crm-sla", companyId],
+    queryFn: () => calcCommercialSla(companyId!),
+    enabled: !!companyId,
+    staleTime: 60_000,
+  });
+
   const reactivationMutation = useMutation({
     mutationFn: async (params: { customerId: string; sellerId: string | null; type: "reativacao" | "retorno" | "perda"; summary: string }) => {
       return registerReactivationAttempt(companyId!, params.customerId, params.sellerId, params.type, params.summary, user?.id || null);
@@ -644,6 +666,7 @@ export default function CrmPage() {
           <TabsTrigger value="atividades"><Activity className="h-4 w-4 mr-1" /> Atividades</TabsTrigger>
           <TabsTrigger value="funil"><Target className="h-4 w-4 mr-1" /> Funil</TabsTrigger>
           <TabsTrigger value="rentabilidade"><TrendingUp className="h-4 w-4 mr-1" /> Rentabilidade</TabsTrigger>
+          <TabsTrigger value="inteligencia"><Lightbulb className="h-4 w-4 mr-1" /> Inteligência</TabsTrigger>
           <TabsTrigger value="alertas"><Shield className="h-4 w-4 mr-1" /> Alertas</TabsTrigger>
         </TabsList>
 
@@ -1182,6 +1205,177 @@ export default function CrmPage() {
         {/* ─── Rentabilidade Tab ─────────────────────── */}
         <TabsContent value="rentabilidade" className="space-y-4">
           <WalletProfitabilityPanel companyId={companyId} />
+        </TabsContent>
+
+        {/* ─── Inteligência Tab ───────────────────────── */}
+        <TabsContent value="inteligencia" className="space-y-6">
+          {/* SLA Metrics */}
+          {slaMetrics && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" /> SLA Comercial
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Card className="glass-card">
+                  <CardContent className="pt-3 pb-2 text-center">
+                    <p className="text-xs text-muted-foreground">Tempo médio 1º contato</p>
+                    <p className="text-xl font-bold">
+                      {slaMetrics.avg_first_contact_hours !== null
+                        ? `${Math.round(slaMetrics.avg_first_contact_hours)}h`
+                        : "—"}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="glass-card">
+                  <CardContent className="pt-3 pb-2 text-center">
+                    <p className="text-xs text-muted-foreground">Tempo médio retorno</p>
+                    <p className="text-xl font-bold">
+                      {slaMetrics.avg_return_hours !== null
+                        ? `${Math.round(slaMetrics.avg_return_hours)}h`
+                        : "—"}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="glass-card">
+                  <CardContent className="pt-3 pb-2 text-center">
+                    <p className="text-xs text-muted-foreground">Follow-up no prazo</p>
+                    <p className="text-xl font-bold text-primary">
+                      {Math.round(slaMetrics.global_on_time_rate)}%
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="glass-card">
+                  <CardContent className="pt-3 pb-2 text-center">
+                    <p className="text-xs text-muted-foreground">Atrasadas agora</p>
+                    <p className="text-xl font-bold text-destructive">{slaMetrics.total_overdue}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Per-seller SLA */}
+              {slaMetrics.by_seller.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">SLA por Vendedor</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Vendedor</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead>No prazo</TableHead>
+                          <TableHead>Atrasadas</TableHead>
+                          <TableHead>Taxa</TableHead>
+                          <TableHead>Tempo médio</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {slaMetrics.by_seller.slice(0, 10).map((s) => (
+                          <TableRow key={s.seller_profile_id}>
+                            <TableCell className="font-medium">{getSellerName(s.seller_profile_id) || "Vendedor"}</TableCell>
+                            <TableCell>{s.total_activities}</TableCell>
+                            <TableCell className="text-primary">{s.completed_on_time}</TableCell>
+                            <TableCell className="text-destructive">{s.overdue}</TableCell>
+                            <TableCell>
+                              <Badge variant={s.on_time_rate >= 80 ? "outline" : "destructive"} className="text-xs">
+                                {Math.round(s.on_time_rate)}%
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {s.avg_completion_hours !== null ? `${Math.round(s.avg_completion_hours)}h` : "—"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* Task Suggestions */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-warning" /> Sugestões Automáticas
+              <Badge variant="outline" className="text-xs">{taskSuggestions.length}</Badge>
+            </h3>
+
+            {taskSuggestions.length === 0 ? (
+              <Card className="glass-card">
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  <CheckCircle className="h-8 w-8 mx-auto mb-2 text-primary" />
+                  <p>Tudo em dia! Nenhuma sugestão pendente.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {taskSuggestions.slice(0, 30).map((s, i) => (
+                  <Card key={`${s.type}-${s.customer_id}-${i}`} className={`glass-card ${s.priority === "urgente" ? "border-destructive/30" : s.priority === "alta" ? "border-warning/30" : ""}`}>
+                    <CardContent className="py-3 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {s.type === "at_risk_no_contact" && <AlertTriangle className="h-4 w-4 text-warning shrink-0" />}
+                        {s.type === "inactive_no_reactivation" && <RefreshCw className="h-4 w-4 text-muted-foreground shrink-0" />}
+                        {s.type === "stale_opportunity" && <Target className="h-4 w-4 text-primary shrink-0" />}
+                        {s.type === "overdue_followup_no_action" && <Clock className="h-4 w-4 text-destructive shrink-0" />}
+                        {s.type === "customer_no_seller" && <UserX className="h-4 w-4 text-muted-foreground shrink-0" />}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs shrink-0">{SUGGESTION_TYPE_LABELS[s.type]}</Badge>
+                            <PriorityBadge priority={s.priority} />
+                          </div>
+                          <p className="text-sm mt-1 truncate"><span className="font-medium">{s.customer_name}</span> — {s.reason}</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0 text-xs"
+                        onClick={() => {
+                          if (s.customer_id) {
+                            openNewActivityFor(s.customer_id, s.seller_profile_id);
+                          }
+                        }}
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> Criar tarefa
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* CRM Config display */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Settings2 className="h-5 w-5 text-muted-foreground" /> Regras Configuráveis
+            </h3>
+            <Card className="glass-card">
+              <CardContent className="pt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Dias para "Em Risco"</p>
+                  <p className="text-lg font-bold">{crmConfig.days_at_risk}d</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Dias para "Inativo"</p>
+                  <p className="text-lg font-bold">{crmConfig.days_inactive}d</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Prazo follow-up padrão</p>
+                  <p className="text-lg font-bold">{crmConfig.default_followup_days}d</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Oportunidade parada</p>
+                  <p className="text-lg font-bold">{crmConfig.stale_opportunity_days}d</p>
+                </div>
+              </CardContent>
+            </Card>
+            <p className="text-xs text-muted-foreground">
+              Estas regras podem ser personalizadas por empresa nas configurações do sistema.
+            </p>
+          </div>
         </TabsContent>
 
         {/* ─── Alertas Tab ────────────────────────────── */}
