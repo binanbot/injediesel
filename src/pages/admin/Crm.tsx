@@ -5,7 +5,7 @@ import {
   Clock, CheckCircle, AlertTriangle, XCircle,
   Shield, TrendingUp, CalendarDays, RefreshCw,
   ListChecks, Phone, MessageSquare, ThumbsDown,
-  Filter,
+  Filter, Lightbulb, UserX, Zap, Settings2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
