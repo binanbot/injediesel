@@ -149,7 +149,7 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
           {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
               // Use cart item count for cart menu item
-              const isCartItem = item.path === "/franqueado/loja/carrinho";
+              const isCartItem = item.label === "Meu Carrinho";
               const notificationCount = isCartItem ? itemCount : (notifications[item.path] || 0);
               
               return (
