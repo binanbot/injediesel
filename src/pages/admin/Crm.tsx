@@ -601,6 +601,13 @@ export default function CrmPage() {
     staleTime: 60_000,
   });
 
+  const { data: playbookAnalytics } = useQuery({
+    queryKey: ["crm-playbook-analytics", companyId],
+    queryFn: () => calcPlaybookAnalytics(companyId!),
+    enabled: !!companyId,
+    staleTime: 120_000,
+  });
+
   const playbookConfig = useMemo(() => getPlaybookConfig(company?.settings as any), [company?.settings]);
   const stageMetrics = useMemo(() => calcStageMetrics(opportunities), [opportunities]);
 
