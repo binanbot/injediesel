@@ -32,6 +32,7 @@ import {
 import { MetricTooltip, metricDefinitions } from "@/components/MetricTooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useCompany } from "@/hooks/useCompany";
+import { OperationalAlertsPanel } from "@/components/admin/OperationalAlertsPanel";
 import {
   StatsGridSkeleton,
   ChartSkeleton,
@@ -115,6 +116,11 @@ export default function AdminDashboard() {
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Visão geral do sistema{company?.brand_name ? ` ${company.brand_name}` : ""}.</p>
         </div>
+
+        {/* Operational Alerts */}
+        {company?.id && (
+          <OperationalAlertsPanel companyId={company.id} maxAlerts={6} />
+        )}
 
         {/* Alert: New Files */}
         <Link to="/admin/arquivos">
