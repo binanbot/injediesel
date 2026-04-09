@@ -41,9 +41,8 @@ export default function Login() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user && !authLoading && userRole) {
       if (isChannelMode) {
-        // In channel mode, all panels mount at "/"
         navigate("/");
       } else {
         navigate(getHomeRouteForRole(userRole));
