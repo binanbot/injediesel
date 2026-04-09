@@ -1384,6 +1384,40 @@ export default function CrmPage() {
             </div>
           )}
 
+          {/* Playbook Pipeline */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <ArrowRight className="h-5 w-5 text-primary" /> Pipeline Comercial
+            </h3>
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+              {stageMetrics.map((sm, i) => (
+                <div key={sm.stage} className="flex items-center gap-2 shrink-0">
+                  <Card className={`glass-card min-w-[140px] ${sm.stale_count > 0 ? "border-destructive/30" : ""}`}>
+                    <CardContent className="pt-3 pb-2 text-center">
+                      <p className="text-xs text-muted-foreground font-medium">{sm.label}</p>
+                      <p className="text-xl font-bold">{sm.count}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {sm.total_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 })}
+                      </p>
+                      {sm.avg_hours !== null && (
+                        <p className="text-xs mt-1">
+                          <span className="text-muted-foreground">Média: </span>
+                          <span className={sm.avg_hours > 96 ? "text-destructive" : "text-primary"}>
+                            {Math.round(sm.avg_hours)}h
+                          </span>
+                        </p>
+                      )}
+                      {sm.stale_count > 0 && (
+                        <Badge variant="destructive" className="text-xs mt-1">{sm.stale_count} paradas</Badge>
+                      )}
+                    </CardContent>
+                  </Card>
+                  {i < stageMetrics.length - 1 && <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />}
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Task Suggestions */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
