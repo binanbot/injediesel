@@ -37,6 +37,7 @@ export default function CeoRentabilidade() {
   return (
     <div className="space-y-6">
       <ExecutivePageHeader
+        icon={TrendingUp}
         title="Rentabilidade"
         subtitle="Visão executiva de custos e resultado operacional"
       />
@@ -46,24 +47,27 @@ export default function CeoRentabilidade() {
         <CeoKpiCard
           title="Faturamento Total"
           value={fmt(totals.revTotal)}
-          icon={<TrendingUp className="h-5 w-5" />}
+          icon={TrendingUp}
+          accent="text-emerald-400"
         />
         <CeoKpiCard
           title="Custo de Pessoal"
           value={fmt(totals.costPersonnel)}
-          icon={<DollarSign className="h-5 w-5" />}
+          icon={DollarSign}
+          accent="text-rose-400"
         />
         <CeoKpiCard
           title="Margem Operacional"
           value={fmt(totals.margin)}
-          icon={<Percent className="h-5 w-5" />}
+          icon={Percent}
+          accent={totals.margin >= 0 ? "text-emerald-400" : "text-rose-400"}
           subtitle={`${totals.marginPct.toFixed(1)}%`}
-          trend={totals.margin >= 0 ? "up" : "down"}
         />
         <CeoKpiCard
           title="Eficiência"
           value={`${totals.efficiency.toFixed(2)}x`}
-          icon={<Zap className="h-5 w-5" />}
+          icon={Zap}
+          accent="text-amber-400"
           subtitle="Receita por R$ de custo"
         />
       </div>
