@@ -61,6 +61,11 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { OperationalAlertsPanel } from "@/components/admin/OperationalAlertsPanel";
 import { WalletProfitabilityPanel } from "@/components/admin/WalletProfitabilityPanel";
+import {
+  calcPlaybookAnalytics,
+  type PlaybookAnalytics,
+} from "@/services/crmPlaybookAnalyticsService";
+import { Progress } from "@/components/ui/progress";
 
 // ─── Activity Dialog ─────────────────────────────────────────
 
