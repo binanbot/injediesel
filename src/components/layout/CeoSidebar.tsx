@@ -4,8 +4,8 @@ import {
   TrendingUp,
   PieChart,
   BarChart3,
-  Target,
   Wallet,
+  Target,
   LogOut,
   X,
   PanelLeftClose,
@@ -24,6 +24,7 @@ const RAW_MENU_ITEMS = [
   { icon: Target, label: "Metas & OKRs", path: "/ceo/metas", badge: null },
   { icon: BarChart3, label: "Relatórios", path: "/ceo/relatorios", badge: null },
   { icon: Wallet, label: "Rentabilidade", path: "/ceo/rentabilidade", badge: null },
+  { icon: Target, label: "Inteligência Comercial", path: "/ceo/comercial", badge: null },
 ];
 
 interface CeoSidebarProps {

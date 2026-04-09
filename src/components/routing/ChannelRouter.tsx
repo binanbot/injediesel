@@ -92,6 +92,7 @@ const CeoMarketShare = lazy(() => import("@/pages/ceo/MarketShare"));
 const CeoMetasOkrs = lazy(() => import("@/pages/ceo/MetasOkrs"));
 const CeoRelatorios = lazy(() => import("@/pages/ceo/Relatorios"));
 const CeoRentabilidade = lazy(() => import("@/pages/ceo/Rentabilidade"));
+const CeoComercialIntelligence = lazy(() => import("@/pages/ceo/ComercialIntelligence"));
 
 // Layouts
 import { FranchiseeLayout } from "@/components/layout/FranchiseeLayout";
@@ -243,6 +244,7 @@ function CeoRoutes() {
         <Route path="metas" element={<CeoMetasOkrs />} />
         <Route path="relatorios" element={<CeoRelatorios />} />
         <Route path="rentabilidade" element={<CeoRentabilidade />} />
+        <Route path="comercial" element={<CeoComercialIntelligence />} />
         <Route path="empresas/:companyId" element={<CeoCompanyDetail />} />
       </Route>
       <Route path="/ceo/*" element={<Navigate to="/" replace />} />
