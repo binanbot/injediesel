@@ -775,7 +775,6 @@ export default function CrmPage() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
         {/* ─── Rentabilidade Tab ─────────────────────── */}
         <TabsContent value="rentabilidade" className="space-y-4">
