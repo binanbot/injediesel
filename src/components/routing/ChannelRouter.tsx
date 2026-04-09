@@ -90,6 +90,7 @@ const CeoReceitaCrescimento = lazy(() => import("@/pages/ceo/ReceitaCrescimento"
 const CeoMarketShare = lazy(() => import("@/pages/ceo/MarketShare"));
 const CeoMetasOkrs = lazy(() => import("@/pages/ceo/MetasOkrs"));
 const CeoRelatorios = lazy(() => import("@/pages/ceo/Relatorios"));
+const CeoRentabilidade = lazy(() => import("@/pages/ceo/Rentabilidade"));
 
 // Layouts
 import { FranchiseeLayout } from "@/components/layout/FranchiseeLayout";
