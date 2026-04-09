@@ -82,6 +82,7 @@ const CrmPage = lazy(() => import("@/pages/admin/Crm"));
 const MasterDashboard = lazy(() => import("@/pages/master/Dashboard"));
 const MasterCompanyDetail = lazy(() => import("@/pages/master/CompanyDetail"));
 const MasterRentabilidade = lazy(() => import("@/pages/master/Rentabilidade"));
+const MasterCrmIntelligence = lazy(() => import("@/pages/master/CrmIntelligence"));
 
 // CEO pages
 const CeoDashboard = lazy(() => import("@/pages/ceo/Dashboard"));
@@ -270,6 +271,7 @@ function MasterRoutes() {
         <Route path="vendas/nova" element={<VendaManual />} />
         <Route path="auditoria" element={<Auditoria />} />
         <Route path="rentabilidade" element={<MasterRentabilidade />} />
+        <Route path="crm" element={<MasterCrmIntelligence />} />
       </Route>
       <Route path="/master/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />

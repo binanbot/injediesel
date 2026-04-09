@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
-  Building2,
+  Building2, Target,
   Globe,
   Users,
   Shield,
@@ -34,6 +34,7 @@ const RAW_MENU_ITEMS = [
   { icon: TrendingUp, label: "Painel Comercial", path: "/master/vendas" },
   { icon: ClipboardList, label: "Auditoria", path: "/master/auditoria" },
   { icon: Wallet, label: "Rentabilidade", path: "/master/rentabilidade" },
+  { icon: Target, label: "Inteligência CRM", path: "/master/crm" },
   { icon: Settings, label: "Configurações", path: "/master/configuracoes" },
   { icon: FileText, label: "Documentação", path: "/master/documentacao" },
 ];
