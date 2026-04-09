@@ -1310,6 +1310,52 @@ export default function CrmPage() {
 
         {/* ─── Inteligência Tab ───────────────────────── */}
         <TabsContent value="inteligencia" className="space-y-6">
+
+          {/* Global KPIs */}
+          {playbookAnalytics && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" /> Métricas Globais do Playbook
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <Card className="glass-card">
+                  <CardContent className="pt-3 pb-2 text-center">
+                    <p className="text-xs text-muted-foreground">Taxa de Conversão</p>
+                    <p className="text-2xl font-bold text-primary">{Math.round(playbookAnalytics.global_conversion_rate)}%</p>
+                  </CardContent>
+                </Card>
+                <Card className="glass-card">
+                  <CardContent className="pt-3 pb-2 text-center">
+                    <p className="text-xs text-muted-foreground">Tempo médio ciclo</p>
+                    <p className="text-2xl font-bold">
+                      {playbookAnalytics.avg_cycle_hours !== null
+                        ? `${Math.round(playbookAnalytics.avg_cycle_hours / 24)}d`
+                        : "—"}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="glass-card">
+                  <CardContent className="pt-3 pb-2 text-center">
+                    <p className="text-xs text-muted-foreground">Total oportunidades</p>
+                    <p className="text-2xl font-bold">{playbookAnalytics.total_opportunities}</p>
+                  </CardContent>
+                </Card>
+                <Card className="glass-card">
+                  <CardContent className="pt-3 pb-2 text-center">
+                    <p className="text-xs text-muted-foreground">Ganhas</p>
+                    <p className="text-2xl font-bold text-primary">{playbookAnalytics.total_won}</p>
+                  </CardContent>
+                </Card>
+                <Card className="glass-card">
+                  <CardContent className="pt-3 pb-2 text-center">
+                    <p className="text-xs text-muted-foreground">Perdidas</p>
+                    <p className="text-2xl font-bold text-destructive">{playbookAnalytics.total_lost}</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+
           {/* SLA Metrics */}
           {slaMetrics && (
             <div className="space-y-4">
@@ -1396,7 +1442,230 @@ export default function CrmPage() {
             </div>
           )}
 
-          {/* Playbook Pipeline */}
+          {/* Conversion by Origin */}
+          {playbookAnalytics && playbookAnalytics.by_origin.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Filter className="h-5 w-5 text-primary" /> Conversão por Origem
+              </h3>
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Origem</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Ganhas</TableHead>
+                        <TableHead>Perdidas</TableHead>
+                        <TableHead>Conversão</TableHead>
+                        <TableHead>Ciclo médio</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {playbookAnalytics.by_origin.slice(0, 10).map((o) => (
+                        <TableRow key={o.dimension}>
+                          <TableCell className="font-medium">{o.label}</TableCell>
+                          <TableCell>{o.total}</TableCell>
+                          <TableCell className="text-primary">{o.won}</TableCell>
+                          <TableCell className="text-destructive">{o.lost}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Progress value={o.conversion_rate} className="h-2 w-16" />
+                              <span className="text-xs font-medium">{Math.round(o.conversion_rate)}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {o.avg_cycle_hours !== null ? `${Math.round(o.avg_cycle_hours / 24)}d` : "—"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Conversion by Temperature */}
+          {playbookAnalytics && playbookAnalytics.by_temperature.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Thermometer className="h-5 w-5 text-primary" /> Conversão por Temperatura
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {playbookAnalytics.by_temperature.map((t) => (
+                  <Card key={t.dimension} className="glass-card">
+                    <CardContent className="pt-4 pb-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="outline" className={`text-xs ${getTemperatureColor(t.dimension)}`}>
+                          {t.label}
+                        </Badge>
+                        <span className="text-sm font-medium">{t.total} opp</span>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Progress value={t.conversion_rate} className="h-2 flex-1" />
+                        <span className="text-sm font-bold">{Math.round(t.conversion_rate)}%</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1 text-xs text-muted-foreground">
+                        <div>G: <span className="text-primary font-medium">{t.won}</span></div>
+                        <div>P: <span className="text-destructive font-medium">{t.lost}</span></div>
+                        <div>A: <span className="font-medium">{t.open}</span></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Conversion by Seller */}
+          {playbookAnalytics && playbookAnalytics.by_seller.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" /> Ranking de Conversão por Vendedor
+              </h3>
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Vendedor</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Ganhas</TableHead>
+                        <TableHead>Perdidas</TableHead>
+                        <TableHead>Conversão</TableHead>
+                        <TableHead>Paradas</TableHead>
+                        <TableHead>Ciclo</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {playbookAnalytics.by_seller.slice(0, 10).map((s) => (
+                        <TableRow key={s.seller_profile_id}>
+                          <TableCell className="font-medium">{getSellerName(s.seller_profile_id) || "Vendedor"}</TableCell>
+                          <TableCell>{s.total}</TableCell>
+                          <TableCell className="text-primary">{s.won}</TableCell>
+                          <TableCell className="text-destructive">{s.lost}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Progress value={s.conversion_rate} className="h-2 w-16" />
+                              <span className="text-xs font-medium">{Math.round(s.conversion_rate)}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {s.stale_count > 0 ? (
+                              <Badge variant="destructive" className="text-xs">{s.stale_count}</Badge>
+                            ) : "—"}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {s.avg_cycle_hours !== null ? `${Math.round(s.avg_cycle_hours / 24)}d` : "—"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Loss Reasons */}
+          {playbookAnalytics && playbookAnalytics.loss_reasons.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <XCircle className="h-5 w-5 text-destructive" /> Motivos de Perda
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {playbookAnalytics.loss_reasons.slice(0, 8).map((r) => (
+                  <Card key={r.reason} className="glass-card">
+                    <CardContent className="pt-3 pb-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium">{r.label}</span>
+                        <Badge variant="outline" className="text-xs">{r.count}x ({Math.round(r.percentage)}%)</Badge>
+                      </div>
+                      <Progress value={r.percentage} className="h-1.5 mb-1" />
+                      <p className="text-xs text-muted-foreground">
+                        Valor perdido: {r.total_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 })}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Reactivation Reasons */}
+          {playbookAnalytics && playbookAnalytics.reactivation_reasons.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <RefreshCw className="h-5 w-5 text-primary" /> Motivos de Reativação
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {playbookAnalytics.reactivation_reasons.map((r) => (
+                  <Card key={r.reason} className="glass-card">
+                    <CardContent className="pt-3 pb-2 text-center">
+                      <p className="text-sm font-medium">{r.label}</p>
+                      <p className="text-xl font-bold">{r.count}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Pipeline Quality / Bottlenecks */}
+          {playbookAnalytics && playbookAnalytics.pipeline_quality.some(p => p.count > 0) && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <ArrowRight className="h-5 w-5 text-primary" /> Qualidade do Pipeline
+              </h3>
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Etapa</TableHead>
+                        <TableHead>Qtde</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Tempo médio</TableHead>
+                        <TableHead>Paradas (SLA)</TableHead>
+                        <TableHead>Sem follow-up</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {playbookAnalytics.pipeline_quality.map((p) => (
+                        <TableRow key={p.stage} className={p.stale_count > 0 ? "bg-destructive/5" : ""}>
+                          <TableCell className="font-medium">{p.label}</TableCell>
+                          <TableCell>{p.count}</TableCell>
+                          <TableCell className="text-sm">
+                            {p.total_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 })}
+                          </TableCell>
+                          <TableCell>
+                            {p.avg_hours !== null ? (
+                              <span className={p.avg_hours > 96 ? "text-destructive font-medium" : ""}>
+                                {Math.round(p.avg_hours)}h
+                              </span>
+                            ) : "—"}
+                          </TableCell>
+                          <TableCell>
+                            {p.stale_count > 0 ? (
+                              <Badge variant="destructive" className="text-xs">{p.stale_count}</Badge>
+                            ) : <span className="text-primary">✓</span>}
+                          </TableCell>
+                          <TableCell>
+                            {p.no_followup_count > 0 ? (
+                              <Badge variant="outline" className="text-xs text-destructive border-destructive/30">{p.no_followup_count}</Badge>
+                            ) : <span className="text-primary">✓</span>}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Pipeline Visual (kept) */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <ArrowRight className="h-5 w-5 text-primary" /> Pipeline Comercial
