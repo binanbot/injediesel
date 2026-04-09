@@ -40,11 +40,10 @@ const TikTokIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Dados mockados de notificações - em produção viriam do banco de dados
-const notifications: Record<string, number> = {
-  "/franqueado/arquivos": 2, // 2 arquivos prontos para download
-  "/franqueado/atualizacoes": 3, // 3 novas atualizações
-  "/franqueado/mensagens": 2, // 2 mensagens não lidas
+// Notification paths mapped to real data sources
+const notificationPaths = {
+  arquivos: "/franqueado/arquivos",
+  mensagens: "/franqueado/mensagens",
 };
 
 const allMenuItems = [
