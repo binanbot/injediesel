@@ -31,6 +31,7 @@ import { useCartStore } from "@/stores/useCartStore";
 import { useSocialLinks } from "@/hooks/useSocialLinks";
 import { useCompany } from "@/hooks/useCompany";
 import { useChannelPaths } from "@/hooks/useChannelPaths";
+import { useSidebarNotifications } from "@/hooks/useSidebarNotifications";
 
 // TikTok icon component
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -39,11 +40,10 @@ const TikTokIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Dados mockados de notificações - em produção viriam do banco de dados
-const notifications: Record<string, number> = {
-  "/franqueado/arquivos": 2, // 2 arquivos prontos para download
-  "/franqueado/atualizacoes": 3, // 3 novas atualizações
-  "/franqueado/mensagens": 2, // 2 mensagens não lidas
+// Notification paths mapped to real data sources
+const notificationPaths = {
+  arquivos: "/franqueado/arquivos",
+  mensagens: "/franqueado/mensagens",
 };
 
 const allMenuItems = [
@@ -79,6 +79,13 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
   const itemCount = useCartStore((s) => s.getItemCount());
   const { isModuleEnabled } = useCompany();
   const { resolve } = useChannelPaths();
+  const sidebarCounts = useSidebarNotifications();
+
+  // Build a map from resolved paths to real notification counts
+  const notifications: Record<string, number> = {
+    [resolve(notificationPaths.arquivos, "/franqueado")]: sidebarCounts.arquivos,
+    [resolve(notificationPaths.mensagens, "/franqueado")]: sidebarCounts.mensagens,
+  };
 
   const menuItems = allMenuItems
     .filter((item) => item.module === null || isModuleEnabled(item.module))
@@ -142,7 +149,7 @@ export function FranchiseeSidebar({ isOpen = true, onClose, collapsed = false, o
           {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
               // Use cart item count for cart menu item
-              const isCartItem = item.path === "/franqueado/loja/carrinho";
+              const isCartItem = item.label === "Meu Carrinho";
               const notificationCount = isCartItem ? itemCount : (notifications[item.path] || 0);
               
               return (
