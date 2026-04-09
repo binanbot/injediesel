@@ -475,25 +475,9 @@ export default function FranqueadoDetalhe() {
                 <History className="h-5 w-5" />
                 Dados de Auditoria
               </CardTitle>
-              <CardDescription>Informações do sistema legado</CardDescription>
+              <CardDescription>Informações do sistema</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Login Legado</Label>
-                <Input value={profile.legacy_user_login || "-"} disabled className="bg-muted" />
-              </div>
-              <div className="space-y-2">
-                <Label>ID Fonte Legado</Label>
-                <Input value={profile.legacy_source_user_id || "-"} disabled className="bg-muted" />
-              </div>
-              <div className="space-y-2">
-                <Label>Role Legado</Label>
-                <Input value={profile.legacy_role || "-"} disabled className="bg-muted" />
-              </div>
-              <div className="space-y-2">
-                <Label>Data Registro Legado</Label>
-                <Input value={profile.legacy_user_registered_at || "-"} disabled className="bg-muted" />
-              </div>
               <div className="space-y-2">
                 <Label>Criado em</Label>
                 <Input 
