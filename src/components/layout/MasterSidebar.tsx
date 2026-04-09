@@ -15,6 +15,7 @@ import {
   ClipboardList,
   PanelLeftClose,
   PanelLeftOpen,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ const RAW_MENU_ITEMS = [
   { icon: UsersRound, label: "Colaboradores", path: "/master/colaboradores" },
   { icon: TrendingUp, label: "Painel Comercial", path: "/master/vendas" },
   { icon: ClipboardList, label: "Auditoria", path: "/master/auditoria" },
+  { icon: Wallet, label: "Rentabilidade", path: "/master/rentabilidade" },
   { icon: Settings, label: "Configurações", path: "/master/configuracoes" },
   { icon: FileText, label: "Documentação", path: "/master/documentacao" },
 ];

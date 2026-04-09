@@ -5,6 +5,7 @@ import {
   PieChart,
   BarChart3,
   Target,
+  Wallet,
   LogOut,
   X,
   PanelLeftClose,
@@ -22,6 +23,7 @@ const RAW_MENU_ITEMS = [
   { icon: PieChart, label: "Market Share", path: "/ceo/market-share", badge: null },
   { icon: Target, label: "Metas & OKRs", path: "/ceo/metas", badge: null },
   { icon: BarChart3, label: "Relatórios", path: "/ceo/relatorios", badge: null },
+  { icon: Wallet, label: "Rentabilidade", path: "/ceo/rentabilidade", badge: null },
 ];
 
 interface CeoSidebarProps {
