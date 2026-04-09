@@ -326,6 +326,17 @@ function OpportunityDialog({
   const mutation = useMutation({
     mutationFn: async () => {
       const isClosed = form.stage === "fechado_ganho" || form.stage === "fechado_perdido";
+      // Enrich notes with temperature and origin
+      let enrichedNotes = form.notes || "";
+      const metaParts: string[] = [];
+      if (form.temperature) metaParts.push(`Temperatura: ${getTemperatureLabel(form.temperature)}`);
+      if (form.contact_origin) metaParts.push(`Origem: ${getContactOriginLabel(form.contact_origin)}`);
+      if (metaParts.length > 0 && enrichedNotes) {
+        enrichedNotes = `[${metaParts.join(" | ")}] ${enrichedNotes}`;
+      } else if (metaParts.length > 0) {
+        enrichedNotes = `[${metaParts.join(" | ")}]`;
+      }
+
       const payload = {
         company_id: companyId,
         customer_id: form.customer_id,
@@ -334,7 +345,7 @@ function OpportunityDialog({
         stage: form.stage,
         estimated_value: Number(form.estimated_value) || 0,
         sale_channel: form.sale_channel || null,
-        notes: form.notes || null,
+        notes: enrichedNotes || null,
         lost_reason: form.stage === "fechado_perdido" ? form.lost_reason || null : null,
         closed_at: isClosed ? new Date().toISOString() : null,
         created_by: user?.id || null,
