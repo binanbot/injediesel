@@ -410,6 +410,7 @@ export function LegacyCombinedRoutes() {
           <Route path="permissoes" element={<Permissoes />} />
           <Route path="auditoria" element={<Auditoria />} />
           <Route path="financeiro" element={<Financeiro />} />
+          <Route path="crm" element={<CrmPage />} />
         </Route>
 
         {/* Master Admin Routes */}
