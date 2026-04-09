@@ -7,12 +7,21 @@ import {
   createFinancialEntry,
   updateFinancialEntry,
   deleteFinancialEntry,
+  approveFinancialEntry,
+  markEntryAsPaid,
+  cancelFinancialEntry,
   calcFinancialSummary,
+  fetchClosingPeriods,
+  closeMonth,
+  reopenMonth,
   ENTRY_TYPES,
+  ENTRY_STATUSES,
   FINANCIAL_CATEGORIES,
   SUBCATEGORY_SUGGESTIONS,
   getCategoryLabel,
   getEntryTypeLabel,
+  getStatusLabel,
+  getStatusColor,
   getCategoriesForType,
   type FinancialEntryRow,
 } from "@/services/financialService";
@@ -29,21 +38,86 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import {
-  Plus,
-  Search,
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  Pencil,
-  Trash2,
-  Filter,
+  Plus, Search, DollarSign, TrendingUp, TrendingDown, Activity,
+  Pencil, Trash2, Filter, Lock, Unlock, CheckCircle, XCircle, ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth } from "date-fns";
+import { logAudit } from "@/services/auditService";
 
 const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+// ─── Closing Panel ───────────────────────────────────────────
+
+function ClosingPanel({ companyId }: { companyId: string }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const currentMonth = format(startOfMonth(new Date()), "yyyy-MM-dd");
+
+  const { data: periods = [] } = useQuery({
+    queryKey: ["financial-closing", companyId],
+    queryFn: () => fetchClosingPeriods(companyId),
+    enabled: !!companyId,
+  });
+
+  const currentPeriod = periods.find(p => p.reference_month === currentMonth);
+  const isClosed = currentPeriod?.status === "fechado";
+
+  const closeMut = useMutation({
+    mutationFn: () => closeMonth(companyId, currentMonth, user?.id || ""),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["financial-closing"] });
+      logAudit({
+        action: "financial.month_closed",
+        module: "financeiro",
+        targetType: "financial_closing_periods",
+        targetId: currentMonth,
+        companyId,
+        details: { reference_month: currentMonth },
+      });
+      toast.success("Mês fechado com sucesso");
+    },
+  });
+
+  const reopenMut = useMutation({
+    mutationFn: () => reopenMonth(companyId, currentMonth),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["financial-closing"] });
+      logAudit({
+        action: "financial.month_reopened",
+        module: "financeiro",
+        targetType: "financial_closing_periods",
+        targetId: currentMonth,
+        companyId,
+        details: { reference_month: currentMonth },
+      });
+      toast.success("Mês reaberto");
+    },
+  });
+
+  return (
+    <div className="flex items-center gap-3">
+      <Badge variant={isClosed ? "destructive" : "success"} className="gap-1">
+        {isClosed ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+        {format(new Date(currentMonth), "MMM yyyy")}: {isClosed ? "Fechado" : "Aberto"}
+      </Badge>
+      <PermissionGuard module="financeiro" action="approve">
+        {isClosed ? (
+          <Button variant="outline" size="sm" onClick={() => reopenMut.mutate()} disabled={reopenMut.isPending}>
+            <Unlock className="h-3 w-3 mr-1" /> Reabrir
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" onClick={() => closeMut.mutate()} disabled={closeMut.isPending}>
+            <Lock className="h-3 w-3 mr-1" /> Fechar Mês
+          </Button>
+        )}
+      </PermissionGuard>
+    </div>
+  );
+}
+
+// ─── Main ────────────────────────────────────────────────────
 
 export default function Financeiro() {
   const { user } = useAuth();
@@ -55,6 +129,7 @@ export default function Financeiro() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const now = new Date();
   const [startDate, setStartDate] = useState(format(startOfMonth(now), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(endOfMonth(now), "yyyy-MM-dd"));
@@ -70,14 +145,16 @@ export default function Financeiro() {
   const [fDate, setFDate] = useState(format(now, "yyyy-MM-dd"));
   const [fCostCenter, setFCostCenter] = useState("");
   const [fIsRecurring, setFIsRecurring] = useState(false);
+  const [fStatus, setFStatus] = useState("lancado");
 
   const { data: entries = [], isLoading } = useQuery({
-    queryKey: ["financial-entries", companyId, filterType, filterCategory, startDate, endDate],
+    queryKey: ["financial-entries", companyId, filterType, filterCategory, filterStatus, startDate, endDate],
     queryFn: () =>
       fetchFinancialEntries({
         companyId,
         entryType: filterType !== "all" ? filterType : undefined,
         category: filterCategory !== "all" ? filterCategory : undefined,
+        status: filterStatus !== "all" ? filterStatus : undefined,
         startDate,
         endDate,
       }),
@@ -107,6 +184,7 @@ export default function Financeiro() {
     setFDate(format(now, "yyyy-MM-dd"));
     setFCostCenter("");
     setFIsRecurring(false);
+    setFStatus("lancado");
   };
 
   const openNew = () => { resetForm(); setFormOpen(true); };
@@ -121,6 +199,7 @@ export default function Financeiro() {
     setFDate(e.competency_date);
     setFCostCenter(e.cost_center || "");
     setFIsRecurring(e.is_recurring);
+    setFStatus(e.status || "lancado");
     setFormOpen(true);
   };
 
@@ -139,6 +218,7 @@ export default function Financeiro() {
           competency_date: fDate,
           cost_center: fCostCenter || null,
           is_recurring: fIsRecurring,
+          status: fStatus,
         });
       } else {
         await createFinancialEntry({
@@ -153,6 +233,7 @@ export default function Financeiro() {
           is_recurring: fIsRecurring,
           created_by: user?.id || null,
           scope: "empresa",
+          status: fStatus,
         });
       }
     },
@@ -174,6 +255,30 @@ export default function Financeiro() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const approveMut = useMutation({
+    mutationFn: (id: string) => approveFinancialEntry(id, user?.id || ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["financial-entries"] });
+      toast.success("Lançamento aprovado");
+    },
+  });
+
+  const paidMut = useMutation({
+    mutationFn: markEntryAsPaid,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["financial-entries"] });
+      toast.success("Marcado como pago");
+    },
+  });
+
+  const cancelMut = useMutation({
+    mutationFn: cancelFinancialEntry,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["financial-entries"] });
+      toast.success("Lançamento cancelado");
+    },
+  });
+
   const entryTypeColor = (type: string) => {
     if (type === "receita") return "text-emerald-400";
     if (type === "despesa") return "text-rose-400";
@@ -184,16 +289,19 @@ export default function Financeiro() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold">Financeiro</h1>
           <p className="text-muted-foreground text-sm">Lançamentos de entradas e despesas</p>
         </div>
-        <PermissionGuard module="financeiro" action="create">
-          <Button onClick={openNew}>
-            <Plus className="h-4 w-4 mr-2" /> Novo Lançamento
-          </Button>
-        </PermissionGuard>
+        <div className="flex items-center gap-3">
+          <ClosingPanel companyId={companyId} />
+          <PermissionGuard module="financeiro" action="create">
+            <Button onClick={openNew}>
+              <Plus className="h-4 w-4 mr-2" /> Novo Lançamento
+            </Button>
+          </PermissionGuard>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -254,7 +362,7 @@ export default function Financeiro() {
                 />
               </div>
             </div>
-            <div className="w-[140px]">
+            <div className="w-[130px]">
               <Label className="text-xs">Tipo</Label>
               <Select value={filterType} onValueChange={setFilterType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -266,7 +374,7 @@ export default function Financeiro() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="w-[160px]">
+            <div className="w-[150px]">
               <Label className="text-xs">Categoria</Label>
               <Select value={filterCategory} onValueChange={setFilterCategory}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -278,11 +386,23 @@ export default function Financeiro() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="w-[140px]">
+            <div className="w-[130px]">
+              <Label className="text-xs">Status</Label>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {ENTRY_STATUSES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-[130px]">
               <Label className="text-xs">De</Label>
               <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
-            <div className="w-[140px]">
+            <div className="w-[130px]">
               <Label className="text-xs">Até</Label>
               <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
@@ -313,13 +433,13 @@ export default function Financeiro() {
                     <TableHead>Categoria</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
-                    <TableHead>Recorrente</TableHead>
-                    <TableHead className="w-20" />
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-28" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((e) => (
-                    <TableRow key={e.id}>
+                    <TableRow key={e.id} className={e.status === "cancelado" ? "opacity-50" : ""}>
                       <TableCell className="text-xs whitespace-nowrap">{e.competency_date}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={`text-xs ${entryTypeColor(e.entry_type)}`}>
@@ -333,24 +453,41 @@ export default function Financeiro() {
                       <TableCell className={`text-right font-mono text-sm ${entryTypeColor(e.entry_type)}`}>
                         {fmtBRL(e.amount)}
                       </TableCell>
-                      <TableCell>{e.is_recurring ? <Badge variant="secondary" className="text-xs">Sim</Badge> : "—"}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={`text-xs ${getStatusColor(e.status)}`}>
+                          {getStatusLabel(e.status)}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <PermissionGuard module="financeiro" action="edit">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(e)}>
-                              <Pencil className="h-3 w-3" />
-                            </Button>
-                          </PermissionGuard>
-                          <PermissionGuard module="financeiro" action="delete">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive"
-                              onClick={() => deleteMutation.mutate(e.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </PermissionGuard>
+                          {e.status === "lancado" && (
+                            <PermissionGuard module="financeiro" action="approve">
+                              <Button variant="ghost" size="icon" className="h-7 w-7" title="Aprovar" onClick={() => approveMut.mutate(e.id)}>
+                                <CheckCircle className="h-3 w-3 text-emerald-400" />
+                              </Button>
+                            </PermissionGuard>
+                          )}
+                          {e.status === "aprovado" && (
+                            <PermissionGuard module="financeiro" action="approve">
+                              <Button variant="ghost" size="icon" className="h-7 w-7" title="Marcar pago" onClick={() => paidMut.mutate(e.id)}>
+                                <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                              </Button>
+                            </PermissionGuard>
+                          )}
+                          {e.status !== "cancelado" && e.status !== "pago" && (
+                            <>
+                              <PermissionGuard module="financeiro" action="edit">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(e)}>
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                              </PermissionGuard>
+                              <PermissionGuard module="financeiro" action="delete">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => cancelMut.mutate(e.id)}>
+                                  <XCircle className="h-3 w-3" />
+                                </Button>
+                              </PermissionGuard>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -394,19 +531,31 @@ export default function Financeiro() {
               </div>
             </div>
 
-            <div className="space-y-1">
-              <Label>Subcategoria</Label>
-              <Input
-                value={fSubcategory}
-                onChange={(e) => setFSubcategory(e.target.value)}
-                placeholder="Ex: Combustível, Uniforme, VT..."
-                list="subcategory-suggestions"
-              />
-              <datalist id="subcategory-suggestions">
-                {SUBCATEGORY_SUGGESTIONS.map((s) => (
-                  <option key={s} value={s} />
-                ))}
-              </datalist>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Subcategoria</Label>
+                <Input
+                  value={fSubcategory}
+                  onChange={(e) => setFSubcategory(e.target.value)}
+                  placeholder="Ex: Combustível..."
+                  list="subcategory-suggestions"
+                />
+                <datalist id="subcategory-suggestions">
+                  {SUBCATEGORY_SUGGESTIONS.map((s) => (
+                    <option key={s} value={s} />
+                  ))}
+                </datalist>
+              </div>
+              <div className="space-y-1">
+                <Label>Status</Label>
+                <Select value={fStatus} onValueChange={setFStatus}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rascunho">Rascunho</SelectItem>
+                    <SelectItem value="lancado">Lançado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-1">
