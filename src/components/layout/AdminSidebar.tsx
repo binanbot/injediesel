@@ -25,6 +25,7 @@ import {
   ClipboardList,
   ShoppingCart,
   Wallet,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
