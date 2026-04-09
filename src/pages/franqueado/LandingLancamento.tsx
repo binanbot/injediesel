@@ -271,9 +271,9 @@ export default function LandingLancamento() {
 
           {/* Animated headline with blur reveal */}
           <motion.h1
-            initial={{ opacity: 0, y: 40, filter: "blur(10px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 0.8 }}
+            initial={{ opacity: 1, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
             className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight"
           >
             Sua operação, agora em um{" "}
