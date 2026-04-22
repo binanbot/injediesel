@@ -1976,6 +1976,10 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
                 {[
                   ["profiles_franchisees", "Perfil do Franqueado", "Franqueado / Perfil", "✅ Tabela canônica. 30+ colunas."],
                   ["franchisee_profiles", "Perfil de Contrato", "—", "⚠️ Auxiliar de contratos (8 colunas). Nome similar à canônica."],
+                  ["employee_profiles", "Perfil de Colaborador", "Colaboradores / Equipe", "✅ Tabela de equipe interna."],
+                  ["seller_profiles", "Perfil de Vendedor", "CRM / Vendas", "✅ Regras de comissão e metas."],
+                  ["departments / job_positions", "Estrutura Organizacional", "Departamentos / Cargos", "✅ Organização de equipe."],
+                  ["companies", "Empresas / Unidades", "Empresas", "✅ Gestão multi-empresa."],
                   ["units", "Unidade", "Unidade", "✅ Coerente."],
                   ["customers", "Cliente", "Cliente", "✅ Coerente."],
                   ["vehicles", "Veículo", "Veículo", "✅ Coerente."],
@@ -1994,6 +1998,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
                   ["file_status_history", "Histórico de Arquivo", "Timeline do Arquivo", "⚠️ Colunas em PT (alterado_por, observacao)."],
                   ["system_settings", "Configuração do Sistema", "Configurações", "✅ Coerente."],
                   ["exports_log", "Log de Exportação", "Exportações", "✅ Coerente."],
+                  ["audit_logs", "Log de Auditoria", "Auditoria", "✅ Log de ações críticas."],
                   ["cities_reference", "Referência de Cidades", "Cidades (IBGE)", "✅ Coerente."],
                   ["plate_lookup_cache", "Cache de Placas", "—", "✅ Interno, sem exposição na UI."],
                   ["services", "Serviço", "Serviço", "✅ Coerente."],
