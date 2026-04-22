@@ -49,7 +49,7 @@ export function CitySearchBox() {
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
