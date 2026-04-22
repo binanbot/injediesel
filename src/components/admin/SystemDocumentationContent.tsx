@@ -703,17 +703,19 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
 
           <h4 className={`font-semibold mb-2 ${headingColor}`}>Funcionalidades Principais:</h4>
           <div className="space-y-3">
-            <FeatureItem printMode={printMode} title="Dashboard" description="Alertas neon de prioridade, KPIs em cards, resumo de pendências, atividade recente" />
+            <FeatureItem printMode={printMode} title="Dashboard" description="Alertas neon de prioridade, alertas operacionais, KPIs em cards, resumo de pendências, atividade recente" />
             <FeatureItem printMode={printMode} title="Gestão de Arquivos" description="Fila de processamento, detalhes com timeline, upload de arquivo modificado, status" />
             <FeatureItem printMode={printMode} title="Tickets de Correção" description="Lista com status, timeline visual, painel de chat integrado, resolução" />
             <FeatureItem printMode={printMode} title="Franqueados" description="CRUD completo, importação em massa, detalhe com contrato, receita, clientes, suporte" />
+            <FeatureItem printMode={printMode} title="Colaboradores & Equipe" description="Gestão de departamentos, cargos, funcionários e vendedores com regras de comissão e metas" />
             <FeatureItem printMode={printMode} title="Clientes e Veículos" description="CRUD vinculado a unidades, histórico de serviços" />
             <FeatureItem printMode={printMode} title="Produtos" description="CRUD com imagens via Storage, importação/exportação em massa (.xlsx), categorias" />
             <FeatureItem printMode={printMode} title="Compras dos Franqueados" description="Lista de pedidos com badges duplos, detalhe com timeline, painel de status admin" />
             <FeatureItem printMode={printMode} title="Dashboard Loja Promax" description="Inteligência comercial com filtros por período: resumo, top produtos, top unidades, vendas mensais, categorias" />
+            <FeatureItem printMode={printMode} title="CRM & Vendas" description="Gestão de funil de vendas, atribuição comercial de pedidos a vendedores, histórico de interações" />
             <FeatureItem printMode={printMode} title="Cobertura" description="Mapa interativo Mapbox com áreas de atuação e cidades" />
             <FeatureItem printMode={printMode} title="Contratos" description="Gestão de contratos com histórico, tipos e alertas de vencimento" />
-            <FeatureItem printMode={printMode} title="Relatórios" description="Top 10 revendas, desempenho por categoria, exportação com conformidade LGPD" />
+            <FeatureItem printMode={printMode} title="Relatórios & Auditoria" description="Top 10 revendas, desempenho por categoria, exportação LGPD e log de auditoria completo" />
             <FeatureItem printMode={printMode} title="Suporte" description="Todas as conversas, filtros por status, chat em tempo real" />
             <FeatureItem printMode={printMode} title="Documentação" description="Esta página - documentação técnica completa com exportação PDF" />
           </div>
