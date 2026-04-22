@@ -35,8 +35,8 @@ const ChannelContext = createContext<ChannelContextType>({
  * 3. URL path prefix fallback (/admin, /franqueado, /master, /ceo)
  * 4. Default: "public"
  */
-function resolveChannel(company: Company | null): ChannelType {
-  // 1. Explicit query param (dev/preview only — ignored on production hostnames)
+function resolveChannel(company: Company | null, userRole: string | null): ChannelType {
+  // 1. Explicit query param (dev/preview only)
   const hostname = window.location.hostname;
   const isDevOrPreview = hostname === "localhost" 
     || hostname.endsWith(".lovable.app")
@@ -53,17 +53,33 @@ function resolveChannel(company: Company | null): ChannelType {
   // 2. channel_type from company_domains RPC (stored on company object)
   const companyChannel = (company as any)?.channel_type;
   if (companyChannel && isValidChannel(companyChannel)) {
+    // If we're on a public domain but logged in as admin/franqueado,
+    // we should "upgrade" the channel to show the dashboard.
+    if (companyChannel === "public" && userRole) {
+      if (userRole === "admin" || userRole === "suporte" || userRole === "admin_empresa" || userRole === "suporte_empresa") return "admin";
+      if (userRole === "franqueado") return "app";
+      if (userRole === "ceo") return "ceo_global";
+      if (userRole === "master_admin") return "master_global";
+    }
     return companyChannel;
   }
 
-  // 3. Path-based fallback (backward compatibility)
+  // 3. Logged-in user fallback (if no hostname mapping)
+  if (userRole) {
+    if (userRole === "admin" || userRole === "suporte" || userRole === "admin_empresa" || userRole === "suporte_empresa") return "admin";
+    if (userRole === "franqueado") return "app";
+    if (userRole === "ceo") return "ceo_global";
+    if (userRole === "master_admin") return "master_global";
+  }
+
+  // 4. Path-based fallback (backward compatibility)
   const path = window.location.pathname;
   if (path.startsWith("/master")) return "master_global";
   if (path.startsWith("/ceo")) return "ceo_global";
   if (path.startsWith("/admin")) return "admin";
   if (path.startsWith("/franqueado")) return "app";
 
-  // 4. Default
+  // 5. Default
   return "public";
 }
 
@@ -73,8 +89,9 @@ function isValidChannel(value: string): value is ChannelType {
 
 export function ChannelProvider({ children }: { children: ReactNode }) {
   const { company, isLoading } = useCompany();
+  const { userRole } = useAuth();
 
-  const channel = useMemo(() => resolveChannel(company), [company]);
+  const channel = useMemo(() => resolveChannel(company, userRole), [company, userRole]);
 
   const value = useMemo<ChannelContextType>(() => ({
     channel,

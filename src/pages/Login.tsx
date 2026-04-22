@@ -42,13 +42,13 @@ export default function Login() {
   // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading && userRole) {
-      if (isChannelMode) {
-        navigate("/");
-      } else {
-        navigate(getHomeRouteForRole(userRole));
-      }
+      // In channel mode, if the current channel is 'public' but the user has an app role,
+      // they should probably be redirected to the app/admin dashboard.
+      // However, for simplicity and to avoid cross-domain issues in dev, 
+      // we'll just send them to the root and let SmartRouter handle the channel switch.
+      navigate("/");
     }
-  }, [user, userRole, authLoading, navigate, isChannelMode]);
+  }, [user, userRole, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
