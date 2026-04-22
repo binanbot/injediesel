@@ -253,6 +253,8 @@ function CeoRoutes() {
         <Route path="comercial" element={<CeoComercialIntelligence />} />
         <Route path="empresas/:companyId" element={<CeoCompanyDetail />} />
       </Route>
+      {/* Shared documentation print route */}
+      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
       <Route path="/ceo/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
