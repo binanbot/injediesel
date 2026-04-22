@@ -283,6 +283,8 @@ function MasterRoutes() {
         <Route path="rentabilidade" element={<MasterRentabilidade />} />
         <Route path="crm" element={<MasterCrmIntelligence />} />
       </Route>
+      {/* Shared documentation print route */}
+      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
       <Route path="/master/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
