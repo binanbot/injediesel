@@ -222,6 +222,8 @@ function AdminRoutes() {
         <Route path="crm" element={<CrmPage />} />
         <Route path="guia" element={<GuiaSistema />} />
       </Route>
+      {/* Shared documentation print route */}
+      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
       {/* Legacy redirect */}
       <Route path="/admin/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
