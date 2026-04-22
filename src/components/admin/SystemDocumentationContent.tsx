@@ -503,6 +503,156 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
 
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
+        {/* ── PAINEL DO CEO (EXECUTIVO GLOBAL) ────── */}
+        <div id="painel-ceo" className="scroll-mt-20" />
+        <SectionBlock printMode={printMode}>
+          <SectionTitle printMode={printMode}>
+            <Crown className="h-5 w-5" />
+            PAINEL DO CEO (BUSINESS INTELLIGENCE GLOBAL)
+          </SectionTitle>
+
+          <div className="space-y-4">
+            <p className={cx(printMode, "text-sm", "text-sm text-slate-700")}>
+              O canal <code>ceo_global</code> é destinado à liderança executiva do grupo. Diferente do Master Admin
+              (foco operacional/configuração), o CEO possui uma visão consolidada de <strong>BI estratégico</strong>{" "}
+              entre todas as empresas — com filtros globais que permitem alternar entre o consolidado
+              ou drill-down por empresa específica.
+            </p>
+
+            <h4 className={`font-semibold mb-2 ${headingColor}`}>Rotas Disponíveis (CeoLayout):</h4>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {["/ceo", "/ceo/receita-crescimento", "/ceo/market-share", "/ceo/comercial", "/ceo/rentabilidade", "/ceo/metas-okrs", "/ceo/relatorios", "/ceo/empresa/:id"].map((r) => (
+                <BadgeItem key={r} printMode={printMode} variant="secondary">{r}</BadgeItem>
+              ))}
+            </div>
+
+            <h4 className={`font-semibold mb-2 ${headingColor}`}>Módulos Estratégicos do CEO:</h4>
+            <div className="space-y-3">
+              <FeatureItem printMode={printMode} title="Dashboard Executivo (/ceo)" description="KPIs consolidados (receita, ticket médio, margem), gráfico de receita por empresa, top clientes, top produtos, ranking de unidades, alertas críticos e progresso de OKRs." />
+              <FeatureItem printMode={printMode} title="Receita & Crescimento" description="Análise temporal, comparação YoY, ranking de crescimento por empresa e por unidade, insights automáticos de tendência." />
+              <FeatureItem printMode={printMode} title="Market Share" description="Distribuição de receita entre empresas, breakdown por categoria, variação de share, concentração de mercado." />
+              <FeatureItem printMode={printMode} title="Inteligência Comercial" description="Forecast de vendas, tendências comerciais, eligibilidade de oportunidades, performance de vendedores cross-empresa." />
+              <FeatureItem printMode={printMode} title="Rentabilidade" description="Margem por empresa/unidade/cliente, custos operacionais agregados, lucro líquido consolidado, análise de carteira (wallet profitability)." />
+              <FeatureItem printMode={printMode} title="Metas & OKRs" description="Cadastro de objetivos (executive_goals), acompanhamento de metas críticas, grade de progresso por OKR, painel de metas em risco." />
+              <FeatureItem printMode={printMode} title="Relatórios Executivos" description="Geração de relatórios consolidados em PDF/Excel, exportação para apresentações ao board." />
+              <FeatureItem printMode={printMode} title="Detalhe da Empresa (/ceo/empresa/:id)" description="Drill-down em uma empresa específica: visão financeira, operacional, comercial e contratos." />
+            </div>
+
+            <InfoCard printMode={printMode}>
+              <h5 className="font-bold text-sm mb-2 flex items-center gap-2">
+                <Database className="h-4 w-4" /> Filtros Globais (CeoFiltersContext)
+              </h5>
+              <div className="text-xs space-y-1 text-slate-700">
+                <p>• <strong>Período:</strong> Mês atual, trimestre, ano, customizado.</p>
+                <p>• <strong>Empresa:</strong> Consolidado (todas) ou empresa específica (Injediesel / PROMAX TUNER / futuras).</p>
+                <p>• <strong>Categoria:</strong> Filtro por categoria de produto/serviço.</p>
+                <p>• <strong>Comparação:</strong> Período anterior, ano anterior, baseline customizado.</p>
+              </div>
+            </InfoCard>
+          </div>
+        </SectionBlock>
+
+        <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
+
+        {/* ── EMPRESAS DO ECOSSISTEMA ─────────── */}
+        <div id="empresas-ecossistema" className="scroll-mt-20" />
+        <SectionBlock printMode={printMode}>
+          <SectionTitle printMode={printMode}>
+            <Building2 className="h-5 w-5" />
+            EMPRESAS DO ECOSSISTEMA (MULTI-TENANT)
+          </SectionTitle>
+
+          <p className={cx(printMode, "text-sm mb-4", "text-sm mb-4 text-slate-700")}>
+            O sistema opera atualmente <strong>2 empresas independentes</strong> sob a mesma plataforma white-label.
+            Cada empresa possui seu próprio domínio, branding, módulos habilitados e base isolada de dados.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* INJEDIESEL */}
+            <div className={cx(printMode, "border-2 rounded-lg p-5", "border-2 border-amber-300 bg-amber-50/40 rounded-lg p-5")}>
+              <div className="flex items-center gap-2 mb-3">
+                <UserCheck className="h-5 w-5 text-amber-700" />
+                <h4 className="font-bold text-amber-900 text-lg">INJEDIESEL</h4>
+                <BadgeItem printMode={printMode} variant="secondary">Pioneira</BadgeItem>
+              </div>
+              <div className="text-xs space-y-2 text-slate-700">
+                <p><strong>Slug:</strong> <code>injediesel</code></p>
+                <p><strong>Domínios:</strong> injediesel.com.br + app.injediesel.com.br</p>
+                <p><strong>Identidade:</strong> Amarelo/Preto (cores tradicionais do diesel)</p>
+                <p><strong>Equipamento:</strong> Não exclusivo (suporte multi-marca)</p>
+                <p><strong>Módulos:</strong> Arquivos ECU, Loja Promax, <strong>Cursos</strong>, CRM, Suporte, Relatórios.</p>
+                <p><strong>Diferencial:</strong> Único tenant com módulo de <strong>Cursos/Tutoriais</strong> habilitado.</p>
+                <p><strong>Status:</strong> ✅ Tenant pioneiro — branding e ativos protegidos por diretriz de produto (legacy protection).</p>
+              </div>
+            </div>
+
+            {/* PROMAX TUNER */}
+            <div className={cx(printMode, "border-2 rounded-lg p-5", "border-2 border-red-300 bg-red-50/40 rounded-lg p-5")}>
+              <div className="flex items-center gap-2 mb-3">
+                <Store className="h-5 w-5 text-red-700" />
+                <h4 className="font-bold text-red-900 text-lg">PROMAX TUNER</h4>
+                <BadgeItem printMode={printMode} variant="secondary">Equipamento Próprio</BadgeItem>
+              </div>
+              <div className="text-xs space-y-2 text-slate-700">
+                <p><strong>Slug:</strong> <code>promax-tuner</code></p>
+                <p><strong>Domínios:</strong> promaxtuner.com.br + app.promaxtuner.com.br</p>
+                <p><strong>Identidade:</strong> Vermelho (#C10D19) + Cinza Escuro (#1E1E1E) — Dark/Technical</p>
+                <p><strong>Equipamento:</strong> <strong>EVOPRO</strong> (proprietário, com seriais e validade)</p>
+                <p><strong>Módulos:</strong> Arquivos ECU, Loja Promax, CRM, Suporte, Relatórios. <strong>Cursos: Desabilitado</strong> (via ModuleGuard).</p>
+                <p><strong>Diferencial:</strong> Landing page exclusiva com vitrine do EVOPRO, gestão de seriais (kess_serial, ktag_serial) e validades de equipamento por franqueado.</p>
+                <p><strong>Status:</strong> ✅ Em operação — primeiros usuários cadastrados e aprovados.</p>
+              </div>
+            </div>
+          </div>
+
+          <h4 className={`font-semibold mt-6 mb-2 ${headingColor}`}>Mecanismos de Isolamento Multi-Tenant:</h4>
+          <div className="overflow-x-auto">
+            <table className={cx(printMode, "w-full text-xs border", "w-full text-xs border border-slate-300")}>
+              <thead className={cx(printMode, "bg-muted", "bg-slate-100")}>
+                <tr>
+                  <th className={cx(printMode, "p-2 text-left border", "p-2 text-left border border-slate-300 text-slate-900")}>Camada</th>
+                  <th className={cx(printMode, "p-2 text-left border", "p-2 text-left border border-slate-300 text-slate-900")}>Mecanismo</th>
+                  <th className={cx(printMode, "p-2 text-left border", "p-2 text-left border border-slate-300 text-slate-900")}>Implementação</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Roteamento</td>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Hostname → Empresa</td>
+                  <td className={cx(printMode, "p-2 border font-mono", "p-2 border border-slate-300 font-mono")}>get_company_by_hostname() + tabela company_domains</td>
+                </tr>
+                <tr>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Branding</td>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Logo, cores, favicon dinâmicos</td>
+                  <td className={cx(printMode, "p-2 border font-mono", "p-2 border border-slate-300 font-mono")}>companies.branding (JSONB) + CompanyProvider</td>
+                </tr>
+                <tr>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Funcionalidades</td>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Módulos por empresa</td>
+                  <td className={cx(printMode, "p-2 border font-mono", "p-2 border border-slate-300 font-mono")}>companies.enabled_modules + ModuleGuard</td>
+                </tr>
+                <tr>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Dados</td>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Isolamento por company_id</td>
+                  <td className={cx(printMode, "p-2 border font-mono", "p-2 border border-slate-300 font-mono")}>RLS Policies em todas as tabelas transacionais</td>
+                </tr>
+                <tr>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Landing Pages</td>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Páginas públicas únicas</td>
+                  <td className={cx(printMode, "p-2 border font-mono", "p-2 border border-slate-300 font-mono")}>LandingRouter → LandingLancamento / LandingPromax</td>
+                </tr>
+                <tr>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Login</td>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Tela parametrizada</td>
+                  <td className={cx(printMode, "p-2 border font-mono", "p-2 border border-slate-300 font-mono")}>Login.tsx exibe brand_name + contatos dinâmicos</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </SectionBlock>
+
+        <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
+
 
         {/* ── JORNADAS ─────────────────────── */}
         <div id="jornadas" className="scroll-mt-20" />
