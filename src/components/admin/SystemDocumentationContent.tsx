@@ -276,7 +276,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
             Sistema de Gestão de Arquivos ECU e Loja Promax para Franqueados
           </p>
           <div className={`flex items-center justify-center gap-4 mt-4 text-sm ${subtextColor}`}>
-            <span>Versão: 4.0</span>
+            <span>Versão: 4.5</span>
             <span>•</span>
             <span>Data: {currentDate}</span>
           </div>
@@ -391,15 +391,18 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
                     "Arquivos (Gestão + Processamento)",
                     "Correções (Tickets de Correção)",
                     "Franqueados (Gestão + Importação)",
+                    "Colaboradores (Equipe Interna + Vendedores)",
                     "Clientes (CRUD + Veículos)",
                     "Loja Promax - Produtos (CRUD + Importação/Exportação)",
                     "Loja Promax - Compras (Gestão de Pedidos)",
                     "Loja Promax - Dashboard (Inteligência Comercial)",
                     "Áreas / Cobertura (Mapa Mapbox)",
+                    "CRM & Atribuição Comercial",
                     "Banners (Marketing)",
                     "Mensagens (Comunicados)",
                     "Suporte (Tickets + Chat)",
                     "Relatórios (Analytics + Exportação LGPD)",
+                    "Auditoria (Logs de Ações)",
                     "Contratos (Gestão + Histórico)",
                     "Configurações",
                     "Documentação (Este Documento)",
@@ -458,15 +461,17 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
                 <JourneyStep printMode={printMode} number={1} title="Login Admin" description="Autenticação com role 'admin' ou 'suporte' → Redirecionamento para /admin" color="orange" />
                 <JourneyStep printMode={printMode} number={2} title="Dashboard" description="Alertas prioritários, KPIs, arquivos pendentes" color="orange" />
                 <JourneyStep printMode={printMode} number={3} title="Processar Arquivos" description="Fila de arquivos, processa ECU, upload de arquivo modificado" color="orange" />
-                <JourneyStep printMode={printMode} number={4} title="Gerenciar Pedidos (Loja)" description="Lista de compras, detalhe com timeline, painel de status de pagamento e logística separados" color="orange" />
-                <JourneyStep printMode={printMode} number={5} title="Dashboard Loja Promax" description="Cards de resumo, top 10 produtos, top 10 unidades, gráfico mensal, ranking por categoria" color="orange" />
-                <JourneyStep printMode={printMode} number={6} title="Gerenciar Correções" description="Tickets de correção, timeline, chat com franqueado" color="orange" />
-                <JourneyStep printMode={printMode} number={7} title="Atender Suporte" description="Responde tickets e chats em tempo real" color="orange" />
-                <JourneyStep printMode={printMode} number={8} title="Gestão de Franqueados" description="CRUD, importação em massa, áreas de cobertura (Mapbox)" color="orange" />
-                <JourneyStep printMode={printMode} number={9} title="Gestão de Clientes" description="CRUD de clientes e veículos vinculados a unidades" color="orange" />
-                <JourneyStep printMode={printMode} number={10} title="Gestão de Produtos" description="CRUD de produtos, importação/exportação em massa, imagens via Storage" color="orange" />
-                <JourneyStep printMode={printMode} number={11} title="Relatórios" description="Analytics, top revendas, desempenho por categoria, exportação com conformidade LGPD" color="orange" />
-                <JourneyStep printMode={printMode} number={12} title="Contratos" description="Gestão de contratos com histórico e alertas de vencimento" color="orange" />
+                <JourneyStep printMode={printMode} number={4} title="Gestão de Vendas" description="Acompanha vendas da loja, dashboard comercial e atribuição de vendedores (CRM)" color="orange" />
+                <JourneyStep printMode={printMode} number={5} title="Gestão de Pedidos (Loja)" description="Lista de compras, detalhe com timeline, painel de status de pagamento e logística separados" color="orange" />
+                <JourneyStep printMode={printMode} number={6} title="Dashboard Loja Promax" description="Cards de resumo, top 10 produtos, top 10 unidades, gráfico mensal, ranking por categoria" color="orange" />
+                <JourneyStep printMode={printMode} number={7} title="Gerenciar Correções" description="Tickets de correção, timeline, chat com franqueado" color="orange" />
+                <JourneyStep printMode={printMode} number={8} title="Atender Suporte" description="Responde tickets e chats em tempo real" color="orange" />
+                <JourneyStep printMode={printMode} number={9} title="Gestão de Franqueados" description="CRUD, importação em massa, áreas de cobertura (Mapbox)" color="orange" />
+                <JourneyStep printMode={printMode} number={10} title="Gestão de Equipe (Colaboradores)" description="Gerencia funcionários, departamentos, cargos e perfis de vendedor com comissão" color="orange" />
+                <JourneyStep printMode={printMode} number={11} title="Gestão de Clientes" description="CRUD de clientes e veículos vinculados a unidades" color="orange" />
+                <JourneyStep printMode={printMode} number={12} title="Gestão de Produtos" description="CRUD de produtos, importação/exportação em massa, imagens via Storage" color="orange" />
+                <JourneyStep printMode={printMode} number={13} title="Relatórios & Auditoria" description="Analytics, auditoria de ações, exportação com conformidade LGPD" color="orange" />
+                <JourneyStep printMode={printMode} number={14} title="Contratos" description="Gestão de contratos com histórico e alertas de vencimento" color="orange" />
               </div>
             </div>
           </div>
@@ -691,24 +696,26 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
 
           <h4 className={`font-semibold mb-2 ${headingColor}`}>Rotas Disponíveis:</h4>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-            {["/admin", "/admin/arquivos", "/admin/arquivos/:id", "/admin/correcoes", "/admin/franqueados", "/admin/franqueados/:id", "/admin/importar", "/admin/cobertura", "/admin/clientes", "/admin/clientes/:id", "/admin/produtos", "/admin/compras", "/admin/compras/:id", "/admin/loja-dashboard", "/admin/areas", "/admin/banners", "/admin/mensagens", "/admin/suporte", "/admin/relatorios", "/admin/contratos", "/admin/configuracoes", "/admin/documentacao"].map((r) => (
+            {["/admin", "/admin/arquivos", "/admin/arquivos/:id", "/admin/correcoes", "/admin/franqueados", "/admin/franqueados/:id", "/admin/colaboradores", "/admin/importar", "/admin/cobertura", "/admin/clientes", "/admin/clientes/:id", "/admin/produtos", "/admin/compras", "/admin/compras/:id", "/admin/loja-dashboard", "/admin/vendas-dashboard", "/admin/crm", "/admin/areas", "/admin/banners", "/admin/mensagens", "/admin/suporte", "/admin/relatorios", "/admin/auditoria", "/admin/contratos", "/admin/configuracoes", "/admin/documentacao"].map((r) => (
               <BadgeItem key={r} printMode={printMode} variant="secondary">{r}</BadgeItem>
             ))}
           </div>
 
           <h4 className={`font-semibold mb-2 ${headingColor}`}>Funcionalidades Principais:</h4>
           <div className="space-y-3">
-            <FeatureItem printMode={printMode} title="Dashboard" description="Alertas neon de prioridade, KPIs em cards, resumo de pendências, atividade recente" />
+            <FeatureItem printMode={printMode} title="Dashboard" description="Alertas neon de prioridade, alertas operacionais, KPIs em cards, resumo de pendências, atividade recente" />
             <FeatureItem printMode={printMode} title="Gestão de Arquivos" description="Fila de processamento, detalhes com timeline, upload de arquivo modificado, status" />
             <FeatureItem printMode={printMode} title="Tickets de Correção" description="Lista com status, timeline visual, painel de chat integrado, resolução" />
             <FeatureItem printMode={printMode} title="Franqueados" description="CRUD completo, importação em massa, detalhe com contrato, receita, clientes, suporte" />
+            <FeatureItem printMode={printMode} title="Colaboradores & Equipe" description="Gestão de departamentos, cargos, funcionários e vendedores com regras de comissão e metas" />
             <FeatureItem printMode={printMode} title="Clientes e Veículos" description="CRUD vinculado a unidades, histórico de serviços" />
             <FeatureItem printMode={printMode} title="Produtos" description="CRUD com imagens via Storage, importação/exportação em massa (.xlsx), categorias" />
             <FeatureItem printMode={printMode} title="Compras dos Franqueados" description="Lista de pedidos com badges duplos, detalhe com timeline, painel de status admin" />
             <FeatureItem printMode={printMode} title="Dashboard Loja Promax" description="Inteligência comercial com filtros por período: resumo, top produtos, top unidades, vendas mensais, categorias" />
+            <FeatureItem printMode={printMode} title="CRM & Vendas" description="Gestão de funil de vendas, atribuição comercial de pedidos a vendedores, histórico de interações" />
             <FeatureItem printMode={printMode} title="Cobertura" description="Mapa interativo Mapbox com áreas de atuação e cidades" />
             <FeatureItem printMode={printMode} title="Contratos" description="Gestão de contratos com histórico, tipos e alertas de vencimento" />
-            <FeatureItem printMode={printMode} title="Relatórios" description="Top 10 revendas, desempenho por categoria, exportação com conformidade LGPD" />
+            <FeatureItem printMode={printMode} title="Relatórios & Auditoria" description="Top 10 revendas, desempenho por categoria, exportação LGPD e log de auditoria completo" />
             <FeatureItem printMode={printMode} title="Suporte" description="Todas as conversas, filtros por status, chat em tempo real" />
             <FeatureItem printMode={printMode} title="Documentação" description="Esta página - documentação técnica completa com exportação PDF" />
           </div>
@@ -751,6 +758,12 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
               { name: "cities_reference", fields: "id, country, state, city, search_key" },
               { name: "plate_lookup_cache", fields: "id, plate, country, payload (JSONB), expires_at" },
               { name: "system_settings", fields: "id, key, value" },
+              { name: "employee_profiles", fields: "id, company_id, user_id, display_name, phone, department_id, job_position_id, hired_at, is_active, notes" },
+              { name: "seller_profiles", fields: "id, employee_id, seller_mode, commission_type, commission_value, target_monthly, max_discount_pct, is_active" },
+              { name: "departments", fields: "id, company_id, name, description" },
+              { name: "job_positions", fields: "id, department_id, name, description" },
+              { name: "audit_logs", fields: "id, user_id, action, module, company_id, target_type, target_id, details (JSONB), ip_address, created_at" },
+              { name: "companies", fields: "id, name, cnpj, is_active, settings (JSONB)" },
             ].map((table) => (
               <InfoCard key={table.name} printMode={printMode}>
                 <h5 className={`font-mono text-sm font-semibold mb-2 flex items-center gap-2 ${headingColor}`}>
@@ -843,6 +856,9 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
             <li>MonthlyStoreSalesChart — Gráfico mensal (Recharts)</li>
             <li>CategoryRankingCard — Ranking por categoria</li>
             <li>CoverageMap — Mapa de cobertura (Mapbox)</li>
+            <li>OperationalAlertsPanel — Alertas operacionais no dashboard admin</li>
+            <li>CommercialAttributionSection — Atribuição de vendas a colaboradores no CRM</li>
+            <li>EmployeeCostsPanel — Visualização de custos e comissões de funcionários</li>
             <li>SecureAttachment — Download seguro com signed URLs</li>
             <li>LGPDExportModal — Modal de exportação com conformidade LGPD</li>
             <li>MermaidDiagram — Diagramas interativos (Mermaid.js)</li>
@@ -1960,6 +1976,10 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
                 {[
                   ["profiles_franchisees", "Perfil do Franqueado", "Franqueado / Perfil", "✅ Tabela canônica. 30+ colunas."],
                   ["franchisee_profiles", "Perfil de Contrato", "—", "⚠️ Auxiliar de contratos (8 colunas). Nome similar à canônica."],
+                  ["employee_profiles", "Perfil de Colaborador", "Colaboradores / Equipe", "✅ Tabela de equipe interna."],
+                  ["seller_profiles", "Perfil de Vendedor", "CRM / Vendas", "✅ Regras de comissão e metas."],
+                  ["departments / job_positions", "Estrutura Organizacional", "Departamentos / Cargos", "✅ Organização de equipe."],
+                  ["companies", "Empresas / Unidades", "Empresas", "✅ Gestão multi-empresa."],
                   ["units", "Unidade", "Unidade", "✅ Coerente."],
                   ["customers", "Cliente", "Cliente", "✅ Coerente."],
                   ["vehicles", "Veículo", "Veículo", "✅ Coerente."],
@@ -1978,6 +1998,7 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
                   ["file_status_history", "Histórico de Arquivo", "Timeline do Arquivo", "⚠️ Colunas em PT (alterado_por, observacao)."],
                   ["system_settings", "Configuração do Sistema", "Configurações", "✅ Coerente."],
                   ["exports_log", "Log de Exportação", "Exportações", "✅ Coerente."],
+                  ["audit_logs", "Log de Auditoria", "Auditoria", "✅ Log de ações críticas."],
                   ["cities_reference", "Referência de Cidades", "Cidades (IBGE)", "✅ Coerente."],
                   ["plate_lookup_cache", "Cache de Placas", "—", "✅ Interno, sem exposição na UI."],
                   ["services", "Serviço", "Serviço", "✅ Coerente."],
@@ -2158,19 +2179,58 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
 
           <InfoCard printMode={printMode}>
             <div className="space-y-2 text-sm">
-              <div><strong className={headingColor}>Regra geral:</strong><span className={` ${subtextColor}`}> Rotas em português. Termos universais (checkout, login) aceitos em inglês.</span></div>
+              <div><strong className={headingColor}>Regra geral:</strong><span className={` ${subtextColor}`}> Rotas em português. Termos universais (checkout, login, dashboard) aceitos em inglês.</span></div>
               <div><strong className={headingColor}>Código vs Interface:</strong><span className={` ${subtextColor}`}> Código-fonte em inglês (variáveis, funções, imports). Interface em português (labels, mensagens, toasts).</span></div>
               <div><strong className={headingColor}>Decisão sobre migração:</strong><span className={` ${subtextColor}`}> Inconsistências de idioma em colunas e status NÃO devem ser migradas — risco de breaking change. Documentar e manter.</span></div>
             </div>
           </InfoCard>
         </SectionBlock>
 
-        {/* ── FOOTER ───────────────────────── */}
-        <div className={`mt-8 pt-6 border-t text-center text-sm ${cx(printMode, "border-border text-muted-foreground", "border-slate-200 text-slate-500")}`}>
-          <p>© {new Date().getFullYear()} Injediesel - Todos os direitos reservados</p>
-          <p className="mt-1">Documento gerado automaticamente pelo sistema</p>
-          <p className="mt-2 text-xs">Versão 4.1 - Atualizado em {currentDate}</p>
-        </div>
+        <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
+
+        {/* ── ROADMAP E CONCLUSÃO ────────────────── */}
+        <SectionBlock printMode={printMode}>
+          <SectionTitle printMode={printMode}>
+            <GitBranch className="h-5 w-5" /> ROADMAP E STATUS ATUAL
+          </SectionTitle>
+          <div className="grid md:grid-cols-2 gap-6 mt-4">
+            <InfoCard printMode={printMode}>
+              <h4 className={`font-bold mb-2 flex items-center gap-2 ${headingColor}`}>
+                🚀 Status Atual (v4.5)
+              </h4>
+              <ul className={`list-disc pl-5 space-y-1 ${listColor}`}>
+                <li>Core de envio e processamento de arquivos estável.</li>
+                <li>Loja Promax com checkout WhatsApp e gestão de status 100% funcional.</li>
+                <li>Sistema de contratos com bloqueio automático operante.</li>
+                <li>Novo módulo de Colaboradores e CRM em fase de implantação.</li>
+                <li>Auditoria de sistema ativa para rastreabilidade de ações críticas.</li>
+              </ul>
+            </InfoCard>
+            <InfoCard printMode={printMode}>
+              <h4 className={`font-bold mb-2 flex items-center gap-2 ${headingColor}`}>
+                🔮 Próximos Passos
+              </h4>
+              <ul className={`list-disc pl-5 space-y-1 ${listColor}`}>
+                <li>Automação de pagamentos via API (atualmente manual/WhatsApp).</li>
+                <li>Expansão do módulo de cursos com tracking de progresso.</li>
+                <li>App Mobile nativo (PWA já disponível).</li>
+                <li>Integração com sistemas externos de ERP/Logística via Webhooks.</li>
+                <li>Advanced Analytics com previsibilidade de vendas por IA.</li>
+              </ul>
+            </InfoCard>
+          </div>
+          <footer className="mt-12 text-center">
+            <p className={`text-xs italic ${subtextColor}`}>
+              Este documento é gerado dinamicamente e reflete o estado atual do código e banco de dados.
+              Última revisão técnica concluída em {currentDate}.
+            </p>
+            <div className={`mt-8 pt-6 border-t text-sm ${cx(printMode, "border-border text-muted-foreground", "border-slate-200 text-slate-500")}`}>
+              <p>© {new Date().getFullYear()} Injediesel - Todos os direitos reservados</p>
+              <p className="mt-1">Documento gerado automaticamente pelo sistema</p>
+              <p className="mt-2 text-xs">Versão 4.5 - Atualizado em {currentDate}</p>
+            </div>
+          </footer>
+        </SectionBlock>
       </div>
     </div>
   );
