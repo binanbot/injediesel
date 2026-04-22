@@ -418,7 +418,91 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
           </div>
         </SectionBlock>
 
+        {/* ── ESTRUTURA ORGANIZACIONAL ────── */}
+        <div id="estrutura-organizacional" className="scroll-mt-20" />
+        <SectionBlock printMode={printMode}>
+          <SectionTitle printMode={printMode}>
+            <Building2 className="h-5 w-5" />
+            ESTRUTURA ORGANIZACIONAL E HIERARQUIA
+          </SectionTitle>
+          <div className="space-y-6">
+            <p className={cx(printMode, "text-sm", "text-sm text-slate-700")}>
+              O sistema foi desenhado para suportar uma estrutura hierárquica multi-empresa (SaaS Multi-tenant), 
+              onde um gestor global (Master/CEO) pode supervisionar múltiplas empresas independentes, cada uma com 
+              sua própria base de franqueados e clientes.
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Nível 1: Global */}
+              <div className={cx(printMode, "border rounded-lg p-4", "border-blue-200 bg-blue-50/50 p-4 rounded-lg border-2")}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Crown className="h-5 w-5 text-blue-600" />
+                  <h4 className="font-bold text-blue-900">NÍVEL 1: GLOBAL</h4>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <BadgeItem printMode={printMode} variant="secondary">master_admin</BadgeItem>
+                    <p className="text-xs mt-1 text-slate-600">Acesso total e irrestrito. Gerencia empresas, módulos e auditoria global.</p>
+                  </div>
+                  <div>
+                    <BadgeItem printMode={printMode} variant="secondary">ceo</BadgeItem>
+                    <p className="text-xs mt-1 text-slate-600">Visão executiva (BI). Analisa KPIs de crescimento e rentabilidade entre empresas.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Nível 2: Empresa */}
+              <div className={cx(printMode, "border rounded-lg p-4", "border-orange-200 bg-orange-50/50 p-4 rounded-lg border-2")}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Building2 className="h-5 w-5 text-orange-600" />
+                  <h4 className="font-bold text-orange-900">NÍVEL 2: EMPRESA</h4>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <BadgeItem printMode={printMode} variant="secondary">admin_empresa</BadgeItem>
+                    <p className="text-xs mt-1 text-slate-600">Gestor da unidade. Controla franqueados, produtos e arquivos da sua empresa.</p>
+                  </div>
+                  <div>
+                    <BadgeItem printMode={printMode} variant="secondary">suporte_empresa</BadgeItem>
+                    <p className="text-xs mt-1 text-slate-600">Operador técnico. Focado no atendimento e processamento de arquivos ECU.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Nível 3: Operacional */}
+              <div className={cx(printMode, "border rounded-lg p-4", "border-slate-200 bg-slate-50/50 p-4 rounded-lg border-2")}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Users className="h-5 w-5 text-slate-600" />
+                  <h4 className="font-bold text-slate-900">NÍVEL 3: PONTA</h4>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <BadgeItem printMode={printMode} variant="secondary">franqueado</BadgeItem>
+                    <p className="text-xs mt-1 text-slate-600">Usuário final. Envia arquivos, compra na loja e gerencia seus próprios clientes.</p>
+                  </div>
+                  <div>
+                    <BadgeItem printMode={printMode} variant="secondary">vendedor</BadgeItem>
+                    <p className="text-xs mt-1 text-slate-600">Colaborador vinculado à empresa com foco em prospecção e vendas (CRM).</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <InfoCard printMode={printMode}>
+              <h5 className="font-bold text-sm mb-2 flex items-center gap-2">
+                <Network className="h-4 w-4" /> Relacionamento Gestor vs Empresas
+              </h5>
+              <div className="text-xs space-y-2 text-slate-700">
+                <p>• <strong>Isolamento de Dados:</strong> O sistema utiliza <code>company_id</code> em todas as tabelas transacionais (arquivos, pedidos, clientes). Usuários de Nível 2 e 3 só enxergam dados onde o <code>company_id</code> coincide.</p>
+                <p>• <strong>Herança de Configurações:</strong> Cada empresa possui seu próprio <code>branding</code> (logo/cores) e <code>settings</code> (módulos habilitados) armazenados na tabela <code>companies</code>.</p>
+                <p>• <strong>Visibilidade Global:</strong> Master e CEO utilizam o hook <code>useChannel</code> no modo <code>global</code>, permitindo alternar entre contextos de empresas ou visualizar o consolidado.</p>
+              </div>
+            </InfoCard>
+          </div>
+        </SectionBlock>
+
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
+
 
         {/* ── JORNADAS ─────────────────────── */}
         <div id="jornadas" className="scroll-mt-20" />
