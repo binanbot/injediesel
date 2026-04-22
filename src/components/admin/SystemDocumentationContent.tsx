@@ -621,25 +621,35 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
               <thead className={cx(printMode, "bg-muted", "bg-slate-100")}>
                 <tr>
                   <th className={cx(printMode, "p-2 text-left border", "p-2 text-left border border-slate-300 text-slate-900")}>Role</th>
-                  <th className={cx(printMode, "p-2 text-left border", "p-2 text-left border border-slate-300 text-slate-900")}>Rotas</th>
-                  <th className={cx(printMode, "p-2 text-left border", "p-2 text-left border border-slate-300 text-slate-900")}>Permissões</th>
+                  <th className={cx(printMode, "p-2 text-left border", "p-2 text-left border border-slate-300 text-slate-900")}>Canal / Rotas</th>
+                  <th className={cx(printMode, "p-2 text-left border", "p-2 text-left border border-slate-300 text-slate-900")}>Escopo e Permissões Principais</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}><BadgeItem printMode={printMode}>master_admin</BadgeItem></td>
+                  <td className={cx(printMode, "p-2 border font-mono text-xs", "p-2 border border-slate-300 font-mono text-xs")}>master_global / *</td>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Controle total multi-empresa. Gestão de módulos, faturamento global e auditoria.</td>
+                </tr>
+                <tr>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}><BadgeItem printMode={printMode}>ceo</BadgeItem></td>
+                  <td className={cx(printMode, "p-2 border font-mono text-xs", "p-2 border border-slate-300 font-mono text-xs")}>ceo_global / *</td>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Visão executiva global. KPIs de desempenho, metas e BI entre todas as empresas.</td>
+                </tr>
+                <tr>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}><BadgeItem printMode={printMode}>admin_empresa</BadgeItem></td>
+                  <td className={cx(printMode, "p-2 border font-mono text-xs", "p-2 border border-slate-300 font-mono text-xs")}>admin / *</td>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Gestor da unidade. Gerencia franqueados, produtos e arquivos ECU da sua empresa.</td>
+                </tr>
+                <tr>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}><BadgeItem printMode={printMode}>suporte_empresa</BadgeItem></td>
+                  <td className={cx(printMode, "p-2 border font-mono text-xs", "p-2 border border-slate-300 font-mono text-xs")}>admin / *</td>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Operação técnica. Atendimento de tickets e processamento de arquivos ECU.</td>
+                </tr>
+                <tr>
                   <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}><BadgeItem printMode={printMode}>franqueado</BadgeItem></td>
-                  <td className={cx(printMode, "p-2 border font-mono text-xs", "p-2 border border-slate-300 font-mono text-xs")}>/franqueado/*</td>
-                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Acesso ao painel de franqueado e loja</td>
-                </tr>
-                <tr>
-                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}><BadgeItem printMode={printMode}>suporte</BadgeItem></td>
-                  <td className={cx(printMode, "p-2 border font-mono text-xs", "p-2 border border-slate-300 font-mono text-xs")}>/admin/* + /franqueado/*</td>
-                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Acesso admin e franqueado para suporte</td>
-                </tr>
-                <tr>
-                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}><BadgeItem printMode={printMode}>admin</BadgeItem></td>
-                  <td className={cx(printMode, "p-2 border font-mono text-xs", "p-2 border border-slate-300 font-mono text-xs")}>/admin/* + /franqueado/*</td>
-                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Acesso total ao sistema</td>
+                  <td className={cx(printMode, "p-2 border font-mono text-xs", "p-2 border border-slate-300 font-mono text-xs")}>app / *</td>
+                  <td className={cx(printMode, "p-2 border", "p-2 border border-slate-300")}>Acesso ao painel operacional, envio de arquivos e compras na Loja Promax.</td>
                 </tr>
               </tbody>
             </table>
