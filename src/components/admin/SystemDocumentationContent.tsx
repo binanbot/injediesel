@@ -1,4 +1,4 @@
-import { FileText, Map, Users, Shield, Database, Palette, GitBranch, Workflow, Network, Store, BookOpen, FolderTree } from "lucide-react";
+import { FileText, Map, Users, Shield, Database, Palette, GitBranch, Workflow, Network, Store, BookOpen, FolderTree, Building2, Crown, UserCheck } from "lucide-react";
 import { MermaidDiagram } from "@/components/MermaidDiagram";
 
 // ── Mermaid Diagrams ──────────────────────────────────────────────
