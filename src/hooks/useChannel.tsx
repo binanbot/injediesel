@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, ReactNode } from "react";
 import { useCompany, type Company } from "@/hooks/useCompany";
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * Channel types that determine which shell/routes to render.
