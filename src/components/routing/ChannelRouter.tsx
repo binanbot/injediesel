@@ -163,6 +163,8 @@ function AppRoutes() {
         <Route path="clientes/:id/veiculos/novo" element={<FranqueadoVeiculoForm />} />
         <Route path="clientes/:id/veiculos/:vehicleId/editar" element={<FranqueadoVeiculoForm />} />
       </Route>
+      {/* Shared documentation print route */}
+      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
       {/* Legacy redirect */}
       <Route path="/franqueado/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
@@ -220,6 +222,8 @@ function AdminRoutes() {
         <Route path="crm" element={<CrmPage />} />
         <Route path="guia" element={<GuiaSistema />} />
       </Route>
+      {/* Shared documentation print route */}
+      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
       {/* Legacy redirect */}
       <Route path="/admin/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
@@ -249,6 +253,8 @@ function CeoRoutes() {
         <Route path="comercial" element={<CeoComercialIntelligence />} />
         <Route path="empresas/:companyId" element={<CeoCompanyDetail />} />
       </Route>
+      {/* Shared documentation print route */}
+      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
       <Route path="/ceo/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -277,6 +283,8 @@ function MasterRoutes() {
         <Route path="rentabilidade" element={<MasterRentabilidade />} />
         <Route path="crm" element={<MasterCrmIntelligence />} />
       </Route>
+      {/* Shared documentation print route */}
+      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
       <Route path="/master/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
