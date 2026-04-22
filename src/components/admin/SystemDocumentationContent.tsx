@@ -2179,19 +2179,58 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
 
           <InfoCard printMode={printMode}>
             <div className="space-y-2 text-sm">
-              <div><strong className={headingColor}>Regra geral:</strong><span className={` ${subtextColor}`}> Rotas em português. Termos universais (checkout, login) aceitos em inglês.</span></div>
+              <div><strong className={headingColor}>Regra geral:</strong><span className={` ${subtextColor}`}> Rotas em português. Termos universais (checkout, login, dashboard) aceitos em inglês.</span></div>
               <div><strong className={headingColor}>Código vs Interface:</strong><span className={` ${subtextColor}`}> Código-fonte em inglês (variáveis, funções, imports). Interface em português (labels, mensagens, toasts).</span></div>
               <div><strong className={headingColor}>Decisão sobre migração:</strong><span className={` ${subtextColor}`}> Inconsistências de idioma em colunas e status NÃO devem ser migradas — risco de breaking change. Documentar e manter.</span></div>
             </div>
           </InfoCard>
         </SectionBlock>
 
-        {/* ── FOOTER ───────────────────────── */}
-        <div className={`mt-8 pt-6 border-t text-center text-sm ${cx(printMode, "border-border text-muted-foreground", "border-slate-200 text-slate-500")}`}>
-          <p>© {new Date().getFullYear()} Injediesel - Todos os direitos reservados</p>
-          <p className="mt-1">Documento gerado automaticamente pelo sistema</p>
-          <p className="mt-2 text-xs">Versão 4.1 - Atualizado em {currentDate}</p>
-        </div>
+        <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
+
+        {/* ── ROADMAP E CONCLUSÃO ────────────────── */}
+        <SectionBlock printMode={printMode}>
+          <SectionTitle printMode={printMode}>
+            <GitBranch className="h-5 w-5" /> ROADMAP E STATUS ATUAL
+          </SectionTitle>
+          <div className="grid md:grid-cols-2 gap-6 mt-4">
+            <InfoCard printMode={printMode}>
+              <h4 className={`font-bold mb-2 flex items-center gap-2 ${headingColor}`}>
+                🚀 Status Atual (v4.5)
+              </h4>
+              <ul className={`list-disc pl-5 space-y-1 ${listColor}`}>
+                <li>Core de envio e processamento de arquivos estável.</li>
+                <li>Loja Promax com checkout WhatsApp e gestão de status 100% funcional.</li>
+                <li>Sistema de contratos com bloqueio automático operante.</li>
+                <li>Novo módulo de Colaboradores e CRM em fase de implantação.</li>
+                <li>Auditoria de sistema ativa para rastreabilidade de ações críticas.</li>
+              </ul>
+            </InfoCard>
+            <InfoCard printMode={printMode}>
+              <h4 className={`font-bold mb-2 flex items-center gap-2 ${headingColor}`}>
+                🔮 Próximos Passos
+              </h4>
+              <ul className={`list-disc pl-5 space-y-1 ${listColor}`}>
+                <li>Automação de pagamentos via API (atualmente manual/WhatsApp).</li>
+                <li>Expansão do módulo de cursos com tracking de progresso.</li>
+                <li>App Mobile nativo (PWA já disponível).</li>
+                <li>Integração com sistemas externos de ERP/Logística via Webhooks.</li>
+                <li>Advanced Analytics com previsibilidade de vendas por IA.</li>
+              </ul>
+            </InfoCard>
+          </div>
+          <footer className="mt-12 text-center">
+            <p className={`text-xs italic ${subtextColor}`}>
+              Este documento é gerado dinamicamente e reflete o estado atual do código e banco de dados.
+              Última revisão técnica concluída em {currentDate}.
+            </p>
+            <div className={`mt-8 pt-6 border-t text-sm ${cx(printMode, "border-border text-muted-foreground", "border-slate-200 text-slate-500")}`}>
+              <p>© {new Date().getFullYear()} Injediesel - Todos os direitos reservados</p>
+              <p className="mt-1">Documento gerado automaticamente pelo sistema</p>
+              <p className="mt-2 text-xs">Versão 4.5 - Atualizado em {currentDate}</p>
+            </div>
+          </footer>
+        </SectionBlock>
       </div>
     </div>
   );
