@@ -163,6 +163,8 @@ function AppRoutes() {
         <Route path="clientes/:id/veiculos/novo" element={<FranqueadoVeiculoForm />} />
         <Route path="clientes/:id/veiculos/:vehicleId/editar" element={<FranqueadoVeiculoForm />} />
       </Route>
+      {/* Shared documentation print route */}
+      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
       {/* Legacy redirect */}
       <Route path="/franqueado/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
