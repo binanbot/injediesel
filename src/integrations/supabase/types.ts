@@ -339,6 +339,44 @@ export type Database = {
           },
         ]
       }
+      company_modules: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          module_key: string
+          settings: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          module_key: string
+          settings?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          module_key?: string
+          settings?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_modules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_history: {
         Row: {
           contract_type: string
@@ -612,6 +650,7 @@ export type Database = {
           address_number: string | null
           address_state: string | null
           cnpj: string | null
+          company_id: string | null
           cpf: string | null
           created_at: string | null
           created_by: string | null
@@ -640,6 +679,7 @@ export type Database = {
           address_number?: string | null
           address_state?: string | null
           cnpj?: string | null
+          company_id?: string | null
           cpf?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -668,6 +708,7 @@ export type Database = {
           address_number?: string | null
           address_state?: string | null
           cnpj?: string | null
+          company_id?: string | null
           cpf?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -687,6 +728,13 @@ export type Database = {
           zip_code?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "customers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "customers_primary_seller_id_fkey"
             columns: ["primary_seller_id"]
@@ -1415,6 +1463,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          company_id: string | null
           created_at: string
           customer_id: string | null
           delivery_address: Json | null
@@ -1440,6 +1489,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           customer_id?: string | null
           delivery_address?: Json | null
@@ -1465,6 +1515,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           customer_id?: string | null
           delivery_address?: Json | null
@@ -1490,6 +1541,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_customer_id_fkey"
             columns: ["customer_id"]
@@ -2520,7 +2578,9 @@ export type Database = {
       }
       get_company_by_hostname: { Args: { _hostname: string }; Returns: Json }
       get_company_unit_ids: { Args: { _company_id: string }; Returns: string[] }
-      get_user_company_id: { Args: { _user_id: string }; Returns: string }
+      get_user_company_id:
+        | { Args: never; Returns: string }
+        | { Args: { _user_id: string }; Returns: string }
       get_user_role: { Args: { _user_id: string }; Returns: string }
       get_user_unit_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
@@ -2538,6 +2598,7 @@ export type Database = {
       }
       is_company_support: { Args: { _user_id: string }; Returns: boolean }
       is_franchisor_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_global_admin: { Args: never; Returns: boolean }
       is_master_level: { Args: { _user_id: string }; Returns: boolean }
       is_same_company: {
         Args: { _user_id_a: string; _user_id_b: string }
@@ -2554,6 +2615,7 @@ export type Database = {
         | "suporte_empresa"
         | "master_admin"
         | "ceo"
+        | "adminco"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2689,6 +2751,7 @@ export const Constants = {
         "suporte_empresa",
         "master_admin",
         "ceo",
+        "adminco",
       ],
     },
   },
