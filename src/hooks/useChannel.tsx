@@ -28,6 +28,8 @@ interface ChannelContextType {
   isLoading: boolean;
   /** Whether the current environment is dev or preview */
   isDevOrPreview: boolean;
+  /** Whether we are in channel-based routing mode */
+  isChannelMode: boolean;
 }
 
 const ChannelContext = createContext<ChannelContextType>({
@@ -37,6 +39,7 @@ const ChannelContext = createContext<ChannelContextType>({
   isGlobalChannel: false,
   isLoading: true,
   isDevOrPreview: false,
+  isChannelMode: false,
 });
 
 /**
@@ -97,10 +100,17 @@ function isValidChannel(value: string): value is ChannelType {
 
 export function ChannelProvider({ children }: { children: ReactNode }) {
   const { company, isLoading } = useCompany();
-  const { userRole } = useAuth();
+  const { user, userRole } = useAuth();
 
   const channel = useMemo(() => resolveChannel(company, userRole), [company, userRole]);
   const isDevOrPreview = useMemo(() => checkIsDevOrPreview(), []);
+  
+  const isChannelMode = useMemo(() => {
+    const hasExplicitChannel = isDevOrPreview && new URLSearchParams(window.location.search).has("channel");
+    const hasHostnameChannel = !!(company as any)?.channel_type;
+    const isLoggedIn = !!user && !!userRole;
+    return hasExplicitChannel || hasHostnameChannel || isLoggedIn;
+  }, [isDevOrPreview, company, user, userRole]);
 
   const value = useMemo<ChannelContextType>(() => ({
     channel,
@@ -109,7 +119,8 @@ export function ChannelProvider({ children }: { children: ReactNode }) {
     isGlobalChannel: ["ceo_global", "master_global"].includes(channel),
     isLoading,
     isDevOrPreview,
-  }), [channel, company, isLoading, isDevOrPreview]);
+    isChannelMode,
+  }), [channel, company, isLoading, isDevOrPreview, isChannelMode]);
 
   return (
     <ChannelContext.Provider value={value}>
