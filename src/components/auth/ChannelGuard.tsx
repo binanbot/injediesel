@@ -6,13 +6,6 @@ import { Loader2 } from "lucide-react";
 /**
  * Validates that the authenticated user's role is compatible with the current channel.
  * If incompatible, redirects to /login on the current hostname.
- *
- * Rules:
- * - app channel: only franqueado (+ admin/master who can impersonate)
- * - admin channel: only admin-level roles for the matching company
- * - ceo_global: only ceo (+ master_admin)
- * - master_global: only master_admin
- * - public: no auth needed, always pass
  */
 
 const CHANNEL_ALLOWED_ROLES: Record<ChannelType, UserRole[]> = {
@@ -29,7 +22,7 @@ interface ChannelGuardProps {
 
 export function ChannelGuard({ children }: ChannelGuardProps) {
   const { user, userRole, userCompanyId, isLoading: authLoading } = useAuth();
-  const { channel, company, isLoading: channelLoading } = useChannel();
+  const { channel, company, isLoading: channelLoading, isDevOrPreview } = useChannel();
 
   if (authLoading || channelLoading) {
     return (
@@ -57,7 +50,8 @@ export function ChannelGuard({ children }: ChannelGuardProps) {
 
   // For company-scoped channels (app/admin), validate company match
   // master_admin and ceo bypass company check
-  if ((channel === "app" || channel === "admin") && company) {
+  // In dev/preview we skip the strict company check to allow testing across brands
+  if ((channel === "app" || channel === "admin") && company && !isDevOrPreview) {
     const isMasterOrCeo = userRole === "master_admin" || userRole === "ceo";
     if (!isMasterOrCeo && userCompanyId && company.id && userCompanyId !== company.id) {
       // User belongs to a different company than this hostname
