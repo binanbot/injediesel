@@ -1,5 +1,24 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, isValidElement, type ReactElement } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+
+/**
+ * Safely returns an array of <Route> elements, validating each child.
+ * Prevents the "X is not a <Route> component" runtime error by ensuring
+ * only valid <Route> elements are passed as children of <Routes>.
+ */
+function safeRoutes(routes: ReactElement[]): ReactElement[] {
+  return routes.filter((node) => {
+    if (!isValidElement(node)) {
+      console.warn("[safeRoutes] Skipping non-element child:", node);
+      return false;
+    }
+    if (node.type !== Route) {
+      console.warn("[safeRoutes] Skipping non-Route child:", node.type);
+      return false;
+    }
+    return true;
+  });
+}
 import { useChannel, type ChannelType } from "@/hooks/useChannel";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
@@ -104,11 +123,11 @@ import { CeoLayout } from "@/components/layout/CeoLayout";
 // ─── Shared routes ───────────────────────────────────────────────────
 
 /** Routes available in all channels - returns an array of Route elements */
-const sharedRoutes = () => [
+const sharedRoutes = (): ReactElement[] => safeRoutes([
   <Route key="login" path="/login" element={<Login />} />,
   <Route key="docs" path="/docs" element={<DocumentacaoPublica />} />,
   <Route key="doc-print" path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />,
-];
+]);
 
 // ─── Channel-specific route sets ─────────────────────────────────────
 
