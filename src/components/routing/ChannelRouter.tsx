@@ -101,6 +101,19 @@ import { AdminLayout } from "@/components/layout/AdminLayout";
 import { MasterLayout } from "@/components/layout/MasterLayout";
 import { CeoLayout } from "@/components/layout/CeoLayout";
 
+// ─── Shared routes ───────────────────────────────────────────────────
+
+/** Routes available in all channels */
+function SharedRoutes() {
+  return (
+    <>
+      <Route path="/login" element={<Login />} />
+      <Route path="/docs" element={<DocumentacaoPublica />} />
+      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
+    </>
+  );
+}
+
 // ─── Channel-specific route sets ─────────────────────────────────────
 
 /** Public channel: landing + login + docs */
@@ -108,9 +121,7 @@ function PublicRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingRouter />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/docs" element={<DocumentacaoPublica />} />
-      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
+      <SharedRoutes />
       {/* Legacy path redirects for backward compatibility */}
       <Route path="/franqueado/*" element={<Navigate to="/login" replace />} />
       <Route path="/admin/*" element={<Navigate to="/login" replace />} />
@@ -123,7 +134,7 @@ function PublicRoutes() {
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <SharedRoutes />
       <Route
         path="/"
         element={
@@ -163,8 +174,6 @@ function AppRoutes() {
         <Route path="clientes/:id/veiculos/novo" element={<FranqueadoVeiculoForm />} />
         <Route path="clientes/:id/veiculos/:vehicleId/editar" element={<FranqueadoVeiculoForm />} />
       </Route>
-      {/* Shared documentation print route */}
-      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
       {/* Legacy redirect */}
       <Route path="/franqueado/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
@@ -176,7 +185,7 @@ function AppRoutes() {
 function AdminRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <SharedRoutes />
       <Route
         path="/"
         element={
@@ -222,8 +231,6 @@ function AdminRoutes() {
         <Route path="crm" element={<CrmPage />} />
         <Route path="guia" element={<GuiaSistema />} />
       </Route>
-      {/* Shared documentation print route */}
-      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
       {/* Legacy redirect */}
       <Route path="/admin/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
@@ -235,7 +242,7 @@ function AdminRoutes() {
 function CeoRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <SharedRoutes />
       <Route
         path="/"
         element={
@@ -253,8 +260,6 @@ function CeoRoutes() {
         <Route path="comercial" element={<CeoComercialIntelligence />} />
         <Route path="empresas/:companyId" element={<CeoCompanyDetail />} />
       </Route>
-      {/* Shared documentation print route */}
-      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
       <Route path="/ceo/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -265,7 +270,7 @@ function CeoRoutes() {
 function MasterRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <SharedRoutes />
       <Route
         path="/"
         element={
@@ -283,8 +288,6 @@ function MasterRoutes() {
         <Route path="rentabilidade" element={<MasterRentabilidade />} />
         <Route path="crm" element={<MasterCrmIntelligence />} />
       </Route>
-      {/* Shared documentation print route */}
-      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
       <Route path="/master/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
