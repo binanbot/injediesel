@@ -284,49 +284,34 @@ export function SystemDocumentationContent({ printMode = false }: Props) {
 
         {/* ── DIAGRAMAS ────────────────────── */}
         <div id="diagramas" className="scroll-mt-20" />
-        {!printMode && (
-          <SectionBlock printMode={printMode}>
-            <SectionTitle printMode={printMode}>
-              <Network className="h-5 w-5 text-primary" />
-              DIAGRAMAS DE ARQUITETURA
-            </SectionTitle>
-            <div className="space-y-8">
-              <div>
-                <h4 className="font-semibold mb-3">1. Arquitetura Geral do Sistema</h4>
-                <MermaidDiagram chart={ARCHITECTURE_DIAGRAM} id="architecture" />
-              </div>
-              <div>
-                <h4 className="font-semibold mb-3">2. Fluxo de Dados - Autenticação e Envio de Arquivo</h4>
-                <MermaidDiagram chart={DATA_FLOW_DIAGRAM} id="dataflow" />
-              </div>
-              <div>
-                <h4 className="font-semibold mb-3">3. Fluxo de Pedido - Loja Promax</h4>
-                <MermaidDiagram chart={ORDER_FLOW_DIAGRAM} id="orderflow" />
-              </div>
-              <div>
-                <h4 className="font-semibold mb-3">4. Fluxo de Suporte em Tempo Real</h4>
-                <MermaidDiagram chart={SUPPORT_FLOW_DIAGRAM} id="support" />
-              </div>
-              <div>
-                <h4 className="font-semibold mb-3">5. Modelo de Dados (ER Diagram)</h4>
-                <MermaidDiagram chart={DATABASE_DIAGRAM} id="database" />
-              </div>
+        <SectionBlock printMode={printMode}>
+          <SectionTitle printMode={printMode}>
+            <Network className={cx(printMode, "h-5 w-5 text-primary", "h-5 w-5 text-blue-500")} />
+            DIAGRAMAS DE ARQUITETURA
+          </SectionTitle>
+          <div className="space-y-8">
+            <div>
+              <h4 className="font-semibold mb-3">1. Arquitetura Geral do Sistema</h4>
+              <MermaidDiagram chart={ARCHITECTURE_DIAGRAM} id="architecture" />
             </div>
-          </SectionBlock>
-        )}
-
-        {printMode && (
-          <SectionBlock printMode={printMode}>
-            <SectionTitle printMode={printMode}>
-              <Network className="h-5 w-5 text-blue-500" />
-              DIAGRAMAS DE ARQUITETURA
-            </SectionTitle>
-            <p className={subtextColor}>
-              Os diagramas interativos (Mermaid.js) estão disponíveis apenas na versão online do sistema.
-              Acesse /admin/documentacao para visualizá-los.
-            </p>
-          </SectionBlock>
-        )}
+            <div>
+              <h4 className="font-semibold mb-3">2. Fluxo de Dados - Autenticação e Envio de Arquivo</h4>
+              <MermaidDiagram chart={DATA_FLOW_DIAGRAM} id="dataflow" />
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3">3. Fluxo de Pedido - Loja Promax</h4>
+              <MermaidDiagram chart={ORDER_FLOW_DIAGRAM} id="orderflow" />
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3">4. Fluxo de Suporte em Tempo Real</h4>
+              <MermaidDiagram chart={SUPPORT_FLOW_DIAGRAM} id="support" />
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3">5. Modelo de Dados (ER Diagram)</h4>
+              <MermaidDiagram chart={DATABASE_DIAGRAM} id="database" />
+            </div>
+          </div>
+        </SectionBlock>
 
         <hr className={cx(printMode, "border-border my-4", "border-slate-200 my-6")} />
 
