@@ -103,16 +103,12 @@ import { CeoLayout } from "@/components/layout/CeoLayout";
 
 // ─── Shared routes ───────────────────────────────────────────────────
 
-/** Routes available in all channels */
-function SharedRoutes() {
-  return (
-    <>
-      <Route path="/login" element={<Login />} />
-      <Route path="/docs" element={<DocumentacaoPublica />} />
-      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
-    </>
-  );
-}
+/** Routes available in all channels - returns an array of Route elements */
+const sharedRoutes = () => [
+  <Route key="login" path="/login" element={<Login />} />,
+  <Route key="docs" path="/docs" element={<DocumentacaoPublica />} />,
+  <Route key="doc-print" path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />,
+];
 
 // ─── Channel-specific route sets ─────────────────────────────────────
 
