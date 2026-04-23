@@ -8,6 +8,13 @@ import { useAuth } from "@/hooks/useAuth";
  */
 export type ChannelType = "public" | "app" | "admin" | "ceo_global" | "master_global";
 
+export function checkIsDevOrPreview() {
+  const hostname = window.location.hostname;
+  return hostname === "localhost" 
+    || hostname.endsWith(".lovable.app")
+    || hostname.includes("127.0.0.1");
+}
+
 interface ChannelContextType {
   /** Resolved channel type */
   channel: ChannelType;
@@ -19,6 +26,8 @@ interface ChannelContextType {
   isGlobalChannel: boolean;
   /** Whether context is still loading */
   isLoading: boolean;
+  /** Whether the current environment is dev or preview */
+  isDevOrPreview: boolean;
 }
 
 const ChannelContext = createContext<ChannelContextType>({
@@ -27,6 +36,7 @@ const ChannelContext = createContext<ChannelContextType>({
   isCompanyScoped: true,
   isGlobalChannel: false,
   isLoading: true,
+  isDevOrPreview: false,
 });
 
 /**
@@ -38,10 +48,7 @@ const ChannelContext = createContext<ChannelContextType>({
  */
 function resolveChannel(company: Company | null, userRole: string | null): ChannelType {
   // 1. Explicit query param (dev/preview only)
-  const hostname = window.location.hostname;
-  const isDevOrPreview = hostname === "localhost" 
-    || hostname.endsWith(".lovable.app")
-    || hostname.includes("127.0.0.1");
+  const isDevOrPreview = checkIsDevOrPreview();
 
   if (isDevOrPreview) {
     const params = new URLSearchParams(window.location.search);
@@ -93,6 +100,7 @@ export function ChannelProvider({ children }: { children: ReactNode }) {
   const { userRole } = useAuth();
 
   const channel = useMemo(() => resolveChannel(company, userRole), [company, userRole]);
+  const isDevOrPreview = useMemo(() => checkIsDevOrPreview(), []);
 
   const value = useMemo<ChannelContextType>(() => ({
     channel,
@@ -100,7 +108,8 @@ export function ChannelProvider({ children }: { children: ReactNode }) {
     isCompanyScoped: ["public", "app", "admin"].includes(channel),
     isGlobalChannel: ["ceo_global", "master_global"].includes(channel),
     isLoading,
-  }), [channel, company, isLoading]);
+    isDevOrPreview,
+  }), [channel, company, isLoading, isDevOrPreview]);
 
   return (
     <ChannelContext.Provider value={value}>
