@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth, isAdminLevel, isMasterLevel, getHomeRouteForRole } from "@/hooks/useAuth";
+import { useChannel } from "@/hooks/useChannel";
 import { Loader2 } from "lucide-react";
 
 type AppRole = "admin" | "suporte" | "franqueado" | "admin_empresa" | "suporte_empresa" | "master_admin" | "ceo";
@@ -11,6 +12,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, userRole, isLoading } = useAuth();
+  const { isChannelMode } = useChannel();
   const location = useLocation();
 
   if (isLoading) {
@@ -52,5 +54,5 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   }
 
   // Redirect to the user's home route
-  return <Navigate to={getHomeRouteForRole(userRole)} replace />;
+  return <Navigate to={getHomeRouteForRole(userRole, isChannelMode)} replace />;
 }

@@ -26,22 +26,9 @@ const queryClient = new QueryClient({
  * Otherwise, the legacy combined routes are used for full backward compatibility.
  */
 function SmartRouter() {
-  const { channel, company } = useChannel();
-  const { user, userRole } = useAuth();
+  const { isChannelMode } = useChannel();
 
-  // Use channel routing when:
-  // 1. An explicit ?channel= param is set (dev testing), OR
-  // 2. The company has a channel_type from hostname resolution, OR
-  // 3. The user is logged in (to ensure they see their dashboard even on the 'wrong' domain)
-  const hostname = window.location.hostname;
-  const isDevOrPreview = hostname === "localhost"
-    || hostname.endsWith(".lovable.app")
-    || hostname.includes("127.0.0.1");
-  const hasExplicitChannel = isDevOrPreview && new URLSearchParams(window.location.search).has("channel");
-  const hasHostnameChannel = !!(company as any)?.channel_type;
-  const isLoggedIn = !!user && !!userRole;
-
-  if (hasExplicitChannel || hasHostnameChannel || isLoggedIn) {
+  if (isChannelMode) {
     return <ChannelRouter />;
   }
 
