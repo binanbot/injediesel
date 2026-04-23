@@ -103,16 +103,12 @@ import { CeoLayout } from "@/components/layout/CeoLayout";
 
 // ─── Shared routes ───────────────────────────────────────────────────
 
-/** Routes available in all channels */
-function SharedRoutes() {
-  return (
-    <>
-      <Route path="/login" element={<Login />} />
-      <Route path="/docs" element={<DocumentacaoPublica />} />
-      <Route path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />
-    </>
-  );
-}
+/** Routes available in all channels - returns an array of Route elements */
+const sharedRoutes = () => [
+  <Route key="login" path="/login" element={<Login />} />,
+  <Route key="docs" path="/docs" element={<DocumentacaoPublica />} />,
+  <Route key="doc-print" path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />,
+];
 
 // ─── Channel-specific route sets ─────────────────────────────────────
 
@@ -121,7 +117,7 @@ function PublicRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingRouter />} />
-      <SharedRoutes />
+      {sharedRoutes()}
       {/* Legacy path redirects for backward compatibility */}
       <Route path="/franqueado/*" element={<Navigate to="/login" replace />} />
       <Route path="/admin/*" element={<Navigate to="/login" replace />} />
@@ -134,7 +130,7 @@ function PublicRoutes() {
 function AppRoutes() {
   return (
     <Routes>
-      <SharedRoutes />
+      {sharedRoutes()}
       <Route
         path="/"
         element={
@@ -185,7 +181,7 @@ function AppRoutes() {
 function AdminRoutes() {
   return (
     <Routes>
-      <SharedRoutes />
+      {sharedRoutes()}
       <Route
         path="/"
         element={
@@ -242,7 +238,7 @@ function AdminRoutes() {
 function CeoRoutes() {
   return (
     <Routes>
-      <SharedRoutes />
+      {sharedRoutes()}
       <Route
         path="/"
         element={
@@ -270,7 +266,7 @@ function CeoRoutes() {
 function MasterRoutes() {
   return (
     <Routes>
-      <SharedRoutes />
+      {sharedRoutes()}
       <Route
         path="/"
         element={
