@@ -1745,6 +1745,7 @@ export type Database = {
           allow_manual_credits: boolean | null
           cidade: string | null
           cnpj: string | null
+          company_id: string | null
           complement: string | null
           contract_expiration_date: string | null
           contract_type: string | null
@@ -1783,6 +1784,7 @@ export type Database = {
           allow_manual_credits?: boolean | null
           cidade?: string | null
           cnpj?: string | null
+          company_id?: string | null
           complement?: string | null
           contract_expiration_date?: string | null
           contract_type?: string | null
@@ -1821,6 +1823,7 @@ export type Database = {
           allow_manual_credits?: boolean | null
           cidade?: string | null
           cnpj?: string | null
+          company_id?: string | null
           complement?: string | null
           contract_expiration_date?: string | null
           contract_type?: string | null
@@ -1854,7 +1857,15 @@ export type Database = {
           user_id?: string | null
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_franchisees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       received_files: {
         Row: {
