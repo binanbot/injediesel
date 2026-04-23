@@ -117,7 +117,7 @@ function PublicRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingRouter />} />
-      <SharedRoutes />
+      {sharedRoutes()}
       {/* Legacy path redirects for backward compatibility */}
       <Route path="/franqueado/*" element={<Navigate to="/login" replace />} />
       <Route path="/admin/*" element={<Navigate to="/login" replace />} />
@@ -130,7 +130,7 @@ function PublicRoutes() {
 function AppRoutes() {
   return (
     <Routes>
-      <SharedRoutes />
+      {sharedRoutes()}
       <Route
         path="/"
         element={
@@ -181,7 +181,7 @@ function AppRoutes() {
 function AdminRoutes() {
   return (
     <Routes>
-      <SharedRoutes />
+      {sharedRoutes()}
       <Route
         path="/"
         element={
@@ -238,7 +238,7 @@ function AdminRoutes() {
 function CeoRoutes() {
   return (
     <Routes>
-      <SharedRoutes />
+      {sharedRoutes()}
       <Route
         path="/"
         element={
@@ -266,7 +266,7 @@ function CeoRoutes() {
 function MasterRoutes() {
   return (
     <Routes>
-      <SharedRoutes />
+      {sharedRoutes()}
       <Route
         path="/"
         element={
