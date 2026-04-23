@@ -123,11 +123,11 @@ import { CeoLayout } from "@/components/layout/CeoLayout";
 // ─── Shared routes ───────────────────────────────────────────────────
 
 /** Routes available in all channels - returns an array of Route elements */
-const sharedRoutes = () => [
+const sharedRoutes = (): ReactElement[] => safeRoutes([
   <Route key="login" path="/login" element={<Login />} />,
   <Route key="docs" path="/docs" element={<DocumentacaoPublica />} />,
   <Route key="doc-print" path="/documentacao/impressao" element={<SystemDocumentationPrintPage />} />,
-];
+]);
 
 // ─── Channel-specific route sets ─────────────────────────────────────
 
