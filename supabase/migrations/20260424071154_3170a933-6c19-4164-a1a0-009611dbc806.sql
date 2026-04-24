@@ -1,0 +1,3 @@
+UPDATE public.profiles_franchisees SET company_id = '7d9c22be-5cc3-4be4-a4a3-b23242a43978', updated_at = now() WHERE id = '62de1c21-3e4a-44b0-b623-f3fd0432dd01';
+UPDATE public.units SET company_id = '7d9c22be-5cc3-4be4-a4a3-b23242a43978' WHERE id = '524a17cf-5fa8-41f9-b221-915823f4000a';
+UPDATE public.user_roles SET company_id = '7d9c22be-5cc3-4be4-a4a3-b23242a43978' WHERE user_id = '6f807e0b-9e2b-4e82-ba99-33e44433cafc';
