@@ -77,6 +77,7 @@ const getStatusBadge = (status: string) => {
 
 export default function MeusArquivos() {
   const navigate = useNavigate();
+  const { resolve } = useChannelPaths();
   const contractStatus = useContractStatus();
   const { isRecentlyUpdated } = useRecentlyUpdatedFiles();
   const [searchParams, setSearchParams] = useSearchParams();
