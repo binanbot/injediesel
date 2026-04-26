@@ -36,6 +36,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useChannelPaths } from "@/hooks/useChannelPaths";
 
 export interface ArquivoDetalhado {
   id: number;
