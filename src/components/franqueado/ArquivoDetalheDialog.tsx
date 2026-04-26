@@ -83,6 +83,7 @@ const getStatusBadge = (status: string) => {
 
 export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDetalheDialogProps) {
   const navigate = useNavigate();
+  const { resolve } = useChannelPaths();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [ticketExistente, setTicketExistente] = useState(false);
   const [verificandoTicket, setVerificandoTicket] = useState(false);
