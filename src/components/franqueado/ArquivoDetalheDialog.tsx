@@ -132,7 +132,7 @@ export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDet
     // Fecha o dialog de confirmação e navega para a página de detalhes do arquivo
     setConfirmDialogOpen(false);
     onOpenChange(false);
-    navigate(`/franqueado/arquivos/${arquivo.id}`);
+    navigate(resolve(`/franqueado/arquivos/${arquivo.id}`, "/franqueado"));
   };
 
   const handleClose = () => {
