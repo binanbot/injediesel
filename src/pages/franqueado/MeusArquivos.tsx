@@ -31,6 +31,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useContractStatus } from "@/hooks/useContractStatus";
+import { useChannelPaths } from "@/hooks/useChannelPaths";
 import { toast } from "@/hooks/use-toast";
 
 const arquivos = [
