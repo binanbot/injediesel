@@ -31,6 +31,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useContractStatus } from "@/hooks/useContractStatus";
+import { useChannelPaths } from "@/hooks/useChannelPaths";
 import { toast } from "@/hooks/use-toast";
 
 const arquivos = [
@@ -76,6 +77,7 @@ const getStatusBadge = (status: string) => {
 
 export default function MeusArquivos() {
   const navigate = useNavigate();
+  const { resolve } = useChannelPaths();
   const contractStatus = useContractStatus();
   const { isRecentlyUpdated } = useRecentlyUpdatedFiles();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -321,7 +323,7 @@ export default function MeusArquivos() {
                   <tr 
                     key={arquivo.id} 
                     className={`border-b border-border/50 hover:bg-secondary/30 transition-colors cursor-pointer group ${isUpdated ? "bg-primary/5 animate-pulse" : ""}`}
-                    onClick={() => navigate(`/franqueado/arquivos/${arquivo.id}`)}
+                    onClick={() => navigate(resolve(`/franqueado/arquivos/${arquivo.id}`, "/franqueado"))}
                   >
                     <td className="py-4 px-4 font-medium">
                       <div className="flex items-center gap-2">
@@ -355,7 +357,7 @@ export default function MeusArquivos() {
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8"
-                            onClick={() => navigate(`/franqueado/arquivos/${arquivo.id}`)}
+                            onClick={() => navigate(resolve(`/franqueado/arquivos/${arquivo.id}`, "/franqueado"))}
                             title="Ver detalhes"
                           >
                             <Eye className="h-4 w-4" />
@@ -385,7 +387,7 @@ export default function MeusArquivos() {
                             {/* Mobile: mostrar ações principais no menu */}
                             <DropdownMenuItem 
                               className="sm:hidden"
-                              onClick={() => navigate(`/franqueado/arquivos/${arquivo.id}`)}
+                              onClick={() => navigate(resolve(`/franqueado/arquivos/${arquivo.id}`, "/franqueado"))}
                             >
                               <Eye className="h-4 w-4 mr-2" />
                               Ver detalhes

@@ -36,6 +36,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useChannelPaths } from "@/hooks/useChannelPaths";
 
 export interface ArquivoDetalhado {
   id: number;
@@ -82,6 +83,7 @@ const getStatusBadge = (status: string) => {
 
 export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDetalheDialogProps) {
   const navigate = useNavigate();
+  const { resolve } = useChannelPaths();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [ticketExistente, setTicketExistente] = useState(false);
   const [verificandoTicket, setVerificandoTicket] = useState(false);
@@ -130,7 +132,7 @@ export function ArquivoDetalheDialog({ arquivo, open, onOpenChange }: ArquivoDet
     // Fecha o dialog de confirmação e navega para a página de detalhes do arquivo
     setConfirmDialogOpen(false);
     onOpenChange(false);
-    navigate(`/franqueado/arquivos/${arquivo.id}`);
+    navigate(resolve(`/franqueado/arquivos/${arquivo.id}`, "/franqueado"));
   };
 
   const handleClose = () => {
